@@ -1,0 +1,252 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  STAFF
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+}
+
+enum BookingStatus {
+  DRAFT
+  CONFIRMED
+  ACTIVE
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentType {
+  CASH
+  CARD
+  TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+enum DepositStatus {
+  HELD
+  PARTIAL_RETURNED
+  RETURNED
+  FORFEITED
+}
+
+enum DepositAction {
+  RELEASE
+  PARTIAL
+  HOLD
+}
+
+model Agency {
+  id       String @id @default(cuid())
+  name     String
+  address  String
+  phone    String
+  email    String
+  city     String
+  country  String @default("Morocco")
+  currency String @default("MAD")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  vehicles  Vehicle[]
+  customers Customer[]
+  bookings  Booking[]
+
+  @@map("agencies")
+}
+
+model User {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  password String
+  name     String
+  role     UserRole @default(STAFF)
+  agencyId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+
+  @@index([agencyId])
+  @@map("users")
+}
+
+model Vehicle {
+  id          String        @id @default(cuid())
+  agencyId    String
+  make        String
+  model       String
+  year        Int
+  plate       String        @unique
+  color       String
+  status      VehicleStatus @default(AVAILABLE)
+  pricePerDay Float
+  mileage     Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency   Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@index([agencyId])
+  @@index([status])
+  @@map("vehicles")
+}
+
+model Customer {
+  id               String    @id @default(cuid())
+  agencyId         String
+  name             String
+  email            String?
+  phone            String
+  passportOrCIN    String
+  passportPhotoUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency   Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@index([agencyId])
+  @@map("customers")
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  agencyId      String
+  vehicleId     String
+  customerId    String
+  startDate     DateTime
+  endDate       DateTime
+  pricePerDay   Float
+  totalPrice    Float
+  depositAmount Float
+  status        BookingStatus @default(CONFIRMED)
+  notes         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  vehicle Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  payments     Payment[]
+  deposit      Deposit?
+  contract     Contract?
+  damageReport DamageReport?
+
+  @@index([agencyId])
+  @@index([vehicleId])
+  @@index([customerId])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([status])
+  @@map("bookings")
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  bookingId String
+  amount    Float
+  type      PaymentType
+  status    PaymentStatus @default(PENDING)
+  paidAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([status])
+  @@map("payments")
+}
+
+model Deposit {
+  id         String        @id @default(cuid())
+  bookingId  String        @unique
+  amount     Float
+  status     DepositStatus @default(HELD)
+  heldAt     DateTime      @default(now())
+  returnedAt DateTime?
+  notes      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("deposits")
+}
+
+model Contract {
+  id          String   @id @default(cuid())
+  bookingId   String   @unique
+  pdfUrl      String
+  generatedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("contracts")
+}
+
+model DamageReport {
+  id            String        @id @default(cuid())
+  bookingId     String        @unique
+  fuelLevel     String?
+  cleanliness   String?
+  notes         String?
+  depositAction DepositAction
+  reportedAt    DateTime      @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking      Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  damagePhotos DamagePhoto[]
+
+  @@map("damage_reports")
+}
+
+model DamagePhoto {
+  id              String @id @default(cuid())
+  damageReportId  String
+  photoUrl        String
+  description     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  damageReport DamageReport @relation(fields: [damageReportId], references: [id], onDelete: Cascade)
+
+  @@index([damageReportId])
+  @@map("damage_photos")
+}
