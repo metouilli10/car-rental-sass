@@ -10,7 +10,7 @@ import { VehicleFormData } from "@/lib/validations/vehicle";
 export default async function EditVehiclePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -18,8 +18,10 @@ export default async function EditVehiclePage({
     redirect("/login");
   }
 
+  const { id } = await params;
+
   const vehicle = await prisma.vehicle.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!vehicle || vehicle.agencyId !== session.user.agencyId) {
@@ -28,7 +30,7 @@ export default async function EditVehiclePage({
 
   const handleUpdate = async (data: VehicleFormData) => {
     "use server";
-    return updateVehicle(params.id, data);
+    return updateVehicle(id, data);
   };
 
   return (
@@ -48,6 +50,7 @@ export default async function EditVehiclePage({
           pricePerDay: vehicle.pricePerDay,
           mileage: vehicle.mileage || undefined,
           status: vehicle.status,
+          photoUrl: vehicle.photoUrl ?? undefined,
         }}
         onSubmit={handleUpdate}
         submitLabel="Enregistrer les modifications"

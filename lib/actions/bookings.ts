@@ -20,7 +20,7 @@ export async function createBooking(data: BookingFormData) {
   const startDate = new Date(validatedData.startDate);
   const endDate = new Date(validatedData.endDate);
 
-  const overlappingBookings = await prisma.booking.findMany({
+  const overlappingCount = await prisma.booking.count({
     where: {
       vehicleId: validatedData.vehicleId,
       status: { notIn: ["CANCELED", "COMPLETED"] },
@@ -44,7 +44,7 @@ export async function createBooking(data: BookingFormData) {
     },
   });
 
-  if (overlappingBookings.length > 0) {
+  if (overlappingCount > 0) {
     throw new Error(
       "Ce véhicule n'est pas disponible pour ces dates. Il existe déjà une réservation."
     );

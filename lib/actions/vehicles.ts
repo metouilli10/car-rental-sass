@@ -29,10 +29,12 @@ export async function createVehicle(data: VehicleFormData) {
     data: {
       ...validatedData,
       agencyId: session.user.agencyId,
+      photoUrl: validatedData.photoUrl || null,
     },
   });
 
   revalidatePath("/vehicles");
+  revalidatePath("/catalogue");
   redirect("/vehicles");
 }
 
@@ -67,10 +69,14 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
 
   await prisma.vehicle.update({
     where: { id },
-    data: validatedData,
+    data: {
+      ...validatedData,
+      photoUrl: validatedData.photoUrl || null,
+    },
   });
 
   revalidatePath("/vehicles");
+  revalidatePath("/catalogue");
   redirect("/vehicles");
 }
 

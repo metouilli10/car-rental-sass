@@ -12,6 +12,7 @@ export const vehicleSchema = z.object({
   pricePerDay: z.coerce.number().min(0, "Le prix doit être positif"),
   mileage: z.coerce.number().min(0, "Le kilométrage doit être positif").optional(),
   status: z.enum(["AVAILABLE", "RENTED", "MAINTENANCE"]),
+  photoUrl: z.string().optional(),
 });
 
 export type VehicleFormData = z.infer<typeof vehicleSchema>;

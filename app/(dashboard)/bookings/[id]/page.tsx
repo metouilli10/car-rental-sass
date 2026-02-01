@@ -7,14 +7,14 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Play, CheckCircle, XCircle } from "lucide-react";
+import { MessageCircle, Play, CheckCircle, XCircle, FileText } from "lucide-react";
 import Link from "next/link";
 import { BookingStatusActions } from "@/components/bookings/booking-status-actions";
 
 export default async function BookingDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -22,8 +22,10 @@ export default async function BookingDetailsPage({
     redirect("/login");
   }
 
+  const { id } = await params;
+
   const booking = await prisma.booking.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       customer: true,
       vehicle: true,

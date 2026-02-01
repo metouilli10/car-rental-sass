@@ -17,6 +17,17 @@ export function formatCurrency(amount: number): string {
     .replace(/\s/g, " ") + " MAD";
 }
 
+/** Format amount with DH suffix (matches PDF contract style) */
+export function formatCurrencyDH(amount: number): string {
+  return new Intl.NumberFormat("fr-MA", {
+    style: "decimal",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+    .format(amount)
+    .replace(/\s/g, " ") + " DH";
+}
+
 export function formatDate(date: Date | string): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
   return format(dateObj, "dd/MM/yyyy", { locale: fr });
@@ -25,4 +36,24 @@ export function formatDate(date: Date | string): string {
 export function formatDateTime(date: Date | string): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
   return format(dateObj, "dd/MM/yyyy HH:mm", { locale: fr });
+}
+
+export function formatTime(date: Date | string): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return format(dateObj, "HH:mm", { locale: fr });
+}
+
+/** Build wa.me link for Morocco (212) with optional prefilled message */
+export function formatWhatsAppLink(
+  phone: string,
+  message?: string
+): string {
+  const cleanPhone = phone.replace(/\D/g, "");
+  const fullPhone = cleanPhone.startsWith("212")
+    ? cleanPhone
+    : `212${cleanPhone.startsWith("0") ? cleanPhone.slice(1) : cleanPhone}`;
+  const query = message
+    ? `?text=${encodeURIComponent(message)}`
+    : "";
+  return `https://wa.me/${fullPhone}${query}`;
 }

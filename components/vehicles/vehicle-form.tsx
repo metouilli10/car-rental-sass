@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { vehicleSchema, VehicleFormData } from "@/lib/validations/vehicle";
@@ -15,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Upload, X } from "lucide-react";
 
 interface VehicleFormProps {
   defaultValues?: Partial<VehicleFormData>;
@@ -28,7 +30,9 @@ export function VehicleForm({
   submitLabel,
 }: VehicleFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -38,12 +42,44 @@ export function VehicleForm({
     watch,
   } = useForm<VehicleFormData>({
     resolver: zodResolver(vehicleSchema),
-    defaultValues: defaultValues || {
+    defaultValues: {
       status: "AVAILABLE",
+      photoUrl: defaultValues?.photoUrl ?? "",
+      ...defaultValues,
     },
   });
 
   const status = watch("status");
+  const photoUrl = watch("photoUrl");
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+      const res = await fetch("/api/vehicles/upload-photo", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur d'upload");
+      setValue("photoUrl", data.photoUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'upload");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setValue("photoUrl", undefined);
+    fileInputRef.current?.value && (fileInputRef.current.value = "");
+  };
 
   const onFormSubmit = async (data: VehicleFormData) => {
     setIsLoading(true);
@@ -70,6 +106,62 @@ export function VehicleForm({
               {error}
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label>Photo du véhicule</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              La photo apparaîtra dans le catalogue. JPEG, PNG ou WebP, max 5 Mo.
+            </p>
+            <div className="flex items-start gap-4">
+              <div className="relative w-40 h-28 rounded-lg border border-border bg-muted overflow-hidden flex items-center justify-center">
+                {photoUrl ? (
+                  <>
+                    <Image
+                      src={photoUrl}
+                      alt="Aperçu"
+                      fill
+                      className="object-cover"
+                      unoptimized={photoUrl.startsWith("/")}
+                      sizes="160px"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1 right-1 h-6 w-6"
+                      onClick={handleRemovePhoto}
+                      disabled={isLoading || isUploading}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                    <Upload className="h-8 w-8 opacity-50" />
+                    <span className="text-xs">Aucune photo</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading || isUploading}
+                >
+                  {isUploading ? "Upload..." : photoUrl ? "Changer" : "Ajouter une photo"}
+                </Button>
+              </div>
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

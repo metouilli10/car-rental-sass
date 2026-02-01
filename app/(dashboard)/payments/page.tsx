@@ -61,13 +61,13 @@ export default async function PaymentsPage() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="border-l-4 border-l-yellow-500">
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-1">
                 Paiements en attente
               </p>
-              <p className="text-3xl font-bold text-orange-600">
+              <p className="text-3xl font-bold text-foreground">
                 {formatCurrency(totalPending)}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
@@ -77,13 +77,13 @@ export default async function PaymentsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-primary">
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-1">
                 Cautions retenues
               </p>
-              <p className="text-3xl font-bold text-blue-600">
+              <p className="text-3xl font-bold text-foreground">
                 {formatCurrency(totalHeld)}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
@@ -96,58 +96,58 @@ export default async function PaymentsPage() {
 
       {/* Payments Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="border-b border-border">
           <CardTitle>Paiements</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {payments.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               Aucun paiement enregistré
             </p>
           ) : (
-            <div className="border rounded-lg overflow-x-auto">
+            <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Client
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Véhicule
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Montant
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Statut
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {payments.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-gray-50">
+                    <tr key={payment.id} className="hover:bg-muted/50 transition-colors duration-200">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium">
+                        <div className="font-medium text-foreground">
                           {payment.booking.customer.name}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                         {payment.booking.vehicle.make}{" "}
                         {payment.booking.vehicle.model}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                         {formatCurrency(payment.amount)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                         {payment.type === "CASH" && "Espèces"}
                         {payment.type === "CARD" && "Carte"}
                         {payment.type === "TRANSFER" && "Virement"}
@@ -155,7 +155,7 @@ export default async function PaymentsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={payment.status} />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {payment.paidAt
                           ? formatDate(payment.paidAt)
                           : formatDate(payment.createdAt)}
@@ -168,7 +168,7 @@ export default async function PaymentsPage() {
                           />
                         )}
                         {payment.status === "PAID" && (
-                          <span className="text-green-600">✓ Reçu</span>
+                          <span className="text-green-600 font-medium">✓ Reçu</span>
                         )}
                       </td>
                     </tr>
@@ -182,64 +182,64 @@ export default async function PaymentsPage() {
 
       {/* Deposits Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="border-b border-border">
           <CardTitle>Cautions</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {deposits.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               Aucune caution enregistrée
             </p>
           ) : (
-            <div className="border rounded-lg overflow-x-auto">
+            <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Client
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Véhicule
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Montant
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Statut
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Date retenue
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Date retour
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {deposits.map((deposit) => (
-                    <tr key={deposit.id} className="hover:bg-gray-50">
+                    <tr key={deposit.id} className="hover:bg-muted/50 transition-colors duration-200">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium">
+                        <div className="font-medium text-foreground">
                           {deposit.booking.customer.name}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                         {deposit.booking.vehicle.make}{" "}
                         {deposit.booking.vehicle.model}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                         {formatCurrency(deposit.amount)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={deposit.status} />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {formatDate(deposit.heldAt)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {deposit.returnedAt
                           ? formatDate(deposit.returnedAt)
                           : "-"}
@@ -248,7 +248,7 @@ export default async function PaymentsPage() {
                         {deposit.status === "HELD" ? (
                           <UpdateDepositButton depositId={deposit.id} />
                         ) : (
-                          <span className="text-gray-500">
+                          <span className="text-muted-foreground">
                             {deposit.status === "RETURNED" && "✓ Retournée"}
                             {deposit.status === "PARTIAL_RETURNED" && "⚠ Partielle"}
                             {deposit.status === "FORFEITED" && "✗ Confisquée"}

@@ -10,7 +10,7 @@ import { CustomerFormData } from "@/lib/validations/customer";
 export default async function EditCustomerPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -18,8 +18,10 @@ export default async function EditCustomerPage({
     redirect("/login");
   }
 
+  const { id } = await params;
+
   const customer = await prisma.customer.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!customer || customer.agencyId !== session.user.agencyId) {
@@ -28,7 +30,7 @@ export default async function EditCustomerPage({
 
   const handleUpdate = async (data: CustomerFormData) => {
     "use server";
-    return updateCustomer(params.id, data);
+    return updateCustomer(id, data);
   };
 
   return (

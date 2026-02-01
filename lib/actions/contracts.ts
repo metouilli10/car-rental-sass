@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateContractHTML } from "@/lib/contract-template";
 import { chromium } from "playwright";
-import { writeFile, mkdir } from "fs/promises";
+import { mkdir } from "fs/promises";
 import path from "path";
 
 export async function generateContractPDF(bookingId: string) {
@@ -24,6 +24,7 @@ export async function generateContractPDF(bookingId: string) {
       vehicle: true,
       agency: true,
       payments: true,
+      damageReport: { include: { damagePhotos: true } },
     },
   });
 
@@ -37,6 +38,24 @@ export async function generateContractPDF(bookingId: string) {
       new Date(booking.startDate).getTime()) /
       (1000 * 60 * 60 * 24)
   );
+
+  // Compute amount paid (sum of PAID rental payments)
+  const amountPaid = booking.payments
+    .filter((p) => p.category === "RENTAL" && p.status === "PAID")
+    .reduce((sum, p) => sum + p.amount, 0);
+  const restToPay = booking.totalPrice - amountPaid;
+
+  const vehicleKm =
+    booking.vehicle.currentKm ?? booking.vehicle.mileage ?? 0;
+
+  // Map payment type to French labels
+  const paymentType = booking.payments[0]?.type || "CASH";
+
+  // Base URL for resolving relative image paths in PDF
+  const baseUrl =
+    process.env.NEXTAUTH_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    "http://localhost:3000";
 
   // Generate HTML
   const html = generateContractHTML({
@@ -54,17 +73,23 @@ export async function generateContractPDF(bookingId: string) {
     numberOfDays,
     totalPrice: booking.totalPrice,
     depositAmount: booking.depositAmount,
-    paymentType: booking.payments[0]?.type || "CASH",
+    paymentType,
     agencyName: booking.agency.name,
     agencyAddress: booking.agency.address,
     agencyPhone: booking.agency.phone,
     agencyEmail: booking.agency.email,
+    amountPaid,
+    restToPay,
+    vehicleKm,
+    damagePhotos: booking.damageReport?.damagePhotos ?? [],
+    baseUrl,
   });
 
-  // Generate PDF with Playwright
+  // Generate PDF with Playwright (baseURL for resolving relative image paths)
   const browser = await chromium.launch();
-  const page = await browser.newPage();
-  await page.setContent(html);
+  const context = await browser.newContext({ baseURL: baseUrl });
+  const page = await context.newPage();
+  await page.setContent(html, { waitUntil: "load" });
 
   // Create directory if it doesn't exist
   const contractsDir = path.join(process.cwd(), "public", "uploads", "contracts");

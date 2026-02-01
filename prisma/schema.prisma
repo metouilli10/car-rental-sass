@@ -19,6 +19,7 @@ enum VehicleStatus {
   AVAILABLE
   RENTED
   MAINTENANCE
+  UNAVAILABLE
 }
 
 enum BookingStatus {
@@ -33,6 +34,25 @@ enum PaymentType {
   CASH
   CARD
   TRANSFER
+  CMI
+}
+
+enum PaymentCategory {
+  RENTAL
+  DEPOSIT
+  REFUND
+}
+
+enum BookingPaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+}
+
+enum BookingDepositStatus {
+  PENDING
+  RECEIVED
+  RETURNED
 }
 
 enum PaymentStatus {
@@ -92,17 +112,30 @@ model User {
   @@map("users")
 }
 
+enum Gearbox {
+  MANUAL
+  AUTO
+}
+
 model Vehicle {
-  id          String        @id @default(cuid())
-  agencyId    String
-  make        String
-  model       String
-  year        Int
-  plate       String        @unique
-  color       String
-  status      VehicleStatus @default(AVAILABLE)
-  pricePerDay Float
-  mileage     Int?
+  id                String        @id @default(cuid())
+  agencyId          String
+  make              String
+  model             String
+  year              Int
+  plate             String        @unique
+  color             String
+  status            VehicleStatus @default(AVAILABLE)
+  pricePerDay       Float
+  depositAmount     Float         @default(2000)
+  gearbox           Gearbox       @default(MANUAL)
+  seats             Int           @default(5)
+  hasAC             Boolean       @default(true)
+  category          String        @default("Citadine")
+  photoUrl          String?
+  mileage           Int?
+  currentKm         Int?
+  nextMaintenanceKm Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -135,23 +168,26 @@ model Customer {
 }
 
 model Booking {
-  id            String        @id @default(cuid())
-  agencyId      String
-  vehicleId     String
-  customerId    String
-  startDate     DateTime
-  endDate       DateTime
-  pricePerDay   Float
-  totalPrice    Float
-  depositAmount Float
-  status        BookingStatus @default(CONFIRMED)
-  notes         String?
+  id               String                 @id @default(cuid())
+  agencyId         String
+  vehicleId        String
+  customerId       String
+  startDate        DateTime
+  endDate          DateTime
+  actualReturnDate DateTime?
+  pricePerDay      Float
+  totalPrice       Float
+  depositAmount    Float
+  status           BookingStatus          @default(CONFIRMED)
+  paymentStatus    BookingPaymentStatus   @default(PENDING)
+  depositStatus    BookingDepositStatus   @default(PENDING)
+  notes            String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  agency Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-  vehicle Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  agency   Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  vehicle  Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
 
   payments     Payment[]
@@ -165,15 +201,19 @@ model Booking {
   @@index([startDate])
   @@index([endDate])
   @@index([status])
+  @@index([paymentStatus])
+  @@index([vehicleId, status])
+  @@index([agencyId, status])
   @@map("bookings")
 }
 
 model Payment {
-  id        String        @id @default(cuid())
+  id        String          @id @default(cuid())
   bookingId String
   amount    Float
   type      PaymentType
-  status    PaymentStatus @default(PENDING)
+  category  PaymentCategory @default(RENTAL)
+  status    PaymentStatus   @default(PENDING)
   paidAt    DateTime?
 
   createdAt DateTime @default(now())
@@ -183,6 +223,7 @@ model Payment {
 
   @@index([bookingId])
   @@index([status])
+  @@index([category])
   @@map("payments")
 }
 

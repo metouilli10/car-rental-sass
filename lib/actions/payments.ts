@@ -62,7 +62,7 @@ export async function updateDepositStatus(
     where: { id: depositId },
     data: {
       status,
-      returnedAt: status !== "HELD" ? new Date() : null,
+      returnedAt: new Date(),
       notes: notes || null,
     },
   });

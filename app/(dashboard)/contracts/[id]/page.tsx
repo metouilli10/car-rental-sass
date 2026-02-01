@@ -13,7 +13,7 @@ import { GenerateContractButton } from "@/components/contracts/generate-contract
 export default async function ContractViewPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -21,8 +21,10 @@ export default async function ContractViewPage({
     redirect("/login");
   }
 
+  const { id } = await params;
+
   const booking = await prisma.booking.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       customer: true,
       vehicle: true,

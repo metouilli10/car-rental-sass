@@ -10,6 +10,7 @@ import {
   Calendar,
   CreditCard,
   AlertTriangle,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 
@@ -26,6 +27,7 @@ const iconMap: Record<string, LucideIcon> = {
   Calendar,
   CreditCard,
   AlertTriangle,
+  BookOpen,
 };
 
 export function NavLink({ href, iconName, label }: NavLinkProps) {
@@ -41,14 +43,14 @@ export function NavLink({ href, iconName, label }: NavLinkProps) {
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+        "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
         isActive
-          ? "bg-primary text-primary-foreground"
-          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          ? "bg-muted text-foreground border-l-4 border-primary"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border-l-4 border-transparent"
       )}
     >
       <Icon className="h-4 w-4" />
-      {label}
+      <span>{label}</span>
     </Link>
   );
 }
