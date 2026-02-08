@@ -62,17 +62,9 @@ export async function QuickActionBar({ agencyId }: QuickActionBarProps) {
         <div className="flex items-center gap-2 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-xl p-2 shadow-lg">
           {/* Primary: New Reservation */}
           <Button asChild className="shadow-sm">
-            <Link href="/bookings?action=new">
+            <Link href="/bookings/create">
               <Plus className="w-4 h-4 mr-2" />
               Nouvelle réservation
-            </Link>
-          </Button>
-
-          {/* Create Contract */}
-          <Button asChild variant="outline" className="shadow-sm">
-            <Link href="/contracts/new">
-              <FileText className="w-4 h-4 mr-2" />
-              Créer contrat
             </Link>
           </Button>
 
@@ -140,25 +132,17 @@ export async function QuickActionBar({ agencyId }: QuickActionBarProps) {
           <div className="grid grid-cols-2 gap-2">
             {/* Primary: New Reservation (spans 2 columns) */}
             <Button asChild className="col-span-2 shadow-sm h-12">
-              <Link href="/bookings?action=new">
+              <Link href="/bookings/create">
                 <Plus className="w-4 h-4 mr-2" />
                 Nouvelle réservation
               </Link>
             </Button>
 
-            {/* Create Contract */}
-            <Button asChild variant="outline" size="sm" className="shadow-sm">
-              <Link href="/contracts/new">
-                <FileText className="w-4 h-4 mr-1.5" />
-                <span className="text-xs">Contrat</span>
-              </Link>
-            </Button>
-
-            {/* Add Damage */}
-            <Button asChild variant="outline" size="sm" className="shadow-sm">
+            {/* Add Damage (spans 2 columns) */}
+            <Button asChild variant="outline" size="sm" className="col-span-2 shadow-sm">
               <Link href="/damage-reports/new">
                 <Camera className="w-4 h-4 mr-1.5" />
-                <span className="text-xs">Dégâts</span>
+                <span className="text-xs">Ajouter dégâts</span>
               </Link>
             </Button>
 

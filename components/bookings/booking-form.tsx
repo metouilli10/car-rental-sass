@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { bookingSchema, BookingFormData } from "@/lib/validations/booking";
@@ -15,7 +15,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { CustomerForm } from "@/components/customers/customer-form";
+import { createCustomerForBooking } from "@/lib/actions/customers";
+import type { CustomerFormData } from "@/lib/validations/customer";
 import { formatCurrency } from "@/lib/utils";
+import { UserPlus } from "lucide-react";
 
 interface Customer {
   id: string;
@@ -38,10 +48,14 @@ interface BookingFormProps {
   onSubmit: (data: BookingFormData) => Promise<void>;
 }
 
-export function BookingForm({ customers, vehicles, onSubmit }: BookingFormProps) {
+const NEW_CLIENT_VALUE = "__new_client__";
+
+export function BookingForm({ customers: initialCustomers, vehicles, onSubmit }: BookingFormProps) {
+  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [numberOfDays, setNumberOfDays] = useState(0);
+  const [newClientOpen, setNewClientOpen] = useState(false);
 
   const {
     register,
@@ -90,6 +104,13 @@ export function BookingForm({ customers, vehicles, onSubmit }: BookingFormProps)
     }
   }, [startDate, endDate, pricePerDay, setValue]);
 
+  const handleNewClientSubmit = useCallback(async (data: CustomerFormData) => {
+    const newCustomer = await createCustomerForBooking(data);
+    setCustomers((prev) => [...prev, newCustomer].sort((a, b) => a.name.localeCompare(b.name)));
+    setValue("customerId", newCustomer.id);
+    setNewClientOpen(false);
+  }, [setValue]);
+
   const onFormSubmit = async (data: BookingFormData) => {
     setIsLoading(true);
     setError(null);
@@ -123,8 +144,14 @@ export function BookingForm({ customers, vehicles, onSubmit }: BookingFormProps)
             <div className="space-y-2">
               <Label htmlFor="customerId">Client *</Label>
               <Select
-                value={customerId}
-                onValueChange={(value) => setValue("customerId", value)}
+                value={customerId === NEW_CLIENT_VALUE ? "" : customerId}
+                onValueChange={(value) => {
+                  if (value === NEW_CLIENT_VALUE) {
+                    setNewClientOpen(true);
+                    return;
+                  }
+                  setValue("customerId", value);
+                }}
                 disabled={isLoading}
               >
                 <SelectTrigger>
@@ -136,6 +163,12 @@ export function BookingForm({ customers, vehicles, onSubmit }: BookingFormProps)
                       {customer.name} - {customer.phone}
                     </SelectItem>
                   ))}
+                  <SelectItem value={NEW_CLIENT_VALUE} className="border-t mt-1 pt-2 font-medium text-primary">
+                    <span className="flex items-center gap-2">
+                      <UserPlus className="h-4 w-4" />
+                      Nouveau client
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
               {errors.customerId && (
@@ -143,6 +176,20 @@ export function BookingForm({ customers, vehicles, onSubmit }: BookingFormProps)
                   {errors.customerId.message}
                 </p>
               )}
+              <Sheet open={newClientOpen} onOpenChange={setNewClientOpen}>
+                <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>Ajouter un client</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6">
+                    <CustomerForm
+                      submitLabel="Ajouter et sélectionner"
+                      onSubmit={handleNewClientSubmit}
+                      onCancel={() => setNewClientOpen(false)}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
 
             <div className="space-y-2">

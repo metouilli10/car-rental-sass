@@ -13,7 +13,7 @@ import Link from "next/link";
 import { format, isBefore, isToday, isTomorrow, isPast } from "date-fns";
 import { fr } from "date-fns/locale";
 
-type VehicleStatus = "AVAILABLE" | "RENTED" | "MAINTENANCE";
+type VehicleStatus = "AVAILABLE" | "RENTED" | "MAINTENANCE" | "UNAVAILABLE";
 
 interface VehicleCard {
   id: string;

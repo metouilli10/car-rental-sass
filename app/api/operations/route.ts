@@ -32,7 +32,6 @@ export async function GET(request: NextRequest) {
     include: {
       customer: { select: { name: true, phone: true } },
       vehicle: { select: { make: true, model: true, plate: true, color: true } },
-      contract: { select: { id: true } },
       damageReport: { select: { id: true } },
     },
     orderBy: { startDate: "asc" },

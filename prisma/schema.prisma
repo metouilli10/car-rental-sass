@@ -74,6 +74,7 @@ enum DepositAction {
   HOLD
 }
 
+
 model Agency {
   id       String @id @default(cuid())
   name     String
@@ -87,10 +88,10 @@ model Agency {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users     User[]
-  vehicles  Vehicle[]
-  customers Customer[]
-  bookings  Booking[]
+  users            User[]
+  vehicles         Vehicle[]
+  customers        Customer[]
+  bookings         Booking[]
 
   @@map("agencies")
 }
@@ -148,14 +149,31 @@ model Vehicle {
   @@map("vehicles")
 }
 
+enum CustomerType {
+  PERSONNE_PHYSIQUE
+  PERSONNE_MORALE
+}
+
 model Customer {
-  id               String    @id @default(cuid())
-  agencyId         String
-  name             String
-  email            String?
-  phone            String
-  passportOrCIN    String
-  passportPhotoUrl String?
+  id                  String       @id @default(cuid())
+  agencyId            String
+  customerType        CustomerType @default(PERSONNE_PHYSIQUE)
+  name                String
+  email               String?
+  phone               String
+  passportOrCIN       String?
+  passportOrCINExpiry DateTime?
+  passportPhotoUrl    String?
+  address             String?
+  dateOfBirth         DateTime?
+  nationality         String       @default("Marocaine")
+  licenseNumber       String?
+  licenseExpiry       DateTime?
+  licensePhotoUrl     String?
+  // Personne morale
+  ice                 String?
+  rc                  String?
+  representativeName String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -182,6 +200,9 @@ model Booking {
   paymentStatus    BookingPaymentStatus   @default(PENDING)
   depositStatus    BookingDepositStatus   @default(PENDING)
   notes            String?
+  pickupLocation   String?
+  returnLocation   String?
+  hasFullInsurance Boolean                @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -192,7 +213,6 @@ model Booking {
 
   payments     Payment[]
   deposit      Deposit?
-  contract     Contract?
   damageReport DamageReport?
 
   @@index([agencyId])
@@ -243,20 +263,6 @@ model Deposit {
 
   @@index([status])
   @@map("deposits")
-}
-
-model Contract {
-  id          String   @id @default(cuid())
-  bookingId   String   @unique
-  pdfUrl      String
-  generatedAt DateTime @default(now())
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-
-  @@map("contracts")
 }
 
 model DamageReport {

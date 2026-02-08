@@ -1,6 +1,5 @@
 import { Suspense } from "react";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth-cache";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { ActionRequise } from "../components/ActionRequise";
@@ -66,7 +65,7 @@ function VueDensembleLoader() {
 }
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     return null;

@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -9,7 +8,7 @@ import { MarkPaymentButton } from "@/components/payments/mark-payment-button";
 import { UpdateDepositButton } from "@/components/payments/update-deposit-button";
 
 export default async function PaymentsPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     return null;

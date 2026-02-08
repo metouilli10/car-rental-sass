@@ -11,7 +11,7 @@ export const vehicleSchema = z.object({
   color: z.string().min(1, "La couleur est requise"),
   pricePerDay: z.coerce.number().min(0, "Le prix doit être positif"),
   mileage: z.coerce.number().min(0, "Le kilométrage doit être positif").optional(),
-  status: z.enum(["AVAILABLE", "RENTED", "MAINTENANCE"]),
+  status: z.enum(["AVAILABLE", "RENTED", "MAINTENANCE", "UNAVAILABLE"]),
   photoUrl: z.string().optional(),
 });
 

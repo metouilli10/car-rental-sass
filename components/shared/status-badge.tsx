@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 
-type VehicleStatus = "AVAILABLE" | "RENTED" | "MAINTENANCE";
+type VehicleStatus = "AVAILABLE" | "RENTED" | "MAINTENANCE" | "UNAVAILABLE";
 type BookingStatus = "DRAFT" | "CONFIRMED" | "ACTIVE" | "COMPLETED" | "CANCELED";
 type PaymentStatus = "PENDING" | "PAID" | "REFUNDED";
 type DepositStatus = "HELD" | "PARTIAL_RETURNED" | "RETURNED" | "FORFEITED";
@@ -19,6 +19,7 @@ const statusConfig: Record<
   AVAILABLE: { label: "Disponible", variant: "success" },
   RENTED: { label: "Loué", variant: "info" },
   MAINTENANCE: { label: "Maintenance", variant: "warning" },
+  UNAVAILABLE: { label: "Indisponible", variant: "destructive" },
 
   // Booking statuses
   DRAFT: { label: "Brouillon", variant: "secondary" },

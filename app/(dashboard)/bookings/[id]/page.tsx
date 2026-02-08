@@ -1,13 +1,12 @@
-import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Play, CheckCircle, XCircle, FileText } from "lucide-react";
+import { MessageCircle, Play, CheckCircle, XCircle, FileText, Send, Users } from "lucide-react";
 import Link from "next/link";
 import { BookingStatusActions } from "@/components/bookings/booking-status-actions";
 
@@ -16,7 +15,7 @@ export default async function BookingDetailsPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     redirect("/login");
@@ -31,7 +30,6 @@ export default async function BookingDetailsPage({
       vehicle: true,
       payments: true,
       deposit: true,
-      contract: true,
       damageReport: {
         include: {
           damagePhotos: true,
@@ -211,65 +209,18 @@ export default async function BookingDetailsPage({
         </Card>
       </div>
 
-      {/* Actions & Contract */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BookingStatusActions
-              bookingId={booking.id}
-              currentStatus={booking.status}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Contrat</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {booking.contract ? (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Contrat généré le {formatDate(booking.contract.generatedAt)}
-                </p>
-                <div className="flex gap-2">
-                  <Button asChild>
-                    <Link href={`/contracts/${booking.id}`}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Voir le contrat
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <a
-                      href={booking.contract.pdfUrl}
-                      download
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Télécharger
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Aucun contrat généré pour cette réservation
-                </p>
-                <Button asChild>
-                  <Link href={`/contracts/${booking.id}`}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Générer le contrat
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <BookingStatusActions
+            bookingId={booking.id}
+            currentStatus={booking.status}
+          />
+        </CardContent>
+      </Card>
 
       {/* Damage Report */}
       {booking.damageReport && (

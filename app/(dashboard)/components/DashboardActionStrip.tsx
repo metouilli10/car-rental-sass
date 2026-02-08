@@ -35,20 +35,13 @@ export function DashboardActionStrip({ activeRentals }: DashboardActionStripProp
   return (
     <div className="flex items-center gap-3 min-w-0">
       <Button asChild className="shrink-0">
-        <Link href="/bookings?action=new">
+        <Link href="/bookings/create">
           <Plus className="w-4 h-4" />
           Nouvelle réservation
         </Link>
       </Button>
 
       <div className="h-6 w-px bg-border shrink-0" aria-hidden />
-
-      <Button asChild variant="outline" size="sm" className="shrink-0">
-        <Link href="/contracts/new">
-          <FileText className="w-4 h-4" />
-          Créer contrat
-        </Link>
-      </Button>
 
       <Button asChild variant="outline" size="sm" className="shrink-0">
         <Link href="/damage-reports/new">

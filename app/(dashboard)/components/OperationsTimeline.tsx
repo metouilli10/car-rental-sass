@@ -33,7 +33,6 @@ interface TimelineOperation {
   depositStatus: "received" | "pending" | "released";
   operationStatus: OperationStatus;
   totalAmount: number;
-  contractId?: string;
 }
 
 export async function OperationsTimeline({ agencyId }: { agencyId: string }) {
@@ -57,7 +56,6 @@ export async function OperationsTimeline({ agencyId }: { agencyId: string }) {
       vehicle: { select: { make: true, model: true, plate: true } },
       payments: { select: { status: true, amount: true } },
       deposit: { select: { status: true } },
-      contract: { select: { id: true } },
     },
     orderBy: { startDate: "asc" },
   });
@@ -119,7 +117,6 @@ export async function OperationsTimeline({ agencyId }: { agencyId: string }) {
         depositStatus,
         operationStatus,
         totalAmount: booking.totalPrice,
-        contractId: booking.contract?.id,
       });
     }
 
@@ -151,7 +148,6 @@ export async function OperationsTimeline({ agencyId }: { agencyId: string }) {
         depositStatus,
         operationStatus,
         totalAmount: booking.totalPrice,
-        contractId: booking.contract?.id,
       });
     }
   }
@@ -363,33 +359,6 @@ export async function OperationsTimeline({ agencyId }: { agencyId: string }) {
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      {/* Contract */}
-                      {op.contractId ? (
-                        <Button
-                          asChild
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-xs"
-                        >
-                          <Link href={`/contracts/${op.contractId}`}>
-                            <FileText className="w-3.5 h-3.5 mr-1.5" />
-                            Contrat
-                          </Link>
-                        </Button>
-                      ) : (
-                        <Button
-                          asChild
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-xs"
-                        >
-                          <Link href={`/bookings/${op.bookingId}`}>
-                            <FileText className="w-3.5 h-3.5 mr-1.5" />
-                            Créer contrat
-                          </Link>
-                        </Button>
-                      )}
-
                       {/* WhatsApp */}
                       <Button
                         asChild

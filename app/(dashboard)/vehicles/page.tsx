@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -17,7 +16,7 @@ export default async function VehiclesPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     return null;
@@ -151,7 +150,7 @@ export default async function VehiclesPage({
               </thead>
               <tbody className="divide-y divide-border">
                 {vehicles.map((vehicle) => {
-                  const activeBooking = "bookings" in vehicle ? vehicle.bookings?.[0] : null;
+                  const activeBooking = "bookings" in vehicle ? (vehicle as any).bookings?.[0] : null;
                   return (
                     <tr
                       key={vehicle.id}

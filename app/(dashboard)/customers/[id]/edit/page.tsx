@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { CustomerForm } from "@/components/customers/customer-form";
@@ -12,7 +11,7 @@ export default async function EditCustomerPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     redirect("/login");
@@ -42,10 +41,21 @@ export default async function EditCustomerPage({
 
       <CustomerForm
         defaultValues={{
+          customerType: customer.customerType,
           name: customer.name,
           email: customer.email || "",
           phone: customer.phone,
-          passportOrCIN: customer.passportOrCIN,
+          passportOrCIN: customer.passportOrCIN || undefined,
+          // @ts-expect-error - passportOrCINExpiry expects string (input type) not Date (output type)
+          passportOrCINExpiry: customer.passportOrCINExpiry
+            ? customer.passportOrCINExpiry.toISOString().slice(0, 10)
+            : undefined,
+          passportPhotoUrl: customer.passportPhotoUrl || undefined,
+          licensePhotoUrl: customer.licensePhotoUrl || undefined,
+          ice: customer.ice || undefined,
+          rc: customer.rc || undefined,
+          representativeName: customer.representativeName || undefined,
+          address: customer.address || undefined,
         }}
         onSubmit={handleUpdate}
         submitLabel="Enregistrer les modifications"

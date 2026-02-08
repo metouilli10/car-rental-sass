@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth-cache";
 import { NavLink } from "@/components/shared/nav-link";
 import { SignOutButton } from "@/components/shared/sign-out-button";
 import Image from "next/image";
@@ -10,7 +9,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     redirect("/login");
@@ -47,6 +46,7 @@ export default async function DashboardLayout({
           <NavLink href="/catalogue" iconName="BookOpen" label="Catalogue" />
           <NavLink href="/customers" iconName="Users" label="Clients" />
           <NavLink href="/bookings" iconName="Calendar" label="Réservations" />
+          <NavLink href="/calendrier" iconName="CalendarRange" label="Calendrier" />
           <NavLink href="/payments" iconName="CreditCard" label="Paiements" />
           <NavLink href="/damage-reports" iconName="AlertTriangle" label="Rapports" />
         </nav>

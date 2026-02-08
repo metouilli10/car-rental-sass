@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { CatalogueFilters } from "./_components/CatalogueFilters";
@@ -20,7 +19,7 @@ interface CataloguePageProps {
 }
 
 export default async function CataloguePage({ searchParams }: CataloguePageProps) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const params = await searchParams;

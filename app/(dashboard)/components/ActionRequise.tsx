@@ -39,7 +39,6 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
         include: {
           customer: { select: { name: true, phone: true } },
           vehicle: { select: { make: true, model: true, plate: true } },
-          contract: { select: { id: true } },
         },
         orderBy: { endDate: "asc" },
         take: 10,
@@ -56,7 +55,6 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
             include: {
               customer: { select: { name: true, phone: true } },
               vehicle: { select: { make: true, model: true } },
-              contract: { select: { id: true } },
             },
           },
         },
@@ -74,7 +72,6 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
           booking: {
             include: {
               customer: { select: { name: true, phone: true } },
-              contract: { select: { id: true } },
             },
           },
         },
@@ -212,13 +209,6 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                       <MessageCircle className="w-4 h-4" />
                     </a>
                   </Button>
-                  {booking.contract && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                      <Link href={`/contracts/${booking.contract.id}`} title="Voir contrat">
-                        <FileText className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                  )}
                 </div>
               </div>
             );
@@ -286,13 +276,6 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                       <MessageCircle className="w-4 h-4" />
                     </a>
                   </Button>
-                  {payment.booking.contract && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                      <Link href={`/contracts/${payment.booking.contract!.id}`} title="Voir contrat">
-                        <FileText className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                  )}
                   <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Encaisser">
                     <Link href="/payments">
                       <CreditCard className="w-4 h-4" />
@@ -362,13 +345,6 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                       <MessageCircle className="w-4 h-4" />
                     </a>
                   </Button>
-                  {deposit.booking.contract && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                      <Link href={`/contracts/${deposit.booking.contract!.id}`} title="Voir contrat">
-                        <FileText className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                  )}
                   <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Rembourser">
                     <Link href={`/bookings/${deposit.bookingId}`}>
                       <Banknote className="w-4 h-4" />

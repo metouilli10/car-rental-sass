@@ -18,14 +18,58 @@ export async function createCustomer(data: CustomerFormData) {
 
   await prisma.customer.create({
     data: {
-      ...validatedData,
+      customerType: validatedData.customerType,
+      name: validatedData.name,
       email: validatedData.email || null,
+      phone: validatedData.phone,
+      passportOrCIN: validatedData.passportOrCIN || null,
+      passportOrCINExpiry: validatedData.passportOrCINExpiry ?? null,
+      passportPhotoUrl: validatedData.passportPhotoUrl || null,
+      licensePhotoUrl: validatedData.licensePhotoUrl || null,
+      ice: validatedData.ice || null,
+      rc: validatedData.rc || null,
+      representativeName: validatedData.representativeName || null,
+      address: validatedData.address || null,
       agencyId: session.user.agencyId,
     },
   });
 
   revalidatePath("/customers");
   redirect("/customers");
+}
+
+/** Creates a customer and returns { id, name, phone } for use in booking form (no redirect). */
+export async function createCustomerForBooking(data: CustomerFormData) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new Error("Non autorisé");
+  }
+
+  const validatedData = customerSchema.parse(data);
+
+  const customer = await prisma.customer.create({
+    data: {
+      customerType: validatedData.customerType,
+      name: validatedData.name,
+      email: validatedData.email || null,
+      phone: validatedData.phone,
+      passportOrCIN: validatedData.passportOrCIN || null,
+      passportOrCINExpiry: validatedData.passportOrCINExpiry ?? null,
+      passportPhotoUrl: validatedData.passportPhotoUrl || null,
+      licensePhotoUrl: validatedData.licensePhotoUrl || null,
+      ice: validatedData.ice || null,
+      rc: validatedData.rc || null,
+      representativeName: validatedData.representativeName || null,
+      address: validatedData.address || null,
+      agencyId: session.user.agencyId,
+    },
+    select: { id: true, name: true, phone: true },
+  });
+
+  revalidatePath("/customers");
+  revalidatePath("/bookings/create");
+  return customer;
 }
 
 export async function updateCustomer(id: string, data: CustomerFormData) {
@@ -49,8 +93,18 @@ export async function updateCustomer(id: string, data: CustomerFormData) {
   await prisma.customer.update({
     where: { id },
     data: {
-      ...validatedData,
+      customerType: validatedData.customerType,
+      name: validatedData.name,
       email: validatedData.email || null,
+      phone: validatedData.phone,
+      passportOrCIN: validatedData.passportOrCIN || null,
+      passportOrCINExpiry: validatedData.passportOrCINExpiry ?? null,
+      passportPhotoUrl: validatedData.passportPhotoUrl || null,
+      licensePhotoUrl: validatedData.licensePhotoUrl || null,
+      ice: validatedData.ice || null,
+      rc: validatedData.rc || null,
+      representativeName: validatedData.representativeName || null,
+      address: validatedData.address || null,
     },
   });
 

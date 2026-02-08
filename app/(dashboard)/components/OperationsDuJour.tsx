@@ -56,37 +56,18 @@ export function OperationsDuJour({ agencyId }: { agencyId: string }) {
 
       setLoadingUpcoming(true);
       try {
-        const upcoming: UpcomingDay[] = [];
-        const today = new Date();
-
-        // Fetch next 7 days
-        for (let i = 1; i <= 7; i++) {
-          const date = addDays(today, i);
-          const response = await fetch(
-            `/api/operations?date=${format(date, 'yyyy-MM-dd')}`
-          );
-          const data = await response.json();
-          const dayBookings = data.bookings || [];
-
-          const dateString = date.toDateString();
-          const departures = dayBookings.filter(
-            (b: any) => new Date(b.startDate).toDateString() === dateString
-          ).length;
-          const returns = dayBookings.filter(
-            (b: any) => new Date(b.endDate).toDateString() === dateString
-          ).length;
-          const total = departures + returns;
-
-          if (total > 0) {
-            upcoming.push({
-              date,
-              dateISO: format(date, 'yyyy-MM-dd'),
-              departures,
-              returns,
-              total
-            });
-          }
-        }
+        // Single batch API call instead of 7 sequential requests
+        const response = await fetch('/api/operations/upcoming?days=7');
+        const data = await response.json();
+        const upcoming: UpcomingDay[] = (data.upcoming || []).map(
+          (day: { date: string; departures: number; returns: number; total: number }) => ({
+            date: new Date(day.date + 'T00:00:00'),
+            dateISO: day.date,
+            departures: day.departures,
+            returns: day.returns,
+            total: day.total,
+          })
+        );
 
         setUpcomingDays(upcoming);
       } catch (error) {
@@ -330,31 +311,27 @@ export function OperationsDuJour({ agencyId }: { agencyId: string }) {
                   </Badge>
 
                   <div className="shrink-0">
-                    {isSortie ? (
-                      <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                        <Link href={`/contracts/${booking.id}`} title="Contrat">
+                    <Button variant="outline" size="sm" className="gap-1.5" asChild>
+                      {isSortie ? (
+                        <Link href={`/bookings/${booking.id}`} title="Voir réservation">
                           <FileText className="w-4 h-4" />
-                          Contrat
+                          Détails
                         </Link>
-                      </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                        {booking.damageReport ? (
-                          <Link
-                            href={`/damage-reports/${booking.damageReport.id}`}
-                            title="Dégâts"
-                          >
-                            <Camera className="w-4 h-4" />
-                            Dégâts
-                          </Link>
-                        ) : (
-                          <Link href="/damage-reports/new" title="Ajouter dégâts">
-                            <Camera className="w-4 h-4" />
-                            Dégâts
-                          </Link>
-                        )}
-                      </Button>
-                    )}
+                      ) : booking.damageReport ? (
+                        <Link
+                          href={`/damage-reports/${booking.damageReport.id}`}
+                          title="Dégâts"
+                        >
+                          <Camera className="w-4 h-4" />
+                          Dégâts
+                        </Link>
+                      ) : (
+                        <Link href="/damage-reports/new" title="Ajouter dégâts">
+                          <Camera className="w-4 h-4" />
+                          Dégâts
+                        </Link>
+                      )}
+                    </Button>
                   </div>
                 </div>
               );

@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { formatDate } from "@/lib/utils";
@@ -10,7 +9,7 @@ import { Edit, Phone, Mail } from "lucide-react";
 import { DeleteCustomerButton } from "@/components/customers/delete-customer-button";
 
 export default async function CustomersPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     return null;
