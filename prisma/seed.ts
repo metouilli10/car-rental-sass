@@ -23,11 +23,11 @@ async function main() {
   });
   console.log("✅ Agency created:", agency.name);
 
-  // Create Owner User
+  // Create Owner User (update password on upsert so re-seeding fixes login)
   const hashedPassword = await hash("password123", 10);
   const owner = await prisma.user.upsert({
     where: { email: "owner@automaroc.ma" },
-    update: {},
+    update: { password: hashedPassword },
     create: {
       email: "owner@automaroc.ma",
       password: hashedPassword,
