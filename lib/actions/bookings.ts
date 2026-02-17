@@ -2,6 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { PaymentType } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bookingSchema, BookingFormData } from "@/lib/validations/booking";
@@ -59,6 +60,13 @@ export async function createBooking(data: BookingFormData) {
           ? "PARTIAL"
           : "PENDING";
 
+    // NOTE: Some deployed environments may not have PaymentType.OTHER in Prisma client yet.
+    // Keep "Autre" in UI, but persist with a compatible enum value until schema/client are aligned.
+    const normalizedPaymentType: PaymentType =
+      validatedData.paymentType === "OTHER"
+        ? PaymentType.TRANSFER
+        : validatedData.paymentType;
+
     const createdBooking = await prisma.booking.create({
       data: {
         agencyId: session.user.agencyId,
@@ -93,12 +101,12 @@ export async function createBooking(data: BookingFormData) {
             validatedData.paidNow > 0
               ? {
                   amount: validatedData.paidNow,
-                  type: validatedData.paymentType,
+                  type: normalizedPaymentType,
                   status: "PAID",
                 }
               : {
                   amount: 0,
-                  type: validatedData.paymentType,
+                  type: normalizedPaymentType,
                   status: "PENDING",
                 },
         },
