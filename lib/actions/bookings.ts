@@ -2,7 +2,6 @@
 
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bookingSchema, BookingFormData } from "@/lib/validations/booking";
@@ -53,24 +52,55 @@ export async function createBooking(data: BookingFormData) {
     }
 
     // Create booking with payment and deposit
-    await prisma.booking.create({
+    const paymentStatus =
+      validatedData.remainingAmount <= 0
+        ? "PAID"
+        : validatedData.paidNow > 0
+          ? "PARTIAL"
+          : "PENDING";
+
+    const createdBooking = await prisma.booking.create({
       data: {
         agencyId: session.user.agencyId,
         customerId: validatedData.customerId,
         vehicleId: validatedData.vehicleId,
         startDate,
         endDate,
+        pickupLocation: validatedData.pickupLocation || null,
+        returnLocation: validatedData.returnLocation || null,
         pricePerDay: validatedData.pricePerDay,
-        totalPrice: validatedData.totalPrice,
+        totalPrice: validatedData.totalTtc,
+        pricingDays: validatedData.pricingDays,
+        pricingHours: validatedData.pricingHours,
+        addonsTotal: validatedData.addonsTotal,
+        discountType: validatedData.discountType ?? null,
+        discountValue: validatedData.discountValue,
+        discountAmount: validatedData.discountAmount,
+        taxEnabled: validatedData.taxEnabled,
+        taxRate: validatedData.taxRate,
+        totalHt: validatedData.totalHt,
+        totalTva: validatedData.totalTva,
+        totalTtc: validatedData.totalTtc,
+        paidNow: validatedData.paidNow,
+        remainingAmount: validatedData.remainingAmount,
+        flowVersion: "reservation_flow_v2",
         depositAmount: validatedData.depositAmount,
-        status: "CONFIRMED",
+        status: validatedData.status,
+        paymentStatus,
         notes: validatedData.notes || null,
         payments: {
-          create: {
-            amount: validatedData.totalPrice,
-            type: validatedData.paymentType,
-            status: "PENDING",
-          },
+          create:
+            validatedData.paidNow > 0
+              ? {
+                  amount: validatedData.paidNow,
+                  type: validatedData.paymentType,
+                  status: "PAID",
+                }
+              : {
+                  amount: 0,
+                  type: validatedData.paymentType,
+                  status: "PENDING",
+                },
         },
         deposit: {
           create: {
@@ -78,17 +108,27 @@ export async function createBooking(data: BookingFormData) {
             status: "HELD",
           },
         },
+        addons: {
+          create: validatedData.addons.map((addon) => ({
+            label: addon.label,
+            quantity: addon.quantity,
+            unitAmount: addon.unitAmount,
+            totalAmount: addon.quantity * addon.unitAmount,
+            isDefault: addon.isDefault ?? false,
+          })),
+        },
       },
+      select: { id: true },
     });
 
     revalidatePath("/bookings");
     revalidatePath("/dashboard");
+    revalidatePath("/bookings/create");
+    return { success: true, bookingId: createdBooking.id };
   } catch (error) {
     console.error("createBooking error:", error);
     return { error: "Erreur lors de la création de la réservation" };
   }
-
-  redirect("/bookings");
 }
 
 export async function updateBookingStatus(

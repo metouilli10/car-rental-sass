@@ -1,0 +1,56 @@
+-- Add enum value for flexible payment methods
+ALTER TYPE "PaymentType" ADD VALUE IF NOT EXISTS 'OTHER';
+
+-- Add discount type enum
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'DiscountType') THEN
+    CREATE TYPE "DiscountType" AS ENUM ('PERCENTAGE', 'FIXED');
+  END IF;
+END $$;
+
+-- Extend bookings with pricing and flow metadata
+ALTER TABLE "bookings"
+  ADD COLUMN IF NOT EXISTS "pricingDays" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "pricingHours" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "addonsTotal" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "discountType" "DiscountType",
+  ADD COLUMN IF NOT EXISTS "discountValue" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "discountAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "taxEnabled" BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS "taxRate" DOUBLE PRECISION NOT NULL DEFAULT 20,
+  ADD COLUMN IF NOT EXISTS "totalHt" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "totalTva" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "totalTtc" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "paidNow" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "remainingAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "flowVersion" TEXT;
+
+-- Persist add-ons used in booking pricing
+CREATE TABLE IF NOT EXISTS "booking_addons" (
+  "id" TEXT NOT NULL,
+  "bookingId" TEXT NOT NULL,
+  "label" TEXT NOT NULL,
+  "unitAmount" DOUBLE PRECISION NOT NULL,
+  "quantity" INTEGER NOT NULL DEFAULT 1,
+  "totalAmount" DOUBLE PRECISION NOT NULL,
+  "isDefault" BOOLEAN NOT NULL DEFAULT false,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "booking_addons_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX IF NOT EXISTS "booking_addons_bookingId_idx" ON "booking_addons"("bookingId");
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'booking_addons_bookingId_fkey'
+  ) THEN
+    ALTER TABLE "booking_addons"
+      ADD CONSTRAINT "booking_addons_bookingId_fkey"
+      FOREIGN KEY ("bookingId") REFERENCES "bookings"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;

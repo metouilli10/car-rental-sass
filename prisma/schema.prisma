@@ -36,6 +36,12 @@ enum PaymentType {
   CARD
   TRANSFER
   CMI
+  OTHER
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
 }
 
 enum PaymentCategory {
@@ -221,6 +227,20 @@ model Booking {
   pickupLocation   String?
   returnLocation   String?
   hasFullInsurance Boolean                @default(false)
+  pricingDays      Float                  @default(0)
+  pricingHours     Int                    @default(0)
+  addonsTotal      Float                  @default(0)
+  discountType     DiscountType?
+  discountValue    Float                  @default(0)
+  discountAmount   Float                  @default(0)
+  taxEnabled       Boolean                @default(false)
+  taxRate          Float                  @default(20)
+  totalHt          Float                  @default(0)
+  totalTva         Float                  @default(0)
+  totalTtc         Float                  @default(0)
+  paidNow          Float                  @default(0)
+  remainingAmount  Float                  @default(0)
+  flowVersion      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -231,6 +251,7 @@ model Booking {
 
   payments      Payment[]
   deposit       Deposit?
+  addons        BookingAddon[]
   damageReports DamageReport[]
 
   @@index([agencyId])
@@ -243,6 +264,24 @@ model Booking {
   @@index([vehicleId, status])
   @@index([agencyId, status])
   @@map("bookings")
+}
+
+model BookingAddon {
+  id          String  @id @default(cuid())
+  bookingId   String
+  label       String
+  unitAmount  Float
+  quantity    Int     @default(1)
+  totalAmount Float
+  isDefault   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_addons")
 }
 
 model Payment {
