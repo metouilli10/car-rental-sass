@@ -59,7 +59,7 @@ export async function QuickActionBar({ agencyId }: QuickActionBarProps) {
     <>
       {/* Desktop: Top-right fixed position */}
       <div className="hidden md:block fixed top-20 right-6 z-40">
-        <div className="flex items-center gap-2 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-xl p-2 shadow-lg">
+        <div className="flex items-center gap-2 bg-white/90 backdrop-blur-xl rounded-2xl p-2.5 shadow-card-lg">
           {/* Primary: New Reservation */}
           <Button asChild className="shadow-sm">
             <Link href="/bookings/create">
@@ -72,7 +72,7 @@ export async function QuickActionBar({ agencyId }: QuickActionBarProps) {
           <Button asChild variant="outline" className="shadow-sm">
             <Link href="/damage-reports/new">
               <Camera className="w-4 h-4 mr-2" />
-              Ajouter dégâts
+              Inspection
             </Link>
           </Button>
 
@@ -128,7 +128,7 @@ export async function QuickActionBar({ agencyId }: QuickActionBarProps) {
 
       {/* Mobile: Bottom fixed position */}
       <div className="md:hidden fixed bottom-4 left-4 right-4 z-40">
-        <div className="bg-white/90 backdrop-blur-lg border border-gray-200 rounded-2xl p-3 shadow-2xl">
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-3 shadow-card-lg">
           <div className="grid grid-cols-2 gap-2">
             {/* Primary: New Reservation (spans 2 columns) */}
             <Button asChild className="col-span-2 shadow-sm h-12">
@@ -142,7 +142,7 @@ export async function QuickActionBar({ agencyId }: QuickActionBarProps) {
             <Button asChild variant="outline" size="sm" className="col-span-2 shadow-sm">
               <Link href="/damage-reports/new">
                 <Camera className="w-4 h-4 mr-1.5" />
-                <span className="text-xs">Ajouter dégâts</span>
+                <span className="text-xs">Inspection</span>
               </Link>
             </Button>
 

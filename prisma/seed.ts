@@ -178,6 +178,20 @@ async function main() {
       phone: "+212663456789",
       passportOrCIN: "EF345678",
     },
+    {
+      id: "customer-4",
+      name: "Karim Idrissi",
+      email: "k.idrissi@gmail.com",
+      phone: "+212664567890",
+      passportOrCIN: "GH901234",
+    },
+    {
+      id: "customer-5",
+      name: "Amina Boussaid",
+      email: "a.boussaid@gmail.com",
+      phone: "+212665678901",
+      passportOrCIN: "IJ567890",
+    },
   ];
 
   for (const customer of customers) {
@@ -211,7 +225,19 @@ async function main() {
   const threeDaysAgo = new Date(today);
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-  // Booking 1: ACTIVE (started 2 days ago, Renault Clio)
+  const fourDaysFromNow = new Date(today);
+  fourDaysFromNow.setDate(fourDaysFromNow.getDate() + 4);
+
+  const tenDaysFromNow = new Date(today);
+  tenDaysFromNow.setDate(tenDaysFromNow.getDate() + 10);
+
+  const fourteenDaysFromNow = new Date(today);
+  fourteenDaysFromNow.setDate(fourteenDaysFromNow.getDate() + 14);
+
+  const oneDayAgo = new Date(today);
+  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+  // Booking 1: ACTIVE (started 2 days ago, Mercedes)
   const booking1 = await prisma.booking.upsert({
     where: { id: "booking-1" },
     update: {},
@@ -395,15 +421,186 @@ async function main() {
     create: {
       id: "damage-report-1",
       bookingId: booking4.id,
-      fuelLevel: "Full",
-      cleanliness: "Clean",
+      inspectionType: "RETOUR",
+      fuelLevel: "Plein",
+      cleanliness: "Propre",
       notes: "Aucun dommage constaté",
       depositAction: "RELEASE",
+      totalDamageCost: 0,
+      deductFromDeposit: false,
+      deductedAmount: 0,
       reportedAt: threeDaysAgo,
+      sections: {
+        create: [
+          { id: "section-1", sectionType: "CARROSSERIE", status: "OK", damageCost: 0 },
+          { id: "section-2", sectionType: "PNEUS", status: "OK", damageCost: 0 },
+          { id: "section-3", sectionType: "INTERIEUR", status: "OK", damageCost: 0 },
+          { id: "section-4", sectionType: "KILOMETRAGE", status: "OK", damageCost: 0 },
+          { id: "section-5", sectionType: "CARBURANT", status: "OK", damageCost: 0 },
+        ],
+      },
     },
   });
 
   console.log("✅ Booking 4 created (COMPLETED with damage report)");
+
+  // Booking 5: CONFIRMED - Future (starts in 3 days)
+  const booking5 = await prisma.booking.upsert({
+    where: { id: "booking-5" },
+    update: {},
+    create: {
+      id: "booking-5",
+      agencyId: agency.id,
+      vehicleId: "vehicle-4",
+      customerId: "customer-2",
+      startDate: fourDaysFromNow,
+      endDate: tenDaysFromNow,
+      pricePerDay: 350,
+      totalPrice: 2100,
+      depositAmount: 2000,
+      status: "CONFIRMED",
+      paymentStatus: "PARTIAL",
+      notes: "Location vacances - assurance complète demandée",
+      pickupLocation: "Agence Casablanca",
+      hasFullInsurance: true,
+    },
+  });
+
+  await prisma.payment.upsert({
+    where: { id: "payment-5" },
+    update: {},
+    create: {
+      id: "payment-5",
+      bookingId: booking5.id,
+      amount: 1000,
+      type: "TRANSFER",
+      category: "RENTAL",
+      status: "PAID",
+      paidAt: today,
+    },
+  });
+
+  console.log("✅ Booking 5 created (CONFIRMED - Future)");
+
+  const eighteenDaysFromNow = new Date(today);
+  eighteenDaysFromNow.setDate(eighteenDaysFromNow.getDate() + 18);
+
+  // Booking 6: DRAFT - En cours de préparation
+  await prisma.booking.upsert({
+    where: { id: "booking-6" },
+    update: {},
+    create: {
+      id: "booking-6",
+      agencyId: agency.id,
+      vehicleId: "vehicle-1",
+      customerId: "customer-4",
+      startDate: fourteenDaysFromNow,
+      endDate: eighteenDaysFromNow,
+      pricePerDay: 250,
+      totalPrice: 1000,
+      depositAmount: 1500,
+      status: "DRAFT",
+      paymentStatus: "PENDING",
+      notes: "Réservation en attente de confirmation client",
+    },
+  });
+
+  console.log("✅ Booking 6 created (DRAFT)");
+
+  // Booking 7: CANCELED
+  await prisma.booking.upsert({
+    where: { id: "booking-7" },
+    update: {},
+    create: {
+      id: "booking-7",
+      agencyId: agency.id,
+      vehicleId: "vehicle-3",
+      customerId: "customer-1",
+      startDate: fourDaysFromNow,
+      endDate: tenDaysFromNow,
+      pricePerDay: 220,
+      totalPrice: 1320,
+      depositAmount: 1000,
+      status: "CANCELED",
+      paymentStatus: "PENDING",
+      notes: "Annulé par le client - changement de programme",
+    },
+  });
+
+  console.log("✅ Booking 7 created (CANCELED)");
+
+  // Booking 8: COMPLETED - Simple location passée
+  const booking8 = await prisma.booking.upsert({
+    where: { id: "booking-8" },
+    update: {},
+    create: {
+      id: "booking-8",
+      agencyId: agency.id,
+      vehicleId: "vehicle-4",
+      customerId: "customer-5",
+      startDate: sevenDaysAgo,
+      endDate: oneDayAgo,
+      actualReturnDate: oneDayAgo,
+      pricePerDay: 350,
+      totalPrice: 2100,
+      depositAmount: 2000,
+      status: "COMPLETED",
+      paymentStatus: "PAID",
+      depositStatus: "RETURNED",
+      notes: "Location weekend - tout s'est bien passé",
+    },
+  });
+
+  await prisma.payment.upsert({
+    where: { id: "payment-8" },
+    update: {},
+    create: {
+      id: "payment-8",
+      bookingId: booking8.id,
+      amount: 2100,
+      type: "CMI",
+      status: "PAID",
+      paidAt: sevenDaysAgo,
+    },
+  });
+
+  await prisma.deposit.upsert({
+    where: { bookingId: booking8.id },
+    update: {},
+    create: {
+      bookingId: booking8.id,
+      amount: 2000,
+      status: "RETURNED",
+      heldAt: sevenDaysAgo,
+      returnedAt: oneDayAgo,
+      notes: "Caution libérée intégralement",
+    },
+  });
+
+  console.log("✅ Booking 8 created (COMPLETED)");
+
+  // Booking 9: CONFIRMED - Départ la semaine prochaine
+  await prisma.booking.upsert({
+    where: { id: "booking-9" },
+    update: {},
+    create: {
+      id: "booking-9",
+      agencyId: agency.id,
+      vehicleId: "vehicle-1",
+      customerId: "customer-3",
+      startDate: tenDaysFromNow,
+      endDate: fourteenDaysFromNow,
+      pricePerDay: 250,
+      totalPrice: 1000,
+      depositAmount: 1500,
+      status: "CONFIRMED",
+      paymentStatus: "PENDING",
+      notes: "Mariage à Marrakech - décoration fleurs prévue",
+      returnLocation: "Même agence",
+    },
+  });
+
+  console.log("✅ Booking 9 created (CONFIRMED - Next week)");
 
   console.log("\n🎉 Seed completed successfully!");
   console.log("\n📝 Login credentials:");

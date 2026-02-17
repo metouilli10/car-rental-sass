@@ -67,10 +67,21 @@ const config: Config = {
           "5": "hsl(var(--chart-5))",
         },
       },
+      boxShadow: {
+        card: "0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px -1px rgba(0,0,0,0.03)",
+        "card-hover": "0 4px 12px 0 rgba(0,0,0,0.06), 0 2px 4px -1px rgba(0,0,0,0.04)",
+        "card-lg": "0 8px 24px 0 rgba(0,0,0,0.08), 0 4px 8px -2px rgba(0,0,0,0.04)",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      spacing: {
+        "section": "var(--dashboard-section)",
+        "section-sm": "var(--dashboard-section-sm)",
+        "card-gap": "var(--dashboard-card-gap)",
+        "card-padding": "var(--card-padding)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "sans-serif"],

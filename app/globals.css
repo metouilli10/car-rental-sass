@@ -4,16 +4,16 @@
 
 @layer base {
   :root {
-    /* Midnight Steel - Modern SaaS Palette */
-    --background: 0 0% 100%;
+    /* Modern Soft SaaS Palette */
+    --background: 225 14% 97%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    /* Primary Violet primary */
-    --primary: 246 91% 67%;
+    /* Primary Blue */
+    --primary: 220 84% 54%;
     --primary-foreground: 0 0% 100%;
 
     /* Semantic Colors */
@@ -26,27 +26,42 @@
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 10% 3.9%;
 
-    /* Light gray muted */
-    --muted: 240 4.8% 95.9%;
+    /* Warm gray muted */
+    --muted: 220 14% 96%;
     --muted-foreground: 240 3.8% 46.1%;
 
     /* Accent = Primary */
-    --accent: 246 91% 67%;
+    --accent: 220 84% 54%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 246 91% 67%;
-    --radius: 0.5rem;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 84% 54%;
+    --radius: 0.75rem;
 
-    --chart-1: 263 70% 60%;
+    /* Dashboard spacing — calm, premium, airy rhythm (+12% global vertical rhythm) */
+    --dashboard-section: 3.15rem;   /* ~50px between major sections */
+    --dashboard-section-sm: 2.5rem; /* 40px optional */
+    --dashboard-card-gap: 1.75rem;  /* 28px between cards in grid */
+    --card-padding: 1.5rem;         /* 24px minimum inside cards */
+
+    /* Card shadow system */
+    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+    --card-shadow-hover: 0 4px 12px 0 rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    --card-shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+
+    /* Primary gradient */
+    --primary-gradient: linear-gradient(135deg, hsl(220, 84%, 54%) 0%, hsl(213, 80%, 48%) 100%);
+    --primary-gradient-hover: linear-gradient(135deg, hsl(220, 84%, 48%) 0%, hsl(213, 80%, 42%) 100%);
+
+    --chart-1: 220 84% 54%;
     --chart-2: 240 10% 3.9%;
     --chart-3: 240 4.8% 95.9%;
-    --chart-4: 262 83% 58%;
-    --chart-5: 270 91% 65%;
+    --chart-4: 213 80% 48%;
+    --chart-5: 200 80% 50%;
   }
 
   .dark {
@@ -58,8 +73,8 @@
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    /* Lighter violet for dark mode */
-    --primary: 263 70% 65%;
+    /* Lighter blue for dark mode */
+    --primary: 217 80% 65%;
     --primary-foreground: 240 10% 3.9%;
 
     /* Dark gray secondary */
@@ -71,7 +86,7 @@
     --muted-foreground: 240 5% 64.9%;
 
     /* Accent = Primary */
-    --accent: 246 91% 72%;
+    --accent: 217 80% 65%;
     --accent-foreground: 240 10% 3.9%;
 
     --destructive: 0 72% 40%;
@@ -79,7 +94,7 @@
 
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 246 91% 72%;
+    --ring: 217 80% 65%;
   }
 }
 
@@ -108,6 +123,40 @@
   /* Clean gradient utilities */
   .gradient-primary {
     background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--primary) / 0.05));
+  }
+
+  /* Card shadow system */
+  .shadow-card {
+    box-shadow: var(--card-shadow);
+  }
+  .shadow-card-hover {
+    box-shadow: var(--card-shadow-hover);
+  }
+  .shadow-card-lg {
+    box-shadow: var(--card-shadow-lg);
+  }
+
+  /* Primary gradient button */
+  .btn-gradient {
+    background: var(--primary-gradient);
+  }
+  .btn-gradient:hover {
+    background: var(--primary-gradient-hover);
+    box-shadow: 0 4px 12px 0 hsl(220 84% 54% / 0.25);
+  }
+
+  /* Soft alert styles */
+  .alert-soft-danger {
+    @apply bg-red-50/60 border-l-4 border-l-red-400 rounded-xl;
+  }
+  .alert-soft-warning {
+    @apply bg-amber-50/60 border-l-4 border-l-amber-400 rounded-xl;
+  }
+  .alert-soft-info {
+    @apply bg-blue-50/60 border-l-4 border-l-blue-400 rounded-xl;
+  }
+  .alert-soft-success {
+    @apply bg-emerald-50/60 border-l-4 border-l-emerald-400 rounded-xl;
   }
 
   /* Animations - Fast and minimal (200ms) */
@@ -190,5 +239,30 @@
       opacity: 1;
       transform: none;
     }
+
+    /* Disable hover micro-interactions */
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Landing page animations */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes draw {
+    from { stroke-dashoffset: 200; }
+    to { stroke-dashoffset: 0; }
+  }
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  .animate-draw {
+    stroke-dasharray: 200;
+    animation: draw 1s ease-out forwards;
+    animation-delay: 0.5s;
   }
 }

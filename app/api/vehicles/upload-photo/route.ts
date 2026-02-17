@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { supabaseAdmin, getPublicUrl } from "@/lib/supabase";
 import { randomUUID } from "crypto";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -40,20 +39,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const safeExt = ["jpeg", "jpg", "png", "webp"].includes(ext) ? ext : "jpg";
-    const fileName = `vehicle-${randomUUID()}.${safeExt}`;
+    const filePath = `${session.user.agencyId}/vehicle-${randomUUID()}.${safeExt}`;
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "vehicles");
-    await mkdir(uploadsDir, { recursive: true });
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    const filePath = path.join(uploadsDir, fileName);
-    await writeFile(filePath, buffer);
+    const { error } = await supabaseAdmin.storage
+      .from("vehicles")
+      .upload(filePath, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
 
-    const photoUrl = `/uploads/vehicles/${fileName}`;
+    if (error) throw error;
+
+    const photoUrl = getPublicUrl("vehicles", filePath);
     return NextResponse.json({ photoUrl });
   } catch (error) {
     console.error("Upload error:", error);

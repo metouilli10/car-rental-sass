@@ -30,10 +30,12 @@ export default async function BookingDetailsPage({
       vehicle: true,
       payments: true,
       deposit: true,
-      damageReport: {
+      damageReports: {
         include: {
           damagePhotos: true,
+          sections: true,
         },
+        orderBy: { reportedAt: "desc" },
       },
     },
   });
@@ -65,7 +67,7 @@ export default async function BookingDetailsPage({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Détails de la réservation"
         description={`Réservation #${booking.id.slice(0, 8)}`}
@@ -179,7 +181,7 @@ export default async function BookingDetailsPage({
                 {formatCurrency(booking.totalPrice)}
               </p>
             </div>
-            <div className="pt-2 border-t">
+            <div className="pt-2 border-t border-muted">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-sm text-muted-foreground">Paiement</p>
                 {payment && <StatusBadge status={payment.status} />}
@@ -194,7 +196,7 @@ export default async function BookingDetailsPage({
                 </p>
               )}
             </div>
-            <div className="pt-2 border-t">
+            <div className="pt-2 border-t border-muted">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-sm text-muted-foreground">Caution</p>
                 {booking.deposit && (
@@ -222,41 +224,51 @@ export default async function BookingDetailsPage({
         </CardContent>
       </Card>
 
-      {/* Damage Report */}
-      {booking.damageReport && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Rapport de dégâts</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Niveau de carburant</p>
-                <p className="font-medium">{booking.damageReport.fuelLevel}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Propreté</p>
-                <p className="font-medium">{booking.damageReport.cleanliness}</p>
-              </div>
+      {/* Inspections */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Inspections</CardTitle>
+          <Button asChild size="sm">
+            <Link href={`/damage-reports/new?bookingId=${booking.id}`}>
+              Nouvelle inspection
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {booking.damageReports.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aucune inspection enregistrée.</p>
+          ) : (
+            <div className="space-y-3">
+              {booking.damageReports.map((report) => {
+                const hasDamage = report.sections.some((s) => s.status === "DAMAGE");
+                return (
+                  <div key={report.id} className="flex items-center justify-between p-3.5 rounded-xl bg-muted/30">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">
+                          {report.inspectionType === "DEPART" ? "Départ" : "Retour"}
+                        </span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${hasDamage ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
+                          {hasDamage ? "Dommages" : "OK"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{formatDate(report.reportedAt)}</p>
+                      {report.totalDamageCost > 0 && (
+                        <p className="text-xs text-red-600 font-medium">Coût: {formatCurrency(report.totalDamageCost)}</p>
+                      )}
+                    </div>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/damage-reports/${report.id}`}>
+                        Voir
+                      </Link>
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
-            {booking.damageReport.notes && (
-              <div>
-                <p className="text-sm text-muted-foreground">Notes</p>
-                <p className="text-sm">{booking.damageReport.notes}</p>
-              </div>
-            )}
-            <div>
-              <p className="text-sm text-muted-foreground">Photos téléchargées</p>
-              <p className="font-medium">{booking.damageReport.damagePhotos.length} photo(s)</p>
-            </div>
-            <Button asChild variant="outline" className="mt-3">
-              <Link href={`/damage-reports/${booking.damageReport.id}`}>
-                Voir le rapport complet
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

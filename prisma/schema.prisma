@@ -74,6 +74,23 @@ enum DepositAction {
   HOLD
 }
 
+enum InspectionSectionType {
+  CARROSSERIE
+  PNEUS
+  INTERIEUR
+  KILOMETRAGE
+  CARBURANT
+}
+
+enum InspectionStatus {
+  OK
+  DAMAGE
+}
+
+enum InspectionType {
+  DEPART
+  RETOUR
+}
 
 model Agency {
   id       String @id @default(cuid())
@@ -211,9 +228,9 @@ model Booking {
   vehicle  Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
 
-  payments     Payment[]
-  deposit      Deposit?
-  damageReport DamageReport?
+  payments      Payment[]
+  deposit       Deposit?
+  damageReports DamageReport[]
 
   @@index([agencyId])
   @@index([vehicleId])
@@ -266,34 +283,61 @@ model Deposit {
 }
 
 model DamageReport {
-  id            String        @id @default(cuid())
-  bookingId     String        @unique
-  fuelLevel     String?
-  cleanliness   String?
-  notes         String?
-  depositAction DepositAction
-  reportedAt    DateTime      @default(now())
+  id                String         @id @default(cuid())
+  bookingId         String
+  inspectionType    InspectionType @default(RETOUR)
+  fuelLevel         String?
+  cleanliness       String?
+  notes             String?
+  depositAction     DepositAction
+  totalDamageCost   Float          @default(0)
+  deductFromDeposit Boolean        @default(false)
+  deductedAmount    Float          @default(0)
+  reportedAt        DateTime       @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  booking      Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking      Booking              @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   damagePhotos DamagePhoto[]
+  sections     InspectionSection[]
 
+  @@index([bookingId])
   @@map("damage_reports")
 }
 
 model DamagePhoto {
-  id              String @id @default(cuid())
+  id              String  @id @default(cuid())
   damageReportId  String
+  sectionId       String?
   photoUrl        String
   description     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  damageReport DamageReport @relation(fields: [damageReportId], references: [id], onDelete: Cascade)
+  damageReport DamageReport       @relation(fields: [damageReportId], references: [id], onDelete: Cascade)
+  section      InspectionSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
 
   @@index([damageReportId])
+  @@index([sectionId])
   @@map("damage_photos")
+}
+
+model InspectionSection {
+  id              String                @id @default(cuid())
+  damageReportId  String
+  sectionType     InspectionSectionType
+  status          InspectionStatus      @default(OK)
+  notes           String?
+  damageCost      Float                 @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  damageReport DamageReport  @relation(fields: [damageReportId], references: [id], onDelete: Cascade)
+  photos       DamagePhoto[]
+
+  @@index([damageReportId])
+  @@map("inspection_sections")
 }

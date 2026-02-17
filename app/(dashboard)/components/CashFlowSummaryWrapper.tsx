@@ -29,12 +29,11 @@ export async function CashFlowSummaryWrapper({ agencyId }: { agencyId: string })
         status: "PAID",
         paidAt: { gte: todayStart, lte: todayEnd },
       },
-      include: {
-        booking: {
-          include: {
-            customer: { select: { name: true } },
-          },
-        },
+      select: {
+        id: true,
+        amount: true,
+        paidAt: true,
+        booking: { select: { customer: { select: { name: true } } } },
       },
       orderBy: { paidAt: "desc" },
     }),
@@ -46,12 +45,11 @@ export async function CashFlowSummaryWrapper({ agencyId }: { agencyId: string })
         status: "HELD",
         heldAt: { gte: todayStart, lte: todayEnd },
       },
-      include: {
-        booking: {
-          include: {
-            customer: { select: { name: true } },
-          },
-        },
+      select: {
+        id: true,
+        amount: true,
+        heldAt: true,
+        booking: { select: { customer: { select: { name: true } } } },
       },
       orderBy: { heldAt: "desc" },
     }),
@@ -63,12 +61,11 @@ export async function CashFlowSummaryWrapper({ agencyId }: { agencyId: string })
         status: { in: ["RETURNED", "PARTIAL_RETURNED"] },
         returnedAt: { gte: todayStart, lte: todayEnd },
       },
-      include: {
-        booking: {
-          include: {
-            customer: { select: { name: true } },
-          },
-        },
+      select: {
+        id: true,
+        amount: true,
+        returnedAt: true,
+        booking: { select: { customer: { select: { name: true } } } },
       },
       orderBy: { returnedAt: "desc" },
     }),
@@ -80,12 +77,11 @@ export async function CashFlowSummaryWrapper({ agencyId }: { agencyId: string })
         status: "REFUNDED",
         updatedAt: { gte: todayStart, lte: todayEnd },
       },
-      include: {
-        booking: {
-          include: {
-            customer: { select: { name: true } },
-          },
-        },
+      select: {
+        id: true,
+        amount: true,
+        updatedAt: true,
+        booking: { select: { customer: { select: { name: true } } } },
       },
       orderBy: { updatedAt: "desc" },
     }),

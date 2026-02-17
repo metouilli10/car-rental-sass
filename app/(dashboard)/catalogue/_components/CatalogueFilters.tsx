@@ -35,6 +35,7 @@ export function CatalogueFilters() {
   const searchParams = useSearchParams();
   
   const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [startDate, setStartDate] = useState<Date | undefined>(
     searchParams.get("start") ? new Date(searchParams.get("start")!) : new Date()
   );
@@ -43,20 +44,26 @@ export function CatalogueFilters() {
   );
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  // Update URL when filters change
+  // Debounce search input -- 300ms delay before triggering URL update
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Update URL when debounced search or date filters change
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
-    if (search) params.set("search", search);
+    if (debouncedSearch) params.set("search", debouncedSearch);
     else params.delete("search");
     
     if (startDate) params.set("start", startDate.toISOString());
     if (endDate) params.set("end", endDate.toISOString());
     
     router.push(`?${params.toString()}`, { scroll: false });
-  }, [search, startDate, endDate, router, searchParams]);
+  }, [debouncedSearch, startDate, endDate, router, searchParams]);
 
   return (
-    <div className="sticky top-0 z-30 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b mb-6 pb-4 pt-2" suppressHydrationWarning>
+    <div className="sticky top-0 z-30 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mb-6 pb-4 pt-2" suppressHydrationWarning>
       <div className="flex flex-col gap-4" suppressHydrationWarning>
         <div className="flex flex-wrap items-center gap-3" suppressHydrationWarning>
           <div className="relative flex-1 min-w-[300px]">
@@ -126,7 +133,7 @@ export function CatalogueFilters() {
             </Popover>
           </div>
 
-          <div className="flex items-center border rounded-md p-1 bg-muted/50">
+          <div className="flex items-center rounded-xl p-1 bg-muted/40">
             <Button
               variant={view === "grid" ? "secondary" : "ghost"}
               size="sm"

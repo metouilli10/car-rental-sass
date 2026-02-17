@@ -12,28 +12,33 @@ export async function markPaymentReceived(paymentId: string, amount?: number) {
     throw new Error("Non autorisé");
   }
 
-  const payment = await prisma.payment.findUnique({
-    where: { id: paymentId },
-    include: {
-      booking: true,
-    },
-  });
+  try {
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        booking: true,
+      },
+    });
 
-  if (!payment || payment.booking.agencyId !== session.user.agencyId) {
-    throw new Error("Paiement non trouvé");
+    if (!payment || payment.booking.agencyId !== session.user.agencyId) {
+      return { error: "Paiement non trouvé" };
+    }
+
+    await prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: "PAID",
+        paidAt: new Date(),
+        ...(amount !== undefined && { amount }),
+      },
+    });
+
+    revalidatePath("/payments");
+    revalidatePath(`/bookings/${payment.bookingId}`);
+  } catch (error) {
+    console.error("markPaymentReceived error:", error);
+    return { error: "Erreur lors de la mise à jour du paiement" };
   }
-
-  await prisma.payment.update({
-    where: { id: paymentId },
-    data: {
-      status: "PAID",
-      paidAt: new Date(),
-      ...(amount !== undefined && { amount }),
-    },
-  });
-
-  revalidatePath("/payments");
-  revalidatePath(`/bookings/${payment.bookingId}`);
 }
 
 export async function updateDepositStatus(
@@ -47,26 +52,31 @@ export async function updateDepositStatus(
     throw new Error("Non autorisé");
   }
 
-  const deposit = await prisma.deposit.findUnique({
-    where: { id: depositId },
-    include: {
-      booking: true,
-    },
-  });
+  try {
+    const deposit = await prisma.deposit.findUnique({
+      where: { id: depositId },
+      include: {
+        booking: true,
+      },
+    });
 
-  if (!deposit || deposit.booking.agencyId !== session.user.agencyId) {
-    throw new Error("Caution non trouvée");
+    if (!deposit || deposit.booking.agencyId !== session.user.agencyId) {
+      return { error: "Caution non trouvée" };
+    }
+
+    await prisma.deposit.update({
+      where: { id: depositId },
+      data: {
+        status,
+        returnedAt: new Date(),
+        notes: notes || null,
+      },
+    });
+
+    revalidatePath("/payments");
+    revalidatePath(`/bookings/${deposit.bookingId}`);
+  } catch (error) {
+    console.error("updateDepositStatus error:", error);
+    return { error: "Erreur lors de la mise à jour de la caution" };
   }
-
-  await prisma.deposit.update({
-    where: { id: depositId },
-    data: {
-      status,
-      returnedAt: new Date(),
-      notes: notes || null,
-    },
-  });
-
-  revalidatePath("/payments");
-  revalidatePath(`/bookings/${deposit.bookingId}`);
 }

@@ -142,9 +142,9 @@ export function BookingDrawer({
           </div>
 
           {/* Rapid Mode Toggle */}
-          <div className="flex items-center justify-between p-3 border rounded-lg bg-violet-500/5 border-violet-500/20">
+          <div className="flex items-center justify-between p-3 border rounded-lg bg-blue-500/5 border-blue-500/20">
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-violet-500" />
+              <Zap className="w-4 h-4 text-blue-500" />
               <div className="space-y-0.5">
                 <Label htmlFor="rapid-mode" className="text-sm font-semibold">Mode rapide</Label>
                 <p className="text-[10px] text-muted-foreground">Uniquement nom + téléphone (Statut: Brouillon)</p>

@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
-  Wallet,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { FlatIcon } from "@/components/shared/flat-icon";
 
 interface CashTransaction {
   id: string;
@@ -50,14 +50,15 @@ export function CashFlowSummary({
 }: CashFlowSummaryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const solde = entrees - sorties;
+  const isPositive = solde >= 0;
 
   return (
-    <Card>
-      <CardHeader className="border-b pb-4">
+    <Card className="bg-white shadow-md transition-all duration-200">
+      <CardHeader className="border-b border-border/50 pb-4 px-card-padding">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-muted-foreground" />
-            <CardTitle className="text-lg">Caisse du jour</CardTitle>
+            <FlatIcon name="wallet" size={22} />
+            <CardTitle className="text-base font-semibold">Caisse du jour</CardTitle>
           </div>
           <Badge variant="secondary" className="text-xs">
             Aujourd&apos;hui
@@ -65,67 +66,69 @@ export function CashFlowSummary({
         </div>
       </CardHeader>
 
-      <CardContent className="pt-6 space-y-4">
+      <CardContent className="px-card-padding pt-6 space-y-5">
         {/* Entrées */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+        <div className="flex items-center justify-between p-4 rounded-xl bg-muted/25">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
               <ArrowDownCircle className="w-5 h-5 text-emerald-600" />
             </div>
-            <div>
-              <p className="text-xs font-medium text-emerald-700 uppercase tracking-wider">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground/50 uppercase tracking-wider">
                 Entrées
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground/45">
                 Paiements + Cautions
               </p>
             </div>
           </div>
-          <p className="text-xl font-bold text-emerald-700">
+          <p className="text-[1.625rem] font-bold tabular-nums text-emerald-600 tracking-tight">
             +{formatCashDH(entrees)}
           </p>
         </div>
 
         {/* Sorties */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-200">
+        <div className="flex items-center justify-between p-4 rounded-xl bg-muted/25">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
               <ArrowUpCircle className="w-5 h-5 text-red-600" />
             </div>
-            <div>
-              <p className="text-xs font-medium text-red-700 uppercase tracking-wider">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground/50 uppercase tracking-wider">
                 Sorties
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground/45">
                 Remboursements
               </p>
             </div>
           </div>
-          <p className="text-xl font-bold text-red-700">
+          <p className="text-[1.625rem] font-bold tabular-nums text-red-600 tracking-tight">
             -{formatCashDH(sorties)}
           </p>
         </div>
 
-        {/* Solde */}
-        <div className="pt-4 border-t-2 border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">
-                Solde du jour
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Entrées - Sorties
-              </p>
-            </div>
-            <p
-              className={`text-3xl font-bold ${
-                solde >= 0 ? "text-emerald-600" : "text-red-600"
-              }`}
-            >
-              {solde >= 0 ? "+" : ""}
-              {formatCashDH(Math.abs(solde))}
-            </p>
-          </div>
+        {/* Solde du jour — reduced dominance, softer green */}
+        <div
+          className={`rounded-xl p-5 border transition-colors duration-200 ${
+            isPositive
+              ? "bg-emerald-50/25 border-emerald-200/40"
+              : "bg-red-50/25 border-red-200/40"
+          }`}
+        >
+          <p className="text-xs font-semibold text-muted-foreground/50 uppercase tracking-wider mb-2">
+            Solde du jour
+          </p>
+          <p className="text-xs text-muted-foreground/45 mb-4">
+            Entrées − Sorties
+          </p>
+          <p
+            className={`text-[2rem] font-bold tabular-nums tracking-tight ${
+              isPositive ? "text-emerald-600" : "text-red-600"
+            }`}
+          >
+            {solde >= 0 ? "+" : ""}
+            {formatCashDH(Math.abs(solde))}
+          </p>
         </div>
 
         {/* Expand/Collapse Button */}
@@ -133,7 +136,7 @@ export function CashFlowSummary({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full"
+            className="w-full mt-1 transition-colors duration-200"
             onClick={() => setIsExpanded(!isExpanded)}
           >
             {isExpanded ? (
@@ -152,8 +155,8 @@ export function CashFlowSummary({
 
         {/* Transaction Breakdown */}
         {isExpanded && (
-          <div className="pt-4 border-t space-y-2">
-            <p className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+          <div className="pt-5 border-t border-muted space-y-2">
+            <p className="text-xs font-semibold text-foreground/80 uppercase tracking-wider mb-3">
               Détail des transactions
             </p>
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -162,17 +165,17 @@ export function CashFlowSummary({
                   key={tx.id}
                   className={`flex items-center justify-between p-2 rounded-lg text-sm ${
                     tx.type === "in"
-                      ? "bg-emerald-50 border border-emerald-100"
-                      : "bg-red-50 border border-red-100"
+                      ? "bg-emerald-50/50 rounded-lg"
+                      : "bg-red-50/50 rounded-lg"
                   }`}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">
+                    <p className="font-medium text-foreground truncate">
                       {tx.customerName}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {categoryLabels[tx.category]} • {tx.time}
-                    </p>
+            <p className="text-xs text-muted-foreground/70">
+              {categoryLabels[tx.category]} • {tx.time}
+            </p>
                   </div>
                   <p
                     className={`text-sm font-bold flex-shrink-0 ml-2 ${
@@ -191,8 +194,8 @@ export function CashFlowSummary({
         {/* Empty state */}
         {transactions.length === 0 && (
           <div className="text-center py-6 border-t">
-            <Wallet className="w-12 h-12 text-muted-foreground mx-auto mb-2 opacity-50" />
-            <p className="text-sm text-muted-foreground">
+            <FlatIcon name="wallet" size={48} className="mx-auto mb-2 opacity-50" />
+            <p className="text-sm text-muted-foreground/70">
               Aucune transaction aujourd&apos;hui
             </p>
           </div>

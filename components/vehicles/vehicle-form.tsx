@@ -20,7 +20,7 @@ import { Upload, X } from "lucide-react";
 
 interface VehicleFormProps {
   defaultValues?: Partial<VehicleFormData>;
-  onSubmit: (data: VehicleFormData) => Promise<void>;
+  onSubmit: (data: VehicleFormData) => Promise<void | { error: string }>;
   submitLabel: string;
 }
 
@@ -86,7 +86,10 @@ export function VehicleForm({
     setError(null);
 
     try {
-      await onSubmit(data);
+      const result = await onSubmit(data);
+      if (result && "error" in result) {
+        setError(result.error);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur s'est produite");
     } finally {
@@ -102,7 +105,7 @@ export function VehicleForm({
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded text-sm">
+            <div className="bg-red-50/60 text-red-600 p-4 rounded-xl border-l-4 border-l-red-400 text-sm">
               {error}
             </div>
           )}
@@ -113,7 +116,7 @@ export function VehicleForm({
               La photo apparaîtra dans le catalogue. JPEG, PNG ou WebP, max 5 Mo.
             </p>
             <div className="flex items-start gap-4">
-              <div className="relative w-40 h-28 rounded-lg border border-border bg-muted overflow-hidden flex items-center justify-center">
+              <div className="relative w-40 h-28 rounded-xl bg-muted/50 overflow-hidden flex items-center justify-center">
                 {photoUrl ? (
                   <>
                     <Image
@@ -121,7 +124,6 @@ export function VehicleForm({
                       alt="Aperçu"
                       fill
                       className="object-cover"
-                      unoptimized={photoUrl.startsWith("/")}
                       sizes="160px"
                     />
                     <Button

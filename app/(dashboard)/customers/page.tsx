@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
+import { Pagination } from "@/components/shared/pagination";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,25 +9,42 @@ import Link from "next/link";
 import { Edit, Phone, Mail } from "lucide-react";
 import { DeleteCustomerButton } from "@/components/customers/delete-customer-button";
 
-export default async function CustomersPage() {
+const PAGE_SIZE = 25;
+
+interface CustomersPageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function CustomersPage({ searchParams }: CustomersPageProps) {
   const session = await getSession();
 
   if (!session) {
     return null;
   }
 
-  const customers = await prisma.customer.findMany({
-    where: { agencyId: session.user.agencyId },
-    orderBy: { createdAt: "desc" },
-    include: {
-      _count: {
-        select: { bookings: true },
+  const params = await searchParams;
+  const page = Math.max(1, Number(params.page) || 1);
+  const where = { agencyId: session.user.agencyId };
+
+  const [customers, total] = await Promise.all([
+    prisma.customer.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: PAGE_SIZE,
+      skip: (page - 1) * PAGE_SIZE,
+      include: {
+        _count: {
+          select: { bookings: true },
+        },
       },
-    },
-  });
+    }),
+    prisma.customer.count({ where }),
+  ]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Clients"
         description="Gérez vos clients et leurs informations"
@@ -36,42 +54,42 @@ export default async function CustomersPage() {
         }}
       />
 
-      {customers.length === 0 ? (
-        <div className="text-center py-12 border border-border rounded-xl bg-card">
+      {customers.length === 0 && page === 1 ? (
+        <div className="text-center py-16 rounded-2xl bg-white shadow-card">
           <p className="text-muted-foreground mb-4">Aucun client enregistré</p>
           <Button asChild>
             <Link href="/customers/add">Ajouter votre premier client</Link>
           </Button>
         </div>
       ) : (
-        <div className="border border-border rounded-xl bg-card shadow-sm">
+        <div className="rounded-2xl bg-white shadow-card">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-muted border-b border-border">
+              <thead className="bg-transparent border-b border-muted">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                     Nom
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                     Contact
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                     Passeport/CIN
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                     Réservations
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                     Créé le
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-muted/60">
                 {customers.map((customer) => (
-                  <tr key={customer.id} className="hover:bg-muted/50 transition-colors duration-200">
+                  <tr key={customer.id} className="hover:bg-muted/40 transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-foreground">{customer.name}</div>
                     </td>
@@ -123,6 +141,7 @@ export default async function CustomersPage() {
               </tbody>
             </table>
           </div>
+          <Pagination currentPage={page} totalPages={totalPages} baseUrl="/customers" />
         </div>
       )}
     </div>

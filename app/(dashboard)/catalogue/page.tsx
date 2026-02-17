@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { CatalogueFilters } from "./_components/CatalogueFilters";
 import { VehicleCard } from "./_components/VehicleCard";
-import { getVehicleAvailabilityStatus } from "@/lib/availability";
+import { BookingStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -27,36 +27,58 @@ export default async function CataloguePage({ searchParams }: CataloguePageProps
   const startDate = params.start ? new Date(params.start) : new Date();
   const endDate = params.end ? new Date(params.end) : new Date(Date.now() + 86400000);
 
-  // Fetch vehicles with basic filters (include photoUrl for catalogue cards)
-  const vehicles = await prisma.vehicle.findMany({
-    where: {
-      agencyId: session.user.agencyId,
-      OR: search ? [
-        { make: { contains: search } },
-        { model: { contains: search } },
-        { plate: { contains: search } },
-        { category: { contains: search } },
-      ] : undefined,
-    },
-    orderBy: {
-      pricePerDay: "asc",
-    },
+  // Fetch vehicles and conflicting bookings in parallel (2 queries instead of N+1)
+  const [vehicles, conflictingBookings] = await Promise.all([
+    prisma.vehicle.findMany({
+      where: {
+        agencyId: session.user.agencyId,
+        OR: search ? [
+          { make: { contains: search } },
+          { model: { contains: search } },
+          { plate: { contains: search } },
+          { category: { contains: search } },
+        ] : undefined,
+      },
+      orderBy: {
+        pricePerDay: "asc",
+      },
+    }),
+    // Single query to find all bookings conflicting with the requested date range
+    prisma.booking.findMany({
+      where: {
+        agencyId: session.user.agencyId,
+        status: { in: [BookingStatus.CONFIRMED, BookingStatus.ACTIVE] },
+        startDate: { lt: endDate },
+        endDate: { gt: startDate },
+      },
+      select: { vehicleId: true, status: true, endDate: true },
+    }),
+  ]);
+
+  // Compute availability in-memory from the batch query results
+  const unavailableVehicleIds = new Set(conflictingBookings.map(b => b.vehicleId));
+  const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+  const todayEnd = new Date(new Date().setHours(23, 59, 59, 999));
+  const returningTodayMap = new Map<string, Date>();
+  for (const b of conflictingBookings) {
+    if (b.status === BookingStatus.ACTIVE && b.endDate >= todayStart && b.endDate <= todayEnd) {
+      returningTodayMap.set(b.vehicleId, b.endDate);
+    }
+  }
+
+  const vehiclesWithAvailability = vehicles.map((vehicle) => {
+    if (unavailableVehicleIds.has(vehicle.id)) {
+      return { ...vehicle, availability: { status: "UNAVAILABLE" as const } };
+    }
+    const returningTime = returningTodayMap.get(vehicle.id);
+    if (returningTime) {
+      return { ...vehicle, availability: { status: "RETURNING_TODAY" as const, time: returningTime } };
+    }
+    return { ...vehicle, availability: { status: "AVAILABLE" as const } };
   });
 
-  // Compute availability for each vehicle
-  const vehiclesWithAvailability = await Promise.all(
-    vehicles.map(async (vehicle) => {
-      const availability = await getVehicleAvailabilityStatus(
-        vehicle.id,
-        startDate,
-        endDate
-      );
-      return { ...vehicle, availability };
-    })
-  );
-
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6" suppressHydrationWarning>
+    <div className="space-y-8" suppressHydrationWarning>
       <PageHeader
         title="Catalogue"
         description="Sélectionnez des dates pour voir les véhicules disponibles"

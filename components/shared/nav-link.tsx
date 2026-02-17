@@ -3,56 +3,109 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  Car,
-  Users,
-  Calendar,
-  CalendarRange,
-  CreditCard,
-  AlertTriangle,
-  BookOpen,
-  type LucideIcon,
-} from "lucide-react";
+import { FlatIcon, type FlatIconName } from "@/components/shared/flat-icon";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NavLinkProps {
   href: string;
   iconName: string;
   label: string;
+  collapsed?: boolean;
 }
 
-const iconMap: Record<string, LucideIcon> = {
-  LayoutDashboard,
-  Car,
-  Users,
-  Calendar,
-  CalendarRange,
-  CreditCard,
-  AlertTriangle,
-  BookOpen,
+const flatIconMap: Record<string, FlatIconName> = {
+  LayoutDashboard: "dashboard",
+  Car: "car",
+  Users: "people",
+  Calendar: "booking",
+  CalendarRange: "schedule",
+  CreditCard: "payment",
+  AlertTriangle: "late-payment",
+  BookOpen: "catalogue",
+  ClipboardCheck: "car-insurance",
 };
 
-export function NavLink({ href, iconName, label }: NavLinkProps) {
+function NavLinkInner({
+  href,
+  iconName,
+  label,
+  collapsed,
+  isActive,
+  flatIconName,
+}: {
+  href: string;
+  iconName: string;
+  label: string;
+  collapsed: boolean;
+  isActive: boolean;
+  flatIconName: FlatIconName;
+}) {
+  const linkContent = (
+    <Link
+      href={href}
+      className={cn(
+        "relative flex items-center rounded-lg text-sm font-medium transition-all duration-200 ease-out",
+        collapsed ? "justify-center px-0 py-3 w-full" : "gap-3.5 px-3 py-3",
+        isActive
+          ? collapsed
+            ? "bg-primary/[0.03] text-primary font-semibold"
+            : "bg-primary/[0.04] text-primary font-semibold"
+          : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+      )}
+    >
+      {/* Active left indicator bar — visible in both states */}
+      {isActive && (
+        <span
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-r-full bg-primary/70 transition-opacity duration-200",
+            collapsed ? "left-0" : "-left-3"
+          )}
+          aria-hidden
+        />
+      )}
+      <FlatIcon
+        name={flatIconName}
+        size={22}
+        className={cn(
+          "shrink-0 transition-colors duration-200",
+          isActive ? "text-primary opacity-100" : "opacity-75 hover:opacity-100"
+        )}
+      />
+      {!collapsed && <span className="truncate">{label}</span>}
+    </Link>
+  );
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8} className="font-medium">
+          {label}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return linkContent;
+}
+
+export function NavLink({ href, iconName, label, collapsed = false }: NavLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href || pathname.startsWith(href + "/");
-  const Icon = iconMap[iconName];
+  const flatIconName = flatIconMap[iconName];
 
-  if (!Icon) {
+  if (!flatIconName) {
     return null;
   }
 
   return (
-    <Link
+    <NavLinkInner
       href={href}
-      className={cn(
-        "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
-        isActive
-          ? "bg-muted text-foreground border-l-4 border-primary"
-          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border-l-4 border-transparent"
-      )}
-    >
-      <Icon className="h-4 w-4" />
-      <span>{label}</span>
-    </Link>
+      iconName={iconName}
+      label={label}
+      collapsed={collapsed}
+      isActive={isActive}
+      flatIconName={flatIconName}
+    />
   );
 }

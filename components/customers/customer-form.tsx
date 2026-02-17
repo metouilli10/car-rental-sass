@@ -14,7 +14,7 @@ import { Upload, X, User, Building2 } from "lucide-react";
 
 interface CustomerFormProps {
   defaultValues?: Partial<CustomerFormData>;
-  onSubmit: (data: CustomerFormData) => Promise<void>;
+  onSubmit: (data: CustomerFormData) => Promise<void | { error: string }>;
   submitLabel: string;
   /** If provided, Cancel button calls this instead of history.back() (e.g. when used in a modal). */
   onCancel?: () => void;
@@ -122,7 +122,10 @@ export function CustomerForm({
     setError(null);
 
     try {
-      await onSubmit(data);
+      const result = await onSubmit(data);
+      if (result && "error" in result) {
+        setError(result.error);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur s'est produite");
     } finally {
@@ -138,7 +141,7 @@ export function CustomerForm({
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded text-sm">
+            <div className="bg-red-50/60 text-red-600 p-4 rounded-xl border-l-4 border-l-red-400 text-sm">
               {error}
             </div>
           )}
@@ -152,12 +155,12 @@ export function CustomerForm({
               }
               className="flex flex-wrap gap-4"
             >
-              <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-border px-4 py-3 hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+              <label className="flex items-center gap-2 cursor-pointer rounded-xl border border-border/60 px-4 py-3 hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
                 <RadioGroupItem value="PERSONNE_PHYSIQUE" id="type-physique" />
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span>Personne physique</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-border px-4 py-3 hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+              <label className="flex items-center gap-2 cursor-pointer rounded-xl border border-border/60 px-4 py-3 hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
                 <RadioGroupItem value="PERSONNE_MORALE" id="type-morale" />
                 <Building2 className="h-4 w-4 text-muted-foreground" />
                 <span>Personne morale</span>
@@ -303,7 +306,7 @@ export function CustomerForm({
             {passportPhotoUrl ? (
               <div className="relative inline-block">
                 {passportPhotoUrl.toLowerCase().endsWith(".pdf") ? (
-                  <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 rounded-xl bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
                     <span>Document PDF enregistré</span>
                     <Button
                       type="button"
@@ -317,7 +320,7 @@ export function CustomerForm({
                     </Button>
                   </div>
                 ) : (
-                  <div className="relative h-32 w-48 overflow-hidden rounded-md border border-border bg-muted/30">
+                  <div className="relative h-32 w-48 overflow-hidden rounded-xl bg-muted/30">
                     <Image
                       src={passportPhotoUrl}
                       alt="Document"
@@ -371,7 +374,7 @@ export function CustomerForm({
             {licensePhotoUrl ? (
               <div className="relative inline-block">
                 {licensePhotoUrl.toLowerCase().endsWith(".pdf") ? (
-                  <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 rounded-xl bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
                     <span>Document PDF enregistré</span>
                     <Button
                       type="button"
@@ -385,7 +388,7 @@ export function CustomerForm({
                     </Button>
                   </div>
                 ) : (
-                  <div className="relative h-32 w-48 overflow-hidden rounded-md border border-border bg-muted/30">
+                  <div className="relative h-32 w-48 overflow-hidden rounded-xl bg-muted/30">
                     <Image
                       src={licensePhotoUrl}
                       alt="Permis de conduire"

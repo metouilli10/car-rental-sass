@@ -34,14 +34,12 @@ function VehicleImage({
 }) {
   const [error, setError] = useState(false);
   if (error || !src) return <>{placeholder}</>;
-  // Use Next Image with unoptimized for local /assets/ so static files are served correctly
   return (
     <Image
       src={src}
       alt={alt}
       fill
       className={className}
-      unoptimized={src.startsWith("/")}
       onError={() => setError(true)}
       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
     />
@@ -76,7 +74,7 @@ export function VehicleCard({ vehicle, startDate, endDate }: VehicleCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden flex flex-col group hover:border-primary/50 transition-all duration-300" suppressHydrationWarning>
+    <Card className="overflow-hidden flex flex-col group hover:shadow-card-hover transition-all duration-300" suppressHydrationWarning>
       <div className="relative aspect-[16/10] bg-muted overflow-hidden" suppressHydrationWarning>
         {vehicle.photoUrl ? (
           <VehicleImage

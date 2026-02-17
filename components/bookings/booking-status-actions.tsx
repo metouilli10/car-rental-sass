@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   startBooking,
   completeBooking,
@@ -31,12 +32,14 @@ export function BookingStatusActions({
 }: BookingStatusActionsProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleAction = async (action: () => Promise<void>) => {
+  const handleAction = async (action: () => Promise<void>, successMessage: string) => {
     setIsLoading(true);
     try {
       await action();
+      toast.success(successMessage);
     } catch (error) {
       console.error(error);
+      toast.error("Erreur lors de la mise à jour du statut");
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +87,7 @@ export function BookingStatusActions({
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={isLoading}>Annuler</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleAction(() => startBooking(bookingId))}
+                  onClick={() => handleAction(() => startBooking(bookingId), "Location démarrée avec succès")}
                   disabled={isLoading}
                 >
                   Confirmer
@@ -110,7 +113,7 @@ export function BookingStatusActions({
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={isLoading}>Retour</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleAction(() => cancelBooking(bookingId))}
+                  onClick={() => handleAction(() => cancelBooking(bookingId), "Réservation annulée")}
                   disabled={isLoading}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
@@ -146,7 +149,7 @@ export function BookingStatusActions({
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={isLoading}>Annuler</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleAction(() => completeBooking(bookingId))}
+                  onClick={() => handleAction(() => completeBooking(bookingId), "Location terminée avec succès")}
                   disabled={isLoading}
                 >
                   Confirmer

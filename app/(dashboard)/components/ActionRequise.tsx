@@ -5,10 +5,9 @@ import {
   CreditCard,
   Banknote,
   MessageCircle,
-  FileText,
-  Send,
   Phone,
 } from "lucide-react";
+import { FlatIcon } from "@/components/shared/flat-icon";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -88,31 +87,33 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
   }
 
   return (
-    <Card className="border-danger/20 bg-danger/5">
-      <CardHeader className="border-b border-danger/20 bg-danger/10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-danger flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-white" />
+    <Card className="bg-white shadow-lg border border-border/50 transition-shadow duration-200">
+      <CardHeader className="px-6 pt-6 pb-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
             </div>
-            <div>
-              <CardTitle className="text-xl text-danger">
-                Action Requise
-              </CardTitle>
-              <p className="text-sm text-danger/80 mt-0.5">
+            <div className="min-w-0 flex flex-col">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <CardTitle className="text-xl font-semibold text-foreground leading-tight">
+                  Action Requise
+                </CardTitle>
+                <Badge variant="danger" className="text-sm font-semibold shrink-0 bg-red-100/70 text-red-600/90 border-0 h-fit leading-none">
+                  {totalItems}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground/55 mt-1">
                 {totalItems} élément{totalItems > 1 ? "s" : ""} nécessitant une
                 attention immédiate
               </p>
             </div>
           </div>
-          <Badge variant="danger" className="text-sm font-semibold">
-            {totalItems}
-          </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="p-0">
-        <div className="divide-y divide-danger/10 transition-[height,padding] duration-300 ease-out">
+      <CardContent className="px-6 pt-0 pb-6">
+        <div className="space-y-3.5 transition-[height,padding] duration-200 ease-out">
           {/* Overdue Returns */}
           {overdueBookings.map((booking) => {
             const daysOverdue = Math.floor(
@@ -127,27 +128,22 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
             // Severity-based styling
             const getSeverityStyles = () => {
               if (daysOverdue > 3) {
-                // CRITICAL: >3 days overdue
                 return {
-                  container: "bg-danger/10 border-2 border-danger/30 border-l-4 border-l-danger",
-                  hoverBg: "hover:bg-danger/20",
-                  iconBg: "bg-danger/20 ring-danger/30",
+                  borderCls: "border-l-red-500",
+                  iconBg: "bg-red-100",
                   titleWeight: "font-bold",
                 };
               }
               if (daysOverdue >= 1) {
-                // WARNING: 1-3 days overdue
                 return {
-                  container: "bg-danger/5 border border-danger/20 border-l-4 border-l-danger/60",
-                  hoverBg: "hover:bg-danger/10",
-                  iconBg: "bg-danger/10 ring-danger/20",
+                  borderCls: "border-l-red-400",
+                  iconBg: "bg-red-100",
                   titleWeight: "font-semibold",
                 };
               }
               return {
-                container: "bg-danger/5 border border-danger/10 border-l-4 border-l-danger/40",
-                hoverBg: "hover:bg-danger/10",
-                iconBg: "bg-danger/5 ring-danger/10",
+                borderCls: "border-l-red-300",
+                iconBg: "bg-red-100/90",
                 titleWeight: "font-semibold",
               };
             };
@@ -157,14 +153,16 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
             return (
               <div
                 key={`overdue-${booking.id}`}
-                className={`group flex items-center gap-4 p-4 ${styles.container} ${styles.hoverBg} transition-all duration-200 ease-out hover:shadow-md hover:shadow-danger/10 hover:-translate-y-0.5 rounded-lg mx-1 -mx-0.5`}
+                className={`group flex items-center gap-3 py-4.5 px-5 bg-white border-l-4 ${styles.borderCls} rounded-lg hover:bg-muted/20 transition-colors duration-200 ease-out`}
               >
                 <Link
                   href={`/bookings/${booking.id}`}
-                  className="flex flex-1 min-w-0 items-center gap-4"
+                  className="flex flex-1 min-w-0 items-center gap-3"
                 >
-                  <div className={`w-10 h-10 rounded-lg ${styles.iconBg} flex items-center justify-center flex-shrink-0 ring-1`}>
-                    <AlertTriangle className="w-5 h-5 text-danger" />
+                  <div
+                    className={`w-9 h-9 rounded-full ${styles.iconBg} flex items-center justify-center flex-shrink-0`}
+                  >
+                    <AlertTriangle className="w-4 h-4 text-danger" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -173,7 +171,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                       </p>
                       <Badge
                         variant="danger"
-                        className="text-xs animate-pulse"
+                        className="text-xs"
                       >
                         {daysOverdue} jour{daysOverdue > 1 ? "s" : ""}
                       </Badge>
@@ -182,7 +180,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                       {booking.customer.name} • {booking.vehicle.make}{" "}
                       {booking.vehicle.model} ({booking.vehicle.plate})
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground/70">
                       Fin prévue : {formatDate(booking.endDate)}
                     </p>
                   </div>
@@ -224,21 +222,21 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
             return (
               <div
                 key={`payment-${payment.id}`}
-                className="group flex items-center gap-4 p-4 bg-warning/5 border border-warning/20 border-l-4 border-l-warning hover:bg-warning/10 transition-all duration-200 ease-out hover:shadow-md hover:shadow-warning/10 hover:-translate-y-0.5 rounded-lg mx-1 -mx-0.5"
+                className="group flex items-center gap-3 py-4.5 px-5 bg-white border-l-4 border-l-amber-400 rounded-lg hover:bg-muted/20 transition-colors duration-200 ease-out"
               >
                 <Link
                   href={`/payments`}
-                  className="flex flex-1 min-w-0 items-center gap-4"
+                  className="flex flex-1 min-w-0 items-center gap-3"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0 ring-1 ring-warning/20">
-                    <CreditCard className="w-5 h-5 text-warning" />
+                  <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                    <CreditCard className="w-4 h-4 text-warning" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-sm font-semibold text-foreground">
                         Paiement en attente
                       </p>
-                      <Badge variant="warning" className="text-xs animate-pulse">
+                      <Badge variant="warning" className="text-xs">
                         {payment.type}
                       </Badge>
                     </div>
@@ -247,7 +245,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                       {payment.booking.vehicle.make}{" "}
                       {payment.booking.vehicle.model}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground/70">
                       Réservation #
                       {payment.booking.id.slice(0, 8).toUpperCase()}
                     </p>
@@ -296,14 +294,14 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
             return (
               <div
                 key={`deposit-${deposit.id}`}
-                className="group flex items-center gap-4 p-4 bg-info/5 border border-info/20 border-l-4 border-l-info hover:bg-info/10 transition-all hover:shadow-md rounded-lg mx-1 -mx-0.5"
+                className="group flex items-center gap-3 py-4.5 px-5 bg-white border-l-4 border-l-blue-400 rounded-lg hover:bg-muted/20 transition-colors duration-200 ease-out"
               >
                 <Link
                   href={`/bookings/${deposit.bookingId}`}
-                  className="flex flex-1 min-w-0 items-center gap-4"
+                  className="flex flex-1 min-w-0 items-center gap-3"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center flex-shrink-0 ring-1 ring-info/20">
-                    <Banknote className="w-5 h-5 text-info" />
+                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <Banknote className="w-4 h-4 text-info" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -317,7 +315,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                     <p className="text-sm text-foreground">
                       {deposit.booking.customer.name}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground/70">
                       Retenue depuis : {formatDate(deposit.heldAt)}
                     </p>
                   </div>

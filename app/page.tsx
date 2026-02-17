@@ -1,15 +1,10 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
 import {
   ArrowRight,
   Check,
   Star,
-  Menu,
   X as CloseIcon,
-  Plus,
   Car,
   Calendar,
   Users,
@@ -28,6 +23,8 @@ import {
   MousePointerClick,
   TrendingUp,
 } from "lucide-react";
+import { FAQItem } from "./_components/FAQItem";
+import { MobileMenuButton } from "./_components/MobileMenu";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA
@@ -118,8 +115,8 @@ const monitoring = [
   },
   {
     icon: Clock,
-    color: "text-[#6D5EF7]",
-    bg: "bg-[#6D5EF7]/10",
+    color: "text-[#2563EB]",
+    bg: "bg-[#2563EB]/10",
     title: "Opérations du jour",
     description: "Tous les départs et retours prévus aujourd'hui, en un coup d'œil.",
   },
@@ -248,42 +245,10 @@ const callouts = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FAQ COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
-
-function FAQItem({ q, a, defaultOpen = false }: { q: string; a: string; defaultOpen?: boolean }) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <div className="border-b border-gray-100 last:border-0">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full py-5 text-left group"
-      >
-        <span className="text-base font-semibold pr-8 text-gray-900 group-hover:text-[#6D5EF7] transition-colors">
-          {q}
-        </span>
-        <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-300 ${open ? "bg-[#6D5EF7] border-[#6D5EF7] rotate-45" : "border-gray-300 bg-white group-hover:border-[#6D5EF7]"}`}>
-          <Plus className={`w-3.5 h-3.5 transition-colors ${open ? "text-white" : "text-gray-400 group-hover:text-[#6D5EF7]"}`} />
-        </div>
-      </button>
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-out ${
-          open ? "max-h-40 pb-5" : "max-h-0"
-        }`}
-      >
-        <p className="text-gray-600 leading-relaxed text-[15px]">{a}</p>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN PAGE
+// MAIN PAGE (Server Component -- no "use client")
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans antialiased overflow-x-hidden">
@@ -323,31 +288,14 @@ export default function Home() {
               </Link>
               <Link
                 href="/login"
-                className="px-5 py-2.5 bg-[#6D5EF7] text-white text-sm font-semibold rounded-full hover:bg-[#5B4ED6] transition-all hover:shadow-lg hover:shadow-[#6D5EF7]/25 active:scale-[0.98]"
+                className="px-5 py-2.5 bg-[#2563EB] text-white text-sm font-semibold rounded-full hover:bg-[#1D4ED8] transition-all hover:shadow-lg hover:shadow-[#2563EB]/25 active:scale-[0.98]"
               >
                 Essai gratuit
               </Link>
             </div>
 
-            <button
-              className="md:hidden p-2 text-gray-700"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <CloseIcon className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+            <MobileMenuButton />
           </div>
-
-          {mobileMenuOpen && (
-            <div className="md:hidden pb-5 space-y-3 border-t border-gray-100 pt-4 animate-in slide-in-from-top-2 duration-200">
-              <a href="#features" className="block text-sm py-2 text-gray-600 font-medium">Fonctionnalités</a>
-              <a href="#pricing" className="block text-sm py-2 text-gray-600 font-medium">Tarifs</a>
-              <a href="#faq" className="block text-sm py-2 text-gray-600 font-medium">FAQ</a>
-              <Link href="/login" className="block text-sm py-2 text-gray-600 font-medium">Connexion</Link>
-              <Link href="/login" className="block text-center px-5 py-3 bg-[#6D5EF7] text-white text-sm font-semibold rounded-full mt-2">
-                Essai gratuit
-              </Link>
-            </div>
-          )}
         </div>
       </nav>
 
@@ -356,7 +304,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-10">
             {/* Morocco-specific tagline */}
-            <p className="inline-flex items-center gap-2 text-sm font-medium text-[#6D5EF7] mb-4">
+            <p className="inline-flex items-center gap-2 text-sm font-medium text-[#2563EB] mb-4">
               <span>🇲🇦</span>
               Pensé pour les agences marocaines
             </p>
@@ -366,7 +314,7 @@ export default function Home() {
               <span className="relative whitespace-nowrap">
                 <span className="relative z-10">sans stress</span>
                 <svg className="absolute -bottom-1.5 left-0 w-full h-3 z-0" viewBox="0 0 200 12" fill="none" preserveAspectRatio="none">
-                  <path d="M2 10C40 4 100 2 198 8" stroke="#6D5EF7" strokeWidth="4" strokeLinecap="round" className="animate-draw"/>
+                  <path d="M2 10C40 4 100 2 198 8" stroke="#2563EB" strokeWidth="4" strokeLinecap="round" className="animate-draw"/>
                 </svg>
               </span>
             </h1>
@@ -379,7 +327,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
             <Link
               href="/login"
-              className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#6D5EF7] text-white text-base font-semibold rounded-full hover:bg-[#5B4ED6] transition-all hover:shadow-xl hover:shadow-[#6D5EF7]/25 active:scale-[0.98]"
+              className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#2563EB] text-white text-base font-semibold rounded-full hover:bg-[#1D4ED8] transition-all hover:shadow-xl hover:shadow-[#2563EB]/25 active:scale-[0.98]"
             >
               Démarrer l'essai gratuit
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -403,7 +351,7 @@ export default function Home() {
               const Icon = item.icon;
               return (
                 <div key={item.text} className="flex items-center gap-2 text-sm text-gray-500">
-                  <Icon className="w-4 h-4 text-[#6D5EF7]" />
+                  <Icon className="w-4 h-4 text-[#2563EB]" />
                   <span>{item.text}</span>
                 </div>
               );
@@ -413,7 +361,7 @@ export default function Home() {
           {/* Product Mockup with Callouts */}
           <div className="relative mx-auto max-w-4xl">
             {/* Soft gradient background for depth */}
-            <div className="absolute -inset-8 bg-gradient-to-b from-[#6D5EF7]/5 via-[#6D5EF7]/10 to-transparent rounded-[2rem] blur-2xl" />
+            <div className="absolute -inset-8 bg-gradient-to-b from-[#2563EB]/5 via-[#2563EB]/10 to-transparent rounded-[2rem] blur-2xl" />
             <div className="absolute -inset-4 bg-gradient-to-tr from-gray-100/80 to-white/50 rounded-3xl" />
 
             {/* Callout Labels */}
@@ -423,7 +371,7 @@ export default function Home() {
                 className={`absolute ${callout.position} z-20 hidden lg:flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-xl shadow-gray-900/10 border border-gray-100 text-sm font-semibold text-gray-800 animate-float`}
                 style={{ animationDelay: callout.delay }}
               >
-                <div className="w-2.5 h-2.5 rounded-full bg-[#6D5EF7] animate-pulse" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#2563EB] animate-pulse" />
                 {callout.label}
               </div>
             ))}
@@ -462,7 +410,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
-              <p className="text-sm font-semibold text-[#6D5EF7] uppercase tracking-wider mb-3">Le problème</p>
+              <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Le problème</p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-8 leading-tight">
                 Vous reconnaissez ces situations ?
               </h2>
@@ -480,9 +428,9 @@ export default function Home() {
 
             <div className="flex items-center justify-center">
               <div className="relative w-full max-w-sm">
-                <div className="absolute inset-0 bg-[#6D5EF7]/10 rounded-3xl blur-2xl scale-110" />
+                <div className="absolute inset-0 bg-[#2563EB]/10 rounded-3xl blur-2xl scale-110" />
                 <div className="relative text-center p-10 bg-white rounded-2xl border border-gray-100 shadow-xl">
-                  <div className="w-14 h-14 bg-[#6D5EF7] rounded-xl flex items-center justify-center mx-auto mb-5">
+                  <div className="w-14 h-14 bg-[#2563EB] rounded-xl flex items-center justify-center mx-auto mb-5">
                     <Check className="w-7 h-7 text-white" />
                   </div>
                   <h3 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-3">
@@ -500,7 +448,7 @@ export default function Home() {
       <section id="features" className="py-20 px-5 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-sm font-semibold text-[#6D5EF7] uppercase tracking-wider mb-3">Fonctionnalités</p>
+            <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Fonctionnalités</p>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
               Tout ce qu'il vous faut, rien de plus
             </h2>
@@ -515,13 +463,13 @@ export default function Home() {
               return (
                 <div
                   key={feature.title}
-                  className="group p-6 rounded-2xl bg-white border border-gray-100 hover:border-[#6D5EF7]/30 hover:shadow-xl hover:shadow-[#6D5EF7]/5 transition-all duration-300 hover:-translate-y-1"
+                  className="group p-6 rounded-2xl bg-white border border-gray-100 hover:border-[#2563EB]/30 hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all duration-300 hover:-translate-y-1"
                 >
-                  <div className="w-11 h-11 bg-gray-100 group-hover:bg-[#6D5EF7] rounded-xl flex items-center justify-center mb-5 transition-colors duration-300">
+                  <div className="w-11 h-11 bg-gray-100 group-hover:bg-[#2563EB] rounded-xl flex items-center justify-center mb-5 transition-colors duration-300">
                     <Icon className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors duration-300" />
                   </div>
                   <h3 className="text-lg font-bold mb-1.5 text-gray-900">{feature.title}</h3>
-                  <p className="text-[#6D5EF7] font-medium text-sm mb-2">{feature.benefit}</p>
+                  <p className="text-[#2563EB] font-medium text-sm mb-2">{feature.benefit}</p>
                   <p className="text-gray-500 text-sm leading-relaxed">{feature.description}</p>
                 </div>
               );
@@ -532,8 +480,8 @@ export default function Home() {
 
       {/* ─── MOROCCO SECTION ─── */}
       <section className="py-20 px-5 lg:px-8 bg-gray-900 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#6D5EF7]/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-[#6D5EF7]/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#2563EB]/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-60 h-60 bg-[#2563EB]/10 rounded-full blur-3xl" />
 
         <div className="max-w-6xl mx-auto relative">
           <div className="flex justify-center mb-6">
@@ -557,10 +505,10 @@ export default function Home() {
               return (
                 <div
                   key={item.title}
-                  className="text-center p-5 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-[#6D5EF7]/50 hover:bg-white/10 transition-all duration-300"
+                  className="text-center p-5 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-[#2563EB]/50 hover:bg-white/10 transition-all duration-300"
                 >
-                  <div className="w-10 h-10 bg-[#6D5EF7]/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <Icon className="w-5 h-5 text-[#6D5EF7]" />
+                  <div className="w-10 h-10 bg-[#2563EB]/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <Icon className="w-5 h-5 text-[#2563EB]" />
                   </div>
                   <h4 className="font-semibold text-white text-sm mb-1">{item.title}</h4>
                   <p className="text-xs text-gray-400">{item.description}</p>
@@ -577,7 +525,7 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="order-2 lg:order-1">
               <div className="relative">
-                <div className="absolute -inset-4 bg-gradient-to-br from-[#6D5EF7]/10 to-gray-100 rounded-2xl blur-xl" />
+                <div className="absolute -inset-4 bg-gradient-to-br from-[#2563EB]/10 to-gray-100 rounded-2xl blur-xl" />
                 <div className="relative rounded-xl border border-gray-200 overflow-hidden shadow-xl">
                   <Image
                     src="/assets/dashboard-screenshot.png"
@@ -591,7 +539,7 @@ export default function Home() {
             </div>
 
             <div className="order-1 lg:order-2">
-              <p className="text-sm font-semibold text-[#6D5EF7] uppercase tracking-wider mb-3">Automatisation</p>
+              <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Automatisation</p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-8 leading-tight">
                 Ce que Locapro surveille pour vous
               </h2>
@@ -629,7 +577,7 @@ export default function Home() {
       <section className="py-20 px-5 lg:px-8 bg-gray-50/70">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <p className="text-sm font-semibold text-[#6D5EF7] uppercase tracking-wider mb-3">Résultats</p>
+            <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Résultats</p>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
               Des résultats concrets
             </h2>
@@ -638,7 +586,7 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-5 mb-14">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center p-8 rounded-2xl bg-white border border-gray-100">
-                <div className="text-4xl md:text-5xl font-bold text-[#6D5EF7] mb-2 tracking-tight">
+                <div className="text-4xl md:text-5xl font-bold text-[#2563EB] mb-2 tracking-tight">
                   {stat.value}
                 </div>
                 <div className="text-gray-500 font-medium text-sm">{stat.label}</div>
@@ -657,7 +605,7 @@ export default function Home() {
                 "Avant Locapro, je passais mes soirées à vérifier les retours et les paiements. Maintenant tout est clair, je peux enfin me concentrer sur mes clients."
               </blockquote>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#6D5EF7] to-[#8B7CF7] flex items-center justify-center text-white font-bold text-sm">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2563EB] to-[#3B82F6] flex items-center justify-center text-white font-bold text-sm">
                   YA
                 </div>
                 <div>
@@ -674,7 +622,7 @@ export default function Home() {
       <section className="py-20 px-5 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-sm font-semibold text-[#6D5EF7] uppercase tracking-wider mb-3">Comment ça marche</p>
+            <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Comment ça marche</p>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
               Démarrer prend 15 minutes
             </h2>
@@ -688,9 +636,9 @@ export default function Home() {
                   {i < steps.length - 1 && (
                     <div className="hidden md:block absolute top-10 left-[60%] w-[80%] border-t-2 border-dashed border-gray-200" />
                   )}
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-[#6D5EF7]/10 rounded-2xl mb-5 relative">
-                    <Icon className="w-8 h-8 text-[#6D5EF7]" />
-                    <span className="absolute -top-2 -right-2 w-7 h-7 bg-[#6D5EF7] rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-[#2563EB]/10 rounded-2xl mb-5 relative">
+                    <Icon className="w-8 h-8 text-[#2563EB]" />
+                    <span className="absolute -top-2 -right-2 w-7 h-7 bg-[#2563EB] rounded-full flex items-center justify-center text-white text-xs font-bold">
                       {step.number}
                     </span>
                   </div>
@@ -707,7 +655,7 @@ export default function Home() {
       <section id="pricing" className="py-20 px-5 lg:px-8 bg-gray-50/70">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-sm font-semibold text-[#6D5EF7] uppercase tracking-wider mb-3">Tarifs</p>
+            <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Tarifs</p>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
               Un prix simple, sans surprise
             </h2>
@@ -720,8 +668,8 @@ export default function Home() {
                 key={plan.name}
                 className={`relative p-7 rounded-2xl transition-all duration-300 ${
                   plan.popular
-                    ? "bg-[#6D5EF7] text-white shadow-2xl shadow-[#6D5EF7]/25 md:-mt-4 md:mb-4 md:py-9"
-                    : "bg-white border border-gray-200 hover:border-[#6D5EF7]/30 hover:shadow-lg"
+                    ? "bg-[#2563EB] text-white shadow-2xl shadow-[#2563EB]/25 md:-mt-4 md:mb-4 md:py-9"
+                    : "bg-white border border-gray-200 hover:border-[#2563EB]/30 hover:shadow-lg"
                 }`}
               >
                 {plan.popular && (
@@ -752,7 +700,7 @@ export default function Home() {
                 <ul className="space-y-3 mb-6">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5">
-                      <Check className={`w-4 h-4 flex-shrink-0 mt-0.5 ${plan.popular ? "text-white" : "text-[#6D5EF7]"}`} />
+                      <Check className={`w-4 h-4 flex-shrink-0 mt-0.5 ${plan.popular ? "text-white" : "text-[#2563EB]"}`} />
                       <span className={`text-sm ${plan.popular ? "text-white/90" : "text-gray-600"}`}>{f}</span>
                     </li>
                   ))}
@@ -762,7 +710,7 @@ export default function Home() {
                   href="/login"
                   className={`block w-full py-3 font-semibold text-center text-sm transition-all rounded-full active:scale-[0.98] ${
                     plan.popular
-                      ? "bg-white text-[#6D5EF7] hover:bg-gray-100"
+                      ? "bg-white text-[#2563EB] hover:bg-gray-100"
                       : "bg-gray-900 text-white hover:bg-gray-800"
                   }`}
                 >
@@ -782,7 +730,7 @@ export default function Home() {
       <section id="faq" className="py-20 px-5 lg:px-8">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-12">
-            <p className="text-sm font-semibold text-[#6D5EF7] uppercase tracking-wider mb-3">FAQ</p>
+            <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">FAQ</p>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
               Questions fréquentes
             </h2>
@@ -797,7 +745,7 @@ export default function Home() {
       </section>
 
       {/* ─── FINAL CTA ─── */}
-      <section className="py-20 px-5 lg:px-8 bg-[#6D5EF7] text-white relative overflow-hidden">
+      <section className="py-20 px-5 lg:px-8 bg-[#2563EB] text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/20 rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
@@ -813,7 +761,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/login"
-              className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white text-[#6D5EF7] text-base font-semibold rounded-full hover:bg-gray-100 transition-all active:scale-[0.98]"
+              className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white text-[#2563EB] text-base font-semibold rounded-full hover:bg-gray-100 transition-all active:scale-[0.98]"
             >
               Démarrer l'essai gratuit
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -882,25 +830,6 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Animation Styles */}
-      <style jsx global>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-8px); }
-        }
-        @keyframes draw {
-          from { stroke-dashoffset: 200; }
-          to { stroke-dashoffset: 0; }
-        }
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        .animate-draw {
-          stroke-dasharray: 200;
-          animation: draw 1s ease-out forwards;
-          animation-delay: 0.5s;
-        }
-      `}</style>
     </div>
   );
 }

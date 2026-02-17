@@ -45,7 +45,7 @@ interface Vehicle {
 interface BookingFormProps {
   customers: Customer[];
   vehicles: Vehicle[];
-  onSubmit: (data: BookingFormData) => Promise<void>;
+  onSubmit: (data: BookingFormData) => Promise<void | { error: string }>;
 }
 
 const NEW_CLIENT_VALUE = "__new_client__";
@@ -105,9 +105,13 @@ export function BookingForm({ customers: initialCustomers, vehicles, onSubmit }:
   }, [startDate, endDate, pricePerDay, setValue]);
 
   const handleNewClientSubmit = useCallback(async (data: CustomerFormData) => {
-    const newCustomer = await createCustomerForBooking(data);
-    setCustomers((prev) => [...prev, newCustomer].sort((a, b) => a.name.localeCompare(b.name)));
-    setValue("customerId", newCustomer.id);
+    const result = await createCustomerForBooking(data);
+    if ("error" in result) {
+      setError(result.error);
+      return;
+    }
+    setCustomers((prev) => [...prev, result].sort((a, b) => a.name.localeCompare(b.name)));
+    setValue("customerId", result.id);
     setNewClientOpen(false);
   }, [setValue]);
 
@@ -116,7 +120,10 @@ export function BookingForm({ customers: initialCustomers, vehicles, onSubmit }:
     setError(null);
 
     try {
-      await onSubmit(data);
+      const result = await onSubmit(data);
+      if (result && "error" in result) {
+        setError(result.error);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur s'est produite");
     } finally {
@@ -135,7 +142,7 @@ export function BookingForm({ customers: initialCustomers, vehicles, onSubmit }:
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded text-sm">
+            <div className="bg-red-50/60 text-red-600 p-4 rounded-xl border-l-4 border-l-red-400 text-sm">
               {error}
             </div>
           )}
@@ -216,7 +223,7 @@ export function BookingForm({ customers: initialCustomers, vehicles, onSubmit }:
                 </p>
               )}
               {availableVehicles.length === 0 && (
-                <p className="text-sm text-yellow-600">
+                <p className="text-sm text-amber-600">
                   Aucun véhicule disponible
                 </p>
               )}
@@ -254,7 +261,7 @@ export function BookingForm({ customers: initialCustomers, vehicles, onSubmit }:
           </div>
 
           {numberOfDays > 0 && (
-            <div className="bg-blue-50 p-3 rounded text-sm text-blue-700">
+            <div className="bg-blue-50/60 p-4 rounded-xl border-l-4 border-l-blue-400 text-sm text-blue-700">
               Durée: <strong>{numberOfDays} jour(s)</strong>
             </div>
           )}

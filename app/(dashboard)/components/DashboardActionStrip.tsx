@@ -41,12 +41,12 @@ export function DashboardActionStrip({ activeRentals }: DashboardActionStripProp
         </Link>
       </Button>
 
-      <div className="h-6 w-px bg-border shrink-0" aria-hidden />
+      <div className="h-5 w-px bg-border/50 shrink-0" aria-hidden />
 
       <Button asChild variant="outline" size="sm" className="shrink-0">
         <Link href="/damage-reports/new">
           <Camera className="w-4 h-4" />
-          Ajouter dégâts
+          Inspection
         </Link>
       </Button>
 
@@ -55,7 +55,7 @@ export function DashboardActionStrip({ activeRentals }: DashboardActionStripProp
           <Button
             variant="outline"
             size="sm"
-            className="shrink-0 hover:text-green-600 hover:border-green-200 hover:bg-green-50/50"
+            className="shrink-0 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50/50"
           >
             <MessageCircle className="w-4 h-4" />
             WhatsApp
@@ -65,7 +65,7 @@ export function DashboardActionStrip({ activeRentals }: DashboardActionStripProp
           <DropdownMenuLabel>Clients actifs</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {activeRentals.length === 0 ? (
-            <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+            <div className="px-2 py-6 text-center text-sm text-muted-foreground/70">
               Aucune location active
             </div>
           ) : (
@@ -85,10 +85,10 @@ export function DashboardActionStrip({ activeRentals }: DashboardActionStripProp
                       <p className="text-sm font-medium truncate">
                         {rental.customer.name}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-xs text-muted-foreground/70 truncate">
                         {rental.vehicle.make} {rental.vehicle.model}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground/70">
                         {rental.customer.phone}
                       </p>
                     </div>
