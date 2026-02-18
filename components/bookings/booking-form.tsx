@@ -1,5 +1,5 @@
 import { BookingFormData } from "@/lib/validations/booking";
-import { ReservationCreatePage } from "@/components/bookings/reservation-create-page";
+import { ReservationWizardPage } from "@/components/bookings/reservation-wizard-page";
 import type {
   ActiveBookingSlot,
   BookingCustomerOption,
@@ -17,5 +17,5 @@ interface BookingFormProps {
 }
 
 export function BookingForm(props: BookingFormProps) {
-  return <ReservationCreatePage {...props} />;
+  return <ReservationWizardPage {...props} />;
 }

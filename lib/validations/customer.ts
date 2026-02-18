@@ -1,13 +1,16 @@
 import { z } from "zod";
 
-const dateOptional = z
-  .string()
-  .optional()
-  .transform((s) => {
-    if (!s || s.trim() === "") return undefined;
-    const d = new Date(s);
+const dateOptional = z.preprocess((value) => {
+  if (value === null || value === undefined || value === "") return undefined;
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? undefined : value;
+  }
+  if (typeof value === "string") {
+    const d = new Date(value);
     return isNaN(d.getTime()) ? undefined : d;
-  });
+  }
+  return undefined;
+}, z.date().optional());
 
 export const customerTypeEnum = z.enum(["PERSONNE_PHYSIQUE", "PERSONNE_MORALE"]);
 

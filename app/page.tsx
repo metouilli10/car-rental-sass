@@ -429,7 +429,7 @@ export default function Home() {
             <div className="flex items-center justify-center">
               <div className="relative w-full max-w-sm">
                 <div className="absolute inset-0 bg-[#2563EB]/10 rounded-3xl blur-2xl scale-110" />
-                <div className="relative text-center p-10 bg-white rounded-2xl border border-gray-100 shadow-xl">
+                <div className="relative text-center p-10 bg-white rounded-2xl shadow-xl">
                   <div className="w-14 h-14 bg-[#2563EB] rounded-xl flex items-center justify-center mx-auto mb-5">
                     <Check className="w-7 h-7 text-white" />
                   </div>
@@ -463,7 +463,7 @@ export default function Home() {
               return (
                 <div
                   key={feature.title}
-                  className="group p-6 rounded-2xl bg-white border border-gray-100 hover:border-[#2563EB]/30 hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all duration-300 hover:-translate-y-1"
+                  className="group p-6 rounded-2xl bg-white shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all duration-300 hover:-translate-y-1"
                 >
                   <div className="w-11 h-11 bg-gray-100 group-hover:bg-[#2563EB] rounded-xl flex items-center justify-center mb-5 transition-colors duration-300">
                     <Icon className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors duration-300" />
@@ -585,7 +585,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-5 mb-14">
             {stats.map((stat) => (
-              <div key={stat.label} className="text-center p-8 rounded-2xl bg-white border border-gray-100">
+              <div key={stat.label} className="text-center p-8 rounded-2xl bg-white shadow-sm">
                 <div className="text-4xl md:text-5xl font-bold text-[#2563EB] mb-2 tracking-tight">
                   {stat.value}
                 </div>
@@ -595,7 +595,7 @@ export default function Home() {
           </div>
 
           <div className="max-w-2xl mx-auto">
-            <div className="bg-white p-8 md:p-10 rounded-2xl border border-gray-100 shadow-sm">
+            <div className="bg-white p-8 md:p-10 rounded-2xl shadow-md">
               <div className="flex items-center gap-1 mb-5">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
@@ -669,7 +669,7 @@ export default function Home() {
                 className={`relative p-7 rounded-2xl transition-all duration-300 ${
                   plan.popular
                     ? "bg-[#2563EB] text-white shadow-2xl shadow-[#2563EB]/25 md:-mt-4 md:mb-4 md:py-9"
-                    : "bg-white border border-gray-200 hover:border-[#2563EB]/30 hover:shadow-lg"
+                    : "bg-white shadow-sm hover:shadow-lg"
                 }`}
               >
                 {plan.popular && (
@@ -736,7 +736,7 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="bg-white border border-gray-100 rounded-2xl px-6 shadow-sm">
+          <div className="bg-white rounded-2xl px-6 shadow-md">
             {faqs.map((faq) => (
               <FAQItem key={faq.q} q={faq.q} a={faq.a} defaultOpen={faq.defaultOpen} />
             ))}

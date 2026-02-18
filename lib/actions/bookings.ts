@@ -139,6 +139,16 @@ export async function createBooking(data: BookingFormData) {
   }
 }
 
+export async function saveBookingDraftPlaceholder(data: {
+  step: number;
+  vehicleId?: string;
+  clientId?: string;
+  total?: number;
+}) {
+  void data;
+  return { success: true };
+}
+
 export async function updateBookingStatus(
   bookingId: string,
   status: "ACTIVE" | "COMPLETED" | "CANCELED"

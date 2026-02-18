@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-cache";
 import { TopNavBar } from "@/components/shared/top-nav-bar";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
+import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
+import { MobileFAB } from "@/components/shared/mobile-fab";
 import { Toaster } from "sonner";
 
 export default async function DashboardLayout({
@@ -33,12 +35,18 @@ export default async function DashboardLayout({
         {/* Main Content */}
         <main className="flex-1 overflow-auto" suppressHydrationWarning>
           <div className="min-h-full" suppressHydrationWarning>
-            <div className="max-w-7xl mx-auto p-10" suppressHydrationWarning>
+            <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8" suppressHydrationWarning>
               {children}
             </div>
           </div>
         </main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      <MobileBottomNav />
+
+      {/* Mobile FAB — speed-dial for quick actions */}
+      <MobileFAB />
     </div>
   );
 }

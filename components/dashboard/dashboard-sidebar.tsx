@@ -53,7 +53,7 @@ export function DashboardSidebar({ agencyName }: DashboardSidebarProps) {
   return (
     <aside
       className={cn(
-        "bg-white flex flex-col border-r border-border/30 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out"
+        "hidden md:flex bg-white flex-col border-r border-border/30 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out"
       )}
       style={{ width }}
       suppressHydrationWarning

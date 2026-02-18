@@ -92,6 +92,38 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
   redirect("/vehicles");
 }
 
+export async function deactivateVehicle(id: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new Error("Non autorisé");
+  }
+
+  try {
+    const vehicle = await prisma.vehicle.findFirst({
+      where: { id, agencyId: session.user.agencyId },
+      select: { id: true, status: true },
+    });
+
+    if (!vehicle) {
+      return { error: "Véhicule non trouvé" };
+    }
+
+    const newStatus = vehicle.status === "UNAVAILABLE" ? "AVAILABLE" : "UNAVAILABLE";
+
+    await prisma.vehicle.update({
+      where: { id },
+      data: { status: newStatus },
+    });
+
+    revalidatePath("/vehicles");
+    revalidatePath("/catalogue");
+  } catch (error) {
+    console.error("deactivateVehicle error:", error);
+    return { error: "Erreur lors de la mise à jour du statut" };
+  }
+}
+
 export async function deleteVehicle(id: string) {
   const session = await getServerSession(authOptions);
 

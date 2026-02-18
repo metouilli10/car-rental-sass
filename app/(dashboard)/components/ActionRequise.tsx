@@ -153,7 +153,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
             return (
               <div
                 key={`overdue-${booking.id}`}
-                className={`group flex items-center gap-3 py-4.5 px-5 bg-white border-l-4 ${styles.borderCls} rounded-lg hover:bg-muted/20 transition-colors duration-200 ease-out`}
+                className={`group flex flex-col sm:flex-row sm:items-center gap-3 py-3.5 px-4 bg-white border-l-4 ${styles.borderCls} rounded-lg hover:bg-muted/20 transition-colors duration-200 ease-out`}
               >
                 <Link
                   href={`/bookings/${booking.id}`}
@@ -165,7 +165,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                     <AlertTriangle className="w-4 h-4 text-danger" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className={`text-sm ${styles.titleWeight} text-danger`}>
                         Retour en retard
                       </p>
@@ -176,7 +176,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                         {daysOverdue} jour{daysOverdue > 1 ? "s" : ""}
                       </Badge>
                     </div>
-                    <p className="text-sm text-foreground">
+                    <p className="text-sm text-foreground truncate">
                       {booking.customer.name} • {booking.vehicle.make}{" "}
                       {booking.vehicle.model} ({booking.vehicle.plate})
                     </p>
@@ -185,24 +185,18 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                     </p>
                   </div>
                 </Link>
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="text-right tabular-nums w-20">
+                <div className="flex items-center gap-2 self-start sm:self-auto sm:shrink-0 pl-12 sm:pl-0">
+                  <div className="tabular-nums">
                     <p className="text-sm font-medium text-foreground">
                       {formatCurrency(booking.totalPrice)}
                     </p>
-                    <a
-                      href={`tel:${sanitizePhoneForCall(booking.customer.phone)}`}
-                      className="text-xs text-info hover:text-info/80 hover:underline block"
-                    >
-                      {booking.customer.phone}
-                    </a>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-info hover:text-info/80 hover:bg-info/10" asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-info hover:text-info/80 hover:bg-info/10" asChild>
                     <a href={`tel:${sanitizePhoneForCall(booking.customer.phone)}`} title="Appeler">
                       <Phone className="w-4 h-4" />
                     </a>
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-success hover:text-success/80 hover:bg-success/10" asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-success hover:text-success/80 hover:bg-success/10" asChild>
                     <a href={waLink} target="_blank" rel="noopener noreferrer" title="WhatsApp">
                       <MessageCircle className="w-4 h-4" />
                     </a>
@@ -222,7 +216,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
             return (
               <div
                 key={`payment-${payment.id}`}
-                className="group flex items-center gap-3 py-4.5 px-5 bg-white border-l-4 border-l-amber-400 rounded-lg hover:bg-muted/20 transition-colors duration-200 ease-out"
+                className="group flex flex-col sm:flex-row sm:items-center gap-3 py-3.5 px-4 bg-white border-l-4 border-l-amber-400 rounded-lg hover:bg-muted/20 transition-colors duration-200 ease-out"
               >
                 <Link
                   href={`/payments`}
@@ -232,7 +226,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                     <CreditCard className="w-4 h-4 text-warning" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className="text-sm font-semibold text-foreground">
                         Paiement en attente
                       </p>
@@ -240,7 +234,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                         {payment.type}
                       </Badge>
                     </div>
-                    <p className="text-sm text-foreground">
+                    <p className="text-sm text-foreground truncate">
                       {payment.booking.customer.name} •{" "}
                       {payment.booking.vehicle.make}{" "}
                       {payment.booking.vehicle.model}
@@ -251,30 +245,23 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                     </p>
                   </div>
                 </Link>
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="text-right tabular-nums w-20">
+                <div className="flex items-center gap-2 self-start sm:self-auto sm:shrink-0 pl-12 sm:pl-0">
+                  <div className="tabular-nums">
                     <p className="text-sm font-bold text-foreground">
                       {formatCurrency(payment.amount)}
                     </p>
-                    <a
-                      href={`tel:${sanitizePhoneForCall(payment.booking.customer.phone)}`}
-                      title="Appeler"
-                      className="text-xs text-info hover:text-info/80 hover:underline block cursor-pointer transition-colors duration-150"
-                    >
-                      {payment.booking.customer.phone}
-                    </a>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-info hover:text-info/80 hover:bg-info/10" asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-info hover:text-info/80 hover:bg-info/10" asChild>
                     <a href={`tel:${sanitizePhoneForCall(payment.booking.customer.phone)}`} title="Appeler">
                       <Phone className="w-4 h-4" />
                     </a>
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-success hover:text-success/80 hover:bg-success/10" asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-success hover:text-success/80 hover:bg-success/10" asChild>
                     <a href={waLink} target="_blank" rel="noopener noreferrer" title="WhatsApp">
                       <MessageCircle className="w-4 h-4" />
                     </a>
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Encaisser">
+                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild title="Encaisser">
                     <Link href="/payments">
                       <CreditCard className="w-4 h-4" />
                     </Link>
@@ -294,7 +281,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
             return (
               <div
                 key={`deposit-${deposit.id}`}
-                className="group flex items-center gap-3 py-4.5 px-5 bg-white border-l-4 border-l-blue-400 rounded-lg hover:bg-muted/20 transition-colors duration-200 ease-out"
+                className="group flex flex-col sm:flex-row sm:items-center gap-3 py-3.5 px-4 bg-white border-l-4 border-l-blue-400 rounded-lg hover:bg-muted/20 transition-colors duration-200 ease-out"
               >
                 <Link
                   href={`/bookings/${deposit.bookingId}`}
@@ -304,7 +291,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                     <Banknote className="w-4 h-4 text-info" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className="text-sm font-semibold text-foreground">
                         Caution à rembourser
                       </p>
@@ -320,30 +307,23 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                     </p>
                   </div>
                 </Link>
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="text-right tabular-nums w-20">
+                <div className="flex items-center gap-2 self-start sm:self-auto sm:shrink-0 pl-12 sm:pl-0">
+                  <div className="tabular-nums">
                     <p className="text-sm font-bold text-foreground">
                       {formatCurrency(deposit.amount)}
                     </p>
-                    <a
-                      href={`tel:${sanitizePhoneForCall(deposit.booking.customer.phone)}`}
-                      title="Appeler"
-                      className="text-xs text-info hover:text-info/80 hover:underline block cursor-pointer transition-colors duration-150"
-                    >
-                      {deposit.booking.customer.phone}
-                    </a>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-info hover:text-info/80 hover:bg-info/10" asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-info hover:text-info/80 hover:bg-info/10" asChild>
                     <a href={`tel:${sanitizePhoneForCall(deposit.booking.customer.phone)}`} title="Appeler">
                       <Phone className="w-4 h-4" />
                     </a>
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-success hover:text-success/80 hover:bg-success/10" asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-success hover:text-success/80 hover:bg-success/10" asChild>
                     <a href={waLink} target="_blank" rel="noopener noreferrer" title="WhatsApp">
                       <MessageCircle className="w-4 h-4" />
                     </a>
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Rembourser">
+                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild title="Rembourser">
                     <Link href={`/bookings/${deposit.bookingId}`}>
                       <Banknote className="w-4 h-4" />
                     </Link>

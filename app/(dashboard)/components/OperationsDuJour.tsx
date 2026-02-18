@@ -129,29 +129,29 @@ export async function OperationsDuJour({ agencyId, date }: { agencyId: string; d
 
   return (
     <Card className="bg-white shadow-lg transition-all duration-200">
-      <CardHeader className="pb-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+      <CardHeader className="pb-4 px-4 sm:px-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
               <FlatIcon name="schedule" size={24} />
             </div>
-            <div>
+            <div className="min-w-0">
               <CardTitle className="text-xl font-semibold text-foreground">
                 Opérations du Jour
               </CardTitle>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <OperationsDateNav currentDate={format(selectedDate, "yyyy-MM-dd")} />
-                <span className="text-xs text-muted-foreground/60 ml-2">
+                <span className="text-xs text-muted-foreground/60">
                   &bull; {totalOperations} opération{totalOperations > 1 ? "s" : ""}
                 </span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="success" className="text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="success" className="text-xs rounded-full">
               {pickups.length} départ{pickups.length > 1 ? "s" : ""}
             </Badge>
-            <Badge variant="info" className="text-xs">
+            <Badge variant="info" className="text-xs rounded-full">
               {returns.length} retour{returns.length > 1 ? "s" : ""}
             </Badge>
           </div>
@@ -243,16 +243,18 @@ export async function OperationsDuJour({ agencyId, date }: { agencyId: string; d
               return (
                 <div
                   key={`${booking.id}-${type}-${index}`}
-                  className="flex items-center gap-4 px-5 py-7 rounded-xl hover:bg-muted/40 transition-colors duration-200 first:rounded-t-xl last:rounded-b-xl"
+                  className="flex items-center gap-3 px-4 sm:px-5 py-4 rounded-xl hover:bg-muted/40 transition-colors duration-200 first:rounded-t-xl last:rounded-b-xl"
                 >
-                  <div className="flex-shrink-0 w-12 pl-1 text-left tabular-nums border-l border-border/15">
-                    <p className="text-sm font-medium text-muted-foreground/50">
+                  {/* Time */}
+                  <div className="flex-shrink-0 w-10 sm:w-12 text-left tabular-nums border-l border-border/15 pl-1">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground/50">
                       {formatTime(time)}
                     </p>
                   </div>
 
+                  {/* Direction icon */}
                   <div
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200 ${
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200 ${
                       isSortie ? "bg-emerald-100 text-emerald-600" : "bg-blue-100 text-blue-600"
                     }`}
                     title={isSortie ? "Sortie" : "Retour"}
@@ -264,31 +266,33 @@ export async function OperationsDuJour({ agencyId, date }: { agencyId: string; d
                     )}
                   </div>
 
-                  <Link href={`/bookings/${booking.id}`} className="flex-1 min-w-0 flex flex-col gap-1.5">
+                  {/* Client + vehicle info */}
+                  <Link href={`/bookings/${booking.id}`} className="flex-1 min-w-0 flex flex-col gap-1">
                     <p className="text-sm font-semibold text-foreground truncate">
                       {booking.customer.name}
                     </p>
                     <p className="text-xs text-muted-foreground/55 truncate">
                       {booking.vehicle.make} {booking.vehicle.model}{" "}
-                      <span className="font-mono text-xs">{booking.vehicle.plate}</span>
+                      <span className="font-mono">{booking.vehicle.plate}</span>
                     </p>
                   </Link>
 
-                  <div className="flex items-center gap-3 shrink-0 ml-auto">
+                  {/* Status + action */}
+                  <div className="flex items-center gap-2 shrink-0 ml-auto">
                     <Badge
-                      className={
+                      className={`hidden sm:inline-flex ${
                         booking.status === "ACTIVE"
                           ? "border border-emerald-300/60 bg-emerald-200 text-emerald-800 font-semibold px-2.5 py-0.5"
                           : "border border-blue-300/60 bg-blue-200 text-blue-800 font-semibold px-2.5 py-0.5"
-                      }
+                      }`}
                     >
                       {statusLabel}
                     </Badge>
-                    <Button variant="outline" size="sm" className="gap-1.5" asChild>
+                    <Button variant="outline" size="sm" className="gap-1.5 h-9" asChild>
                       {isSortie ? (
                         <Link href={`/bookings/${booking.id}`} title="Voir réservation">
                           <FileText className="w-4 h-4" />
-                          Détails
+                          <span className="hidden sm:inline">Détails</span>
                         </Link>
                       ) : booking.damageReports.length > 0 ? (
                         <Link
@@ -296,12 +300,12 @@ export async function OperationsDuJour({ agencyId, date }: { agencyId: string; d
                           title="Inspection"
                         >
                           <Camera className="w-4 h-4" />
-                          Inspection
+                          <span className="hidden sm:inline">Inspection</span>
                         </Link>
                       ) : (
                         <Link href={`/damage-reports/new?bookingId=${booking.id}`} title="Nouvelle inspection">
                           <Camera className="w-4 h-4" />
-                          Inspection
+                          <span className="hidden sm:inline">Inspection</span>
                         </Link>
                       )}
                     </Button>
