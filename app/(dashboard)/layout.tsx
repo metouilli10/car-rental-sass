@@ -35,7 +35,7 @@ export default async function DashboardLayout({
         {/* Main Content */}
         <main className="flex-1 overflow-auto" suppressHydrationWarning>
           <div className="min-h-full" suppressHydrationWarning>
-            <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8" suppressHydrationWarning>
+            <div className="mx-auto w-full max-w-7xl px-4 pt-4 pb-24 sm:px-6 sm:py-6 lg:px-8" suppressHydrationWarning>
               {children}
             </div>
           </div>

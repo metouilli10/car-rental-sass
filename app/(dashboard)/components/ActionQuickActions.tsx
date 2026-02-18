@@ -41,21 +41,20 @@ export function ActionQuickActions({
   onMarkReturned,
 }: ActionQuickActionsProps) {
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="mt-3 flex flex-col gap-2 sm:mt-0 sm:flex-row sm:items-center sm:justify-between">
       {/* ── Primary CTA ── */}
       {type === "retard" ? (
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
-              size="sm"
               variant="default"
-              className="h-8 gap-1.5 text-xs"
+              className="h-10 w-full gap-2 rounded-xl px-4 text-sm transition-all duration-200 active:scale-[0.98] sm:w-auto"
               disabled={isPending}
             >
               {isPending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <CheckCircle className="h-3.5 w-3.5" />
+                <CheckCircle className="h-4 w-4" />
               )}
               <span>Marquer comme rendu</span>
             </Button>
@@ -82,44 +81,58 @@ export function ActionQuickActions({
           </AlertDialogContent>
         </AlertDialog>
       ) : type === "paiement" ? (
-        <Button size="sm" variant="default" className="h-8 gap-1.5 text-xs" asChild>
+        <Button
+          variant="default"
+          className="h-10 w-full gap-2 rounded-xl px-4 text-sm transition-all duration-200 active:scale-[0.98] sm:w-auto"
+          asChild
+        >
           <Link href={detailsHref}>
-            <CreditCard className="h-3.5 w-3.5" />
+            <CreditCard className="h-4 w-4" />
             <span>Encaisser</span>
           </Link>
         </Button>
       ) : (
-        <Button size="sm" variant="default" className="h-8 gap-1.5 text-xs" asChild>
+        <Button
+          variant="default"
+          className="h-10 w-full gap-2 rounded-xl px-4 text-sm transition-all duration-200 active:scale-[0.98] sm:w-auto"
+          asChild
+        >
           <Link href={detailsHref}>
-            <Banknote className="h-3.5 w-3.5" />
+            <Banknote className="h-4 w-4" />
             <span>Libérer</span>
           </Link>
         </Button>
       )}
 
-      {/* ── Phone ── */}
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-        onClick={() => { window.location.href = phoneHref; }}
-        aria-label="Appeler"
-      >
-        <Phone className="h-4 w-4" />
-      </Button>
+      <div className="flex items-center justify-end gap-2">
+        {/* ── Phone ── */}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 shrink-0 rounded-xl border-slate-200 text-blue-600 transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98]"
+          onClick={() => {
+            window.location.href = phoneHref;
+          }}
+          aria-label="Appeler"
+        >
+          <Phone className="h-4 w-4" />
+        </Button>
 
-      {/* ── WhatsApp ── */}
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-        onClick={() => { window.open(waLink, "_blank", "noopener,noreferrer"); }}
-        aria-label="WhatsApp"
-      >
-        <MessageCircle className="h-4 w-4" />
-      </Button>
+        {/* ── WhatsApp ── */}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 shrink-0 rounded-xl border-slate-200 text-emerald-600 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-700 active:scale-[0.98]"
+          onClick={() => {
+            window.open(waLink, "_blank", "noopener,noreferrer");
+          }}
+          aria-label="WhatsApp"
+        >
+          <MessageCircle className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
