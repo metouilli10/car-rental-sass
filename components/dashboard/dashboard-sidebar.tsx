@@ -62,7 +62,7 @@ export function DashboardSidebar({ agencyName }: DashboardSidebarProps) {
       <div
         className={cn(
           "flex items-center shrink-0 border-b border-border/30",
-          isCollapsed ? "justify-center px-0 py-4" : "justify-between gap-2 px-4 pt-6 pb-4"
+          isCollapsed ? "justify-between gap-1 px-2 py-3.5" : "justify-between gap-2 px-4 pt-6 pb-4"
         )}
       >
         {!isCollapsed ? (
@@ -75,7 +75,17 @@ export function DashboardSidebar({ agencyName }: DashboardSidebarProps) {
               priority
             />
           </div>
-        ) : null}
+        ) : (
+          <div className="relative h-8 w-8 rounded-lg bg-muted/40 border border-border/40 shrink-0 overflow-hidden">
+            <Image
+              src="/assets/locapro-favicon.png"
+              alt="Locapro"
+              fill
+              className="object-contain p-1"
+              sizes="32px"
+            />
+          </div>
+        )}
         <Button
           variant="ghost"
           size="icon"

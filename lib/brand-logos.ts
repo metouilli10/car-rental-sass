@@ -2,6 +2,7 @@ const BRAND_LOGOS: Record<string, string> = {
   dacia: "/assets/brands/dacia.png",
   hyundai: "/assets/brands/hyundai.png",
   toyota: "/assets/brands/toyota.png",
+  peugeot: "/assets/brands/peugeot.png",
   renault: "/assets/brands/renault.png",
   "renault group": "/assets/brands/renault.png",
   mercedes: "/assets/brands/mercedes-benz.png",

@@ -2,39 +2,37 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Calendar,
-  CalendarRange,
-  Car,
-  Users,
-  MoreHorizontal,
-  BookOpen,
-  CreditCard,
-  ClipboardCheck,
-  X,
-} from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { FlatIcon, type FlatIconName } from "@/components/shared/flat-icon";
+
+type NavItem = {
+  href: string;
+  label: string;
+  iconName: FlatIconName;
+  exact: boolean;
+};
 
 const primaryNavItems = [
-  { href: "/dashboard", label: "Accueil", icon: LayoutDashboard, exact: true },
-  { href: "/bookings", label: "Réservations", icon: Calendar, exact: false },
-  { href: "/vehicles", label: "Véhicules", icon: Car, exact: false },
-  { href: "/customers", label: "Clients", icon: Users, exact: false },
-];
+  { href: "/dashboard", label: "Accueil", iconName: "dashboard", exact: true },
+  { href: "/bookings", label: "Réservations", iconName: "booking", exact: false },
+  { href: "/vehicles", label: "Véhicules", iconName: "car", exact: false },
+  { href: "/customers", label: "Clients", iconName: "people", exact: false },
+] satisfies NavItem[];
 
 const allNavItems = [
-  { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, exact: true },
-  { href: "/vehicles", label: "Véhicules", icon: Car, exact: false },
-  { href: "/catalogue", label: "Catalogue", icon: BookOpen, exact: false },
-  { href: "/customers", label: "Clients", icon: Users, exact: false },
-  { href: "/bookings", label: "Réservations", icon: Calendar, exact: false },
-  { href: "/calendrier", label: "Calendrier", icon: CalendarRange, exact: false },
-  { href: "/payments", label: "Paiements", icon: CreditCard, exact: false },
-  { href: "/damage-reports", label: "Inspections", icon: ClipboardCheck, exact: false },
-];
+  { href: "/dashboard", label: "Tableau de bord", iconName: "dashboard", exact: true },
+  { href: "/vehicles", label: "Véhicules", iconName: "car", exact: false },
+  { href: "/catalogue", label: "Catalogue", iconName: "catalogue", exact: false },
+  { href: "/customers", label: "Clients", iconName: "people", exact: false },
+  { href: "/bookings", label: "Réservations", iconName: "booking", exact: false },
+  { href: "/calendrier", label: "Calendrier", iconName: "schedule", exact: false },
+  { href: "/payments", label: "Paiements", iconName: "payment", exact: false },
+  { href: "/damage-reports", label: "Inspections", iconName: "car-insurance", exact: false },
+] satisfies NavItem[];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -51,7 +49,6 @@ export function MobileBottomNav() {
           const isActive = item.exact
             ? pathname === item.href
             : pathname.startsWith(item.href);
-          const Icon = item.icon;
 
           return (
             <Link
@@ -63,9 +60,13 @@ export function MobileBottomNav() {
               )}
             >
               <div className="flex h-11 w-11 items-center justify-center">
-                <Icon
-                  className={cn("h-5 w-5 transition-all duration-150", isActive && "scale-110")}
-                  strokeWidth={isActive ? 2.5 : 1.8}
+                <FlatIcon
+                  name={item.iconName}
+                  size={22}
+                  className={cn(
+                    "transition-all duration-150",
+                    isActive ? "opacity-100 scale-110" : "opacity-70"
+                  )}
                 />
               </div>
               <span
@@ -118,6 +119,18 @@ export function MobileBottomNav() {
           </div>
 
           <div className="px-4 pb-2">
+            <div className="mb-4 flex justify-center">
+              <div className="relative h-8 w-[132px]">
+                <Image
+                  src="/assets/locapro-logo.png"
+                  alt="Locapro"
+                  fill
+                  className="object-contain [filter:contrast(1.08)_saturate(1.06)]"
+                  sizes="132px"
+                  priority
+                />
+              </div>
+            </div>
             <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-widest px-2 mb-3">
               Menu Principal
             </p>
@@ -126,7 +139,6 @@ export function MobileBottomNav() {
                 const isActive = item.exact
                   ? pathname === item.href
                   : pathname.startsWith(item.href);
-                const Icon = item.icon;
 
                 return (
                   <Link
@@ -140,9 +152,10 @@ export function MobileBottomNav() {
                         : "hover:bg-muted/50 text-foreground/80 hover:text-foreground"
                     )}
                   >
-                    <Icon
-                      className="h-5 w-5 shrink-0"
-                      strokeWidth={isActive ? 2.5 : 1.8}
+                    <FlatIcon
+                      name={item.iconName}
+                      size={20}
+                      className={cn("shrink-0", isActive ? "opacity-100" : "opacity-70")}
                     />
                     <span className="text-sm font-medium">{item.label}</span>
                   </Link>
