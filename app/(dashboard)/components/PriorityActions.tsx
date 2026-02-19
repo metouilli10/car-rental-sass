@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate, formatWhatsAppLink } from "@/lib/utils";
-import { DashboardPeriod, getPeriodBounds, getPeriodLabel } from "@/lib/dashboard-periods";
-import { PriorityActionsClient, type PriorityActionItem } from "./PriorityActionsClient";
+import { DashboardPeriod, getPeriodBounds } from "@/lib/dashboard-periods";
+import { PriorityActionsClient } from "./PriorityActionsClient";
+import type { PriorityActionItem } from "./PriorityActionsList";
 
 interface PriorityActionsProps {
   agencyId: string;
@@ -161,9 +162,6 @@ export async function PriorityActions({ agencyId, period }: PriorityActionsProps
   ].slice(0, 10);
 
   return (
-    <PriorityActionsClient
-      periodLabel={getPeriodLabel(period)}
-      actions={rows}
-    />
+    <PriorityActionsClient actions={rows} />
   );
 }

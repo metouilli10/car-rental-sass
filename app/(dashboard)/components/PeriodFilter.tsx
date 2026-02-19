@@ -48,7 +48,7 @@ export async function PeriodFilter({ agencyId, selectedPeriod }: PeriodFilterPro
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Période globale</p>
           <p className="text-xs text-muted-foreground">Tous les widgets suivent ce filtre</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {periodItems.map((period) => {
             const isActive = selectedPeriod === period.id;
             const periodCount = counts.find((item) => item.id === period.id);
@@ -58,20 +58,24 @@ export async function PeriodFilter({ agencyId, selectedPeriod }: PeriodFilterPro
                 key={period.id}
                 href={`/dashboard?period=${period.id}`}
                 className={cn(
-                  "group inline-flex min-w-[155px] flex-col rounded-xl border px-3.5 py-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2",
+                  "flex cursor-pointer flex-col gap-1 rounded-xl border border-border p-4 transition-all duration-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   isActive
-                    ? "border-blue-600 bg-blue-600 text-white shadow-sm"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                    ? "border-primary bg-primary text-white shadow-sm"
+                    : "bg-muted/40 text-foreground hover:bg-muted"
                 )}
               >
-                <span className="text-sm font-medium">{period.label}</span>
-                <span
-                  className={cn(
-                    "mt-1 text-xs",
-                    isActive ? "text-blue-100" : "text-slate-500 group-hover:text-slate-600"
-                  )}
-                >
-                  {periodCount?.departures ?? 0} départs · {periodCount?.returns ?? 0} retours
+                <span className="text-sm font-semibold">{period.label}</span>
+                <span className="inline-flex items-baseline gap-1">
+                  <span className="text-lg font-bold leading-none">{periodCount?.departures ?? 0}</span>
+                  <span className={cn("text-xs", isActive ? "text-white/80" : "text-muted-foreground")}>
+                    départs
+                  </span>
+                </span>
+                <span className="inline-flex items-baseline gap-1">
+                  <span className="text-lg font-bold leading-none">{periodCount?.returns ?? 0}</span>
+                  <span className={cn("text-xs", isActive ? "text-white/80" : "text-muted-foreground")}>
+                    retours
+                  </span>
                 </span>
               </Link>
             );
