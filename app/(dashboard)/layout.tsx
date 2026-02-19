@@ -26,7 +26,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-background" suppressHydrationWarning>
       {/* Collapsible Sidebar */}
-      <DashboardSidebar agencyName={session.user.agencyName ?? "Agence"} />
+      <DashboardSidebar agencyName={session.user.agencyName ?? "Agence"} role={session.user.role} />
 
       <Toaster richColors position="top-right" />
 
@@ -51,7 +51,7 @@ export default async function DashboardLayout({
       </div>
 
       {/* Mobile bottom navigation */}
-      <MobileBottomNav />
+      <MobileBottomNav role={session.user.role} />
 
       {/* Mobile FAB — speed-dial for quick actions */}
       <MobileFAB />

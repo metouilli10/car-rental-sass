@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import type { UserRole } from "@prisma/client";
 import { PanelLeftClose, PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,10 @@ const COLLAPSED_WIDTH = 76;
 
 export interface DashboardSidebarProps {
   agencyName: string;
+  role: UserRole;
 }
 
-export function DashboardSidebar({ agencyName }: DashboardSidebarProps) {
+export function DashboardSidebar({ agencyName, role }: DashboardSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -128,6 +130,9 @@ export function DashboardSidebar({ agencyName }: DashboardSidebarProps) {
           <NavLink href="/payments" iconName="CreditCard" label="Paiements" collapsed={isCollapsed} />
           <NavLink href="/damage-reports" iconName="ClipboardCheck" label="Inspections" collapsed={isCollapsed} />
           <NavLink href="/notifications" iconName="Bell" label="Notifications" collapsed={isCollapsed} />
+          {role === "OWNER" ? (
+            <NavLink href="/users" iconName="Users" label="Utilisateurs" collapsed={isCollapsed} />
+          ) : null}
         </nav>
       </TooltipProvider>
 

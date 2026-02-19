@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import type { UserRole } from "@prisma/client";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -34,9 +35,18 @@ const allNavItems = [
   { href: "/damage-reports", label: "Inspections", iconName: "car-insurance", exact: false },
 ] satisfies NavItem[];
 
-export function MobileBottomNav() {
+export interface MobileBottomNavProps {
+  role: UserRole;
+}
+
+export function MobileBottomNav({ role }: MobileBottomNavProps) {
   const pathname = usePathname();
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  const effectiveAllNavItems: NavItem[] =
+    role === "OWNER"
+      ? [...allNavItems, { href: "/users", label: "Utilisateurs", iconName: "people", exact: false }]
+      : allNavItems;
 
   const isMoreActive = !primaryNavItems.some((item) =>
     item.exact ? pathname === item.href : pathname.startsWith(item.href)
@@ -135,7 +145,7 @@ export function MobileBottomNav() {
               Menu Principal
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {allNavItems.map((item) => {
+              {effectiveAllNavItems.map((item) => {
                 const isActive = item.exact
                   ? pathname === item.href
                   : pathname.startsWith(item.href);

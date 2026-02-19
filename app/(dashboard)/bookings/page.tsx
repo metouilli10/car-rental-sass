@@ -11,7 +11,7 @@ import { Eye } from "lucide-react";
 const PAGE_SIZE = 25;
 
 interface BookingsPageProps {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; clientId?: string; customerId?: string }>;
 }
 
 export default async function BookingsPage({ searchParams }: BookingsPageProps) {
@@ -23,10 +23,14 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
 
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
+  const selectedClientId = params.clientId || params.customerId;
 
-  const where = { agencyId: session.user.agencyId };
+  const where = {
+    agencyId: session.user.agencyId,
+    ...(selectedClientId ? { customerId: selectedClientId } : {}),
+  };
 
-  const [bookings, total] = await Promise.all([
+  const [bookings, total, selectedCustomer] = await Promise.all([
     prisma.booking.findMany({
       where,
       select: {
@@ -45,6 +49,12 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
       skip: (page - 1) * PAGE_SIZE,
     }),
     prisma.booking.count({ where }),
+    selectedClientId
+      ? prisma.customer.findFirst({
+          where: { id: selectedClientId, agencyId: session.user.agencyId },
+          select: { name: true },
+        })
+      : null,
   ]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -52,7 +62,7 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Réservations"
+        title={selectedCustomer ? `Réservations > ${selectedCustomer.name}` : "Réservations"}
         description="Gérez toutes vos réservations"
         action={{
           label: "Nouvelle réservation",
@@ -150,7 +160,12 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
               </tbody>
             </table>
           </div>
-          <Pagination currentPage={page} totalPages={totalPages} baseUrl="/bookings" />
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            baseUrl="/bookings"
+            searchParams={selectedClientId ? { clientId: selectedClientId } : {}}
+          />
         </div>
       )}
     </div>

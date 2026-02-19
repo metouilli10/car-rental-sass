@@ -6,6 +6,7 @@ import { PaymentType } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bookingSchema, BookingFormData } from "@/lib/validations/booking";
+import { canDelete } from "@/lib/authz";
 
 export async function createBooking(data: BookingFormData) {
   const session = await getServerSession(authOptions);
@@ -157,6 +158,10 @@ export async function updateBookingStatus(
 
   if (!session) {
     throw new Error("Non autorisé");
+  }
+
+  if (status === "CANCELED" && !canDelete(session.user.role)) {
+    throw new Error("Vous n'avez pas l'autorisation d'annuler une réservation");
   }
 
   try {

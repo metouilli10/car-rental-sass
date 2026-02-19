@@ -21,7 +21,8 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   const where = { agencyId: session.user.agencyId };
   const monthStart = startOfMonth(new Date());
 
-  const [customers, total, withReservations, withoutDocuments, createdThisMonth] = await Promise.all([
+  const [customers, total, withReservations, withoutDocuments, createdThisMonth, financialByCustomer] =
+    await Promise.all([
     prisma.customer.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -63,7 +64,28 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         },
       },
     }),
-  ]);
+    prisma.booking.groupBy({
+      by: ["customerId"],
+      where: {
+        agencyId: session.user.agencyId,
+        status: { not: "CANCELED" },
+      },
+      _sum: {
+        totalPrice: true,
+        remainingAmount: true,
+      },
+    }),
+    ]);
+
+  const financialMap = new Map(
+    financialByCustomer.map((entry) => [
+      entry.customerId,
+      {
+        totalSpent: entry._sum.totalPrice ?? 0,
+        balance: entry._sum.remainingAmount ?? 0,
+      },
+    ]),
+  );
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -81,7 +103,10 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         nationality: customer.nationality,
         createdAt: customer.createdAt.toISOString(),
         bookingsCount: customer._count.bookings,
+        totalSpent: financialMap.get(customer.id)?.totalSpent ?? 0,
+        balance: financialMap.get(customer.id)?.balance ?? 0,
       }))}
+      currentUserRole={session.user.role}
       stats={{
         totalClients: total,
         clientsWithReservations: withReservations,

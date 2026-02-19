@@ -32,6 +32,7 @@ interface ReservationWizardPageProps {
   locationOptions: string[];
   activeBookings: ActiveBookingSlot[];
   prefilledVehicleId?: string;
+  prefilledCustomerId?: string;
   onSubmit: (
     data: BookingFormData,
   ) => Promise<{ error: string } | { success: boolean; bookingId: string } | void>;
@@ -96,6 +97,7 @@ export function ReservationWizardPage({
   locationOptions,
   activeBookings,
   prefilledVehicleId,
+  prefilledCustomerId,
   onSubmit,
 }: ReservationWizardPageProps) {
   const router = useRouter();
@@ -273,6 +275,22 @@ export function ReservationWizardPage({
       };
     });
   }, [prefilledVehicleId, vehicles]);
+
+  useEffect(() => {
+    if (!prefilledCustomerId) return;
+    const customerExists = customers.some((customer) => customer.id === prefilledCustomerId);
+    if (!customerExists) return;
+
+    setDraft((prev) => {
+      if (prev.clientId) {
+        return prev;
+      }
+      return {
+        ...prev,
+        clientId: prefilledCustomerId,
+      };
+    });
+  }, [customers, prefilledCustomerId]);
 
   const warnings = useMemo(() => {
     const list: string[] = [];

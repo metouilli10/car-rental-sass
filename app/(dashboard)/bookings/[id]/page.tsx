@@ -220,6 +220,7 @@ export default async function BookingDetailsPage({
           <BookingStatusActions
             bookingId={booking.id}
             currentStatus={booking.status}
+            canCancel={session.user.role === "OWNER" || session.user.role === "MANAGER"}
           />
         </CardContent>
       </Card>

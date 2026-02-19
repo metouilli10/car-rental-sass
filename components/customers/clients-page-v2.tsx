@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import type { UserRole } from "@prisma/client";
 import {
+  AlertTriangle,
   Calendar,
   FileText,
   Search,
@@ -11,7 +14,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -38,10 +41,13 @@ export interface ClientListItem {
   nationality: string;
   createdAt: string;
   bookingsCount: number;
+  totalSpent: number;
+  balance: number;
 }
 
 interface ClientsPageV2Props {
   customers: ClientListItem[];
+  currentUserRole: UserRole;
   stats: {
     totalClients: number;
     clientsWithReservations: number;
@@ -70,7 +76,7 @@ const DEFAULT_FILTERS: ToolbarFilters = {
   createdTo: "",
 };
 
-export function ClientsPageV2({ customers, stats, pagination }: ClientsPageV2Props) {
+export function ClientsPageV2({ customers, currentUserRole, stats, pagination }: ClientsPageV2Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showDeleted, setShowDeleted] = useState(false);
   const [searchInput, setSearchInput] = useState("");
@@ -187,12 +193,143 @@ export function ClientsPageV2({ customers, stats, pagination }: ClientsPageV2Pro
     return Array.from(unique);
   }, [customers]);
 
+  const monthStart = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  }, []);
+
+  const monthEnd = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+  }, []);
+
+  const activeMetricFilter = useMemo<"all" | "reservations" | "noDocuments" | "addedThisMonth">(() => {
+    if (filters.hasReservations === "yes") {
+      return "reservations";
+    }
+    if (filters.hasDocuments === "no") {
+      return "noDocuments";
+    }
+    if (filters.createdFrom === monthStart && filters.createdTo === monthEnd) {
+      return "addedThisMonth";
+    }
+    return "all";
+  }, [filters, monthEnd, monthStart]);
+
+  const handleMetricFilter = (metric: "all" | "reservations" | "noDocuments" | "addedThisMonth") => {
+    if (metric === activeMetricFilter) {
+      setFilters((prev) => ({
+        ...prev,
+        hasReservations: "all",
+        hasDocuments: "all",
+        createdFrom: "",
+        createdTo: "",
+      }));
+      return;
+    }
+
+    setFilters((prev) => {
+      if (metric === "all") {
+        return {
+          ...prev,
+          hasReservations: "all",
+          hasDocuments: "all",
+          createdFrom: "",
+          createdTo: "",
+        };
+      }
+
+      if (metric === "reservations") {
+        return {
+          ...prev,
+          hasReservations: "yes",
+          hasDocuments: "all",
+          createdFrom: "",
+          createdTo: "",
+        };
+      }
+
+      if (metric === "noDocuments") {
+        return {
+          ...prev,
+          hasReservations: "all",
+          hasDocuments: "no",
+          createdFrom: "",
+          createdTo: "",
+        };
+      }
+
+      return {
+        ...prev,
+        hasReservations: "all",
+        hasDocuments: "all",
+        createdFrom: monthStart,
+        createdTo: monthEnd,
+      };
+    });
+  };
+
+  const exportCustomersToCsv = () => {
+    const headers = [
+      "Nom",
+      "Type",
+      "Email",
+      "Telephone",
+      "Nationalite",
+      "Passeport/CIN",
+      "Reservations",
+      "Total depense",
+      "Solde",
+      "Date creation",
+    ];
+
+    const escapeCsvValue = (value: string | number | null | undefined) => {
+      const normalized = String(value ?? "").replace(/"/g, '""');
+      return `"${normalized}"`;
+    };
+
+    const rows = filteredCustomers.map((customer) => [
+      customer.name,
+      customer.customerType === "PERSONNE_MORALE" ? "Entreprise" : "Particulier",
+      customer.email ?? "",
+      customer.phone,
+      customer.nationality,
+      customer.passportOrCIN ?? "",
+      customer.bookingsCount,
+      customer.totalSpent,
+      customer.balance,
+      formatDate(customer.createdAt),
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => escapeCsvValue(cell)).join(","))
+      .join("\n");
+
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const now = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `clients-${now}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <TooltipProvider delayDuration={250}>
       <div className="space-y-6 bg-slate-50/70 p-1">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <PageHeader />
-          <MetricsGrid stats={stats} />
+          <PageHeader
+            onExport={exportCustomersToCsv}
+            canExport={filteredCustomers.length > 0}
+          />
+          <MetricsGrid
+            stats={stats}
+            activeMetricFilter={activeMetricFilter}
+            onMetricFilterChange={handleMetricFilter}
+          />
           <ClientsToolbar
             filters={filters}
             onFiltersChange={setFilters}
@@ -205,6 +342,7 @@ export function ClientsPageV2({ customers, stats, pagination }: ClientsPageV2Pro
           />
           <ClientsTable
             rows={filteredCustomers}
+            currentUserRole={currentUserRole}
             selectedId={selectedId}
             onSelect={setSelectedId}
           />
@@ -215,7 +353,13 @@ export function ClientsPageV2({ customers, stats, pagination }: ClientsPageV2Pro
   );
 }
 
-function PageHeader() {
+function PageHeader({
+  onExport,
+  canExport,
+}: {
+  onExport: () => void;
+  canExport: boolean;
+}) {
   return (
     <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-start">
       <div>
@@ -225,7 +369,13 @@ function PageHeader() {
         </p>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" className="h-10" aria-label="Exporter les clients">
+        <Button
+          variant="ghost"
+          className="h-10"
+          aria-label="Exporter les clients"
+          onClick={onExport}
+          disabled={!canExport}
+        >
           Exporter
         </Button>
         <Button asChild className="h-10" aria-label="Ajouter un client">
@@ -239,44 +389,69 @@ function PageHeader() {
   );
 }
 
-function MetricsGrid({ stats }: { stats: ClientsPageV2Props["stats"] }) {
+function MetricsGrid({
+  stats,
+  activeMetricFilter,
+  onMetricFilterChange,
+}: {
+  stats: ClientsPageV2Props["stats"];
+  activeMetricFilter: "all" | "reservations" | "noDocuments" | "addedThisMonth";
+  onMetricFilterChange: (metric: "all" | "reservations" | "noDocuments" | "addedThisMonth") => void;
+}) {
   const cards = [
     {
       label: "Total clients",
       value: stats.totalClients,
       icon: Users,
+      filterKey: "all" as const,
     },
     {
       label: "Clients avec reservations",
       value: stats.clientsWithReservations,
       icon: Calendar,
+      filterKey: "reservations" as const,
     },
     {
       label: "Sans documents",
       value: stats.clientsWithoutDocuments,
       icon: FileText,
+      filterKey: "noDocuments" as const,
     },
     {
       label: "Ajoutes ce mois",
       value: stats.clientsAddedThisMonth,
       icon: UserPlus,
+      filterKey: "addedThisMonth" as const,
     },
   ];
 
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {cards.map((card) => (
-        <div
-          key={card.label}
-          className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 shadow-sm"
-        >
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">{card.label}</p>
-            <card.icon className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <p className="text-2xl font-semibold tracking-tight text-slate-900">{card.value}</p>
-        </div>
-      ))}
+      {cards.map((card) => {
+        const isActive = activeMetricFilter === card.filterKey;
+        return (
+          <button
+            key={card.label}
+            type="button"
+            onClick={() => onMetricFilterChange(card.filterKey)}
+            className={`rounded-xl border p-4 text-left shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+              isActive
+                ? "border-primary/40 bg-primary/5"
+                : "border-slate-200 bg-slate-50/60 hover:border-slate-300 hover:bg-slate-100/60"
+            }`}
+            aria-pressed={isActive}
+            aria-label={`Filtrer: ${card.label}`}
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">{card.label}</p>
+              <card.icon
+                className={`h-4 w-4 ${isActive ? "text-primary" : "text-muted-foreground"}`}
+              />
+            </div>
+            <p className="text-2xl font-semibold tracking-tight text-slate-900">{card.value}</p>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -484,13 +659,17 @@ function ClientsToolbar({
 
 function ClientsTable({
   rows,
+  currentUserRole,
   selectedId,
   onSelect,
 }: {
   rows: ClientListItem[];
+  currentUserRole: UserRole;
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
+  const router = useRouter();
+
   if (rows.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 px-6 py-14 text-center">
@@ -527,6 +706,12 @@ function ClientsTable({
                 Reservations
               </th>
               <th className="px-5 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                Total depense
+              </th>
+              <th className="px-5 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                Solde
+              </th>
+              <th className="px-5 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground">
                 Cree le
               </th>
               <th className="px-5 py-3 text-right text-xs uppercase tracking-wider text-muted-foreground">
@@ -541,13 +726,18 @@ function ClientsTable({
                 customer.customerType === "PERSONNE_MORALE"
                   ? "Client entreprise"
                   : customer.email || "Client individuel";
+              const hasOutstandingBalance = customer.balance > 0;
 
               return (
                 <tr
                   key={customer.id}
                   onClick={() => onSelect(customer.id)}
                   className={`cursor-pointer transition-colors ${
-                    isSelected ? "bg-slate-100/70" : "hover:bg-slate-50"
+                    isSelected
+                      ? "bg-slate-100/70"
+                      : hasOutstandingBalance
+                        ? "bg-amber-50/30 hover:bg-amber-50/50"
+                        : "hover:bg-slate-50"
                   }`}
                 >
                   <td className="px-5 py-4">
@@ -556,7 +746,13 @@ function ClientsTable({
                         {customer.name.slice(0, 1).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-900">{customer.name}</p>
+                        <Link
+                          href={`/clients/${customer.id}`}
+                          className="truncate text-sm font-medium text-slate-900 hover:text-primary hover:underline"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          {customer.name}
+                        </Link>
                         <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
                       </div>
                     </div>
@@ -607,13 +803,41 @@ function ClientsTable({
                     )}
                   </td>
                   <td className="px-5 py-4">
-                    <Badge variant="secondary">{customer.bookingsCount}</Badge>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        router.push(`/reservations?clientId=${customer.id}`);
+                      }}
+                      aria-label={`Voir les réservations de ${customer.name}`}
+                    >
+                      <Badge variant="secondary">{customer.bookingsCount}</Badge>
+                    </Button>
+                  </td>
+                  <td className="px-5 py-4 text-sm font-medium text-slate-900">
+                    {formatCurrency(customer.totalSpent)}
+                  </td>
+                  <td className="px-5 py-4">
+                    {hasOutstandingBalance ? (
+                      <Badge variant="warning" className="inline-flex items-center gap-1">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        {formatCurrency(customer.balance)}
+                      </Badge>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">{formatCurrency(customer.balance)}</span>
+                    )}
                   </td>
                   <td className="px-5 py-4 text-sm text-muted-foreground">
                     {formatDate(customer.createdAt)}
                   </td>
                   <td className="px-5 py-4" onClick={(event) => event.stopPropagation()}>
-                    <CustomerRowActions customerId={customer.id} />
+                    <CustomerRowActions
+                      customerId={customer.id}
+                      canDelete={currentUserRole === "OWNER" || currentUserRole === "MANAGER"}
+                    />
                   </td>
                 </tr>
               );

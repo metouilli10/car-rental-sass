@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import { canDeleteCustomer } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { customerSchema, CustomerFormData } from "@/lib/validations/customer";
 
@@ -134,6 +135,12 @@ export async function deleteCustomer(id: string) {
 
   if (!session) {
     throw new Error("Non autorisé");
+  }
+
+  if (!canDeleteCustomer(session.user.role)) {
+    return {
+      error: "Vous n'avez pas l'autorisation de supprimer un client",
+    };
   }
 
   try {

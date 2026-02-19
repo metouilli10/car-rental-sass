@@ -18,11 +18,16 @@ import {
 
 interface DeleteVehicleButtonProps {
   vehicleId: string;
+  canDelete?: boolean;
 }
 
-export function DeleteVehicleButton({ vehicleId }: DeleteVehicleButtonProps) {
+export function DeleteVehicleButton({ vehicleId, canDelete = true }: DeleteVehicleButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  if (!canDelete) {
+    return null;
+  }
 
   const handleDelete = async () => {
     setIsLoading(true);

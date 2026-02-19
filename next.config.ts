@@ -37,6 +37,19 @@ const nextConfig: NextConfig = {
 
   // React strict mode for catching performance issues in dev
   reactStrictMode: true,
+
+  async rewrites() {
+    return [
+      {
+        source: "/clients/:path*",
+        destination: "/customers/:path*",
+      },
+      {
+        source: "/reservations/:path*",
+        destination: "/bookings/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

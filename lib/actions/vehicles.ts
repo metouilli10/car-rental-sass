@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { vehicleSchema, VehicleFormData } from "@/lib/validations/vehicle";
 import { computeVehicleReminders } from "@/lib/reminders/engine";
+import { canDelete } from "@/lib/authz";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -229,6 +230,12 @@ export async function deleteVehicle(id: string) {
 
   if (!session) {
     throw new Error("Non autorisé");
+  }
+
+  if (!canDelete(session.user.role)) {
+    return {
+      error: "Vous n'avez pas l'autorisation de supprimer un véhicule",
+    };
   }
 
   try {

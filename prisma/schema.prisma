@@ -13,7 +13,8 @@ datasource db {
 
 enum UserRole {
   OWNER
-  STAFF
+  MANAGER
+  EMPLOYEE
 }
 
 enum VehicleStatus {
@@ -159,7 +160,11 @@ model User {
   email    String   @unique
   password String
   name     String
-  role     UserRole @default(STAFF)
+  role     UserRole @default(EMPLOYEE)
+  isActive Boolean  @default(true)
+  invitedAt DateTime?
+  invitedById String?
+  lastLoginAt DateTime?
   agencyId String
 
   createdAt DateTime @default(now())
@@ -168,6 +173,7 @@ model User {
   agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
 
   @@index([agencyId])
+  @@index([agencyId, role])
   @@map("users")
 }
 

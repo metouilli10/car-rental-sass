@@ -30,7 +30,11 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError("Email ou mot de passe incorrect");
+        setError(
+          result.error === "Compte désactivé"
+            ? "Compte désactivé"
+            : "Email ou mot de passe incorrect",
+        );
       } else {
         router.push("/dashboard");
         router.refresh();

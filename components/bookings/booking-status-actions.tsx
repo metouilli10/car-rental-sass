@@ -24,11 +24,13 @@ import {
 interface BookingStatusActionsProps {
   bookingId: string;
   currentStatus: string;
+  canCancel: boolean;
 }
 
 export function BookingStatusActions({
   bookingId,
   currentStatus,
+  canCancel,
 }: BookingStatusActionsProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -96,32 +98,34 @@ export function BookingStatusActions({
             </AlertDialogContent>
           </AlertDialog>
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" disabled={isLoading}>
-                <XCircle className="h-4 w-4 mr-2" />
-                Annuler la réservation
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Annuler la réservation</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Êtes-vous sûr de vouloir annuler cette réservation ?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isLoading}>Retour</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleAction(() => cancelBooking(bookingId), "Réservation annulée")}
-                  disabled={isLoading}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
+          {canCancel ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={isLoading}>
+                  <XCircle className="h-4 w-4 mr-2" />
                   Annuler la réservation
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Annuler la réservation</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Êtes-vous sûr de vouloir annuler cette réservation ?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isLoading}>Retour</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleAction(() => cancelBooking(bookingId), "Réservation annulée")}
+                    disabled={isLoading}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Annuler la réservation
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : null}
         </>
       )}
 

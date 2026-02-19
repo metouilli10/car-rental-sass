@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { MoreVertical, Pencil, Eye, FileText, History, Trash2 } from "lucide-react";
+import { CalendarPlus, MoreVertical, Pencil, Eye, FileText, History, Trash2 } from "lucide-react";
 import { deleteCustomer } from "@/lib/actions/customers";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,9 +25,10 @@ import {
 
 interface CustomerRowActionsProps {
   customerId: string;
+  canDelete: boolean;
 }
 
-export function CustomerRowActions({ customerId }: CustomerRowActionsProps) {
+export function CustomerRowActions({ customerId, canDelete }: CustomerRowActionsProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,9 +74,15 @@ export function CustomerRowActions({ customerId }: CustomerRowActionsProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuItem asChild>
-              <Link href={`/customers/${customerId}/edit`}>
+              <Link href={`/clients/${customerId}`}>
                 <Eye className="mr-2 h-4 w-4" />
                 Voir détails
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/bookings/create?customerId=${customerId}`}>
+                <CalendarPlus className="mr-2 h-4 w-4" />
+                Nouvelle réservation
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
@@ -85,19 +92,21 @@ export function CustomerRowActions({ customerId }: CustomerRowActionsProps) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/bookings?customerId=${customerId}`}>
+              <Link href={`/reservations?clientId=${customerId}`}>
                 <History className="mr-2 h-4 w-4" />
                 Historique réservations
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => setConfirmOpen(true)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Supprimer
-            </DropdownMenuItem>
+            {canDelete ? <DropdownMenuSeparator /> : null}
+            {canDelete ? (
+              <DropdownMenuItem
+                onClick={() => setConfirmOpen(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Supprimer
+              </DropdownMenuItem>
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
