@@ -31,7 +31,7 @@ const allNavItems = [
   { href: "/customers", label: "Clients", iconName: "people", exact: false },
   { href: "/bookings", label: "Réservations", iconName: "booking", exact: false },
   { href: "/calendrier", label: "Calendrier", iconName: "schedule", exact: false },
-  { href: "/payments", label: "Paiements", iconName: "payment", exact: false },
+  { href: "/finance", label: "Finance", iconName: "payment", exact: false },
   { href: "/damage-reports", label: "Inspections", iconName: "car-insurance", exact: false },
 ] satisfies NavItem[];
 

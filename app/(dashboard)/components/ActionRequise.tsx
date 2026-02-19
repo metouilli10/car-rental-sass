@@ -57,7 +57,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
             },
           },
         },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
         take: 10,
       }),
 

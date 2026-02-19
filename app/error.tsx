@@ -26,7 +26,7 @@ export default function GlobalError({
             <div>
               <h1 className="text-3xl font-bold mb-2">Erreur Application</h1>
               <p className="text-gray-600">
-                Une erreur inattendue s'est produite. Veuillez réessayer.
+                Une erreur inattendue s&apos;est produite. Veuillez réessayer.
               </p>
             </div>
             {error.message && (
@@ -40,7 +40,7 @@ export default function GlobalError({
                 onClick={() => window.location.href = "/"}
                 variant="outline"
               >
-                Retour à l'accueil
+                Retour à l&apos;accueil
               </Button>
             </div>
           </div>

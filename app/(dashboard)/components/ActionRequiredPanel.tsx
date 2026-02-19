@@ -70,7 +70,7 @@ export async function ActionRequiredPanel({ agencyId }: ActionRequiredPanelProps
           },
         },
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
       take: 8,
     }),
     prisma.deposit.findMany({

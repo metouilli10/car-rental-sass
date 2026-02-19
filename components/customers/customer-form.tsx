@@ -280,7 +280,7 @@ export function CustomerForm({
               </p>
             )}
             <p className="text-xs text-muted-foreground">
-              Numéro de passeport ou carte d'identité nationale
+              Numéro de passeport ou carte d&apos;identité nationale
             </p>
           </div>
 

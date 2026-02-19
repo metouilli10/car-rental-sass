@@ -1,21 +1,23 @@
 "use client";
 
-import { useState, useMemo, useCallback, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { startOfWeek, addWeeks, subWeeks, format, parseISO } from "date-fns";
+import { useState, useMemo, useCallback, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { startOfWeek, addWeeks, subWeeks, format } from "date-fns";
 import { TimelineHeader } from "./TimelineHeader";
-import { TimelineGrid } from "./TimelineGrid";
+import { CalendarGrid } from "./CalendarGrid";
 import { CalendarDays, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import { toast } from "sonner";
 import type { CalendarVehicle, CalendarBooking } from "@/lib/actions/calendar";
+import { toDayKeyLocal } from "./conflict";
 
 interface BookingTimelineProps {
   vehicles: CalendarVehicle[];
   bookings: CalendarBooking[];
   weekStart: Date;
   weekEnd: Date;
+  currentUserRole: "OWNER" | "MANAGER" | "EMPLOYEE";
 }
 
 export function BookingTimeline({
@@ -23,19 +25,25 @@ export function BookingTimeline({
   bookings,
   weekStart: initialWeekStart,
   weekEnd: initialWeekEnd,
+  currentUserRole,
 }: BookingTimelineProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [statusFilter, setStatusFilter] = useState("all");
+  const [calendarBookings, setCalendarBookings] = useState<CalendarBooking[]>(bookings);
 
-  const weekStart = new Date(initialWeekStart);
-  const weekEnd = new Date(initialWeekEnd);
+  const weekStart = useMemo(() => new Date(initialWeekStart), [initialWeekStart]);
+  const weekEnd = useMemo(() => new Date(initialWeekEnd), [initialWeekEnd]);
+
+  useEffect(() => {
+    setCalendarBookings(bookings);
+  }, [bookings]);
 
   // Filter bookings by status
   const filteredBookings = useMemo(() => {
-    if (statusFilter === "all") return bookings;
-    return bookings.filter((b) => b.status === statusFilter);
-  }, [bookings, statusFilter]);
+    if (statusFilter === "all") return calendarBookings;
+    return calendarBookings.filter((b) => b.status === statusFilter);
+  }, [calendarBookings, statusFilter]);
 
   const navigateToWeek = useCallback(
     (date: Date) => {
@@ -62,13 +70,13 @@ export function BookingTimeline({
 
   // Quick stats
   const stats = useMemo(() => {
-    const active = bookings.filter((b) => b.status === "ACTIVE").length;
-    const confirmed = bookings.filter((b) => b.status === "CONFIRMED").length;
-    const totalRevenue = bookings
+    const active = calendarBookings.filter((b) => b.status === "ACTIVE").length;
+    const confirmed = calendarBookings.filter((b) => b.status === "CONFIRMED").length;
+    const totalRevenue = calendarBookings
       .filter((b) => b.status !== "CANCELED")
       .reduce((sum, b) => sum + b.totalPrice, 0);
     const occupiedVehicles = new Set(
-      bookings
+      calendarBookings
         .filter((b) => b.status === "ACTIVE" || b.status === "CONFIRMED")
         .map((b) => b.vehicleId)
     ).size;
@@ -78,7 +86,7 @@ export function BookingTimeline({
         : 0;
 
     return { active, confirmed, totalRevenue, occupationRate };
-  }, [bookings, vehicles]);
+  }, [calendarBookings, vehicles]);
 
   const formattedRevenue = new Intl.NumberFormat("fr-MA", {
     minimumFractionDigits: 0,
@@ -86,7 +94,54 @@ export function BookingTimeline({
   }).format(stats.totalRevenue);
 
   // Check if there are any bookings at all
-  const hasBookings = bookings.length > 0;
+  const hasBookings = calendarBookings.length > 0;
+
+  const handleCommitDates = useCallback(
+    async (payload: {
+      bookingId: string;
+      startDate: Date;
+      endDate: Date;
+      updatedAt?: Date;
+    }) => {
+      const response = await fetch(`/api/bookings/${payload.bookingId}/dates`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startDate: payload.startDate.toISOString(),
+          endDate: payload.endDate.toISOString(),
+          updatedAt: payload.updatedAt?.toISOString(),
+        }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        booking?: { id: string; startDate: string; endDate: string; updatedAt?: string };
+        error?: string;
+      };
+
+      if (!response.ok || !data.booking) {
+        throw new Error(data.error || "Erreur lors de la mise à jour");
+      }
+
+      return data.booking;
+    },
+    [],
+  );
+
+  const handleCreateFromRange = useCallback(
+    (payload: { vehicleId: string; startDate: Date; endDate: Date }) => {
+      const params = new URLSearchParams({
+        vehicleId: payload.vehicleId,
+        start: toDayKeyLocal(payload.startDate),
+        end: toDayKeyLocal(payload.endDate),
+      });
+      router.push(`/bookings/create?${params.toString()}`);
+    },
+    [router],
+  );
+
+  const handleInteractionError = useCallback((message: string) => {
+    toast.error(message);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -139,11 +194,16 @@ export function BookingTimeline({
       )}
 
       {/* Timeline Grid */}
-      <TimelineGrid
+      <CalendarGrid
         vehicles={vehicles}
         bookings={filteredBookings}
         weekStart={weekStart}
         weekEnd={weekEnd}
+        currentUserRole={currentUserRole}
+        setBookings={setCalendarBookings}
+        onCommitDates={handleCommitDates}
+        onCreateFromRange={handleCreateFromRange}
+        onError={handleInteractionError}
       />
 
       {/* Empty state when there are vehicles but no bookings */}

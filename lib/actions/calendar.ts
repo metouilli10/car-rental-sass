@@ -19,8 +19,10 @@ export type CalendarBooking = {
   vehicleId: string;
   startDate: Date;
   endDate: Date;
+  updatedAt: Date;
   totalPrice: number;
   pricePerDay: number;
+  depositAmount: number;
   status: string;
   paymentStatus: string;
   customer: {
@@ -36,6 +38,7 @@ export type CalendarData = {
   bookings: CalendarBooking[];
   weekStart: Date;
   weekEnd: Date;
+  currentUserRole: "OWNER" | "MANAGER" | "EMPLOYEE";
 };
 
 export async function getCalendarData(weekParam?: string): Promise<CalendarData> {
@@ -103,13 +106,16 @@ export async function getCalendarData(weekParam?: string): Promise<CalendarData>
       vehicleId: b.vehicleId,
       startDate: b.startDate,
       endDate: b.endDate,
+      updatedAt: b.updatedAt,
       totalPrice: b.totalPrice,
       pricePerDay: b.pricePerDay,
+      depositAmount: b.depositAmount,
       status: b.status as string,
       paymentStatus: b.paymentStatus as string,
       customer: b.customer,
     })),
     weekStart,
     weekEnd,
+    currentUserRole: session.user.role,
   };
 }

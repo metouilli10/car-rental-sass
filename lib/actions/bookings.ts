@@ -214,3 +214,124 @@ export async function startBooking(bookingId: string) {
 export async function completeBooking(bookingId: string) {
   return updateBookingStatus(bookingId, "COMPLETED");
 }
+
+export async function extendActiveBooking(
+  bookingId: string,
+  additionalDays: number
+) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new Error("Non autorisé");
+  }
+
+  if (!["OWNER", "MANAGER", "EMPLOYEE"].includes(session.user.role)) {
+    throw new Error("Vous n'avez pas l'autorisation de prolonger cette réservation");
+  }
+
+  if (!Number.isFinite(additionalDays) || additionalDays <= 0 || additionalDays > 30) {
+    throw new Error("Le nombre de jours doit être compris entre 1 et 30");
+  }
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.findFirst({
+        where: {
+          id: bookingId,
+          agencyId: session.user.agencyId,
+        },
+        include: {
+          payments: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
+      });
+
+      if (!booking) {
+        throw new Error("Réservation non trouvée");
+      }
+
+      if (booking.status !== "ACTIVE") {
+        throw new Error("Seules les réservations actives peuvent être prolongées");
+      }
+
+      const newEndDate = new Date(booking.endDate);
+      newEndDate.setDate(newEndDate.getDate() + additionalDays);
+
+      const conflictingBooking = await tx.booking.findFirst({
+        where: {
+          agencyId: session.user.agencyId,
+          vehicleId: booking.vehicleId,
+          id: { not: booking.id },
+          status: { notIn: ["CANCELED", "COMPLETED"] },
+          startDate: { lt: newEndDate },
+          endDate: { gt: booking.startDate },
+        },
+        select: { id: true },
+      });
+
+      if (conflictingBooking) {
+        throw new Error("Conflit: ce véhicule est déjà réservé sur cette période");
+      }
+
+      const extraAmount = additionalDays * booking.pricePerDay;
+      const nextRemainingAmount = booking.remainingAmount + extraAmount;
+      const nextTotalPrice = booking.totalPrice + extraAmount;
+      const nextTotalTtc =
+        (booking.totalTtc > 0 ? booking.totalTtc : booking.totalPrice) + extraAmount;
+      const nextPricingDays = booking.pricingDays + additionalDays;
+      const nextPaymentStatus =
+        nextRemainingAmount <= 0
+          ? "PAID"
+          : booking.paidNow > 0
+            ? "PARTIAL"
+            : "PENDING";
+
+      await tx.booking.update({
+        where: { id: booking.id },
+        data: {
+          endDate: newEndDate,
+          totalPrice: nextTotalPrice,
+          totalTtc: nextTotalTtc,
+          remainingAmount: nextRemainingAmount,
+          pricingDays: nextPricingDays,
+          paymentStatus: nextPaymentStatus,
+        },
+      });
+
+      await tx.payment.create({
+        data: {
+          bookingId: booking.id,
+          amount: extraAmount,
+          type: booking.payments[0]?.type ?? PaymentType.CASH,
+          category: "RENTAL",
+          status: "PENDING",
+        },
+      });
+
+      return {
+        newEndDate,
+        extraAmount,
+      };
+    });
+
+    revalidatePath("/bookings");
+    revalidatePath(`/bookings/${bookingId}`);
+    revalidatePath("/dashboard");
+    revalidatePath("/payments");
+    revalidatePath("/finance");
+
+    return {
+      success: true,
+      newEndDate: result.newEndDate,
+      extraAmount: result.extraAmount,
+    };
+  } catch (error) {
+    console.error("extendActiveBooking error:", error);
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error("Erreur lors de la prolongation de la réservation");
+  }
+}

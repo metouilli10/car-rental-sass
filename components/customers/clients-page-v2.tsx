@@ -784,7 +784,7 @@ function ClientsTable({
                           <TooltipContent>{customer.email}</TooltipContent>
                         </Tooltip>
                       ) : (
-                        <p className="text-xs text-muted-foreground">Pas d'email</p>
+                        <p className="text-xs text-muted-foreground">Pas d&apos;email</p>
                       )}
                     </div>
                   </td>

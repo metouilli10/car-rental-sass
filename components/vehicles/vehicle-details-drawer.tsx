@@ -95,7 +95,7 @@ export function VehicleDetailsDrawer({
           Véhicule désactivé
         </Button>
         <p className="text-xs text-muted-foreground">
-          Réactivez le véhicule depuis le menu d'actions pour créer une réservation.
+          Réactivez le véhicule depuis le menu d&apos;actions pour créer une réservation.
         </p>
       </div>
     );

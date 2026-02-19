@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   startBooking,
   completeBooking,
   cancelBooking,
+  extendActiveBooking,
 } from "@/lib/actions/bookings";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,14 +28,19 @@ interface BookingStatusActionsProps {
   bookingId: string;
   currentStatus: string;
   canCancel: boolean;
+  endDate?: Date;
+  pricePerDay?: number;
 }
 
 export function BookingStatusActions({
   bookingId,
   currentStatus,
   canCancel,
+  endDate,
+  pricePerDay,
 }: BookingStatusActionsProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [additionalDays, setAdditionalDays] = useState(1);
 
   const handleAction = async (action: () => Promise<void>, successMessage: string) => {
     setIsLoading(true);
@@ -133,6 +141,78 @@ export function BookingStatusActions({
         <>
           <AlertDialog>
             <AlertDialogTrigger asChild>
+              <Button variant="outline" disabled={isLoading}>
+                Prolonger la réservation
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Prolonger la réservation</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Ajoutez des jours à cette location active. Un paiement en attente sera
+                  créé automatiquement pour le montant supplémentaire.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Jours à ajouter</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={additionalDays}
+                    onChange={(event) =>
+                      setAdditionalDays(
+                        Math.max(1, Math.min(30, Number(event.target.value) || 1))
+                      )
+                    }
+                  />
+                </div>
+
+                {typeof pricePerDay === "number" ? (
+                  <p className="text-sm text-muted-foreground">
+                    Supplément estimé :{" "}
+                    <span className="font-medium text-foreground">
+                      {formatCurrency(additionalDays * pricePerDay)}
+                    </span>
+                  </p>
+                ) : null}
+
+                {endDate ? (
+                  <p className="text-sm text-muted-foreground">
+                    Nouveau retour prévu :{" "}
+                    <span className="font-medium text-foreground">
+                      {formatDate(
+                        new Date(
+                          new Date(endDate).setDate(
+                            new Date(endDate).getDate() + additionalDays
+                          )
+                        )
+                      )}
+                    </span>
+                  </p>
+                ) : null}
+              </div>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isLoading}>Annuler</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() =>
+                    handleAction(async () => {
+                      await extendActiveBooking(bookingId, additionalDays);
+                    }, "Réservation prolongée avec succès")
+                  }
+                  disabled={isLoading}
+                >
+                  Prolonger
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
               <Button disabled={isLoading}>
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -146,7 +226,7 @@ export function BookingStatusActions({
               <AlertDialogHeader>
                 <AlertDialogTitle>Terminer la location</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Le véhicule sera marqué comme disponible. Assurez-vous d'avoir
+                  Le véhicule sera marqué comme disponible. Assurez-vous d&apos;avoir
                   créé un rapport de dégâts si nécessaire.
                 </AlertDialogDescription>
               </AlertDialogHeader>

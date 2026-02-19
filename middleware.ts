@@ -9,7 +9,9 @@ export const config = {
     "/bookings/:path*",
     "/reservations/:path*",
     "/users/:path*",
+    "/finance/:path*",
     "/payments/:path*",
+    "/paiements/:path*",
     "/damage-reports/:path*",
   ],
 };

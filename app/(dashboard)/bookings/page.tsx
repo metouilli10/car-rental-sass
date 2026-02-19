@@ -1,12 +1,10 @@
 import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { Pagination } from "@/components/shared/pagination";
-import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { BookingsControlCenter, type BookingListItem } from "@/components/bookings/bookings-control-center";
 import Link from "next/link";
-import { Eye } from "lucide-react";
 
 const PAGE_SIZE = 25;
 
@@ -35,13 +33,16 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
       where,
       select: {
         id: true,
+        paymentStatus: true,
+        paidNow: true,
+        remainingAmount: true,
         startDate: true,
         endDate: true,
         totalPrice: true,
         depositAmount: true,
         status: true,
-        customer: { select: { name: true, phone: true } },
-        vehicle: { select: { make: true, model: true, plate: true } },
+        customer: { select: { id: true, name: true, phone: true } },
+        vehicle: { select: { id: true, make: true, model: true, plate: true } },
         deposit: { select: { status: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -58,6 +59,7 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
   ]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const bookingsData: BookingListItem[] = bookings;
 
   return (
     <div className="space-y-8">
@@ -80,86 +82,8 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
           </Button>
         </div>
       ) : (
-        <div className="rounded-2xl bg-white shadow-card">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-transparent border-b border-muted">
-                <tr>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                    Client
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                    Véhicule
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                    Dates
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                    Caution
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                    Statut
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-muted/60">
-                {bookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-muted/40 transition-colors duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-foreground">{booking.customer.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {booking.customer.phone}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-foreground">
-                        {booking.vehicle.make} {booking.vehicle.model}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {booking.vehicle.plate}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="text-foreground">{formatDate(booking.startDate)}</div>
-                      <div className="text-muted-foreground">
-                        → {formatDate(booking.endDate)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                      {formatCurrency(booking.totalPrice)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-foreground">
-                        {formatCurrency(booking.depositAmount)}
-                      </div>
-                      {booking.deposit && (
-                        <div className="mt-1">
-                          <StatusBadge status={booking.deposit.status} />
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <StatusBadge status={booking.status} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Button asChild size="sm" variant="ghost">
-                        <Link href={`/bookings/${booking.id}`}>
-                          <Eye className="h-4 w-4 mr-1" />
-                          Voir
-                        </Link>
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-4">
+          <BookingsControlCenter bookings={bookingsData} role={session.user.role} />
           <Pagination
             currentPage={page}
             totalPages={totalPages}

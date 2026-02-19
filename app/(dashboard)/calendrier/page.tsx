@@ -26,6 +26,7 @@ async function CalendrierContent({ weekParam }: { weekParam?: string }) {
       bookings={data.bookings}
       weekStart={data.weekStart}
       weekEnd={data.weekEnd}
+      currentUserRole={data.currentUserRole}
     />
   );
 }

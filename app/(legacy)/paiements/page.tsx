@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default async function PaymentsPage() {
+export default async function PaiementsLegacyPage() {
   redirect("/finance");
 }

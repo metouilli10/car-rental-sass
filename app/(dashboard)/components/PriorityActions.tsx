@@ -57,7 +57,7 @@ export async function PriorityActions({ agencyId, period }: PriorityActionsProps
             },
           },
         },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
         take: 6,
       }),
       prisma.deposit.findMany({

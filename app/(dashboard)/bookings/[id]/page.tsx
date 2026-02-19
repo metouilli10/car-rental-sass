@@ -221,6 +221,8 @@ export default async function BookingDetailsPage({
             bookingId={booking.id}
             currentStatus={booking.status}
             canCancel={session.user.role === "OWNER" || session.user.role === "MANAGER"}
+            endDate={booking.endDate}
+            pricePerDay={booking.pricePerDay}
           />
         </CardContent>
       </Card>

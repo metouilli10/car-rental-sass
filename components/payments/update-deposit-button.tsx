@@ -63,7 +63,7 @@ export function UpdateDepositButton({ depositId }: UpdateDepositButtonProps) {
         <AlertDialogHeader>
           <AlertDialogTitle>Gérer la caution</AlertDialogTitle>
           <AlertDialogDescription>
-            Choisissez l'action à effectuer sur cette caution.
+            Choisissez l&apos;action à effectuer sur cette caution.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

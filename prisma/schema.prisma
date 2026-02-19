@@ -82,6 +82,18 @@ enum DepositAction {
   HOLD
 }
 
+enum ExpenseCategory {
+  MAINTENANCE
+  CARBURANT
+  NETTOYAGE
+  ASSURANCE
+  TAXES
+  SALAIRES
+  LOYER
+  MARKETING
+  AUTRE
+}
+
 enum InspectionSectionType {
   CARROSSERIE
   PNEUS
@@ -149,6 +161,7 @@ model Agency {
   vehicles         Vehicle[]
   customers        Customer[]
   bookings         Booking[]
+  expenses         Expense[]
   reminderRules    ReminderRule[]
   notifications    Notification[]
 
@@ -234,6 +247,7 @@ model Vehicle {
 
   agency        Agency         @relation(fields: [agencyId], references: [id], onDelete: Cascade)
   bookings      Booking[]
+  expenses      Expense[]
   notifications Notification[]
 
   @@index([agencyId])
@@ -388,6 +402,29 @@ model Deposit {
 
   @@index([status])
   @@map("deposits")
+}
+
+model Expense {
+  id         String          @id @default(cuid())
+  agencyId   String
+  date       DateTime
+  category   ExpenseCategory
+  amount     Decimal         @db.Decimal(12, 2)
+  method     PaymentType
+  vehicleId  String?
+  note       String?
+  receiptUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency  Agency  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  vehicle Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+
+  @@index([agencyId, date])
+  @@index([agencyId, category])
+  @@index([agencyId, vehicleId])
+  @@map("expenses")
 }
 
 model DamageReport {

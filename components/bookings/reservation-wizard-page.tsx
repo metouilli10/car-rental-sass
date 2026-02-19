@@ -33,6 +33,8 @@ interface ReservationWizardPageProps {
   activeBookings: ActiveBookingSlot[];
   prefilledVehicleId?: string;
   prefilledCustomerId?: string;
+  prefilledStartAt?: string;
+  prefilledEndAt?: string;
   onSubmit: (
     data: BookingFormData,
   ) => Promise<{ error: string } | { success: boolean; bookingId: string } | void>;
@@ -98,6 +100,8 @@ export function ReservationWizardPage({
   activeBookings,
   prefilledVehicleId,
   prefilledCustomerId,
+  prefilledStartAt,
+  prefilledEndAt,
   onSubmit,
 }: ReservationWizardPageProps) {
   const router = useRouter();
@@ -291,6 +295,20 @@ export function ReservationWizardPage({
       };
     });
   }, [customers, prefilledCustomerId]);
+
+  useEffect(() => {
+    if (!prefilledStartAt && !prefilledEndAt) return;
+    setDraft((prev) => {
+      if (prev.startAt || prev.endAt) {
+        return prev;
+      }
+      return {
+        ...prev,
+        startAt: prefilledStartAt ?? prev.startAt,
+        endAt: prefilledEndAt ?? prev.endAt,
+      };
+    });
+  }, [prefilledEndAt, prefilledStartAt]);
 
   const warnings = useMemo(() => {
     const list: string[] = [];

@@ -329,7 +329,7 @@ export default function Home() {
               href="/login"
               className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#2563EB] text-white text-base font-semibold rounded-full hover:bg-[#1D4ED8] transition-all hover:shadow-xl hover:shadow-[#2563EB]/25 active:scale-[0.98]"
             >
-              Démarrer l'essai gratuit
+              Démarrer l&apos;essai gratuit
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <Link
@@ -450,7 +450,7 @@ export default function Home() {
           <div className="text-center mb-14">
             <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Fonctionnalités</p>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              Tout ce qu'il vous faut, rien de plus
+              Tout ce qu&apos;il vous faut, rien de plus
             </h2>
             <p className="text-gray-500 max-w-xl mx-auto">
               Conçu spécialement pour les agences de location au Maroc. Simple, complet, efficace.
@@ -602,7 +602,7 @@ export default function Home() {
                 ))}
               </div>
               <blockquote className="text-lg md:text-xl font-medium leading-relaxed mb-6 text-gray-900">
-                "Avant Locapro, je passais mes soirées à vérifier les retours et les paiements. Maintenant tout est clair, je peux enfin me concentrer sur mes clients."
+                &quot;Avant Locapro, je passais mes soirées à vérifier les retours et les paiements. Maintenant tout est clair, je peux enfin me concentrer sur mes clients.&quot;
               </blockquote>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2563EB] to-[#3B82F6] flex items-center justify-center text-white font-bold text-sm">
@@ -610,7 +610,7 @@ export default function Home() {
                 </div>
                 <div>
                   <div className="font-semibold text-gray-900 text-sm">Youssef A.</div>
-                  <div className="text-xs text-gray-500">Gérant d'agence, Casablanca</div>
+                  <div className="text-xs text-gray-500">Gérant d&apos;agence, Casablanca</div>
                 </div>
               </div>
             </div>
@@ -763,7 +763,7 @@ export default function Home() {
               href="/login"
               className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white text-[#2563EB] text-base font-semibold rounded-full hover:bg-gray-100 transition-all active:scale-[0.98]"
             >
-              Démarrer l'essai gratuit
+              Démarrer l&apos;essai gratuit
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <Link

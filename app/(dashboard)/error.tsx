@@ -24,11 +24,11 @@ export default function DashboardError({
           <div className="w-16 h-16 rounded-full bg-destructive/10 mx-auto mb-4 flex items-center justify-center">
             <AlertCircle className="w-8 h-8 text-destructive" />
           </div>
-          <CardTitle className="text-2xl">Quelque chose s'est mal passé</CardTitle>
+          <CardTitle className="text-2xl">Quelque chose s&apos;est mal passé</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-muted-foreground">
-            Une erreur inattendue s'est produite lors du chargement de cette page.
+            Une erreur inattendue s&apos;est produite lors du chargement de cette page.
           </p>
           {error.message && (
             <div className="p-3 rounded-lg bg-muted text-sm">
