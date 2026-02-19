@@ -8,6 +8,8 @@ import { PriorityActionRow } from "./PriorityActionRow";
 export interface PriorityActionItem {
   id: string;
   type: "retard" | "paiement" | "caution" | "rappel";
+  paymentId?: string;
+  depositId?: string;
   clientName: string;
   vehicleName: string;
   plate: string;

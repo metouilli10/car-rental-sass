@@ -114,6 +114,7 @@ export async function PriorityActions({ agencyId, period }: PriorityActionsProps
     ...unpaidPayments.map((payment) => ({
       id: `paiement-${payment.id}`,
       type: "paiement" as const,
+      paymentId: payment.id,
       clientName: payment.booking.customer.name,
       vehicleName: `${payment.booking.vehicle.make} ${payment.booking.vehicle.model}`,
       plate: payment.booking.vehicle.plate,
@@ -132,6 +133,7 @@ export async function PriorityActions({ agencyId, period }: PriorityActionsProps
     ...depositsToRelease.map((deposit) => ({
       id: `caution-${deposit.id}`,
       type: "caution" as const,
+      depositId: deposit.id,
       clientName: deposit.booking.customer.name,
       vehicleName: `${deposit.booking.vehicle.make} ${deposit.booking.vehicle.model}`,
       plate: deposit.booking.vehicle.plate,

@@ -1,10 +1,23 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, PhoneCall, MessageCircleMore, Eye } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { markPaymentReceived, updateDepositStatus } from "@/lib/actions/payments";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,9 +40,54 @@ const statusByType: Record<PriorityActionItem["type"], string> = {
 
 export function PriorityActionRow({ action }: PriorityActionRowProps) {
   const router = useRouter();
+  const [isActionPending, setIsActionPending] = useState(false);
 
   const handleOpenDetails = () => {
     router.push(action.detailsHref);
+  };
+
+  const handlePaymentAction = async () => {
+    if (!(action.type === "paiement" && action.paymentId)) return;
+    setIsActionPending(true);
+    try {
+      const result = await markPaymentReceived(action.paymentId);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Paiement encaissé");
+      router.refresh();
+    } catch {
+      toast.error("Erreur lors de l'encaissement");
+    } finally {
+      setIsActionPending(false);
+    }
+  };
+
+  const handleDepositRelease = async () => {
+    if (!(action.type === "caution" && action.depositId)) return;
+    setIsActionPending(true);
+    try {
+      const result = await updateDepositStatus(action.depositId, "RETURNED");
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Caution libérée");
+      router.refresh();
+    } catch {
+      toast.error("Erreur lors de la libération de la caution");
+    } finally {
+      setIsActionPending(false);
+    }
+  };
+
+  const handlePrimaryAction = async () => {
+    if (action.type === "paiement") {
+      await handlePaymentAction();
+      return;
+    }
+    router.push(action.actionHref);
   };
 
   return (
@@ -44,9 +102,42 @@ export function PriorityActionRow({ action }: PriorityActionRowProps) {
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
-        <Button size="sm" className="h-8 rounded-md px-3" asChild>
-          <Link href={action.actionHref}>{action.actionLabel}</Link>
-        </Button>
+        {action.type === "caution" && action.depositId ? (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" className="h-8 rounded-md px-3" disabled={isActionPending}>
+                {action.actionLabel}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmer la libération de caution</AlertDialogTitle>
+                <AlertDialogDescription>
+                  La caution de{" "}
+                  <span className="font-medium text-foreground">{action.clientName}</span> pour{" "}
+                  <span className="font-medium text-foreground">{action.vehicleName}</span>{" "}
+                  (<span className="font-mono text-foreground">{action.plate}</span>) sera marquée
+                  comme restituée.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDepositRelease}>
+                  Confirmer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : (
+          <Button
+            size="sm"
+            className="h-8 rounded-md px-3"
+            onClick={handlePrimaryAction}
+            disabled={isActionPending}
+          >
+            {action.actionLabel}
+          </Button>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

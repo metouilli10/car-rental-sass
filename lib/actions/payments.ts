@@ -35,6 +35,7 @@ export async function markPaymentReceived(paymentId: string, amount?: number) {
 
     revalidatePath("/payments");
     revalidatePath("/finance");
+    revalidatePath("/dashboard");
     revalidatePath(`/bookings/${payment.bookingId}`);
   } catch (error) {
     console.error("markPaymentReceived error:", error);
@@ -76,6 +77,7 @@ export async function updateDepositStatus(
 
     revalidatePath("/payments");
     revalidatePath("/finance");
+    revalidatePath("/dashboard");
     revalidatePath(`/bookings/${deposit.bookingId}`);
   } catch (error) {
     console.error("updateDepositStatus error:", error);
