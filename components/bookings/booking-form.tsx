@@ -11,6 +11,7 @@ interface BookingFormProps {
   vehicles: BookingVehicleOption[];
   locationOptions: string[];
   activeBookings: ActiveBookingSlot[];
+  prefilledVehicleId?: string;
   onSubmit: (
     data: BookingFormData,
   ) => Promise<{ error: string } | { success: boolean; bookingId: string } | void>;

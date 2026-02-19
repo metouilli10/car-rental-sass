@@ -5,6 +5,7 @@ import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
 import { MobileFAB } from "@/components/shared/mobile-fab";
 import { Toaster } from "sonner";
+import { getNotificationsSummary } from "@/lib/actions/notifications";
 
 export default async function DashboardLayout({
   children,
@@ -16,6 +17,11 @@ export default async function DashboardLayout({
   if (!session) {
     redirect("/login");
   }
+
+  // Fetch real notification summary for the bell icon
+  const notifSummary = await getNotificationsSummary(session.user.agencyId).catch(
+    () => ({ count: 0, items: [] })
+  );
 
   return (
     <div className="flex min-h-screen bg-background" suppressHydrationWarning>
@@ -30,6 +36,8 @@ export default async function DashboardLayout({
           userName={session.user.name || "Utilisateur"}
           userEmail={session.user.email || ""}
           agencyName={session.user.agencyName || "Agence"}
+          notifCount={notifSummary.count}
+          topNotifs={notifSummary.items}
         />
 
         {/* Main Content */}

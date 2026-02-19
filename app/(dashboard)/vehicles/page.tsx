@@ -1,13 +1,10 @@
 import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { Pagination } from "@/components/shared/pagination";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import Image from "next/image";
 import Link from "next/link";
 import { Plus, Car } from "lucide-react";
-import { VehicleActionsMenu } from "@/components/vehicles/vehicle-actions-menu";
 import { VehiclesSearchBar } from "@/components/vehicles/vehicles-search-bar";
-import { getBrandLogoPath } from "@/lib/brand-logos";
+import { VehiclesList } from "@/components/vehicles/vehicles-list";
 import type { VehicleStatus } from "@prisma/client";
 
 const PAGE_SIZE = 25;
@@ -23,20 +20,6 @@ const statusTabs = [
   { key: "MAINTENANCE" as VehicleStatus, label: "Maintenance" },
   { key: "UNAVAILABLE" as VehicleStatus, label: "Désactivés" },
 ];
-
-const statusBadgeStyles: Record<string, string> = {
-  AVAILABLE: "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200",
-  RENTED: "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200",
-  MAINTENANCE: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200",
-  UNAVAILABLE: "bg-gray-100 text-gray-500 ring-1 ring-inset ring-gray-200",
-};
-
-const statusLabels: Record<string, string> = {
-  AVAILABLE: "Disponible",
-  RENTED: "Loué",
-  MAINTENANCE: "Maintenance",
-  UNAVAILABLE: "Désactivé",
-};
 
 export default async function VehiclesPage({
   searchParams,
@@ -85,6 +68,7 @@ export default async function VehiclesPage({
                 where: { status: "ACTIVE" },
                 take: 1,
                 select: {
+                  id: true,
                   startDate: true,
                   endDate: true,
                   customer: { select: { id: true, name: true } },
@@ -211,232 +195,10 @@ export default async function VehiclesPage({
           )}
         </div>
       ) : (
-        <div className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
-
-          {/* ── Desktop table ── */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                    Véhicule
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                    Plaque
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                    Année
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                    Prix / Jour
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                    Statut
-                  </th>
-                  {isRentedView && (
-                    <>
-                      <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                        Client
-                      </th>
-                      <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                        Période
-                      </th>
-                    </>
-                  )}
-                  <th className="px-6 py-3.5 text-right text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {vehicles.map((vehicle) => {
-                  const brandLogoPath = getBrandLogoPath(vehicle.make);
-                  const activeBooking =
-                    "bookings" in vehicle
-                      ? (
-                          vehicle.bookings as Array<{
-                            startDate: Date;
-                            endDate: Date;
-                            customer: { id: string; name: string };
-                          }>
-                        )?.[0]
-                      : null;
-
-                  return (
-                    <tr
-                      key={vehicle.id}
-                      className="hover:bg-gray-50/70 transition-colors duration-150"
-                    >
-                      {/* Vehicle column */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
-                            {brandLogoPath ? (
-                              <div className="relative w-7 h-7">
-                                <Image
-                                  src={brandLogoPath}
-                                  alt={`Logo ${vehicle.make}`}
-                                  fill
-                                  className="object-contain"
-                                  sizes="28px"
-                                />
-                              </div>
-                            ) : (
-                              <Car className="h-4 w-4 text-gray-400" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-semibold text-gray-900 text-sm leading-snug">
-                              {vehicle.make} {vehicle.model}
-                            </div>
-                            <div className="text-xs text-gray-400 mt-0.5">
-                              {vehicle.color}
-                              {" · "}
-                              {vehicle.gearbox === "AUTO"
-                                ? "Automatique"
-                                : "Manuelle"}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Plate */}
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-gray-50 border border-gray-200 text-xs font-mono font-medium text-gray-700 tracking-wide">
-                          {vehicle.plate}
-                        </span>
-                      </td>
-
-                      {/* Year */}
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {vehicle.year}
-                      </td>
-
-                      {/* Price */}
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-semibold text-gray-900">
-                          {formatCurrency(vehicle.pricePerDay)}
-                        </span>
-                        <span className="text-xs text-gray-400 ml-0.5">/j</span>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                            statusBadgeStyles[vehicle.status] ??
-                            "bg-gray-100 text-gray-500"
-                          }`}
-                        >
-                          {statusLabels[vehicle.status] ?? vehicle.status}
-                        </span>
-                      </td>
-
-                      {/* Rented-view extras */}
-                      {isRentedView && (
-                        <>
-                          <td className="px-6 py-4 text-sm">
-                            {activeBooking ? (
-                              <Link
-                                href={`/customers/${activeBooking.customer.id}`}
-                                className="text-[#6D5EF7] hover:underline font-medium"
-                              >
-                                {activeBooking.customer.name}
-                              </Link>
-                            ) : (
-                              <span className="text-gray-300">—</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-xs text-gray-500">
-                            {activeBooking ? (
-                              <>
-                                {formatDate(activeBooking.startDate)}
-                                <span className="mx-1 text-gray-300">→</span>
-                                {formatDate(activeBooking.endDate)}
-                              </>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                        </>
-                      )}
-
-                      {/* Actions */}
-                      <td className="px-6 py-4 text-right">
-                        <VehicleActionsMenu
-                          vehicleId={vehicle.id}
-                          vehicleStatus={vehicle.status}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* ── Mobile cards ── */}
-          <div className="sm:hidden divide-y divide-gray-100">
-            {vehicles.map((vehicle) => {
-              const brandLogoPath = getBrandLogoPath(vehicle.make);
-              return (
-                <div
-                  key={vehicle.id}
-                  className="flex items-center gap-3 px-4 py-3.5"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
-                    {brandLogoPath ? (
-                      <div className="relative w-8 h-8">
-                        <Image
-                          src={brandLogoPath}
-                          alt={`Logo ${vehicle.make}`}
-                          fill
-                          className="object-contain"
-                          sizes="32px"
-                        />
-                      </div>
-                    ) : (
-                      <Car className="h-5 w-5 text-gray-400" />
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-gray-900 text-sm truncate">
-                        {vehicle.make} {vehicle.model}
-                      </span>
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium shrink-0 ${
-                          statusBadgeStyles[vehicle.status] ??
-                          "bg-gray-100 text-gray-500"
-                        }`}
-                      >
-                        {statusLabels[vehicle.status] ?? vehicle.status}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-gray-400 font-mono">
-                        {vehicle.plate}
-                      </span>
-                      <span className="text-gray-200">·</span>
-                      <span className="text-xs font-semibold text-gray-600">
-                        {formatCurrency(vehicle.pricePerDay)}/j
-                      </span>
-                    </div>
-                  </div>
-
-                  <VehicleActionsMenu
-                    vehicleId={vehicle.id}
-                    vehicleStatus={vehicle.status}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="border-t border-gray-100">
+        <>
+          <VehiclesList vehicles={vehicles} isRentedView={isRentedView} />
+          {totalPages > 1 ? (
+            <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}
@@ -444,8 +206,8 @@ export default async function VehiclesPage({
                 searchParams={{ status, q }}
               />
             </div>
-          )}
-        </div>
+          ) : null}
+        </>
       )}
     </div>
   );

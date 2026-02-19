@@ -99,6 +99,38 @@ enum InspectionType {
   RETOUR
 }
 
+enum ReminderType {
+  OIL_CHANGE
+  INSURANCE_EXPIRY
+  TECH_INSPECTION
+  VIGNETTE
+}
+
+enum NotificationSeverity {
+  INFO
+  WARNING
+  DUE
+}
+
+enum NotificationStatus {
+  OPEN
+  SNOOZED
+  DONE
+  DISMISSED
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  WHATSAPP
+}
+
+enum NotificationEventStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
 model Agency {
   id       String @id @default(cuid())
   name     String
@@ -116,6 +148,8 @@ model Agency {
   vehicles         Vehicle[]
   customers        Customer[]
   bookings         Booking[]
+  reminderRules    ReminderRule[]
+  notifications    Notification[]
 
   @@map("agencies")
 }
@@ -162,11 +196,39 @@ model Vehicle {
   currentKm         Int?
   nextMaintenanceKm Int?
 
+  // Maintenance — oil change
+  lastOilChangeMileageKm Int?
+  lastOilChangeDate      DateTime?
+  oilChangeIntervalKm    Int?
+  oilChangeIntervalMonths Int?
+  nextOilChangeMileageKm Int?
+  nextOilChangeDate      DateTime?
+
+  // Insurance
+  insuranceProvider     String?
+  insurancePolicyNumber String?
+  insuranceStartDate    DateTime?
+  insuranceExpiryDate   DateTime?
+  insuranceReminderDays Int[]
+
+  // Visite technique
+  lastTechnicalInspectionDate     DateTime?
+  nextTechnicalInspectionDate     DateTime?
+  technicalInspectionReminderDays Int[]
+
+  // Vignette
+  vignetteExpiryDate    DateTime?
+  vignetteReminderDays  Int[]
+
+  // General
+  maintenanceNotes String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  agency   Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  agency        Agency         @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  bookings      Booking[]
+  notifications Notification[]
 
   @@index([agencyId])
   @@index([status])
@@ -380,4 +442,65 @@ model InspectionSection {
 
   @@index([damageReportId])
   @@map("inspection_sections")
+}
+
+model ReminderRule {
+  id              String       @id @default(cuid())
+  agencyId        String
+  type            ReminderType
+  enabled         Boolean      @default(true)
+  leadDays        Int[]
+  leadKm          Int[]
+  channelInApp    Boolean      @default(true)
+  channelEmail    Boolean      @default(false)
+  channelWhatsApp Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+
+  @@unique([agencyId, type])
+  @@index([agencyId])
+  @@map("reminder_rules")
+}
+
+model Notification {
+  id           String               @id @default(cuid())
+  agencyId     String
+  vehicleId    String
+  type         ReminderType
+  title        String
+  body         String
+  severity     NotificationSeverity
+  dueAt        DateTime?
+  dueMileageKm Int?
+  status       NotificationStatus   @default(OPEN)
+  snoozedUntil DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  agency  Agency              @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  vehicle Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  events  NotificationEvent[]
+
+  @@unique([agencyId, vehicleId, type])
+  @@index([agencyId])
+  @@index([vehicleId])
+  @@index([status])
+  @@map("notifications")
+}
+
+model NotificationEvent {
+  id                String                  @id @default(cuid())
+  notificationId    String
+  channel           NotificationChannel
+  status            NotificationEventStatus @default(PENDING)
+  providerMessageId String?
+  lastError         String?
+  createdAt         DateTime                @default(now())
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@map("notification_events")
 }

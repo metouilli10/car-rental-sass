@@ -15,61 +15,81 @@ const sanitizePhoneForCall = (phone: string) => {
     : `+212${cleaned.startsWith("0") ? cleaned.slice(1) : cleaned}`;
 };
 
+const REMINDER_LABELS: Record<string, string> = {
+  OIL_CHANGE: "Vidange à prévoir",
+  INSURANCE_EXPIRY: "Assurance à renouveler",
+  TECH_INSPECTION: "Visite technique à prévoir",
+  VIGNETTE: "Vignette à renouveler",
+};
+
 export async function PriorityActions({ agencyId, period }: PriorityActionsProps) {
   const now = new Date();
   const { end } = getPeriodBounds(period, now);
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
 
-  const [overdueBookings, unpaidPayments, depositsToRelease] = await Promise.all([
-    prisma.booking.findMany({
-      where: {
-        agencyId,
-        status: "ACTIVE",
-        endDate: { lt: todayStart, lte: end },
-      },
-      include: {
-        customer: { select: { name: true, phone: true } },
-        vehicle: { select: { make: true, model: true, plate: true } },
-      },
-      orderBy: { endDate: "asc" },
-      take: 6,
-    }),
-    prisma.payment.findMany({
-      where: {
-        booking: { agencyId },
-        status: "PENDING",
-        createdAt: { lte: end },
-      },
-      include: {
-        booking: {
-          include: {
-            customer: { select: { name: true, phone: true } },
-            vehicle: { select: { make: true, model: true, plate: true } },
+  const [overdueBookings, unpaidPayments, depositsToRelease, reminderNotifications] =
+    await Promise.all([
+      prisma.booking.findMany({
+        where: {
+          agencyId,
+          status: "ACTIVE",
+          endDate: { lt: todayStart, lte: end },
+        },
+        include: {
+          customer: { select: { name: true, phone: true } },
+          vehicle: { select: { make: true, model: true, plate: true } },
+        },
+        orderBy: { endDate: "asc" },
+        take: 6,
+      }),
+      prisma.payment.findMany({
+        where: {
+          booking: { agencyId },
+          status: "PENDING",
+          createdAt: { lte: end },
+        },
+        include: {
+          booking: {
+            include: {
+              customer: { select: { name: true, phone: true } },
+              vehicle: { select: { make: true, model: true, plate: true } },
+            },
           },
         },
-      },
-      orderBy: { createdAt: "asc" },
-      take: 6,
-    }),
-    prisma.deposit.findMany({
-      where: {
-        booking: { agencyId, status: "COMPLETED" },
-        status: "HELD",
-        heldAt: { lte: end },
-      },
-      include: {
-        booking: {
-          include: {
-            customer: { select: { name: true, phone: true } },
-            vehicle: { select: { make: true, model: true, plate: true } },
+        orderBy: { createdAt: "asc" },
+        take: 6,
+      }),
+      prisma.deposit.findMany({
+        where: {
+          booking: { agencyId, status: "COMPLETED" },
+          status: "HELD",
+          heldAt: { lte: end },
+        },
+        include: {
+          booking: {
+            include: {
+              customer: { select: { name: true, phone: true } },
+              vehicle: { select: { make: true, model: true, plate: true } },
+            },
           },
         },
-      },
-      orderBy: { heldAt: "asc" },
-      take: 6,
-    }),
-  ]);
+        orderBy: { heldAt: "asc" },
+        take: 6,
+      }),
+      prisma.notification.findMany({
+        where: {
+          agencyId,
+          status: "OPEN",
+          severity: { in: ["WARNING", "DUE"] },
+        },
+        include: {
+          vehicle: { select: { id: true, make: true, model: true, plate: true } },
+        },
+        orderBy: [{ severity: "desc" }, { updatedAt: "asc" }],
+        take: 3,
+      }),
+    ]);
 
   const rows: PriorityActionItem[] = [
     ...overdueBookings.map((booking) => ({
@@ -126,7 +146,19 @@ export async function PriorityActions({ agencyId, period }: PriorityActionsProps
       dueLabel: `Retenue depuis le ${formatDate(deposit.heldAt)}`,
       stripeColor: "bg-blue-500",
     })),
-  ].slice(0, 8);
+    ...reminderNotifications.map((notif) => ({
+      id: `rappel-${notif.id}`,
+      type: "rappel" as const,
+      clientName: REMINDER_LABELS[notif.type] ?? notif.title,
+      vehicleName: `${notif.vehicle.make} ${notif.vehicle.model}`,
+      plate: notif.vehicle.plate,
+      detailsHref: `/notifications`,
+      actionLabel: "Voir",
+      actionHref: `/notifications`,
+      dueLabel: notif.body,
+      stripeColor: notif.severity === "DUE" ? "bg-red-500" : "bg-violet-500",
+    })),
+  ].slice(0, 10);
 
   return (
     <PriorityActionsClient

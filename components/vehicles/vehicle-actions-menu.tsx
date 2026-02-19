@@ -1,153 +1,137 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, Edit2, PowerOff, Trash2, Power } from "lucide-react";
-import Link from "next/link";
-import { deleteVehicle, deactivateVehicle } from "@/lib/actions/vehicles";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { MoreHorizontal, Edit2, PowerOff, Power, Loader2, Wrench } from "lucide-react";
+import { toast } from "sonner";
+import { deactivateVehicle, setVehicleMaintenance } from "@/lib/actions/vehicles";
+import { Button } from "@/components/ui/button";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface VehicleActionsMenuProps {
   vehicleId: string;
   vehicleStatus: string;
+  onEdit: (vehicleId: string) => void;
+  onToggleActive?: (vehicleId: string) => void;
+  onSetMaintenance?: (vehicleId: string) => void;
 }
 
 export function VehicleActionsMenu({
   vehicleId,
   vehicleStatus,
+  onEdit,
+  onToggleActive,
+  onSetMaintenance,
 }: VehicleActionsMenuProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
   const [isToggling, setIsToggling] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    setError(null);
-    try {
-      const result = await deleteVehicle(vehicleId);
-      if (result?.error) {
-        setError(result.error);
-        setIsDeleting(false);
-      }
-    } catch {
-      setError("Une erreur s'est produite");
-      setIsDeleting(false);
-    }
-  };
+  const [isSettingMaintenance, setIsSettingMaintenance] = useState(false);
 
   const handleToggleStatus = async () => {
     setIsToggling(true);
-    setIsOpen(false);
     try {
-      await deactivateVehicle(vehicleId);
+      const result = await deactivateVehicle(vehicleId);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(
+        isActive ? "Véhicule désactivé" : "Véhicule activé",
+      );
+      onToggleActive?.(vehicleId);
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de la mise à jour du statut");
     } finally {
       setIsToggling(false);
     }
   };
 
-  const isDeactivated = vehicleStatus === "UNAVAILABLE";
+  const handleSetMaintenance = async () => {
+    setIsSettingMaintenance(true);
+    try {
+      const result = await setVehicleMaintenance(vehicleId);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Véhicule mis en maintenance");
+      onSetMaintenance?.(vehicleId);
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors du passage en maintenance");
+    } finally {
+      setIsSettingMaintenance(false);
+    }
+  };
+
+  const isActive = vehicleStatus === "AVAILABLE";
+  const isInMaintenance = vehicleStatus === "MAINTENANCE";
+  const isBusy = isToggling || isSettingMaintenance;
 
   return (
-    <div className="relative" ref={menuRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        disabled={isToggling}
-        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors duration-150 disabled:opacity-50"
-        aria-label="Actions"
-      >
-        <MoreHorizontal className="h-4 w-4" />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 z-50 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 mt-1 origin-top-right animate-in fade-in zoom-in-95 duration-100">
-          <Link
-            href={`/vehicles/${vehicleId}/edit`}
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+    <div onClick={(event) => event.stopPropagation()}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-gray-500 hover:text-gray-800"
+            disabled={isBusy}
+            aria-label="Actions"
+            onClick={(event) => event.stopPropagation()}
           >
-            <Edit2 className="h-3.5 w-3.5 text-gray-400" />
-            Modifier
-          </Link>
-
-          <button
-            onClick={handleToggleStatus}
-            className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            {isDeactivated ? (
-              <>
-                <Power className="h-3.5 w-3.5 text-emerald-500" />
-                Réactiver
-              </>
+            {isBusy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <>
-                <PowerOff className="h-3.5 w-3.5 text-gray-400" />
-                Désactiver
-              </>
+              <MoreHorizontal className="h-4 w-4" />
             )}
-          </button>
-
-          <div className="border-t border-gray-100 my-1" />
-
-          <button
-            onClick={() => {
-              setIsOpen(false);
-              setShowDeleteDialog(true);
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuItem
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(vehicleId);
             }}
-            className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-            Supprimer
-          </button>
-        </div>
-      )}
-
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer ce véhicule ? Cette action est
-              irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
-              {error}
-            </div>
-          )}
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? "Suppression..." : "Supprimer"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <Edit2 className="mr-2 h-4 w-4" />
+            Modifier
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={isBusy}
+            onClick={(event) => {
+              event.stopPropagation();
+              void handleToggleStatus();
+            }}
+          >
+            {isActive ? (
+              <PowerOff className="mr-2 h-4 w-4" />
+            ) : (
+              <Power className="mr-2 h-4 w-4 text-emerald-600" />
+            )}
+            {isActive ? "Désactiver" : "Activer"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={isBusy || isInMaintenance}
+            onClick={(event) => {
+              event.stopPropagation();
+              void handleSetMaintenance();
+            }}
+          >
+            <Wrench className="mr-2 h-4 w-4" />
+            Mettre en maintenance
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

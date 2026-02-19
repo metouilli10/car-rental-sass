@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, X } from "lucide-react";
+import { RemindersSetupPanel } from "./reminders-setup-panel";
 
 interface VehicleFormProps {
   defaultValues?: Partial<VehicleFormData>;
@@ -34,20 +35,25 @@ export function VehicleForm({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const form = useForm<VehicleFormData>({
+    resolver: zodResolver(vehicleSchema),
+    defaultValues: {
+      status: "AVAILABLE",
+      photoUrl: defaultValues?.photoUrl ?? "",
+      insuranceReminderDays: [30, 15, 7],
+      technicalInspectionReminderDays: [30, 15, 7],
+      vignetteReminderDays: [30, 15, 7],
+      ...defaultValues,
+    },
+  });
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
     watch,
-  } = useForm<VehicleFormData>({
-    resolver: zodResolver(vehicleSchema),
-    defaultValues: {
-      status: "AVAILABLE",
-      photoUrl: defaultValues?.photoUrl ?? "",
-      ...defaultValues,
-    },
-  });
+  } = form;
 
   const status = watch("status");
   const photoUrl = watch("photoUrl");
@@ -98,7 +104,8 @@ export function VehicleForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onFormSubmit)}>
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+      {/* ── Main vehicle info card ──────────────────────────────────────── */}
       <Card>
         <CardHeader>
           <CardTitle>Informations du véhicule</CardTitle>
@@ -209,7 +216,7 @@ export function VehicleForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="plate">Plaque d'immatriculation *</Label>
+              <Label htmlFor="plate">Plaque d&apos;immatriculation *</Label>
               <Input
                 id="plate"
                 {...register("plate")}
@@ -308,6 +315,9 @@ export function VehicleForm({
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Reminders setup panel (replaces old collapsible) ──────────── */}
+      <RemindersSetupPanel form={form} isLoading={isLoading} />
     </form>
   );
 }

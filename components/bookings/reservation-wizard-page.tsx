@@ -31,6 +31,7 @@ interface ReservationWizardPageProps {
   vehicles: BookingVehicleOption[];
   locationOptions: string[];
   activeBookings: ActiveBookingSlot[];
+  prefilledVehicleId?: string;
   onSubmit: (
     data: BookingFormData,
   ) => Promise<{ error: string } | { success: boolean; bookingId: string } | void>;
@@ -94,6 +95,7 @@ export function ReservationWizardPage({
   vehicles,
   locationOptions,
   activeBookings,
+  prefilledVehicleId,
   onSubmit,
 }: ReservationWizardPageProps) {
   const router = useRouter();
@@ -252,6 +254,25 @@ export function ReservationWizardPage({
       deposit: prev.deposit > 0 ? prev.deposit : selectedVehicle.depositAmount,
     }));
   }, [selectedVehicle]);
+
+  useEffect(() => {
+    if (!prefilledVehicleId) return;
+    const prefilledVehicle = vehicles.find((vehicle) => vehicle.id === prefilledVehicleId);
+    if (!prefilledVehicle) return;
+
+    setDraft((prev) => {
+      if (prev.vehicleId) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        vehicleId: prefilledVehicle.id,
+        pricePerDay: prefilledVehicle.pricePerDay,
+        deposit: prefilledVehicle.depositAmount,
+      };
+    });
+  }, [prefilledVehicleId, vehicles]);
 
   const warnings = useMemo(() => {
     const list: string[] = [];

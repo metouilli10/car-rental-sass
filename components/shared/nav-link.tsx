@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { FlatIcon, type FlatIconName } from "@/components/shared/flat-icon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Bell, type LucideIcon } from "lucide-react";
 
 interface NavLinkProps {
   href: string;
@@ -25,6 +26,11 @@ const flatIconMap: Record<string, FlatIconName> = {
   ClipboardCheck: "car-insurance",
 };
 
+// Lucide fallback icons for items without a flat icon equivalent
+const lucideIconMap: Record<string, LucideIcon> = {
+  Bell,
+};
+
 function NavLinkInner({
   href,
   iconName,
@@ -32,13 +38,15 @@ function NavLinkInner({
   collapsed,
   isActive,
   flatIconName,
+  LucideIconFallback,
 }: {
   href: string;
   iconName: string;
   label: string;
   collapsed: boolean;
   isActive: boolean;
-  flatIconName: FlatIconName;
+  flatIconName: FlatIconName | null;
+  LucideIconFallback: LucideIcon | null;
 }) {
   const linkContent = (
     <Link
@@ -63,14 +71,23 @@ function NavLinkInner({
           aria-hidden
         />
       )}
-      <FlatIcon
-        name={flatIconName}
-        size={22}
-        className={cn(
-          "shrink-0 transition-colors duration-200",
-          isActive ? "text-primary opacity-100" : "opacity-75 hover:opacity-100"
-        )}
-      />
+      {flatIconName ? (
+        <FlatIcon
+          name={flatIconName}
+          size={22}
+          className={cn(
+            "shrink-0 transition-colors duration-200",
+            isActive ? "text-primary opacity-100" : "opacity-75 hover:opacity-100"
+          )}
+        />
+      ) : LucideIconFallback ? (
+        <LucideIconFallback
+          className={cn(
+            "h-[22px] w-[22px] shrink-0 transition-colors duration-200",
+            isActive ? "text-primary opacity-100" : "opacity-75"
+          )}
+        />
+      ) : null}
       {!collapsed && <span className="truncate">{label}</span>}
     </Link>
   );
@@ -92,9 +109,10 @@ function NavLinkInner({
 export function NavLink({ href, iconName, label, collapsed = false }: NavLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href || pathname.startsWith(href + "/");
-  const flatIconName = flatIconMap[iconName];
+  const flatIconName = flatIconMap[iconName] ?? null;
+  const LucideIconFallback = lucideIconMap[iconName] ?? null;
 
-  if (!flatIconName) {
+  if (!flatIconName && !LucideIconFallback) {
     return null;
   }
 
@@ -106,6 +124,7 @@ export function NavLink({ href, iconName, label, collapsed = false }: NavLinkPro
       collapsed={collapsed}
       isActive={isActive}
       flatIconName={flatIconName}
+      LucideIconFallback={LucideIconFallback}
     />
   );
 }

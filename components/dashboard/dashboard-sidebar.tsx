@@ -127,6 +127,7 @@ export function DashboardSidebar({ agencyName }: DashboardSidebarProps) {
           <NavLink href="/calendrier" iconName="CalendarRange" label="Calendrier" collapsed={isCollapsed} />
           <NavLink href="/payments" iconName="CreditCard" label="Paiements" collapsed={isCollapsed} />
           <NavLink href="/damage-reports" iconName="ClipboardCheck" label="Inspections" collapsed={isCollapsed} />
+          <NavLink href="/notifications" iconName="Bell" label="Notifications" collapsed={isCollapsed} />
         </nav>
       </TooltipProvider>
 

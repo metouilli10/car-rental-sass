@@ -6,12 +6,20 @@ import { PageHeader } from "@/components/shared/page-header";
 import { BookingForm } from "@/components/bookings/booking-form";
 import { createBooking } from "@/lib/actions/bookings";
 
-export default async function NewReservationPage() {
+interface NewReservationPageProps {
+  searchParams: Promise<{ vehicleId?: string }>;
+}
+
+export default async function NewReservationPage({
+  searchParams,
+}: NewReservationPageProps) {
   const session = await getSession();
 
   if (!session) {
     redirect("/login");
   }
+
+  const params = await searchParams;
 
   const [customers, vehicles, locations, customerBookingStats, customerUnpaidStats, activeBookings] =
     await Promise.all([
@@ -123,6 +131,7 @@ export default async function NewReservationPage() {
         vehicles={vehicles}
         locationOptions={Array.from(locationSet)}
         activeBookings={activeBookings}
+        prefilledVehicleId={params.vehicleId}
         onSubmit={createBooking}
       />
     </div>
