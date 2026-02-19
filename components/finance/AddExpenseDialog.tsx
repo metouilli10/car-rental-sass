@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import type { ExpenseRow } from "@/components/finance/ExpensesTable";
 
 type VehicleOption = {
   id: string;
@@ -37,6 +38,11 @@ type VehicleOption = {
 
 type AddExpenseDialogProps = {
   vehicles: VehicleOption[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+  onOptimisticCreate?: (row: ExpenseRow) => void;
+  onOptimisticRevert?: (id: string) => void;
 };
 
 const categoryOptions = [
@@ -57,9 +63,16 @@ const methodOptions = [
   { value: "CARD", label: "Carte" },
 ] as const;
 
-export function AddExpenseDialog({ vehicles }: AddExpenseDialogProps) {
+export function AddExpenseDialog({
+  vehicles,
+  open,
+  onOpenChange,
+  hideTrigger = false,
+  onOptimisticCreate,
+  onOptimisticRevert,
+}: AddExpenseDialogProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const today = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
 
@@ -69,7 +82,6 @@ export function AddExpenseDialog({ vehicles }: AddExpenseDialogProps) {
   const [method, setMethod] = useState<(typeof methodOptions)[number]["value"]>("CASH");
   const [vehicleId, setVehicleId] = useState("none");
   const [note, setNote] = useState("");
-  const [receiptUrl, setReceiptUrl] = useState("");
 
   const reset = () => {
     setDate(today);
@@ -78,7 +90,6 @@ export function AddExpenseDialog({ vehicles }: AddExpenseDialogProps) {
     setMethod("CASH");
     setVehicleId("none");
     setNote("");
-    setReceiptUrl("");
   };
 
   const onSubmit = () => {
@@ -88,6 +99,28 @@ export function AddExpenseDialog({ vehicles }: AddExpenseDialogProps) {
       return;
     }
 
+    const selectedVehicle = vehicles.find((item) => item.id === vehicleId) ?? null;
+    const optimisticId = `temp-${Date.now()}`;
+    const optimisticRow: ExpenseRow = {
+      id: optimisticId,
+      date: new Date(date),
+      category,
+      amount: parsedAmount,
+      method,
+      note: note || null,
+      receiptUrl: null,
+      vehicle: selectedVehicle
+        ? {
+            id: selectedVehicle.id,
+            make: selectedVehicle.make,
+            model: selectedVehicle.model,
+            plate: selectedVehicle.plate,
+          }
+        : null,
+    };
+
+    onOptimisticCreate?.(optimisticRow);
+
     startTransition(async () => {
       const result = await createExpense({
         date,
@@ -96,41 +129,48 @@ export function AddExpenseDialog({ vehicles }: AddExpenseDialogProps) {
         method,
         vehicleId: vehicleId === "none" ? undefined : vehicleId,
         note,
-        receiptUrl,
       });
 
       if ("error" in result) {
+        onOptimisticRevert?.(optimisticId);
         toast.error(result.error);
         return;
       }
 
       toast.success("Charge ajoutee");
-      setOpen(false);
+      onOpenChange?.(false);
+      setInternalOpen(false);
       reset();
       router.refresh();
     });
   };
 
+  const resolvedOpen = open ?? internalOpen;
+  const setOpen = (next: boolean) => {
+    onOpenChange?.(next);
+    setInternalOpen(next);
+  };
+
   return (
     <Dialog
-      open={open}
+      open={resolvedOpen}
       onOpenChange={(next) => {
         setOpen(next);
         if (!next) reset();
       }}
     >
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Ajouter une charge
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger ? (
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter une charge
+          </Button>
+        </DialogTrigger>
+      ) : null}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Nouvelle charge</DialogTitle>
-          <DialogDescription>
-            Enregistrez une depense operationnelle avec rattachement vehicule optionnel.
-          </DialogDescription>
+          <DialogDescription>Enregistrez une depense operationnelle pour votre periode en cours.</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
@@ -221,18 +261,6 @@ export function AddExpenseDialog({ vehicles }: AddExpenseDialogProps) {
               disabled={isPending}
               placeholder="Details utiles pour le suivi..."
               rows={3}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="expense-receipt">Lien justificatif (optionnel)</Label>
-            <Input
-              id="expense-receipt"
-              type="url"
-              value={receiptUrl}
-              onChange={(event) => setReceiptUrl(event.target.value)}
-              disabled={isPending}
-              placeholder="https://..."
             />
           </div>
         </div>
