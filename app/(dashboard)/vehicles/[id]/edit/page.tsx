@@ -33,7 +33,7 @@ export default async function EditVehiclePage({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen">
       <PageHeader
         title="Modifier le véhicule"
         description={`${vehicle.make} ${vehicle.model} - ${vehicle.plate}`}

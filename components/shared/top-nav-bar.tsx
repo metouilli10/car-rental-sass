@@ -135,7 +135,7 @@ export function TopNavBar({
 
             {/* Notification Dropdown */}
             {notifOpen && (
-              <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-white rounded-2xl shadow-card-lg border border-border/30 overflow-hidden animate-scale-in origin-top-right">
+              <div className="fixed left-4 right-4 top-[4.5rem] z-50 w-auto max-w-none bg-white rounded-2xl shadow-card-lg border border-border/30 overflow-hidden animate-scale-in origin-top-right sm:absolute sm:left-auto sm:right-0 sm:top-full sm:z-auto sm:mt-2 sm:w-96 sm:max-w-sm">
                 <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground">
                     Rappels &amp; alertes
@@ -147,7 +147,7 @@ export function TopNavBar({
                   )}
                 </div>
 
-                <div className="max-h-80 overflow-y-auto">
+                <div className="max-h-[70vh] overflow-y-auto sm:max-h-80">
                   {topNotifs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center px-4">
                       <Bell className="h-8 w-8 text-muted-foreground/30 mb-2" />
