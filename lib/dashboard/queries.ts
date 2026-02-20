@@ -1,3 +1,4 @@
+import type { BookingStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
 import {
@@ -595,7 +596,7 @@ export async function getDashboardData(input: {
     id: string;
     startDate: Date;
     endDate: Date;
-    status: string;
+    status: BookingStatus;
     totalPrice: number;
     totalTtc: number;
     taxEnabled: boolean;
