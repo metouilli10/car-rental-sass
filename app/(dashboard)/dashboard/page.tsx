@@ -1,137 +1,15 @@
-import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { getSession } from "@/lib/auth-cache";
-import { resolveDashboardPeriod } from "@/lib/dashboard-periods";
+import { periodLabel, resolveDashboardPeriod } from "@/lib/dashboard/ranges";
+import { getDashboardData } from "@/lib/dashboard/queries";
+import { Badge } from "@/components/ui/badge";
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { PeriodFilterBar } from "@/components/dashboard/PeriodFilterBar";
+import { ActionCenter } from "@/components/dashboard/ActionCenter";
+import { ParkStatusCard } from "@/components/dashboard/ParkStatusCard";
+import { CashCard } from "@/components/dashboard/CashCard";
+import { MonthPerformanceCard } from "@/components/dashboard/MonthPerformanceCard";
+import { TopVehiclesCard } from "@/components/dashboard/TopVehiclesCard";
 import { DashboardHeader } from "../components/DashboardHeader";
-import { PeriodFilter } from "../components/PeriodFilter";
-import { TopMetrics } from "../components/TopMetrics";
-import { PriorityActions } from "../components/PriorityActions";
-import { FleetStatus } from "../components/FleetStatus";
-import { DailyCash } from "../components/DailyCash";
-import { MonthlyOverview } from "../components/MonthlyOverview";
-
-// ── Skeleton loaders (match new card designs) ──────────────────────────────
-
-function HeaderLoader() {
-  return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-      <div>
-        <Skeleton className="h-9 w-56" />
-        <Skeleton className="mt-2 h-4 w-72" />
-      </div>
-      <div className="flex gap-2">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-10 w-36 rounded-lg" />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PeriodLoader() {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <Skeleton className="mb-3 h-3 w-28" />
-      <div className="flex flex-wrap gap-2">
-        {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-14 w-40 rounded-xl" />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function KpiRowLoader() {
-  return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-      {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="mt-2 h-8 w-20" />
-              <Skeleton className="mt-2 h-3 w-24" />
-            </div>
-            <Skeleton className="h-9 w-9 rounded-lg" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function CardLoader() {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      {/* Header skeleton */}
-      <div className="border-b border-slate-100 p-6">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-7 w-7 rounded-lg" />
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-5 w-6 rounded-full" />
-        </div>
-        <Skeleton className="ml-9 mt-1 h-3 w-56" />
-      </div>
-      {/* Row skeletons */}
-      <div className="divide-y divide-slate-100">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-center gap-4 px-6 py-5">
-            <Skeleton className="h-12 w-1 shrink-0 rounded-full" />
-            <Skeleton className="h-5 w-16 rounded-md" />
-            <div className="flex-1">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="mt-1.5 h-3 w-48" />
-            </div>
-            <Skeleton className="hidden h-4 w-20 sm:block" />
-            <Skeleton className="h-8 w-28 rounded-md" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function OperationsLoader() {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-4 flex items-center justify-between">
-        <Skeleton className="h-5 w-28" />
-        <Skeleton className="h-5 w-5" />
-      </div>
-      <div className="space-y-3">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rounded-xl border border-slate-200 p-3">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="mt-2 h-5 w-20" />
-            <Skeleton className="mt-3 h-2 w-full" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function OverviewLoader() {
-  return (
-    <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-100 p-6">
-            <Skeleton className="h-5 w-28" />
-            <Skeleton className="h-5 w-5" />
-          </div>
-          <div className="space-y-3 p-6">
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <Skeleton className="h-16 w-full rounded-lg" />
-            <Skeleton className="h-10 w-full rounded-lg" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Page ──────────────────────────────────────────────────────────────────
 
 interface DashboardPageProps {
   searchParams: Promise<{ period?: string }>;
@@ -147,43 +25,91 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const agencyId = session.user.agencyId;
   const params = await searchParams;
   const selectedPeriod = resolveDashboardPeriod(params.period);
+  const dashboard = await getDashboardData({
+    agencyId,
+    period: selectedPeriod,
+    includeTopVehicles: true,
+  });
+  const selectedPeriodLabel = periodLabel(dashboard.period);
+  const occupancyLabel = periodLabel(dashboard.ceoSnapshot.occupancy.labelPeriod);
 
   return (
     <div className="-mx-4 -my-4 min-h-screen bg-slate-50 pb-24 sm:-mx-6 sm:-my-6 lg:-mx-8 md:pb-0">
       <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 lg:px-8 xl:max-w-[1320px]">
         <div className="flex flex-col gap-6">
+          <DashboardHeader />
 
-          <Suspense fallback={<HeaderLoader />}>
-            <DashboardHeader />
-          </Suspense>
-
-          <Suspense fallback={<PeriodLoader />}>
-            <PeriodFilter agencyId={agencyId} selectedPeriod={selectedPeriod} />
-          </Suspense>
-
-          <Suspense fallback={<KpiRowLoader />}>
-            <TopMetrics agencyId={agencyId} period={selectedPeriod} />
-          </Suspense>
-
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-            <div className="xl:col-span-8">
-              <Suspense fallback={<CardLoader />}>
-                <PriorityActions agencyId={agencyId} period={selectedPeriod} />
-              </Suspense>
-            </div>
-            <div className="xl:col-span-4">
-              <Suspense fallback={<OperationsLoader />}>
-                <FleetStatus agencyId={agencyId} />
-              </Suspense>
-            </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={dashboard.ownerAlerts.lateReturnsCount > 0 ? "destructive" : "secondary"}>
+              {dashboard.ownerAlerts.lateReturnsCount} retours en retard
+            </Badge>
+            <Badge variant={dashboard.ownerAlerts.followUpsTodayCount > 0 ? "warning" : "secondary"}>
+              {dashboard.ownerAlerts.followUpsTodayCount} clients a relancer aujourd&apos;hui
+            </Badge>
           </div>
 
-          <Suspense fallback={<OverviewLoader />}>
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-              <DailyCash agencyId={agencyId} />
-              <MonthlyOverview agencyId={agencyId} />
+          <section className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <KpiCard
+              title={`Encaissements (${selectedPeriodLabel})`}
+              value={dashboard.ceoSnapshot.encaissements.amount}
+              subtitle={`Paiements location encaisses (${selectedPeriodLabel.toLowerCase()})`}
+              trend={dashboard.ceoSnapshot.encaissements.trend}
+            />
+            <KpiCard
+              title="Impayes / A encaisser (En cours)"
+              value={dashboard.ceoSnapshot.pendingCollections.amount}
+              subtitle={`${dashboard.ceoSnapshot.pendingCollections.pendingBookingsCount} dossiers, ${dashboard.ceoSnapshot.pendingCollections.urgentCount} urgents (${selectedPeriodLabel.toLowerCase()})`}
+              risk={dashboard.ceoSnapshot.pendingCollections.urgentCount > 0 ? "warning" : "none"}
+            />
+            <KpiCard
+              title={
+                dashboard.ceoSnapshot.occupancy.labelPeriod === "today"
+                  ? "Taux d'occupation (Aujourd'hui)"
+                  : `Utilisation (${occupancyLabel})`
+              }
+              value={dashboard.ceoSnapshot.occupancy.rate}
+              valueSuffix="%"
+              subtitle={
+                dashboard.ceoSnapshot.occupancy.labelPeriod === "today"
+                  ? `${dashboard.ceoSnapshot.occupancy.rented}/${dashboard.ceoSnapshot.occupancy.total} loues - ${dashboard.ceoSnapshot.occupancy.maintenance} en maintenance`
+                  : [
+                      `${dashboard.ceoSnapshot.occupancy.rented}/${dashboard.ceoSnapshot.occupancy.total} loues`,
+                      dashboard.ceoSnapshot.occupancy.occupiedDays != null &&
+                      dashboard.ceoSnapshot.occupancy.availableDays != null
+                        ? ` • ${dashboard.ceoSnapshot.occupancy.occupiedDays} / ${dashboard.ceoSnapshot.occupancy.availableDays} jours-vehicule`
+                        : "",
+                    ].join("")
+                  }
+            />
+            <KpiCard
+              title={`Cautions a rembourser (${selectedPeriodLabel})`}
+              value={dashboard.ceoSnapshot.depositsToRefund.totalHeld}
+              subtitle={`${dashboard.ceoSnapshot.depositsToRefund.dueCount} dues, ${dashboard.ceoSnapshot.depositsToRefund.overdueCount} en retard`}
+              risk={dashboard.ceoSnapshot.depositsToRefund.overdueCount > 0 ? "destructive" : "none"}
+            />
+          </section>
+
+          <PeriodFilterBar selectedPeriod={selectedPeriod} stats={dashboard.periodStats} />
+
+          <section className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+            <div className="xl:col-span-8">
+              <ActionCenter
+                pendingCollections={dashboard.actionCenter.pendingCollections}
+                depositsToRelease={dashboard.actionCenter.depositsToRelease}
+                lateReturns={dashboard.actionCenter.lateReturns}
+              />
             </div>
-          </Suspense>
+            <div className="xl:col-span-4">
+              <ParkStatusCard status={dashboard.parkStatus} />
+            </div>
+          </section>
+
+          <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <CashCard cash={dashboard.cash} />
+            <MonthPerformanceCard data={dashboard.monthPerformance} />
+          </section>
+
+          <TopVehiclesCard data={dashboard.topVehicles} />
 
         </div>
       </div>
