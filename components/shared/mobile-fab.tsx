@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Plus, Calendar, User, Car } from "lucide-react";
 
 interface FabAction {
@@ -36,6 +37,9 @@ const FAB_ACTIONS: FabAction[] = [
 
 export function MobileFAB() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isReservationWizard = pathname === "/reservations/new";
+  if (isReservationWizard) return null;
 
   return (
     <>

@@ -550,7 +550,7 @@ export function ReservationWizardPage({
                 )}
               </div>
 
-              <div className="sticky bottom-0 -mx-6 border-t bg-background/95 px-6 py-3 backdrop-blur md:hidden">
+              <div className="sticky bottom-0 z-[60] -mx-6 border-t bg-background/95 px-6 py-3 backdrop-blur md:hidden">
                 <div className="flex items-center justify-between gap-2">
                   <Button type="button" variant="outline" onClick={onBack} disabled={draft.step === 1} className="min-h-11 flex-1">
                     Retour
