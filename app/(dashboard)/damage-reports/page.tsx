@@ -34,7 +34,7 @@ export default async function InspectionsPage({
       <PageHeader
         title="Inspections"
         description={`${total} inspection${total !== 1 ? "s" : ""} enregistrée${total !== 1 ? "s" : ""}`}
-        action={{ label: "Nouvelle inspection", href: "/damage-reports/new" }}
+        action={inspections.length > 0 ? { label: "Nouvelle inspection", href: "/damage-reports/new" } : undefined}
       />
 
       {inspections.length === 0 ? (
@@ -43,12 +43,12 @@ export default async function InspectionsPage({
             <div className="w-16 h-16 rounded-full bg-gray-100 mx-auto mb-4 flex items-center justify-center">
               <ClipboardCheck className="w-8 h-8 text-gray-400" />
             </div>
-            <p className="text-gray-500 font-medium mb-2">Aucune inspection</p>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-muted-foreground font-medium mb-2">Aucune inspection enregistrée.</p>
+            <p className="text-sm text-muted-foreground/80 mb-6">
               Créez votre première inspection pour commencer le suivi.
             </p>
             <Button asChild>
-              <Link href="/damage-reports/new">Créer une inspection</Link>
+              <Link href="/damage-reports/new">Nouvelle inspection</Link>
             </Button>
           </CardContent>
         </Card>

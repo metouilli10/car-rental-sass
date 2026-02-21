@@ -1,14 +1,18 @@
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
-import { PageHeader } from "@/components/shared/page-header";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { MessageCircle, Play, CheckCircle, XCircle, FileText, Send, Users } from "lucide-react";
-import Link from "next/link";
-import { BookingStatusActions } from "@/components/bookings/booking-status-actions";
+import { formatDate } from "@/lib/utils";
+import { ReservationDetailsHeader } from "@/components/reservations/ReservationDetailsHeader";
+import { ReservationSummarySticky } from "@/components/reservations/ReservationSummarySticky";
+import { ReservationPanels } from "@/components/reservations/ReservationPanels";
+import {
+  ReservationOperationalAlerts,
+  buildReservationAlerts,
+} from "@/components/reservations/ReservationOperationalAlerts";
+import { InspectionsPanel } from "@/components/reservations/InspectionsPanel";
+import { ReservationActivity } from "@/components/reservations/ReservationActivity";
+import { getDepositStatus, getPaymentStatus, getReservationTone } from "@/lib/reservations/presentation";
+import { canDelete } from "@/lib/authz";
 
 export default async function BookingDetailsPage({
   params,
@@ -44,234 +48,129 @@ export default async function BookingDetailsPage({
     notFound();
   }
 
-  const whatsappMessage = encodeURIComponent(
-    `Bonjour ${booking.customer.name},\n\nConcernant votre réservation du ${formatDate(
-      booking.startDate
-    )} au ${formatDate(booking.endDate)} pour le véhicule ${
-      booking.vehicle.make
-    } ${booking.vehicle.model} (${booking.vehicle.plate}).\n\nCordialement,\n${
-      session.user.agencyName
-    }`
-  );
-
-  const whatsappLink = `https://wa.me/${booking.customer.phone.replace(
-    /\D/g,
-    ""
-  )}?text=${whatsappMessage}`;
-
-  const payment = booking.payments[0];
-  const numberOfDays = Math.ceil(
-    (new Date(booking.endDate).getTime() -
-      new Date(booking.startDate).getTime()) /
+  const code = booking.id.slice(0, 8);
+  const durationDays = Math.ceil(
+    (new Date(booking.endDate).getTime() - new Date(booking.startDate).getTime()) /
       (1000 * 60 * 60 * 24)
   );
 
+  const whatsappMessage = encodeURIComponent(
+    `Bonjour ${booking.customer.name},\n\nConcernant votre réservation du ${formatDate(
+      booking.startDate
+    )} au ${formatDate(booking.endDate)} pour le véhicule ${booking.vehicle.make} ${
+      booking.vehicle.model
+    } (${booking.vehicle.plate}).\n\nCordialement,\n${session.user.agencyName ?? ""}`
+  );
+  const whatsappLink = `https://wa.me/${booking.customer.phone.replace(/\D/g, "")}?text=${whatsappMessage}`;
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+  const startDateObj = new Date(booking.startDate);
+  const isStartToday =
+    startDateObj >= todayStart && startDateObj <= todayEnd;
+
+  const depositStatusResult = getDepositStatus(
+    booking.depositAmount,
+    booking.deposit,
+    booking.depositStatus
+  );
+  const paymentStatusResult = getPaymentStatus(
+    booking.paidNow,
+    booking.totalPrice,
+    booking.paymentStatus
+  );
+  const statusResult = getReservationTone(booking.status);
+
+  const alerts = buildReservationAlerts({
+    remainingAmount: booking.remainingAmount,
+    status: booking.status,
+    depositStatusLabel: depositStatusResult.label,
+    startDate: booking.startDate,
+    isStartToday,
+  });
+
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Détails de la réservation"
-        description={`Réservation #${booking.id.slice(0, 8)}`}
+    <div className="space-y-6 pb-24 lg:pb-6">
+      <ReservationDetailsHeader
+        bookingId={booking.id}
+        code={code}
+        status={booking.status}
+        startDate={booking.startDate}
+        endDate={booking.endDate}
+        durationDays={durationDays}
+        vehicle={{ make: booking.vehicle.make, model: booking.vehicle.model }}
+        customer={{ name: booking.customer.name }}
+        canCancel={canDelete(session.user.role)}
+        endDateForExtend={booking.endDate}
+        pricePerDay={booking.pricePerDay}
       />
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Customer Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Client</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Nom</p>
-              <p className="font-medium">{booking.customer.name}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Téléphone</p>
-              <p className="font-medium">{booking.customer.phone}</p>
-            </div>
-            {booking.customer.email && (
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium">{booking.customer.email}</p>
-              </div>
-            )}
-            <div>
-              <p className="text-sm text-muted-foreground">Passeport/CIN</p>
-              <p className="font-medium">{booking.customer.passportOrCIN}</p>
-            </div>
-            <Button asChild className="w-full" variant="outline">
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Contacter sur WhatsApp
-              </a>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
+        <div className="min-w-0 space-y-6 lg:pr-2">
+          <ReservationOperationalAlerts alerts={alerts} />
 
-        {/* Vehicle Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Véhicule</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Véhicule</p>
-              <p className="font-medium">
-                {booking.vehicle.make} {booking.vehicle.model}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Plaque</p>
-              <p className="font-medium">{booking.vehicle.plate}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Couleur</p>
-              <p className="font-medium">{booking.vehicle.color}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Statut du véhicule</p>
-              <StatusBadge status={booking.vehicle.status} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Booking Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Détails de la réservation</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Statut</p>
-              <StatusBadge status={booking.status} />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Date de début</p>
-              <p className="font-medium">{formatDate(booking.startDate)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Date de fin</p>
-              <p className="font-medium">{formatDate(booking.endDate)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Durée</p>
-              <p className="font-medium">{numberOfDays} jour(s)</p>
-            </div>
-            {booking.notes && (
-              <div>
-                <p className="text-sm text-muted-foreground">Notes</p>
-                <p className="text-sm">{booking.notes}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Financial Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informations financières</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Prix par jour</p>
-              <p className="font-medium">{formatCurrency(booking.pricePerDay)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Prix total</p>
-              <p className="text-lg font-bold">
-                {formatCurrency(booking.totalPrice)}
-              </p>
-            </div>
-            <div className="pt-2 border-t border-muted">
-              <div className="flex justify-between items-center mb-2">
-                <p className="text-sm text-muted-foreground">Paiement</p>
-                {payment && <StatusBadge status={payment.status} />}
-              </div>
-              {payment && (
-                <p className="text-sm">
-                  {payment.type === "CASH" && "Espèces"}
-                  {payment.type === "CARD" && "Carte bancaire"}
-                  {payment.type === "TRANSFER" && "Virement"}
-                  {" - "}
-                  {formatCurrency(payment.amount)}
-                </p>
-              )}
-            </div>
-            <div className="pt-2 border-t border-muted">
-              <div className="flex justify-between items-center mb-2">
-                <p className="text-sm text-muted-foreground">Caution</p>
-                {booking.deposit && (
-                  <StatusBadge status={booking.deposit.status} />
-                )}
-              </div>
-              <p className="font-medium">
-                {formatCurrency(booking.depositAmount)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <BookingStatusActions
-            bookingId={booking.id}
-            currentStatus={booking.status}
-            canCancel={session.user.role === "OWNER" || session.user.role === "MANAGER"}
-            endDate={booking.endDate}
-            pricePerDay={booking.pricePerDay}
+          <ReservationPanels
+            customer={{
+              name: booking.customer.name,
+              phone: booking.customer.phone,
+              email: booking.customer.email ?? null,
+              passportOrCIN: booking.customer.passportOrCIN ?? null,
+            }}
+            vehicle={{
+              make: booking.vehicle.make,
+              model: booking.vehicle.model,
+              plate: booking.vehicle.plate,
+              color: booking.vehicle.color,
+              status: booking.vehicle.status,
+              currentKm: booking.vehicle.currentKm,
+              mileage: booking.vehicle.mileage,
+              nextOilChangeDate: booking.vehicle.nextOilChangeDate,
+              nextMaintenanceKm: booking.vehicle.nextMaintenanceKm,
+            }}
+            reservation={{
+              status: booking.status,
+              startDate: booking.startDate,
+              endDate: booking.endDate,
+              durationDays,
+              pickupLocation: booking.pickupLocation,
+              returnLocation: booking.returnLocation,
+              notes: booking.notes,
+            }}
+            whatsappLink={whatsappLink}
           />
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Inspections */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Inspections</CardTitle>
-          <Button asChild size="sm">
-            <Link href={`/damage-reports/new?bookingId=${booking.id}`}>
-              Nouvelle inspection
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {booking.damageReports.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucune inspection enregistrée.</p>
-          ) : (
-            <div className="space-y-3">
-              {booking.damageReports.map((report) => {
-                const hasDamage = report.sections.some((s) => s.status === "DAMAGE");
-                return (
-                  <div key={report.id} className="flex items-center justify-between p-3.5 rounded-xl bg-muted/30">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">
-                          {report.inspectionType === "DEPART" ? "Départ" : "Retour"}
-                        </span>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${hasDamage ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
-                          {hasDamage ? "Dommages" : "OK"}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{formatDate(report.reportedAt)}</p>
-                      {report.totalDamageCost > 0 && (
-                        <p className="text-xs text-red-600 font-medium">Coût: {formatCurrency(report.totalDamageCost)}</p>
-                      )}
-                    </div>
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/damage-reports/${report.id}`}>
-                        Voir
-                      </Link>
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start lg:min-h-0">
+          <ReservationSummarySticky
+            totalPrice={booking.totalPrice}
+            pricePerDay={booking.pricePerDay}
+            durationDays={durationDays}
+            paidNow={booking.paidNow}
+            remainingAmount={booking.remainingAmount}
+            paymentStatus={booking.paymentStatus}
+            depositAmount={booking.depositAmount}
+            deposit={booking.deposit}
+            bookingDepositStatus={booking.depositStatus}
+            bookingId={booking.id}
+          />
+          <InspectionsPanel
+            bookingId={booking.id}
+            damageReports={booking.damageReports.map((r) => ({
+              id: r.id,
+              inspectionType: r.inspectionType,
+            }))}
+            compact
+          />
+          <ReservationActivity
+            createdAt={booking.createdAt}
+            statusLabel={statusResult.label}
+            paymentLabel={paymentStatusResult.label}
+            compact
+          />
+        </aside>
+      </div>
     </div>
   );
 }

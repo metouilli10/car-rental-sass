@@ -25,7 +25,7 @@ interface MobileSummarySheetProps {
 
 export function MobileSummarySheet(props: MobileSummarySheetProps) {
   return (
-    <div className="fixed inset-x-0 bottom-3 z-40 mx-auto w-[calc(100%-1rem)] max-w-md md:hidden">
+    <div className="fixed inset-x-0 bottom-20 z-40 mx-auto w-[calc(100%-1rem)] max-w-md md:hidden">
       <Sheet>
         <SheetTrigger asChild>
           <Button className="h-14 w-full justify-between rounded-2xl bg-blue-600 px-4 text-left text-white hover:bg-blue-700">

@@ -22,7 +22,6 @@ import { formatCurrency } from "@/lib/utils";
 import { saveBookingDraftPlaceholder } from "@/lib/actions/bookings";
 import { WizardStepper } from "@/components/bookings/wizard-stepper";
 import { SummaryCard } from "@/components/bookings/summary-card";
-import { MobileSummarySheet } from "@/components/bookings/mobile-summary-sheet";
 import { NewClientWizardModal } from "@/components/bookings/new-client-wizard-modal";
 import type { ActiveBookingSlot, BookingCustomerOption, BookingVehicleOption } from "@/components/bookings/types";
 
@@ -474,7 +473,7 @@ export function ReservationWizardPage({
                 {draft.step === 4 && "Confirmez le paiement et créez la réservation."}
               </p>
             </CardHeader>
-            <CardContent className="space-y-5">
+            <CardContent className="space-y-5 pb-28 md:pb-6">
               {draft.step === 1 ? (
                 <StepLocation
                   draft={draft}
@@ -550,7 +549,7 @@ export function ReservationWizardPage({
                 )}
               </div>
 
-              <div className="sticky bottom-0 z-[60] -mx-6 border-t bg-background/95 px-6 py-3 backdrop-blur md:hidden">
+              <div className="sticky bottom-0 z-[60] -mx-6 border-t border-border/70 bg-card px-6 py-3 md:hidden">
                 <div className="flex items-center justify-between gap-2">
                   <Button type="button" variant="outline" onClick={onBack} disabled={draft.step === 1} className="min-h-11 flex-1">
                     Retour
@@ -595,22 +594,6 @@ export function ReservationWizardPage({
           </div>
         </div>
       </div>
-
-      <MobileSummarySheet
-        vehicle={selectedVehicle}
-        client={selectedClient}
-        durationLabel={derived.durationLabel}
-        startAt={draft.startAt}
-        endAt={draft.endAt}
-        baseTotal={derived.baseTotal}
-        addonsTotal={derived.addonsTotal}
-        discountTotal={derived.discountTotal}
-        vatTotal={derived.vatTotal}
-        totalTTC={derived.totalTTC}
-        paid={draft.paidAmount}
-        remaining={derived.remaining}
-        warnings={warnings}
-      />
 
       <NewClientWizardModal
         open={newClientOpen}
