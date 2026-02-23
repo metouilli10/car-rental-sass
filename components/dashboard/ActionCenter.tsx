@@ -1,10 +1,8 @@
-import Link from "next/link";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { formatCurrency } from "@/lib/utils";
+import { ActionCenterRow } from "./ActionCenterRow";
 import type { PriorityActionItem } from "@/lib/dashboard/types";
 
 interface ActionCenterProps {
@@ -36,35 +34,7 @@ function ActionSection({
       ) : (
         <div className="space-y-2">
           {items.map((item) => (
-            <div
-              key={item.id}
-              className="grid gap-3 rounded-lg border border-slate-200 bg-white p-3 md:grid-cols-[1fr_auto_auto]"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-slate-900">
-                  {item.customerName} - {item.vehicleLabel}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {item.plate} - {item.dueLabel}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {item.amount ? (
-                  <Badge variant="outline" className="rounded-full">
-                    {formatCurrency(item.amount)}
-                  </Badge>
-                ) : null}
-                <Button asChild size="sm" className="rounded-lg">
-                  <Link href={item.primaryHref}>
-                    {item.primaryAction}
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-              <Button asChild size="sm" variant="ghost" className="justify-self-start md:justify-self-end">
-                <Link href={item.detailsHref}>Details</Link>
-              </Button>
-            </div>
+            <ActionCenterRow key={item.id} item={item} />
           ))}
         </div>
       )}
