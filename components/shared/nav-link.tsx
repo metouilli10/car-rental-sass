@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { FlatIcon, type FlatIconName } from "@/components/shared/flat-icon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Bell, type LucideIcon } from "lucide-react";
+import { Bell, Wallet, type LucideIcon } from "lucide-react";
 
 interface NavLinkProps {
   href: string;
@@ -26,9 +26,10 @@ const flatIconMap: Record<string, FlatIconName> = {
   ClipboardCheck: "car-insurance",
 };
 
-// Lucide fallback icons for items without a flat icon equivalent
+// Lucide fallback icons (used when no flat icon or for reliable display)
 const lucideIconMap: Record<string, LucideIcon> = {
   Bell,
+  Wallet,
 };
 
 function NavLinkInner({

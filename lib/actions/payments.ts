@@ -8,7 +8,8 @@ import type { PaymentType } from "@prisma/client";
 
 /**
  * Record payment received for a booking from the dashboard "Encaisser" action.
- * Finds a PENDING payment for the booking and marks it PAID, or creates one if none.
+ * Finds a PENDING payment for the booking and marks it PAID (with the given amount), or creates one if none.
+ * Syncs Booking.paidNow, remainingAmount and paymentStatus from the sum of PAID RENTAL payments.
  */
 export async function recordPaymentReceivedByBooking(
   bookingId: string,
@@ -26,18 +27,20 @@ export async function recordPaymentReceivedByBooking(
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
-      include: { payments: { where: { status: "PENDING", category: "RENTAL" }, orderBy: { createdAt: "asc" } } },
+      include: { payments: { where: { category: "RENTAL" }, orderBy: { createdAt: "asc" } } },
     });
 
     if (!booking || booking.agencyId !== session.user.agencyId) {
       return { error: "Réservation non trouvée" };
     }
 
-    const existing = booking.payments[0];
+    const pendingRental = booking.payments.filter((p) => p.status === "PENDING");
+    const existing = pendingRental[0];
+
     if (existing) {
       await prisma.payment.update({
         where: { id: existing.id },
-        data: { status: "PAID", paidAt: new Date(), amount },
+        data: { status: "PAID", paidAt: new Date(), amount, type: paymentType },
       });
     } else {
       await prisma.payment.create({
@@ -51,6 +54,24 @@ export async function recordPaymentReceivedByBooking(
         },
       });
     }
+
+    const paidRentalSum = await prisma.payment.aggregate({
+      where: {
+        bookingId,
+        category: "RENTAL",
+        status: "PAID",
+      },
+      _sum: { amount: true },
+    });
+    const paidNow = Number(paidRentalSum._sum.amount ?? 0);
+    const total = booking.totalTtc > 0 ? booking.totalTtc : booking.totalPrice;
+    const remainingAmount = Math.max(0, total - paidNow);
+    const paymentStatus = remainingAmount <= 0 ? "PAID" : paidNow > 0 ? "PARTIAL" : "PENDING";
+
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: { paidNow, remainingAmount, paymentStatus },
+    });
 
     revalidatePath("/payments");
     revalidatePath("/finance");

@@ -15,11 +15,20 @@ import { FinanceView } from "@/components/finance/FinanceView";
 
 type FinanceRange = "today" | "7d" | "month" | "quarter" | "custom";
 
+const FINANCE_TABS = ["apercu", "revenus", "charges", "cautions"] as const;
+type FinanceTab = (typeof FINANCE_TABS)[number];
+
+function parseFinanceTab(tab?: string): FinanceTab | undefined {
+  if (tab && FINANCE_TABS.includes(tab as FinanceTab)) return tab as FinanceTab;
+  return undefined;
+}
+
 type FinancePageProps = {
   searchParams: Promise<{
     range?: string;
     from?: string;
     to?: string;
+    tab?: string;
   }>;
 };
 
@@ -105,6 +114,7 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
   }
 
   const params = await searchParams;
+  const defaultTab = parseFinanceTab(params.tab);
   const agencyId = session.user.agencyId;
   const window = resolveFinanceWindow(params);
   const expenseDelegate = (prisma as unknown as { expense?: any }).expense;
@@ -338,6 +348,7 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
   return (
     <div className="space-y-6">
       <FinanceView
+        defaultTab={defaultTab}
         period={{
           range: window.range,
           label: window.label,

@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import { BookingStatusActions } from "@/components/bookings/booking-status-actions";
 import { BookingLifecycleStepper } from "@/components/reservations/BookingLifecycleStepper";
+import { LibererCautionDialog } from "@/components/dashboard/LibererCautionDialog";
+import { EncaisserDialog } from "@/components/dashboard/EncaisserDialog";
 import {
   formatDateFR,
   getReservationTone,
@@ -39,7 +41,7 @@ import { cancelBooking } from "@/lib/actions/bookings";
 import { toast } from "sonner";
 import type { BookingStatus } from "@prisma/client";
 
-type Vehicle = { make: string; model: string };
+type Vehicle = { make: string; model: string; plate?: string };
 type Customer = { name: string };
 
 export interface ReservationDetailsHeaderProps {
@@ -54,6 +56,10 @@ export interface ReservationDetailsHeaderProps {
   canCancel: boolean;
   endDateForExtend?: Date;
   pricePerDay?: number;
+  /** When present and status is HELD, "Restituer caution" opens in-place release dialog. */
+  deposit?: { id: string; amount: number; status: string } | null;
+  /** Outstanding amount for "Ajouter paiement" dialog default. */
+  remainingAmount?: number;
 }
 
 const badgeVariantMap: Record<
@@ -80,15 +86,20 @@ export function ReservationDetailsHeader({
   canCancel,
   endDateForExtend,
   pricePerDay,
+  deposit,
+  remainingAmount = 0,
 }: ReservationDetailsHeaderProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+  const [libererCautionOpen, setLibererCautionOpen] = useState(false);
+  const [encaisserOpen, setEncaisserOpen] = useState(false);
 
   const { label: statusLabel, variant: statusVariant } = getReservationTone(status);
   const startStr = formatDateFR(startDate);
   const endStr = formatDateFR(endDate);
   const vehicleName = `${vehicle.make} ${vehicle.model}`;
   const subline = `${startStr} → ${endStr} • ${durationDays} jour(s) • ${vehicleName} • ${customer.name}`;
+  const canReleaseInPlace = deposit?.status === "HELD" && deposit?.id;
 
   const handleCancel = async () => {
     setIsCanceling(true);
@@ -146,18 +157,33 @@ export function ReservationDetailsHeader({
                   Modifier
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/payments?booking=${bookingId}`}>
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  Ajouter paiement
-                </Link>
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setEncaisserOpen(true);
+                }}
+              >
+                <CreditCard className="mr-2 h-4 w-4" />
+                Ajouter paiement
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/payments?booking=${bookingId}`}>
+              {canReleaseInPlace ? (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setLibererCautionOpen(true);
+                  }}
+                >
                   <Banknote className="mr-2 h-4 w-4" />
                   Restituer caution
-                </Link>
-              </DropdownMenuItem>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem asChild>
+                  <Link href="/finance?tab=cautions">
+                    <Banknote className="mr-2 h-4 w-4" />
+                    Restituer caution
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild>
                 <Link href="#" aria-label="Télécharger contrat">
                   <FileText className="mr-2 h-4 w-4" />
@@ -203,6 +229,27 @@ export function ReservationDetailsHeader({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EncaisserDialog
+        open={encaisserOpen}
+        onOpenChange={setEncaisserOpen}
+        bookingId={bookingId}
+        defaultAmount={remainingAmount}
+        customerName={customer.name}
+        vehicleLabel={vehicleName}
+      />
+
+      {canReleaseInPlace && deposit && (
+        <LibererCautionDialog
+          open={libererCautionOpen}
+          onOpenChange={setLibererCautionOpen}
+          depositId={deposit.id}
+          customerName={customer.name}
+          vehicleLabel={vehicleName}
+          plate={vehicle.plate ?? ""}
+          amount={deposit.amount}
+        />
+      )}
     </header>
   );
 }

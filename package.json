@@ -8,6 +8,7 @@
     "build": "prisma db push && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "node --import tsx --test lib/dashboard/caisse.test.ts",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset",

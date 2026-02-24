@@ -79,6 +79,7 @@ export async function createExpense(data: ExpenseFormData): Promise<ExpenseResul
 
     revalidatePath("/finance");
     revalidatePath("/payments");
+    revalidatePath("/caisse");
 
     return { success: true, expenseId: created.id };
   } catch (error) {

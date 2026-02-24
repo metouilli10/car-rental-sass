@@ -100,11 +100,25 @@ export default async function BookingDetailsPage({
         startDate={booking.startDate}
         endDate={booking.endDate}
         durationDays={durationDays}
-        vehicle={{ make: booking.vehicle.make, model: booking.vehicle.model }}
+        vehicle={{
+          make: booking.vehicle.make,
+          model: booking.vehicle.model,
+          plate: booking.vehicle.plate,
+        }}
         customer={{ name: booking.customer.name }}
         canCancel={canDelete(session.user.role)}
         endDateForExtend={booking.endDate}
         pricePerDay={booking.pricePerDay}
+        deposit={
+          booking.deposit
+            ? {
+                id: booking.deposit.id,
+                amount: Number(booking.deposit.amount),
+                status: booking.deposit.status,
+              }
+            : null
+        }
+        remainingAmount={booking.remainingAmount}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
@@ -151,9 +165,20 @@ export default async function BookingDetailsPage({
             remainingAmount={booking.remainingAmount}
             paymentStatus={booking.paymentStatus}
             depositAmount={booking.depositAmount}
-            deposit={booking.deposit}
+            deposit={
+              booking.deposit
+                ? {
+                    id: booking.deposit.id,
+                    amount: Number(booking.deposit.amount),
+                    status: booking.deposit.status,
+                  }
+                : null
+            }
             bookingDepositStatus={booking.depositStatus}
             bookingId={booking.id}
+            customerName={booking.customer.name}
+            vehicleLabel={`${booking.vehicle.make} ${booking.vehicle.model}`}
+            plate={booking.vehicle.plate}
           />
           <InspectionsPanel
             bookingId={booking.id}

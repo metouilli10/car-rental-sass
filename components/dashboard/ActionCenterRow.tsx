@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { EncaisserDialog } from "./EncaisserDialog";
+import { LibererCautionDialog } from "./LibererCautionDialog";
 import type { PriorityActionItem } from "@/lib/dashboard/types";
 
 interface ActionCenterRowProps {
@@ -15,7 +16,10 @@ interface ActionCenterRowProps {
 
 export function ActionCenterRow({ item }: ActionCenterRowProps) {
   const [encaisserOpen, setEncaisserOpen] = useState(false);
+  const [libererCautionOpen, setLibererCautionOpen] = useState(false);
   const isEncaisser = item.type === "collection" && item.primaryAction === "Encaisser";
+  const isLibererCaution =
+    item.type === "deposit_release" && item.primaryAction === "Liberer" && item.depositId;
 
   return (
     <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-3 md:grid-cols-[1fr_auto_auto]">
@@ -46,6 +50,22 @@ export function ActionCenterRow({ item }: ActionCenterRowProps) {
               defaultAmount={item.amount ?? 0}
               customerName={item.customerName}
               vehicleLabel={item.vehicleLabel}
+            />
+          </>
+        ) : isLibererCaution ? (
+          <>
+            <Button size="sm" className="rounded-lg" onClick={() => setLibererCautionOpen(true)}>
+              {item.primaryAction}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+            <LibererCautionDialog
+              open={libererCautionOpen}
+              onOpenChange={setLibererCautionOpen}
+              depositId={item.depositId!}
+              customerName={item.customerName}
+              vehicleLabel={item.vehicleLabel}
+              plate={item.plate}
+              amount={item.amount ?? 0}
             />
           </>
         ) : (

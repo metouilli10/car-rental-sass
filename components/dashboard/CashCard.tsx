@@ -66,7 +66,7 @@ export function CashCard({ cash }: CashCardProps) {
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Derniers mouvements
             </p>
-            <Link href="/payments" className="text-xs font-medium text-primary hover:underline">
+            <Link href="/caisse" className="text-xs font-medium text-primary hover:underline">
               Voir tout
             </Link>
           </div>

@@ -736,6 +736,7 @@ export async function getDashboardData(input: {
         primaryAction: "Liberer",
         primaryHref: `/bookings/${deposit.bookingId}`,
         detailsHref: `/bookings/${deposit.bookingId}`,
+        depositId: deposit.id,
       });
     }
   }

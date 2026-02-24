@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -131,26 +132,34 @@ export function CashFlowSummary({
           </p>
         </div>
 
-        {/* Expand/Collapse Button */}
+        {/* Expand/Collapse + Voir tout */}
         {transactions.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full mt-1 transition-colors duration-200"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="w-4 h-4 mr-2" />
-                Masquer les détails
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-4 h-4 mr-2" />
-                Voir les transactions ({transactions.length})
-              </>
-            )}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="transition-colors duration-200"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="w-4 h-4 mr-2" />
+                  Masquer les détails
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4 mr-2" />
+                  Voir les transactions ({transactions.length})
+                </>
+              )}
+            </Button>
+            <Link
+              href="/caisse"
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              Voir tout
+            </Link>
+          </div>
         )}
 
         {/* Transaction Breakdown */}

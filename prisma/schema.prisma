@@ -424,6 +424,7 @@ model Expense {
   @@index([agencyId, date])
   @@index([agencyId, category])
   @@index([agencyId, vehicleId])
+  @@index([vehicleId])
   @@map("expenses")
 }
 

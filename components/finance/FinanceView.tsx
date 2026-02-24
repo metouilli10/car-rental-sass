@@ -22,7 +22,10 @@ import { EmptyStateCard } from "@/components/finance/EmptyStateCard";
 import { paymentMethodLabel } from "@/components/finance/constants";
 import { formatMAD } from "@/lib/format";
 
+type FinanceTabValue = "apercu" | "revenus" | "charges" | "cautions";
+
 type FinanceViewProps = {
+  defaultTab?: FinanceTabValue;
   period: {
     range: "today" | "7d" | "month" | "quarter" | "custom";
     label: string;
@@ -87,6 +90,7 @@ function BreakdownCard({
 }
 
 export function FinanceView({
+  defaultTab,
   period,
   kpis,
   incomes,
@@ -96,6 +100,7 @@ export function FinanceView({
   paymentBreakdown,
   vehicles,
 }: FinanceViewProps) {
+  const [activeTab, setActiveTab] = useState<FinanceTabValue>(defaultTab ?? "apercu");
   const [isAddExpenseOpen, setAddExpenseOpen] = useState(false);
   const [expensesRows, setExpensesRows] = useState(expenses);
 
@@ -105,6 +110,10 @@ export function FinanceView({
 
   const [expenseSearch, setExpenseSearch] = useState("");
   const [expenseMethod, setExpenseMethod] = useState<"ALL" | "CASH" | "CARD" | "TRANSFER">("ALL");
+
+  useEffect(() => {
+    if (defaultTab) setActiveTab(defaultTab);
+  }, [defaultTab]);
 
   useEffect(() => {
     setExpensesRows(expenses);
@@ -173,7 +182,7 @@ export function FinanceView({
         onOptimisticRevert={onOptimisticExpenseRevert}
       />
 
-      <Tabs defaultValue="apercu" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FinanceTabValue)} className="space-y-4">
         <TabsList className="inline-flex h-auto rounded-xl border border-border/70 bg-muted/40 p-1">
           <TabsTrigger
             value="apercu"

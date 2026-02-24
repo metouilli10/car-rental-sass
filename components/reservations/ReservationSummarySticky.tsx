@@ -1,4 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +14,8 @@ import {
   getDepositStatus,
   type ReservationToneVariant,
 } from "@/lib/reservations/presentation";
+import { LibererCautionDialog } from "@/components/dashboard/LibererCautionDialog";
+import { EncaisserDialog } from "@/components/dashboard/EncaisserDialog";
 import type { DepositStatus } from "@prisma/client";
 import type { BookingDepositStatus } from "@prisma/client";
 
@@ -33,9 +39,12 @@ export interface ReservationSummaryStickyProps {
   remainingAmount: number;
   paymentStatus?: "PENDING" | "PARTIAL" | "PAID";
   depositAmount: number;
-  deposit?: { status: DepositStatus } | null;
+  deposit?: { id: string; amount: number; status: DepositStatus } | null;
   bookingDepositStatus?: BookingDepositStatus;
   bookingId: string;
+  customerName: string;
+  vehicleLabel: string;
+  plate: string;
 }
 
 export function ReservationSummarySticky({
@@ -49,12 +58,19 @@ export function ReservationSummarySticky({
   deposit,
   bookingDepositStatus,
   bookingId,
+  customerName,
+  vehicleLabel,
+  plate,
 }: ReservationSummaryStickyProps) {
+  const router = useRouter();
+  const [libererCautionOpen, setLibererCautionOpen] = useState(false);
+  const [encaisserOpen, setEncaisserOpen] = useState(false);
   const payment = getPaymentStatus(paidNow, totalPrice, paymentStatus);
   const depositStatus = getDepositStatus(depositAmount, deposit, bookingDepositStatus);
 
   const paymentVariant = badgeVariantMap[payment.variant] ?? "secondary";
   const depositVariant = badgeVariantMap[depositStatus.variant] ?? "secondary";
+  const canReleaseInPlace = deposit?.status === "HELD" && deposit?.id;
 
   return (
     <>
@@ -81,11 +97,14 @@ export function ReservationSummarySticky({
             <p className="text-sm text-muted-foreground">
               Payé : {formatMad(paidNow)} · Reste : {formatMad(remainingAmount)}
             </p>
-            <Button asChild variant="outline" size="sm" className="w-full">
-              <Link href={`/payments?booking=${bookingId}`}>
-                <CreditCard className="mr-2 h-4 w-4" />
-                Ajouter paiement
-              </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setEncaisserOpen(true)}
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              Ajouter paiement
             </Button>
           </div>
 
@@ -99,12 +118,24 @@ export function ReservationSummarySticky({
             <p className="text-sm text-muted-foreground">
               {formatMad(depositAmount)}
             </p>
-            <Button asChild variant="outline" size="sm" className="w-full">
-              <Link href={`/payments?booking=${bookingId}`}>
+            {canReleaseInPlace && deposit ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setLibererCautionOpen(true)}
+              >
                 <Banknote className="mr-2 h-4 w-4" />
                 Restituer caution
-              </Link>
-            </Button>
+              </Button>
+            ) : (
+              <Button asChild variant="outline" size="sm" className="w-full">
+                <Link href="/finance?tab=cautions">
+                  <Banknote className="mr-2 h-4 w-4" />
+                  Restituer caution
+                </Link>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -124,21 +155,57 @@ export function ReservationSummarySticky({
             </div>
           </div>
           <div className="flex shrink-0 gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href={`/payments?booking=${bookingId}`}>
-                <CreditCard className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">Paiement</span>
-              </Link>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setEncaisserOpen(true)}
+            >
+              <CreditCard className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Paiement</span>
             </Button>
-            <Button asChild size="sm" variant="outline">
-              <Link href={`/payments?booking=${bookingId}`}>
+            {canReleaseInPlace && deposit ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setLibererCautionOpen(true)}
+              >
                 <Banknote className="h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Caution</span>
-              </Link>
-            </Button>
+              </Button>
+            ) : (
+              <Button asChild size="sm" variant="outline">
+                <Link href="/finance?tab=cautions">
+                  <Banknote className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Caution</span>
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>
+
+      <EncaisserDialog
+        open={encaisserOpen}
+        onOpenChange={setEncaisserOpen}
+        bookingId={bookingId}
+        defaultAmount={remainingAmount}
+        customerName={customerName}
+        vehicleLabel={vehicleLabel}
+        onSuccess={() => router.refresh()}
+      />
+
+      {canReleaseInPlace && deposit && (
+        <LibererCautionDialog
+          open={libererCautionOpen}
+          onOpenChange={setLibererCautionOpen}
+          depositId={deposit.id}
+          customerName={customerName}
+          vehicleLabel={vehicleLabel}
+          plate={plate}
+          amount={deposit.amount}
+          onSuccess={() => router.refresh()}
+        />
+      )}
     </>
   );
 }

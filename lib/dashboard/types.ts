@@ -72,6 +72,8 @@ export interface PriorityActionItem {
   primaryAction: PriorityActionPrimary;
   primaryHref: string;
   detailsHref: string;
+  /** Set for type === "deposit_release" to allow in-place release. */
+  depositId?: string;
 }
 
 export interface PriorityActionGroups {
