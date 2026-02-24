@@ -18,7 +18,7 @@ interface DashboardPageProps {
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const session = await getSession();
 
-  if (!session) {
+  if (!session?.user?.agencyId) {
     return null;
   }
 

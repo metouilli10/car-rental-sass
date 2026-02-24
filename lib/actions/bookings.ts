@@ -150,6 +150,136 @@ export async function saveBookingDraftPlaceholder(data: {
   return { success: true };
 }
 
+export async function updateBooking(bookingId: string, data: BookingFormData) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new Error("Non autorisé");
+  }
+
+  try {
+    const validatedData = bookingSchema.parse(data);
+    const startDate = new Date(validatedData.startDate);
+    const endDate = new Date(validatedData.endDate);
+
+    const booking = await prisma.booking.findFirst({
+      where: {
+        id: bookingId,
+        agencyId: session.user.agencyId,
+      },
+      include: {
+        deposit: true,
+        addons: true,
+      },
+    });
+
+    if (!booking) {
+      return { error: "Réservation non trouvée" };
+    }
+
+    if (booking.status === "COMPLETED" || booking.status === "CANCELED") {
+      return { error: "Impossible de modifier une réservation clôturée ou annulée" };
+    }
+
+    const overlappingCount = await prisma.booking.count({
+      where: {
+        vehicleId: validatedData.vehicleId,
+        id: { not: bookingId },
+        status: { notIn: ["CANCELED", "COMPLETED"] },
+        OR: [
+          {
+            AND: [
+              { startDate: { lte: startDate } },
+              { endDate: { gte: startDate } },
+            ],
+          },
+          {
+            AND: [{ startDate: { lte: endDate } }, { endDate: { gte: endDate } }],
+          },
+          {
+            AND: [
+              { startDate: { gte: startDate } },
+              { endDate: { lte: endDate } },
+            ],
+          },
+        ],
+      },
+    });
+
+    if (overlappingCount > 0) {
+      return {
+        error:
+          "Ce véhicule n'est pas disponible pour ces dates. Il existe déjà une réservation.",
+      };
+    }
+
+    const paidNow = booking.paidNow;
+    const remainingAmount = Math.max(0, validatedData.totalTtc - paidNow);
+    const paymentStatus =
+      remainingAmount <= 0 ? "PAID" : paidNow > 0 ? "PARTIAL" : "PENDING";
+
+    await prisma.$transaction(async (tx) => {
+      await tx.bookingAddon.deleteMany({ where: { bookingId } });
+
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          customerId: validatedData.customerId,
+          vehicleId: validatedData.vehicleId,
+          startDate,
+          endDate,
+          pickupLocation: validatedData.pickupLocation || null,
+          returnLocation: validatedData.returnLocation || null,
+          pricePerDay: validatedData.pricePerDay,
+          totalPrice: validatedData.totalTtc,
+          pricingDays: validatedData.pricingDays,
+          pricingHours: validatedData.pricingHours,
+          addonsTotal: validatedData.addonsTotal,
+          discountType: validatedData.discountType ?? null,
+          discountValue: validatedData.discountValue,
+          discountAmount: validatedData.discountAmount,
+          taxEnabled: validatedData.taxEnabled,
+          taxRate: validatedData.taxRate,
+          totalHt: validatedData.totalHt,
+          totalTva: validatedData.totalTva,
+          totalTtc: validatedData.totalTtc,
+          paidNow,
+          remainingAmount,
+          paymentStatus,
+          depositAmount: validatedData.depositAmount,
+          status: validatedData.status,
+          notes: validatedData.notes || null,
+          addons: {
+            create: validatedData.addons.map((addon) => ({
+              label: addon.label,
+              quantity: addon.quantity,
+              unitAmount: addon.unitAmount,
+              totalAmount: addon.quantity * addon.unitAmount,
+              isDefault: addon.isDefault ?? false,
+            })),
+          },
+        },
+      });
+
+      if (booking.deposit && booking.deposit.amount !== validatedData.depositAmount) {
+        await tx.deposit.update({
+          where: { id: booking.deposit.id },
+          data: { amount: validatedData.depositAmount },
+        });
+      }
+    });
+
+    revalidatePath("/bookings");
+    revalidatePath("/dashboard");
+    revalidatePath(`/bookings/${bookingId}`);
+    revalidatePath(`/bookings/${bookingId}/edit`);
+    return { success: true, bookingId };
+  } catch (error) {
+    console.error("updateBooking error:", error);
+    return { error: "Erreur lors de la mise à jour de la réservation" };
+  }
+}
+
 export async function updateBookingStatus(
   bookingId: string,
   status: "ACTIVE" | "COMPLETED" | "CANCELED"

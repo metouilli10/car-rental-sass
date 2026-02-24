@@ -152,7 +152,7 @@ export function ReservationDetailsHeader({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
-                <Link href={`/bookings/${bookingId}`}>
+                <Link href={`/bookings/${bookingId}/edit`}>
                   <Pencil className="mr-2 h-4 w-4" />
                   Modifier
                 </Link>

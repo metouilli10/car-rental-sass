@@ -14,14 +14,16 @@ export default async function DashboardLayout({
 }) {
   const session = await getSession();
 
-  if (!session) {
+  if (!session?.user) {
     redirect("/login");
   }
 
-  // Fetch real notification summary for the bell icon
-  const notifSummary = await getNotificationsSummary(session.user.agencyId).catch(
-    () => ({ count: 0, items: [] })
-  );
+  const agencyId = session.user.agencyId ?? "";
+  // Fetch real notification summary for the bell icon (guard against missing agencyId)
+  const notifSummary =
+    agencyId ?
+      await getNotificationsSummary(agencyId).catch(() => ({ count: 0, items: [] }))
+    : { count: 0, items: [] };
 
   return (
     <div className="flex min-h-screen bg-background" suppressHydrationWarning>

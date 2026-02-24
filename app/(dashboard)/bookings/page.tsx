@@ -13,22 +13,29 @@ interface BookingsPageProps {
 }
 
 export default async function BookingsPage({ searchParams }: BookingsPageProps) {
-  const session = await getSession();
+  try {
+    const session = await getSession();
 
-  if (!session) {
-    return null;
-  }
+    if (!session?.user) {
+      return null;
+    }
 
-  const params = await searchParams;
-  const page = Math.max(1, Number(params.page) || 1);
-  const selectedClientId = params.clientId || params.customerId;
+    const agencyId = session.user.agencyId;
+    if (!agencyId) {
+      console.error("BookingsPage: session.user.agencyId is missing");
+      throw new Error("Session invalide : agencyId manquant. Veuillez vous reconnecter.");
+    }
 
-  const where = {
-    agencyId: session.user.agencyId,
-    ...(selectedClientId ? { customerId: selectedClientId } : {}),
-  };
+    const params = await searchParams;
+    const page = Math.max(1, Number(params.page) || 1);
+    const selectedClientId = params.clientId || params.customerId;
 
-  const [bookings, total, selectedCustomer] = await Promise.all([
+    const where = {
+      agencyId,
+      ...(selectedClientId ? { customerId: selectedClientId } : {}),
+    };
+
+    const [bookings, total, selectedCustomer] = await Promise.all([
     prisma.booking.findMany({
       where,
       select: {
@@ -52,16 +59,21 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
     prisma.booking.count({ where }),
     selectedClientId
       ? prisma.customer.findFirst({
-          where: { id: selectedClientId, agencyId: session.user.agencyId },
+          where: { id: selectedClientId, agencyId },
           select: { name: true },
         })
       : null,
   ]);
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-  const bookingsData: BookingListItem[] = bookings;
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    // Serialize to plain JSON-safe shape so client never gets non-serializable values
+    const bookingsData: BookingListItem[] = bookings.map((b) => ({
+      ...b,
+      startDate: b.startDate instanceof Date ? b.startDate.toISOString() : b.startDate,
+      endDate: b.endDate instanceof Date ? b.endDate.toISOString() : b.endDate,
+    }));
 
-  return (
+    return (
     <div className="space-y-8">
       <PageHeader
         title={selectedCustomer ? `Réservations > ${selectedCustomer.name}` : "Réservations"}
@@ -93,5 +105,9 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
         </div>
       )}
     </div>
-  );
+    );
+  } catch (err) {
+    console.error("BookingsPage error:", err);
+    throw err;
+  }
 }

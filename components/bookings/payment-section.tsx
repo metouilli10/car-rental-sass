@@ -26,6 +26,10 @@ interface PaymentSectionProps {
   onNotesChange: (value: string) => void;
   isSubmitting: boolean;
   onSaveDraft: () => void;
+  /** Override submit button label (e.g. "Enregistrer les modifications") */
+  submitLabel?: string;
+  /** Show "Enregistrer brouillon" button (default true, set false on edit) */
+  showDraft?: boolean;
 }
 
 export function PaymentSection({
@@ -40,6 +44,8 @@ export function PaymentSection({
   onNotesChange,
   isSubmitting,
   onSaveDraft,
+  submitLabel,
+  showDraft = true,
 }: PaymentSectionProps) {
   return (
     <div className="space-y-5">
@@ -104,11 +110,13 @@ export function PaymentSection({
 
       <div className="flex flex-wrap gap-3 pt-2">
         <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
-          {isSubmitting ? "Création..." : "Créer la réservation"}
+          {isSubmitting ? "Enregistrement..." : submitLabel ?? "Créer la réservation"}
         </Button>
-        <Button type="button" variant="outline" disabled={isSubmitting} onClick={onSaveDraft}>
-          Enregistrer brouillon
-        </Button>
+        {showDraft ? (
+          <Button type="button" variant="outline" disabled={isSubmitting} onClick={onSaveDraft}>
+            Enregistrer brouillon
+          </Button>
+        ) : null}
       </div>
     </div>
   );

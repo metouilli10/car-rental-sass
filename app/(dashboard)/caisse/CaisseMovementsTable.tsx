@@ -110,64 +110,76 @@ export function CaisseMovementsTable({
             </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {showDateColumn && <TableHead>Date</TableHead>}
-                <TableHead>Heure</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead className="text-muted-foreground">Réf</TableHead>
-                <TableHead className="text-right">Montant</TableHead>
-                <TableHead className="w-10" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((m) => (
-                <TableRow key={m.id}>
-                  {showDateColumn && (
-                    <TableCell className="font-mono text-muted-foreground">
-                      {format(new Date(m.happenedAt), "dd/MM")}
-                    </TableCell>
-                  )}
-                  <TableCell className="font-mono text-muted-foreground">
-                    {format(new Date(m.happenedAt), "HH:mm")}
-                  </TableCell>
-                  <TableCell>{m.label}</TableCell>
-                  <TableCell className="font-medium">{m.customerName}</TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
-                    {m.reference}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      "text-right font-semibold tabular-nums",
-                      m.direction === "in"
-                        ? "text-emerald-600"
-                        : "text-red-600"
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {showDateColumn && (
+                      <TableHead className="py-3 px-2 sm:px-4">Date</TableHead>
                     )}
-                  >
-                    {m.direction === "in" ? "+" : "-"}
-                    {FORMAT_MAD(m.amount)}
-                  </TableCell>
-                  <TableCell>
-                    {m.bookingId ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        asChild
-                        title="Ouvrir la réservation"
+                    <TableHead className="py-3 px-2 sm:px-4">Heure</TableHead>
+                    <TableHead className="min-w-0 py-3 px-2 sm:px-4 truncate">Type</TableHead>
+                    <TableHead className="min-w-0 py-3 px-2 sm:px-4 truncate">Client</TableHead>
+                    <TableHead className="hidden py-3 px-2 text-muted-foreground sm:table-cell sm:px-4">
+                      Réf
+                    </TableHead>
+                    <TableHead className="w-[90px] py-3 px-2 text-right whitespace-nowrap sm:px-4">
+                      Montant
+                    </TableHead>
+                    <TableHead className="w-10 py-3 px-2 sm:px-4" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((m) => (
+                    <TableRow key={m.id}>
+                      {showDateColumn && (
+                        <TableCell className="font-mono py-3 px-2 text-muted-foreground sm:px-4">
+                          {format(new Date(m.happenedAt), "dd/MM")}
+                        </TableCell>
+                      )}
+                      <TableCell className="font-mono py-3 px-2 text-muted-foreground sm:px-4">
+                        {format(new Date(m.happenedAt), "HH:mm")}
+                      </TableCell>
+                      <TableCell className="min-w-0 py-3 px-2 sm:px-4 truncate" title={m.label}>{m.label}</TableCell>
+                      <TableCell className="min-w-0 py-3 px-2 font-medium sm:px-4 truncate" title={m.customerName}>
+                        {m.customerName}
+                      </TableCell>
+                      <TableCell className="hidden py-3 px-2 text-xs text-muted-foreground sm:table-cell sm:px-4">
+                        {m.reference ?? "—"}
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          "py-3 px-2 text-right font-semibold tabular-nums whitespace-nowrap sm:px-4",
+                          m.direction === "in"
+                            ? "text-emerald-600"
+                            : "text-red-600"
+                        )}
                       >
-                        <Link href={`/bookings/${m.bookingId}`}>
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    ) : null}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                        {m.direction === "in" ? "+" : "-"}
+                        {FORMAT_MAD(m.amount)}
+                      </TableCell>
+                      <TableCell className="py-3 px-2 sm:px-4">
+                        {m.bookingId ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            asChild
+                            title="Ouvrir la réservation"
+                          >
+                            <Link href={`/bookings/${m.bookingId}`}>
+                              <ExternalLink className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         )}
       </div>
 

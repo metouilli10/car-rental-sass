@@ -1,11 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { BookingPaymentStatus, BookingStatus, UserRole } from "@prisma/client";
-import { Eye, Search, X } from "lucide-react";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { Badge } from "@/components/ui/badge";
+import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,10 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { BookingActionsDropdown } from "@/components/bookings/booking-actions-dropdown";
-
-type DateLike = Date | string;
+import {
+  type DateLike,
+  toDate,
+  startOfDay,
+  endOfDay,
+  isSameDay,
+  isInRangeInclusive,
+  intersectsRange,
+} from "@/lib/bookings/list-utils";
+import { ReservationCardList } from "@/components/reservations/ReservationCardList";
+import { ReservationsTable } from "@/components/reservations/ReservationsTable";
 
 type DatePreset = "ALL" | "TODAY" | "THIS_WEEK" | "THIS_MONTH" | "CUSTOM";
 type StatusFilter =
@@ -59,66 +63,6 @@ export interface BookingListItem {
 interface BookingsControlCenterProps {
   bookings: BookingListItem[];
   role: UserRole;
-}
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function endOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-}
-
-function toDate(value: DateLike): Date {
-  return value instanceof Date ? value : new Date(value);
-}
-
-function isSameDay(dateA: Date, dateB: Date): boolean {
-  return startOfDay(dateA).getTime() === startOfDay(dateB).getTime();
-}
-
-function isInRangeInclusive(date: Date, start: Date, end: Date): boolean {
-  return date.getTime() >= start.getTime() && date.getTime() <= end.getTime();
-}
-
-function intersectsRange(
-  rangeStart: Date,
-  rangeEnd: Date,
-  bookingStart: Date,
-  bookingEnd: Date
-): boolean {
-  return bookingStart.getTime() <= rangeEnd.getTime() && bookingEnd.getTime() >= rangeStart.getTime();
-}
-
-function getDurationDays(startDate: Date, endDate: Date): number {
-  const start = startOfDay(startDate).getTime();
-  const end = startOfDay(endDate).getTime();
-  return Math.max(1, Math.ceil((end - start) / MS_PER_DAY));
-}
-
-function getBookingUrgency(booking: BookingListItem, today: Date) {
-  const startDate = toDate(booking.startDate);
-  const endDate = toDate(booking.endDate);
-  const todayStart = startOfDay(today);
-
-  if (booking.status === "ACTIVE" && startOfDay(endDate).getTime() < todayStart.getTime()) {
-    return { label: "En retard", variant: "destructive" as const };
-  }
-  if (isSameDay(startDate, todayStart)) {
-    return { label: "Départ aujourd'hui", variant: "info" as const };
-  }
-  if (isSameDay(endDate, todayStart)) {
-    return { label: "Retour aujourd'hui", variant: "warning" as const };
-  }
-  if (
-    booking.status === "ACTIVE" &&
-    isInRangeInclusive(todayStart, startOfDay(startDate), endOfDay(endDate))
-  ) {
-    return { label: "En cours", variant: "success" as const };
-  }
-  return null;
 }
 
 export function BookingsControlCenter({ bookings, role }: BookingsControlCenterProps) {
@@ -468,139 +412,22 @@ export function BookingsControlCenter({ bookings, role }: BookingsControlCenterP
           </Button>
         </div>
       ) : (
-        <div className="rounded-2xl bg-white shadow-card">
-          <div className="max-h-[72vh] overflow-auto">
-            <table className="w-full min-w-[1150px]">
-              <thead className="sticky top-0 z-20 border-b border-muted bg-white">
-                <tr>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                    Client
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                    Véhicule
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                    Dates
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                    Urgence
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                    Financier
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                    Statut
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-muted/60">
-                {filteredBookings.map((booking) => {
-                  const startDate = toDate(booking.startDate);
-                  const endDate = toDate(booking.endDate);
-                  const durationDays = getDurationDays(startDate, endDate);
-                  const urgency = getBookingUrgency(booking, today);
-                  const dayProgress =
-                    booking.status === "ACTIVE"
-                      ? Math.min(
-                          durationDays,
-                          Math.max(
-                            1,
-                            Math.floor(
-                              (startOfDay(today).getTime() - startOfDay(startDate).getTime()) /
-                                MS_PER_DAY
-                            ) + 1
-                          )
-                        )
-                      : null;
-
-                  const paidNowValue = typeof booking.paidNow === "number" ? booking.paidNow : null;
-                  const remainingValue =
-                    typeof booking.remainingAmount === "number" ? booking.remainingAmount : null;
-
-                  return (
-                    <tr key={booking.id} className="transition-colors duration-200 hover:bg-slate-50">
-                      <td className="px-6 py-4">
-                        <Link
-                          href={`/customers/${booking.customer.id}`}
-                          className="font-medium text-foreground underline-offset-4 hover:underline"
-                        >
-                          {booking.customer.name}
-                        </Link>
-                        <div className="text-sm text-muted-foreground">{booking.customer.phone}</div>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <Link
-                          href={`/vehicles/${booking.vehicle.id}/edit`}
-                          className="font-medium text-foreground underline-offset-4 hover:underline"
-                        >
-                          {booking.vehicle.make} {booking.vehicle.model}
-                        </Link>
-                        <div className="text-sm text-muted-foreground">{booking.vehicle.plate}</div>
-                      </td>
-
-                      <td className="px-6 py-4 text-sm">
-                        <div className="text-foreground">
-                          {formatDate(startDate)} → {formatDate(endDate)}
-                        </div>
-                        <div className="text-muted-foreground">({durationDays} jours)</div>
-                        {dayProgress ? (
-                          <div className="mt-1 text-xs font-medium text-primary">
-                            Jour {dayProgress}/{durationDays}
-                          </div>
-                        ) : null}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {urgency ? <Badge variant={urgency.variant}>{urgency.label}</Badge> : <span className="text-sm text-muted-foreground">-</span>}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-foreground">
-                          Total: {formatCurrency(booking.totalPrice)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Payé: {paidNowValue !== null ? formatCurrency(paidNowValue) : "--"}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Reste: {remainingValue !== null ? formatCurrency(remainingValue) : "--"}
-                        </div>
-                        {booking.deposit ? (
-                          <div className="mt-1">
-                            <StatusBadge status={booking.deposit.status} />
-                          </div>
-                        ) : null}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <StatusBadge status={booking.status} />
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1">
-                          <Button asChild size="icon" variant="ghost" aria-label="Voir la réservation">
-                            <Link href={`/bookings/${booking.id}`}>
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <BookingActionsDropdown
-                            bookingId={booking.id}
-                            status={booking.status}
-                            paymentStatus={booking.paymentStatus}
-                            role={role}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <>
+          <div className="md:hidden">
+            <ReservationCardList
+              bookings={filteredBookings}
+              role={role}
+              today={today}
+            />
           </div>
-        </div>
+          <div className="hidden md:block">
+            <ReservationsTable
+              bookings={filteredBookings}
+              role={role}
+              today={today}
+            />
+          </div>
+        </>
       )}
     </div>
   );

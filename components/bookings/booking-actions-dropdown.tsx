@@ -73,7 +73,12 @@ export function BookingActionsDropdown({
         <DropdownMenuItem asChild>
           <Link href={`/bookings/${bookingId}`}>Voir détails</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => handleComingSoon("Modifier")}>
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.preventDefault();
+            router.push(`/bookings/${bookingId}/edit`);
+          }}
+        >
           Modifier
         </DropdownMenuItem>
         <DropdownMenuItem

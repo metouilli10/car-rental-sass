@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { bookingSchema, BookingFormData } from "@/lib/validations/booking";
+import { updateBooking } from "@/lib/actions/bookings";
 import { formatCurrency } from "@/lib/utils";
 import { BlockCard } from "@/components/bookings/block-card";
 import { StepperNav } from "@/components/bookings/stepper-nav";
@@ -45,14 +46,50 @@ interface ReservationCreatePageProps {
   vehicles: BookingVehicleOption[];
   locationOptions: string[];
   activeBookings: ActiveBookingSlot[];
-  onSubmit: (
+  /** For create mode. Omit when bookingId is provided (edit mode). */
+  onSubmit?: (
     data: BookingFormData,
   ) => Promise<{ error: string } | { success: boolean; bookingId: string } | void>;
+  /** When provided, form is in edit mode; submit will call updateBooking(bookingId, data). */
+  bookingId?: string;
+  /** When provided, form is in edit mode with these default values */
+  initialData?: Partial<BookingFormData>;
+  submitLabel?: string;
+  showDraft?: boolean;
 }
 
 const DEFAULT_ADDONS: BookingFormData["addons"] = [
   { label: "Assurance complémentaire", quantity: 1, unitAmount: 0, isDefault: true },
 ];
+
+const DEFAULT_FORM_VALUES: BookingFormData = {
+  customerId: "",
+  vehicleId: "",
+  startDate: "",
+  endDate: "",
+  pickupLocation: "",
+  returnLocation: "",
+  pricePerDay: 0,
+  pricingDays: 0,
+  pricingHours: 0,
+  addonsTotal: 0,
+  discountType: null,
+  discountValue: 0,
+  discountAmount: 0,
+  taxEnabled: false,
+  taxRate: 20,
+  totalHt: 0,
+  totalTva: 0,
+  totalTtc: 0,
+  totalPrice: 0,
+  paidNow: 0,
+  remainingAmount: 0,
+  depositAmount: 2000,
+  paymentType: "CASH",
+  status: "CONFIRMED",
+  addons: DEFAULT_ADDONS,
+  notes: "",
+};
 
 export function ReservationCreatePage({
   customers: initialCustomers,
@@ -60,10 +97,16 @@ export function ReservationCreatePage({
   locationOptions,
   activeBookings,
   onSubmit,
+  bookingId,
+  initialData,
+  submitLabel,
+  showDraft = true,
 }: ReservationCreatePageProps) {
   const router = useRouter();
   const [customers, setCustomers] = useState(initialCustomers);
-  const [addons, setAddons] = useState<BookingFormData["addons"]>(DEFAULT_ADDONS);
+  const [addons, setAddons] = useState<BookingFormData["addons"]>(
+    initialData?.addons ?? DEFAULT_ADDONS
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -75,34 +118,9 @@ export function ReservationCreatePage({
     getValues,
   } = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
-    defaultValues: {
-      customerId: "",
-      vehicleId: "",
-      startDate: "",
-      endDate: "",
-      pickupLocation: "",
-      returnLocation: "",
-      pricePerDay: 0,
-      pricingDays: 0,
-      pricingHours: 0,
-      addonsTotal: 0,
-      discountType: null,
-      discountValue: 0,
-      discountAmount: 0,
-      taxEnabled: false,
-      taxRate: 20,
-      totalHt: 0,
-      totalTva: 0,
-      totalTtc: 0,
-      totalPrice: 0,
-      paidNow: 0,
-      remainingAmount: 0,
-      depositAmount: 2000,
-      paymentType: "CASH",
-      status: "CONFIRMED",
-      addons: DEFAULT_ADDONS,
-      notes: "",
-    },
+    defaultValues: initialData
+      ? { ...DEFAULT_FORM_VALUES, ...initialData, addons: initialData.addons ?? DEFAULT_ADDONS }
+      : DEFAULT_FORM_VALUES,
   });
 
   const vehicleId = watch("vehicleId");
@@ -233,29 +251,49 @@ export function ReservationCreatePage({
     ];
   }, [availabilityConflict, customerId, endDate, paidNow, pricePerDay, pricing.totalTtc, startDate, vehicleId]);
 
+  const isEdit = Boolean(bookingId);
+
   const handleCreate = async (data: BookingFormData) => {
     setIsSubmitting(true);
     setFormError(null);
     try {
-      const result = await onSubmit(data);
+      const result = isEdit && bookingId
+        ? await updateBooking(bookingId, data)
+        : await onSubmit?.(data);
+
       if (result && "error" in result) {
         setFormError(result.error);
         return;
       }
 
-      toast.success("Réservation créée avec succès");
-      toast("Prochaines étapes", {
-        description: "Créer contrat • Faire inspection départ • Envoyer WhatsApp",
-      });
-      setTimeout(() => {
-        if (result && "bookingId" in result) {
-          router.push(`/bookings/${result.bookingId}`);
-          return;
-        }
-        router.push("/bookings");
-      }, 900);
+      if (isEdit) {
+        toast.success("Réservation mise à jour");
+        setTimeout(() => {
+          if (result && "bookingId" in result) {
+            router.push(`/bookings/${result.bookingId}`);
+          } else {
+            router.push("/bookings");
+          }
+        }, 500);
+      } else {
+        toast.success("Réservation créée avec succès");
+        toast("Prochaines étapes", {
+          description: "Créer contrat • Faire inspection départ • Envoyer WhatsApp",
+        });
+        setTimeout(() => {
+          if (result && "bookingId" in result) {
+            router.push(`/bookings/${result.bookingId}`);
+            return;
+          }
+          router.push("/bookings");
+        }, 900);
+      }
     } catch {
-      setFormError("Impossible de créer la réservation pour le moment.");
+      setFormError(
+        isEdit
+          ? "Impossible de mettre à jour la réservation pour le moment."
+          : "Impossible de créer la réservation pour le moment."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -437,6 +475,8 @@ export function ReservationCreatePage({
               onNotesChange={(value) => setValue("notes", value)}
               isSubmitting={isSubmitting}
               onSaveDraft={handleSaveDraft}
+              submitLabel={submitLabel}
+              showDraft={showDraft}
             />
           </BlockCard>
         </div>

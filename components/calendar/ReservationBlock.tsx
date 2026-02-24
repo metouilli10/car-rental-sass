@@ -185,7 +185,7 @@ export function ReservationBlock({
               <Link href={`/bookings/${booking.id}`}>Voir</Link>
             </Button>
             <Button asChild variant="ghost" size="sm" className="w-full justify-start">
-              <Link href={`/bookings/${booking.id}`}>Modifier</Link>
+              <Link href={`/bookings/${booking.id}/edit`}>Modifier</Link>
             </Button>
             <Button
               variant="ghost"
