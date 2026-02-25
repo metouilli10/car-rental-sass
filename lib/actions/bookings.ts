@@ -327,6 +327,8 @@ export async function updateBookingStatus(
     revalidatePath("/bookings");
     revalidatePath("/dashboard");
     revalidatePath(`/bookings/${bookingId}`);
+    revalidatePath("/vehicles");
+    revalidatePath("/catalogue");
   } catch (error) {
     console.error("updateBookingStatus error:", error);
     throw new Error("Erreur lors de la mise à jour du statut de la réservation");
@@ -343,6 +345,46 @@ export async function startBooking(bookingId: string) {
 
 export async function completeBooking(bookingId: string) {
   return updateBookingStatus(bookingId, "COMPLETED");
+}
+
+/**
+ * Reconcile past-due ACTIVE bookings: set them to COMPLETED and their vehicles to AVAILABLE.
+ * Called when the dashboard loads so vehicle status stays in sync without a cron.
+ */
+export async function reconcilePastDueBookings() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.agencyId) return;
+
+  const now = new Date();
+  const pastDue = await prisma.booking.findMany({
+    where: {
+      agencyId: session.user.agencyId,
+      status: "ACTIVE",
+      endDate: { lt: now },
+    },
+    select: { id: true, vehicleId: true },
+  });
+
+  if (pastDue.length === 0) return;
+
+  const bookingIds = pastDue.map((b) => b.id);
+  const vehicleIds = [...new Set(pastDue.map((b) => b.vehicleId))];
+
+  await prisma.$transaction(async (tx) => {
+    await tx.booking.updateMany({
+      where: { id: { in: bookingIds } },
+      data: { status: "COMPLETED" },
+    });
+    await tx.vehicle.updateMany({
+      where: { id: { in: vehicleIds } },
+      data: { status: "AVAILABLE" },
+    });
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/bookings");
+  revalidatePath("/vehicles");
+  revalidatePath("/catalogue");
 }
 
 export async function extendActiveBooking(

@@ -67,6 +67,10 @@ export default async function CataloguePage({ searchParams }: CataloguePageProps
   }
 
   const vehiclesWithAvailability = vehicles.map((vehicle) => {
+    // Synced with vehicle page: MAINTENANCE / UNAVAILABLE are always indisponible
+    if (vehicle.status === "MAINTENANCE" || vehicle.status === "UNAVAILABLE") {
+      return { ...vehicle, availability: { status: "UNAVAILABLE" as const } };
+    }
     if (unavailableVehicleIds.has(vehicle.id)) {
       return { ...vehicle, availability: { status: "UNAVAILABLE" as const } };
     }

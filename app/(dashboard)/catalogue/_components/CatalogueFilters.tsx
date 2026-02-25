@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,19 +30,50 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
+/** Normalize to start of day in local time so calendar highlights match the selected range. */
+function startOfDayLocal(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function parseDateFromUrl(value: string | null): Date | undefined {
+  if (!value) return undefined;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : startOfDayLocal(d);
+}
+
 export function CatalogueFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const initialStart = useMemo(
+    () => parseDateFromUrl(searchParams.get("start")) ?? startOfDayLocal(new Date()),
+    [searchParams.get("start")]
+  );
+  const initialEnd = useMemo(() => {
+    const end = parseDateFromUrl(searchParams.get("end"));
+    if (end) return end;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return startOfDayLocal(tomorrow);
+  }, [searchParams.get("end")]);
   
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(search);
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    searchParams.get("start") ? new Date(searchParams.get("start")!) : new Date()
-  );
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    searchParams.get("end") ? new Date(searchParams.get("end")!) : new Date(Date.now() + 86400000)
-  );
+  const [startDate, setStartDate] = useState<Date | undefined>(initialStart);
+  const [endDate, setEndDate] = useState<Date | undefined>(initialEnd);
   const [view, setView] = useState<"grid" | "list">("grid");
+
+  // Sync state from URL when searchParams change (e.g. back/forward or external update)
+  useEffect(() => {
+    const start = parseDateFromUrl(searchParams.get("start")) ?? startOfDayLocal(new Date());
+    const end = parseDateFromUrl(searchParams.get("end"));
+    setStartDate(start);
+    setEndDate(end ?? (() => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return startOfDayLocal(tomorrow);
+    })());
+  }, [searchParams.get("start"), searchParams.get("end")]);
 
   // Debounce search input -- 300ms delay before triggering URL update
   useEffect(() => {
@@ -56,8 +87,8 @@ export function CatalogueFilters() {
     if (debouncedSearch) params.set("search", debouncedSearch);
     else params.delete("search");
     
-    if (startDate) params.set("start", startDate.toISOString());
-    if (endDate) params.set("end", endDate.toISOString());
+    if (startDate) params.set("start", startOfDayLocal(startDate).toISOString());
+    if (endDate) params.set("end", startOfDayLocal(endDate).toISOString());
     
     router.push(`?${params.toString()}`, { scroll: false });
   }, [debouncedSearch, startDate, endDate, router, searchParams]);
@@ -108,8 +139,11 @@ export function CatalogueFilters() {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => {
-                      setStartDate(new Date());
-                      setEndDate(new Date(Date.now() + 86400000));
+                      const today = startOfDayLocal(new Date());
+                      const tomorrow = new Date(today);
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      setStartDate(today);
+                      setEndDate(tomorrow);
                     }}
                   >
                     Réinitialiser
@@ -119,11 +153,14 @@ export function CatalogueFilters() {
                   <Calendar
                     initialFocus
                     mode="range"
-                    defaultMonth={startDate}
-                    selected={{ from: startDate, to: endDate }}
+                    defaultMonth={startDate ?? new Date()}
+                    selected={{
+                      from: startDate ? startOfDayLocal(startDate) : undefined,
+                      to: endDate ? startOfDayLocal(endDate) : undefined,
+                    }}
                     onSelect={(range) => {
-                      setStartDate(range?.from);
-                      setEndDate(range?.to);
+                      setStartDate(range?.from ? startOfDayLocal(range.from) : undefined);
+                      setEndDate(range?.to ? startOfDayLocal(range.to) : undefined);
                     }}
                     numberOfMonths={2}
                     locale={fr}

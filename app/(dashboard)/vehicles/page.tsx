@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
+import { reconcilePastDueBookings } from "@/lib/actions/bookings";
 import { Pagination } from "@/components/shared/pagination";
 import Link from "next/link";
 import { Plus, Car } from "lucide-react";
@@ -28,6 +29,8 @@ export default async function VehiclesPage({
 }) {
   const session = await getSession();
   if (!session) return null;
+
+  await reconcilePastDueBookings();
 
   const { status, page: pageParam, q } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
@@ -61,21 +64,18 @@ export default async function VehiclesPage({
       orderBy: { createdAt: "desc" },
       take: PAGE_SIZE,
       skip: (page - 1) * PAGE_SIZE,
-      include:
-        statusFilter === "RENTED"
-          ? {
-              bookings: {
-                where: { status: "ACTIVE" },
-                take: 1,
-                select: {
-                  id: true,
-                  startDate: true,
-                  endDate: true,
-                  customer: { select: { id: true, name: true } },
-                },
-              },
-            }
-          : undefined,
+      include: {
+        bookings: {
+          where: { status: "ACTIVE" },
+          take: 1,
+          select: {
+            id: true,
+            startDate: true,
+            endDate: true,
+            customer: { select: { id: true, name: true } },
+          },
+        },
+      },
     }),
     prisma.vehicle.count({ where }),
     prisma.vehicle.groupBy({

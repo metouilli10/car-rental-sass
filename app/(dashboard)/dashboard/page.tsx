@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth-cache";
 import { periodLabel, resolveDashboardPeriod } from "@/lib/dashboard/ranges";
 import { getDashboardData } from "@/lib/dashboard/queries";
+import { reconcilePastDueBookings } from "@/lib/actions/bookings";
 import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { PeriodFilterBar } from "@/components/dashboard/PeriodFilterBar";
@@ -23,6 +24,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   const agencyId = session.user.agencyId;
+  await reconcilePastDueBookings();
   const params = await searchParams;
   const selectedPeriod = resolveDashboardPeriod(params.period);
   const dashboard = await getDashboardData({
