@@ -121,60 +121,70 @@ export default async function VehiclesPage({
         </div>
         <Link
           href="/vehicles/add"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#6D5EF7] hover:bg-[#5b4fd4] text-white text-sm font-medium rounded-xl transition-colors duration-200 shadow-sm shrink-0"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors duration-200 shadow-sm shrink-0"
         >
           <Plus className="h-4 w-4" />
           Ajouter un véhicule
         </Link>
       </div>
 
-      {/* ── Status tabs ── */}
-      <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl w-fit overflow-x-auto">
-        {statusTabs.map((tab) => {
-          const isActive =
-            statusFilter === tab.key ||
-            (!statusFilter && tab.key === undefined);
-          const count =
-            tab.key !== undefined ? (countMap[tab.key] ?? 0) : totalCount;
-          const href =
-            tab.key !== undefined
-              ? `/vehicles?status=${tab.key}`
-              : "/vehicles";
+      {/* ── Section 1: Status filter ── */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider sm:text-[11px]">
+          Statut
+        </p>
+        <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-muted rounded-xl w-full">
+          {statusTabs.map((tab) => {
+            const isActive =
+              statusFilter === tab.key ||
+              (!statusFilter && tab.key === undefined);
+            const count =
+              tab.key !== undefined ? (countMap[tab.key] ?? 0) : totalCount;
+            const href =
+              tab.key !== undefined
+                ? `/vehicles?status=${tab.key}`
+                : "/vehicles";
 
-          return (
-            <Link
-              key={tab.label}
-              href={href}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
-                isActive
-                  ? "bg-[#6D5EF7] text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-800 hover:bg-white/70"
-              }`}
-            >
-              {tab.label}
-              <span
-                className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold min-w-[18px] h-[18px] px-1 tabular-nums ${
+            return (
+              <Link
+                key={tab.label}
+                href={href}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                   isActive
-                    ? "bg-white/25 text-white"
-                    : "bg-gray-200 text-gray-500"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-transparent text-gray-600 hover:bg-blue-50"
                 }`}
               >
-                {count}
-              </span>
-            </Link>
-          );
-        })}
+                {tab.label}
+                <span
+                  className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold min-w-[18px] h-[18px] px-1 tabular-nums ${
+                    isActive
+                      ? "bg-white/25 text-white"
+                      : "bg-gray-200/80 text-gray-600"
+                  }`}
+                >
+                  {count}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
-      {/* ── Search + filter row ── */}
-      <VehiclesSearchBar defaultValue={searchQuery} statusFilter={status} />
+      {/* ── Section 2: Search ── */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider sm:text-[11px]">
+          Recherche
+        </p>
+        <VehiclesSearchBar defaultValue={searchQuery} statusFilter={status} />
+      </div>
 
       {/* ── Content ── */}
       {vehicles.length === 0 && page === 1 ? (
         /* Empty state */
-        <div className="flex flex-col items-center justify-center py-20 rounded-2xl bg-white shadow-sm border border-gray-100">
-          <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
-            <Car className="h-7 w-7 text-gray-300" />
+        <div className="flex flex-col items-center justify-center py-20 rounded-xl bg-white shadow-sm border border-border">
+          <div className="w-14 h-14 rounded-2xl bg-blue-100 border border-blue-100 flex items-center justify-center mb-4">
+            <Car className="h-7 w-7 text-blue-600/80" />
           </div>
           <p className="text-gray-700 text-sm font-medium mb-1">
             {emptyMessage}
@@ -187,7 +197,7 @@ export default async function VehiclesPage({
           {!statusFilter && !searchQuery && (
             <Link
               href="/vehicles/add"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#6D5EF7] hover:bg-[#5b4fd4] text-white text-sm font-medium rounded-xl transition-colors duration-200"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors duration-200"
             >
               <Plus className="h-4 w-4" />
               Ajouter un véhicule
@@ -198,7 +208,7 @@ export default async function VehiclesPage({
         <>
           <VehiclesList vehicles={vehicles} isRentedView={isRentedView} />
           {totalPages > 1 ? (
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="rounded-xl border border-border bg-white shadow-sm">
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}

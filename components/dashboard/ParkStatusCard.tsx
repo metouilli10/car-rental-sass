@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CarFront } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,13 +24,14 @@ export function ParkStatusCard({ status }: ParkStatusCardProps) {
   };
 
   return (
-    <Card className="h-full rounded-xl border border-slate-200 bg-white shadow-sm hover:translate-y-0 hover:shadow-sm">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold text-slate-900">Etat du parc</CardTitle>
-          <CarFront className="h-4 w-4 text-muted-foreground" />
-        </div>
-      </CardHeader>
+    <Link href="/vehicles" className="block h-full">
+      <Card className="h-full rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md cursor-pointer">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold text-slate-900">Etat du parc</CardTitle>
+            <CarFront className="h-4 w-4 text-muted-foreground" />
+          </div>
+        </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-center">
           <div className="relative h-36 w-36 rounded-full p-3" style={donutStyle}>
@@ -55,5 +57,6 @@ export function ParkStatusCard({ status }: ParkStatusCardProps) {
         </div>
       </CardContent>
     </Card>
+    </Link>
   );
 }

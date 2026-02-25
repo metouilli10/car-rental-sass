@@ -42,11 +42,11 @@ export function VehiclesSearchBar({
   };
 
   return (
-    <div className="flex items-center gap-3 w-full">
-      <div className="relative flex-1 max-w-sm">
+    <div className="flex items-center gap-3 w-full min-w-0">
+      <div className="relative flex-1 min-w-0 max-w-sm">
         <Search
           className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors duration-200 ${
-            isPending ? "text-[#6D5EF7]" : "text-gray-400"
+            isPending ? "text-blue-600" : "text-gray-400"
           }`}
         />
         <input
@@ -54,7 +54,7 @@ export function VehiclesSearchBar({
           value={value}
           onChange={handleChange}
           placeholder="Rechercher par modèle, plaque..."
-          className="w-full pl-9 pr-8 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#6D5EF7]/20 focus:border-[#6D5EF7] transition-all duration-200 placeholder:text-gray-400 text-gray-900"
+          className="w-full pl-9 pr-8 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all duration-200 placeholder:text-gray-400 text-gray-900"
         />
         {value && (
           <button
@@ -67,7 +67,7 @@ export function VehiclesSearchBar({
         )}
       </div>
 
-      <button className="flex items-center gap-2 px-3.5 py-2.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium whitespace-nowrap">
+      <button className="flex shrink-0 items-center gap-2 px-3.5 py-2.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium whitespace-nowrap">
         <SlidersHorizontal className="h-4 w-4" />
         <span className="hidden sm:inline">Filtres</span>
       </button>
