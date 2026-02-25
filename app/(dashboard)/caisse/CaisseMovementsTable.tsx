@@ -1,29 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { format } from "date-fns";
-import { ExternalLink, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import type { CaisseMovement } from "@/lib/dashboard/caisse";
-
-const FORMAT_MAD = (amount: number) =>
-  new Intl.NumberFormat("fr-MA", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-    .format(amount)
-    .replace(/\s/g, " ") + " MAD";
+import type { SerializedMovement } from "@/components/caisse/types";
+import { MovementsTable } from "@/components/caisse/MovementsTable";
+import { MovementsCardList } from "@/components/caisse/MovementsCardList";
 
 type FilterPill = "all" | "payment" | "cautions" | "refund" | "expense";
 
@@ -36,10 +19,6 @@ const FILTER_LABELS: Record<FilterPill, string> = {
 };
 
 const PILL_OPTIONS: FilterPill[] = ["all", "payment", "cautions", "refund", "expense"];
-
-type SerializedMovement = Omit<CaisseMovement, "happenedAt"> & {
-  happenedAt: string;
-};
 
 type CaisseMovementsTableProps = {
   movements: SerializedMovement[];
@@ -71,6 +50,13 @@ export function CaisseMovementsTable({
     return list;
   }, [movements, filter, search]);
 
+  const emptyMessage =
+    movements.length === 0
+      ? showDateColumn
+        ? "Aucun mouvement pour ce mois."
+        : "Aucun mouvement pour ce jour."
+      : "Aucun mouvement ne correspond aux filtres.";
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -98,89 +84,19 @@ export function CaisseMovementsTable({
         </div>
       </div>
 
-      <div className="rounded-lg border bg-card overflow-hidden">
-        {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-            <p className="text-sm font-medium">
-              {movements.length === 0
-                ? showDateColumn
-                  ? "Aucun mouvement pour ce mois."
-                  : "Aucun mouvement pour ce jour."
-                : "Aucun mouvement ne correspond aux filtres."}
-            </p>
-          </div>
-        ) : (
-          <div className="w-full overflow-x-auto">
-            <div className="min-w-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {showDateColumn && (
-                      <TableHead className="py-3 px-2 sm:px-4">Date</TableHead>
-                    )}
-                    <TableHead className="py-3 px-2 sm:px-4">Heure</TableHead>
-                    <TableHead className="min-w-0 py-3 px-2 sm:px-4 truncate">Type</TableHead>
-                    <TableHead className="min-w-0 py-3 px-2 sm:px-4 truncate">Client</TableHead>
-                    <TableHead className="hidden py-3 px-2 text-muted-foreground sm:table-cell sm:px-4">
-                      Réf
-                    </TableHead>
-                    <TableHead className="w-[90px] py-3 px-2 text-right whitespace-nowrap sm:px-4">
-                      Montant
-                    </TableHead>
-                    <TableHead className="w-10 py-3 px-2 sm:px-4" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((m) => (
-                    <TableRow key={m.id}>
-                      {showDateColumn && (
-                        <TableCell className="font-mono py-3 px-2 text-muted-foreground sm:px-4">
-                          {format(new Date(m.happenedAt), "dd/MM")}
-                        </TableCell>
-                      )}
-                      <TableCell className="font-mono py-3 px-2 text-muted-foreground sm:px-4">
-                        {format(new Date(m.happenedAt), "HH:mm")}
-                      </TableCell>
-                      <TableCell className="min-w-0 py-3 px-2 sm:px-4 truncate" title={m.label}>{m.label}</TableCell>
-                      <TableCell className="min-w-0 py-3 px-2 font-medium sm:px-4 truncate" title={m.customerName}>
-                        {m.customerName}
-                      </TableCell>
-                      <TableCell className="hidden py-3 px-2 text-xs text-muted-foreground sm:table-cell sm:px-4">
-                        {m.reference ?? "—"}
-                      </TableCell>
-                      <TableCell
-                        className={cn(
-                          "py-3 px-2 text-right font-semibold tabular-nums whitespace-nowrap sm:px-4",
-                          m.direction === "in"
-                            ? "text-emerald-600"
-                            : "text-red-600"
-                        )}
-                      >
-                        {m.direction === "in" ? "+" : "-"}
-                        {FORMAT_MAD(m.amount)}
-                      </TableCell>
-                      <TableCell className="py-3 px-2 sm:px-4">
-                        {m.bookingId ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            asChild
-                            title="Ouvrir la réservation"
-                          >
-                            <Link href={`/bookings/${m.bookingId}`}>
-                              <ExternalLink className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        ) : null}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        )}
+      <div className="md:hidden">
+        <MovementsCardList
+          movements={filtered}
+          showDateColumn={showDateColumn}
+          emptyMessage={emptyMessage}
+        />
+      </div>
+      <div className="hidden md:block">
+        <MovementsTable
+          movements={filtered}
+          showDateColumn={showDateColumn}
+          emptyMessage={emptyMessage}
+        />
       </div>
 
       <p className="text-xs text-muted-foreground">
