@@ -547,12 +547,12 @@ export function VehicleForm({
                 htmlFor="plate"
                 required
                 error={errors.plate?.message}
-                hint="Format marocain : A-12345-20"
+                hint="Format marocain : 4 chiffres, 1 lettre, 2 chiffres (ex. 1234 A 56)"
               >
                 <Input
                   id="plate"
                   {...register("plate")}
-                  placeholder="A-12345-20"
+                  placeholder="1234 A 56"
                   disabled={isLoading}
                 />
               </FormField>
