@@ -26,9 +26,10 @@ import {
 interface CustomerRowActionsProps {
   customerId: string;
   canDelete: boolean;
+  compact?: boolean;
 }
 
-export function CustomerRowActions({ customerId, canDelete }: CustomerRowActionsProps) {
+export function CustomerRowActions({ customerId, canDelete, compact }: CustomerRowActionsProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,15 +54,79 @@ export function CustomerRowActions({ customerId, canDelete }: CustomerRowActions
 
   return (
     <>
-      <div className="flex items-center justify-end gap-1.5">
-        <Button asChild size="sm" variant="ghost" aria-label="Modifier le client">
-          <Link href={`/customers/${customerId}/edit`}>
-            <Pencil className="h-4 w-4" />
-            Modifier
-          </Link>
-        </Button>
+      <div className="flex items-center justify-end gap-1">
+        {compact ? (
+          <>
+            <Button asChild size="icon" variant="ghost" className="h-8 w-8" aria-label="Voir le client">
+              <Link href={`/clients/${customerId}`}>
+                <Eye className="h-4 w-4" />
+              </Link>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label="Plus d'actions client"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem asChild>
+                  <Link href={`/clients/${customerId}`}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Voir détails
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/customers/${customerId}/edit`}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Modifier
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/bookings/create?customerId=${customerId}`}>
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Nouvelle réservation
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/customers/${customerId}/edit?tab=documents`}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Ajouter document
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/reservations?clientId=${customerId}`}>
+                    <History className="mr-2 h-4 w-4" />
+                    Historique réservations
+                  </Link>
+                </DropdownMenuItem>
+                {canDelete ? <DropdownMenuSeparator /> : null}
+                {canDelete ? (
+                  <DropdownMenuItem
+                    onClick={() => setConfirmOpen(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Supprimer
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        ) : (
+          <>
+            <Button asChild size="sm" variant="ghost" aria-label="Modifier le client">
+              <Link href={`/customers/${customerId}/edit`}>
+                <Pencil className="h-4 w-4" />
+                Modifier
+              </Link>
+            </Button>
 
-        <DropdownMenu>
+            <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
@@ -109,6 +174,8 @@ export function CustomerRowActions({ customerId, canDelete }: CustomerRowActions
             ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
+          </>
+        )}
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

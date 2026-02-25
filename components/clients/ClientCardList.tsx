@@ -1,0 +1,40 @@
+"use client";
+
+import Link from "next/link";
+import { UserPlus } from "lucide-react";
+import type { UserRole } from "@prisma/client";
+import type { ClientListItem } from "@/components/customers/clients-page-v2";
+import { Button } from "@/components/ui/button";
+import { ClientCard } from "./ClientCard";
+
+interface ClientCardListProps {
+  clients: ClientListItem[];
+  currentUserRole: UserRole;
+}
+
+export function ClientCardList({ clients, currentUserRole }: ClientCardListProps) {
+  if (clients.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-slate-300 px-6 py-14 text-center">
+        <h3 className="text-base font-semibold text-slate-900">Aucun client ne correspond</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Ajustez vos filtres ou ajoutez un nouveau client.
+        </p>
+        <Button asChild className="mt-4">
+          <Link href="/customers/add">
+            <UserPlus className="h-4 w-4" />
+            Ajouter un client
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {clients.map((client) => (
+        <ClientCard key={client.id} client={client} currentUserRole={currentUserRole} />
+      ))}
+    </div>
+  );
+}
