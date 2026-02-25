@@ -74,8 +74,8 @@ export function FinanceHeader({ range, from, to, onAddExpense }: FinanceHeaderPr
     <>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
-          <h1 className="text-[1.75rem] font-semibold tracking-tight">Finance</h1>
-          <p className="text-sm text-muted-foreground">Suivez revenus, charges et cautions en un seul endroit</p>
+          <h1 className="text-[1.75rem] font-semibold tracking-tight">Finance Center</h1>
+          <p className="text-sm text-muted-foreground">Résumé financier stratégique de votre agence</p>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

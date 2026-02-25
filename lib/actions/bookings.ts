@@ -8,6 +8,35 @@ import { prisma } from "@/lib/prisma";
 import { bookingSchema, BookingFormData } from "@/lib/validations/booking";
 import { canDelete } from "@/lib/authz";
 
+async function validateBookingRelationsForAgency(params: {
+  agencyId: string;
+  customerId: string;
+  vehicleId: string;
+}) {
+  const { agencyId, customerId, vehicleId } = params;
+
+  const [customer, vehicle] = await Promise.all([
+    prisma.customer.findFirst({
+      where: { id: customerId, agencyId },
+      select: { id: true },
+    }),
+    prisma.vehicle.findFirst({
+      where: { id: vehicleId, agencyId },
+      select: { id: true },
+    }),
+  ]);
+
+  if (!customer) {
+    return { error: "Client introuvable pour cette agence" } as const;
+  }
+
+  if (!vehicle) {
+    return { error: "Véhicule introuvable pour cette agence" } as const;
+  }
+
+  return null;
+}
+
 export async function createBooking(data: BookingFormData) {
   const session = await getServerSession(authOptions);
 
@@ -17,6 +46,15 @@ export async function createBooking(data: BookingFormData) {
 
   try {
     const validatedData = bookingSchema.parse(data);
+    const relationError = await validateBookingRelationsForAgency({
+      agencyId: session.user.agencyId,
+      customerId: validatedData.customerId,
+      vehicleId: validatedData.vehicleId,
+    });
+
+    if (relationError) {
+      return relationError;
+    }
 
     // Check for overlapping bookings
     const startDate = new Date(validatedData.startDate);
@@ -24,6 +62,7 @@ export async function createBooking(data: BookingFormData) {
 
     const overlappingCount = await prisma.booking.count({
       where: {
+        agencyId: session.user.agencyId,
         vehicleId: validatedData.vehicleId,
         status: { notIn: ["CANCELED", "COMPLETED"] },
         OR: [
@@ -181,8 +220,19 @@ export async function updateBooking(bookingId: string, data: BookingFormData) {
       return { error: "Impossible de modifier une réservation clôturée ou annulée" };
     }
 
+    const relationError = await validateBookingRelationsForAgency({
+      agencyId: session.user.agencyId,
+      customerId: validatedData.customerId,
+      vehicleId: validatedData.vehicleId,
+    });
+
+    if (relationError) {
+      return relationError;
+    }
+
     const overlappingCount = await prisma.booking.count({
       where: {
+        agencyId: session.user.agencyId,
         vehicleId: validatedData.vehicleId,
         id: { not: bookingId },
         status: { notIn: ["CANCELED", "COMPLETED"] },

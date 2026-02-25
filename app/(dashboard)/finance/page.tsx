@@ -7,28 +7,20 @@ import {
   startOfQuarter,
   subDays,
 } from "date-fns";
-import type { ExpenseCategory, PaymentType } from "@prisma/client";
+import type { ExpenseCategory } from "@prisma/client";
 import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
-import { expenseCategoryLabel } from "@/components/finance/constants";
-import { FinanceView } from "@/components/finance/FinanceView";
+import { FinanceCenterView } from "@/components/finance/FinanceCenterView";
+
+/* ── Period types ────────────────────────────────────────── */
 
 type FinanceRange = "today" | "7d" | "month" | "quarter" | "custom";
-
-const FINANCE_TABS = ["apercu", "revenus", "charges", "cautions"] as const;
-type FinanceTab = (typeof FINANCE_TABS)[number];
-
-function parseFinanceTab(tab?: string): FinanceTab | undefined {
-  if (tab && FINANCE_TABS.includes(tab as FinanceTab)) return tab as FinanceTab;
-  return undefined;
-}
 
 type FinancePageProps = {
   searchParams: Promise<{
     range?: string;
     from?: string;
     to?: string;
-    tab?: string;
   }>;
 };
 
@@ -56,7 +48,7 @@ function resolveFinanceWindow(params: { range?: string; from?: string; to?: stri
         to: endOfDay(to),
         fromInput: params.from ?? "",
         toInput: params.to ?? "",
-        label: "Periode personnalisee",
+        label: "Période personnalisée",
       };
     }
   }
@@ -107,248 +99,255 @@ function resolveFinanceWindow(params: { range?: string; from?: string; to?: stri
   };
 }
 
+/* ── Previous period helper ──────────────────────────────── */
+
+function computePreviousWindow(current: { from: Date; to: Date }) {
+  const durationMs = current.to.getTime() - current.from.getTime();
+  return {
+    from: new Date(current.from.getTime() - durationMs - 1),
+    to: new Date(current.from.getTime() - 1),
+  };
+}
+
+function deltaPercent(current: number, previous: number): number | null {
+  if (previous === 0 && current === 0) return null;
+  if (previous === 0) return 100;
+  return ((current - previous) / Math.abs(previous)) * 100;
+}
+
+/* ── Fixed vs variable categorization ────────────────────── */
+
+const FIXED_CATEGORIES: ExpenseCategory[] = ["ASSURANCE", "TAXES", "SALAIRES", "LOYER"];
+
+function isFixedCategory(cat: ExpenseCategory) {
+  return FIXED_CATEGORIES.includes(cat);
+}
+
+/* ── Page ─────────────────────────────────────────────────── */
+
 export default async function FinancePage({ searchParams }: FinancePageProps) {
   const session = await getSession();
-  if (!session) {
-    return null;
-  }
+  if (!session) return null;
 
   const params = await searchParams;
-  const defaultTab = parseFinanceTab(params.tab);
   const agencyId = session.user.agencyId;
   const window = resolveFinanceWindow(params);
+  const prevWindow = computePreviousWindow(window);
+
   const expenseDelegate = (prisma as unknown as { expense?: any }).expense;
 
-  const paymentDateInRangeFilter = {
+  // Date filter for payments (uses paidAt or createdAt fallback)
+  const paymentDateFilter = (w: { from: Date; to: Date }) => ({
     OR: [
-      { paidAt: { gte: window.from, lte: window.to } },
-      {
-        AND: [
-          { paidAt: null },
-          { createdAt: { gte: window.from, lte: window.to } },
-        ],
-      },
+      { paidAt: { gte: w.from, lte: w.to } },
+      { AND: [{ paidAt: null }, { createdAt: { gte: w.from, lte: w.to } }] },
     ],
-  };
+  });
 
   const [
-    incomes,
-    deposits,
-    expenses,
-    vehicles,
+    // Current period
     revenueAgg,
     expensesAgg,
-    depositsHeldAgg,
     cashIncomeAgg,
     cashExpenseAgg,
     expenseCategoryAgg,
-    paymentMethodAgg,
+    // Previous period (for deltas)
+    prevRevenueAgg,
+    prevExpensesAgg,
+    prevCashIncomeAgg,
+    prevCashExpenseAgg,
+    // Revenue per vehicle
+    vehiclePayments,
+    // Alerts data
+    unpaidBookings,
+    depositsHeldAgg,
+    depositsHeldCount,
+    refundedPayments,
+    // Metrics
+    paidBookingsCount,
+    activeVehicleCount,
+    // Vehicles for AddExpenseDialog
+    vehicles,
   ] = await Promise.all([
-    prisma.payment.findMany({
-      where: {
-        booking: { agencyId },
-        ...paymentDateInRangeFilter,
-      },
-      select: {
-        id: true,
-        amount: true,
-        type: true,
-        status: true,
-        paidAt: true,
-        createdAt: true,
-        booking: {
-          select: {
-            customer: { select: { name: true } },
-            vehicle: { select: { make: true, model: true } },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 300,
-    }),
-    prisma.deposit.findMany({
-      where: {
-        booking: { agencyId },
-        heldAt: { gte: window.from, lte: window.to },
-      },
-      select: {
-        id: true,
-        amount: true,
-        status: true,
-        heldAt: true,
-        returnedAt: true,
-        booking: {
-          select: {
-            customer: { select: { name: true } },
-            vehicle: { select: { make: true, model: true } },
-          },
-        },
-      },
-      orderBy: { heldAt: "desc" },
-      take: 300,
-    }),
-    expenseDelegate
-      ? expenseDelegate.findMany({
-          where: {
-            agencyId,
-            date: { gte: window.from, lte: window.to },
-          },
-          select: {
-            id: true,
-            date: true,
-            category: true,
-            amount: true,
-            method: true,
-            note: true,
-            receiptUrl: true,
-            vehicle: {
-              select: {
-                id: true,
-                make: true,
-                model: true,
-                plate: true,
-              },
-            },
-          },
-          orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-          take: 300,
-        })
-      : Promise.resolve([]),
-    prisma.vehicle.findMany({
-      where: { agencyId },
-      select: { id: true, make: true, model: true, plate: true },
-      orderBy: [{ make: "asc" }, { model: "asc" }],
-    }),
+    /* ── Current period aggregates ── */
     prisma.payment.aggregate({
-      where: {
-        booking: { agencyId },
-        status: "PAID",
-        ...paymentDateInRangeFilter,
-      },
+      where: { booking: { agencyId }, status: "PAID", ...paymentDateFilter(window) },
       _sum: { amount: true },
     }),
     expenseDelegate
       ? expenseDelegate.aggregate({
-          where: {
-            agencyId,
-            date: { gte: window.from, lte: window.to },
-          },
+          where: { agencyId, date: { gte: window.from, lte: window.to } },
           _sum: { amount: true },
         })
       : Promise.resolve({ _sum: { amount: 0 } }),
-    prisma.deposit.aggregate({
-      where: {
-        booking: { agencyId },
-        status: "HELD",
-      },
-      _sum: { amount: true },
-    }),
     prisma.payment.aggregate({
-      where: {
-        booking: { agencyId },
-        status: "PAID",
-        type: "CASH",
-        ...paymentDateInRangeFilter,
-      },
+      where: { booking: { agencyId }, status: "PAID", type: "CASH", ...paymentDateFilter(window) },
       _sum: { amount: true },
     }),
     expenseDelegate
       ? expenseDelegate.aggregate({
-          where: {
-            agencyId,
-            method: "CASH",
-            date: { gte: window.from, lte: window.to },
-          },
+          where: { agencyId, method: "CASH", date: { gte: window.from, lte: window.to } },
           _sum: { amount: true },
         })
       : Promise.resolve({ _sum: { amount: 0 } }),
     expenseDelegate
       ? expenseDelegate.groupBy({
           by: ["category"],
-          where: {
-            agencyId,
-            date: { gte: window.from, lte: window.to },
-          },
+          where: { agencyId, date: { gte: window.from, lte: window.to } },
           _sum: { amount: true },
         })
       : Promise.resolve([]),
-    Promise.all([
-      prisma.payment.aggregate({
-        where: {
-          booking: { agencyId },
-          status: "PAID",
-          type: "CASH",
-          ...paymentDateInRangeFilter,
+
+    /* ── Previous period aggregates (for deltas) ── */
+    prisma.payment.aggregate({
+      where: { booking: { agencyId }, status: "PAID", ...paymentDateFilter(prevWindow) },
+      _sum: { amount: true },
+    }),
+    expenseDelegate
+      ? expenseDelegate.aggregate({
+          where: { agencyId, date: { gte: prevWindow.from, lte: prevWindow.to } },
+          _sum: { amount: true },
+        })
+      : Promise.resolve({ _sum: { amount: 0 } }),
+    prisma.payment.aggregate({
+      where: { booking: { agencyId }, status: "PAID", type: "CASH", ...paymentDateFilter(prevWindow) },
+      _sum: { amount: true },
+    }),
+    expenseDelegate
+      ? expenseDelegate.aggregate({
+          where: { agencyId, method: "CASH", date: { gte: prevWindow.from, lte: prevWindow.to } },
+          _sum: { amount: true },
+        })
+      : Promise.resolve({ _sum: { amount: 0 } }),
+
+    /* ── Revenue per vehicle ── */
+    prisma.payment.findMany({
+      where: { booking: { agencyId }, status: "PAID", ...paymentDateFilter(window) },
+      select: {
+        amount: true,
+        booking: {
+          select: { vehicle: { select: { make: true, model: true } } },
         },
-        _sum: { amount: true },
-      }),
-      prisma.payment.aggregate({
-        where: {
-          booking: { agencyId },
-          status: "PAID",
-          type: "CARD",
-          ...paymentDateInRangeFilter,
-        },
-        _sum: { amount: true },
-      }),
-      prisma.payment.aggregate({
-        where: {
-          booking: { agencyId },
-          status: "PAID",
-          type: "TRANSFER",
-          ...paymentDateInRangeFilter,
-        },
-        _sum: { amount: true },
-      }),
-    ]),
+      },
+    }),
+
+    /* ── Alerts: unpaid bookings ── */
+    prisma.booking.findMany({
+      where: {
+        agencyId,
+        paymentStatus: { in: ["PENDING", "PARTIAL"] },
+        status: { notIn: ["CANCELED", "DRAFT"] },
+      },
+      select: { remainingAmount: true },
+    }),
+
+    /* ── Alerts: deposits held ── */
+    prisma.deposit.aggregate({
+      where: { booking: { agencyId }, status: "HELD" },
+      _sum: { amount: true },
+    }),
+    prisma.deposit.count({
+      where: { booking: { agencyId }, status: "HELD" },
+    }),
+
+    /* ── Alerts: refunded payments ── */
+    prisma.payment.findMany({
+      where: { booking: { agencyId }, status: "REFUNDED", ...paymentDateFilter(window) },
+      select: { amount: true },
+    }),
+
+    /* ── Metrics: distinct paid bookings (for panier moyen) ── */
+    prisma.payment.findMany({
+      where: { booking: { agencyId }, status: "PAID", ...paymentDateFilter(window) },
+      select: { bookingId: true },
+      distinct: ["bookingId"],
+    }),
+
+    /* ── Metrics: active vehicles ── */
+    prisma.vehicle.count({
+      where: { agencyId, status: { not: "UNAVAILABLE" } },
+    }),
+
+    /* ── Vehicles for AddExpenseDialog ── */
+    prisma.vehicle.findMany({
+      where: { agencyId },
+      select: { id: true, make: true, model: true, plate: true },
+      orderBy: [{ make: "asc" }, { model: "asc" }],
+    }),
   ]);
+
+  /* ── Compute derived values ── */
 
   const revenuePeriod = Number(revenueAgg._sum.amount ?? 0);
   const expensesPeriod = Number(expensesAgg._sum.amount ?? 0);
   const netProfit = revenuePeriod - expensesPeriod;
-  const depositsHeld = Number(depositsHeldAgg._sum.amount ?? 0);
+
   const cashIncome = Number(cashIncomeAgg._sum.amount ?? 0);
   const cashExpense = Number(cashExpenseAgg._sum.amount ?? 0);
   const cashInHand = cashIncome - cashExpense;
 
-  const expenseByCategory = expenseCategoryAgg
-    .map((item: { category: ExpenseCategory; _sum: { amount: number | null } }) => ({
-      key: item.category,
-      label: expenseCategoryLabel[item.category],
-      amount: Number(item._sum.amount ?? 0),
+  // Previous period
+  const prevRevenue = Number(prevRevenueAgg._sum.amount ?? 0);
+  const prevExpenses = Number(prevExpensesAgg._sum.amount ?? 0);
+  const prevNet = prevRevenue - prevExpenses;
+  const prevCashIn = Number(prevCashIncomeAgg._sum.amount ?? 0);
+  const prevCashOut = Number(prevCashExpenseAgg._sum.amount ?? 0);
+  const prevCash = prevCashIn - prevCashOut;
+
+  // Deltas
+  const cashDelta = deltaPercent(cashInHand, prevCash);
+  const netDelta = deltaPercent(netProfit, prevNet);
+
+  // Revenue per vehicle (group in JS)
+  const vehicleRevenueMap = new Map<string, number>();
+  for (const p of vehiclePayments) {
+    const name = `${p.booking.vehicle.make} ${p.booking.vehicle.model}`;
+    vehicleRevenueMap.set(name, (vehicleRevenueMap.get(name) ?? 0) + Number(p.amount));
+  }
+  const vehicleRevenueTotal = Array.from(vehicleRevenueMap.values()).reduce((a, b) => a + b, 0);
+  const vehicleRevenue = Array.from(vehicleRevenueMap.entries())
+    .map(([name, amount]) => ({
+      name,
+      amount,
+      percentage: vehicleRevenueTotal > 0 ? (amount / vehicleRevenueTotal) * 100 : 0,
     }))
-    .filter((item: { amount: number }) => item.amount > 0)
-    .sort((a: { amount: number }, b: { amount: number }) => b.amount - a.amount);
+    .sort((a, b) => b.amount - a.amount);
 
-  const expenseBreakdownTotal = expenseByCategory.reduce(
-    (acc: number, item: { amount: number }) => acc + item.amount,
-    0
-  );
-  const expenseBreakdown = expenseByCategory.map((item: { key: string; label: string; amount: number }) => ({
-    ...item,
-    percentage: expenseBreakdownTotal > 0 ? (item.amount / expenseBreakdownTotal) * 100 : 0,
-  }));
+  // Unpaid bookings
+  const unpaidAmount = unpaidBookings.reduce((sum, b) => sum + Number(b.remainingAmount), 0);
+  const unpaidCount = unpaidBookings.length;
 
-  const paymentMethodRows: Array<{
-    key: Extract<PaymentType, "CASH" | "CARD" | "TRANSFER">;
-    label: string;
-    amount: number;
-  }> = [
-    { key: "CASH", label: "Cash", amount: Number(paymentMethodAgg[0]._sum.amount ?? 0) },
-    { key: "CARD", label: "Carte", amount: Number(paymentMethodAgg[1]._sum.amount ?? 0) },
-    { key: "TRANSFER", label: "Virement", amount: Number(paymentMethodAgg[2]._sum.amount ?? 0) },
-  ];
+  // Deposits held
+  const depositsHeld = Number(depositsHeldAgg._sum.amount ?? 0);
 
-  const paymentBreakdownTotal = paymentMethodRows.reduce((acc, item) => acc + item.amount, 0);
-  const paymentBreakdown = paymentMethodRows.map((item) => ({
-    ...item,
-    percentage: paymentBreakdownTotal > 0 ? (item.amount / paymentBreakdownTotal) * 100 : 0,
-  }));
+  // Refunds pending
+  const refundsPending = refundedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const refundsPendingCount = refundedPayments.length;
+
+  // Fixed vs Variable expenses
+  let fixedAmount = 0;
+  let variableAmount = 0;
+  for (const item of expenseCategoryAgg as Array<{
+    category: ExpenseCategory;
+    _sum: { amount: number | null };
+  }>) {
+    const amt = Number(item._sum.amount ?? 0);
+    if (isFixedCategory(item.category)) {
+      fixedAmount += amt;
+    } else {
+      variableAmount += amt;
+    }
+  }
+  const fixedPercentOfRevenue = revenuePeriod > 0 ? (fixedAmount / revenuePeriod) * 100 : 0;
+
+  // Key metrics
+  const paidBookingsTotal = paidBookingsCount.length;
+  const revenuePerVehicle = activeVehicleCount > 0 ? revenuePeriod / activeVehicleCount : 0;
+  const panierMoyen = paidBookingsTotal > 0 ? revenuePeriod / paidBookingsTotal : 0;
 
   return (
     <div className="space-y-6">
-      <FinanceView
-        defaultTab={defaultTab}
+      <FinanceCenterView
         period={{
           range: window.range,
           label: window.label,
@@ -356,37 +355,38 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
           to: window.toInput,
         }}
         kpis={{
+          cashInHand,
+          unpaidAmount,
+          unpaidCount,
+          depositsHeld,
+          depositsHeldCount,
+          netProfit,
           revenuePeriod,
           expensesPeriod,
-          netProfit,
-          cashInHand,
-          depositsHeld,
         }}
-        incomes={incomes.map((payment) => ({
-          id: payment.id,
-          amount: Number(payment.amount),
-          type: payment.type,
-          status: payment.status,
-          paidAt: payment.paidAt,
-          createdAt: payment.createdAt,
-          customerName: payment.booking.customer.name,
-          vehicleName: `${payment.booking.vehicle.make} ${payment.booking.vehicle.model}`,
-        }))}
-        expenses={expenses.map((expense: any) => ({
-          ...expense,
-          amount: Number(expense.amount),
-        }))}
-        deposits={deposits.map((deposit) => ({
-          id: deposit.id,
-          amount: Number(deposit.amount),
-          status: deposit.status,
-          heldAt: deposit.heldAt,
-          returnedAt: deposit.returnedAt,
-          customerName: deposit.booking.customer.name,
-          vehicleName: `${deposit.booking.vehicle.make} ${deposit.booking.vehicle.model}`,
-        }))}
-        expenseBreakdown={expenseBreakdown}
-        paymentBreakdown={paymentBreakdown}
+        deltas={{
+          cashDelta,
+          netDelta,
+        }}
+        vehicleRevenue={vehicleRevenue}
+        costStructure={{
+          fixedAmount,
+          variableAmount,
+          fixedPercentOfRevenue,
+        }}
+        metrics={{
+          revenuePerVehicle,
+          panierMoyen,
+          activeVehicleCount,
+        }}
+        alerts={{
+          unpaidAmount,
+          unpaidCount,
+          depositsToReturn: depositsHeld,
+          depositsToReturnCount: depositsHeldCount,
+          refundsPending,
+          refundsPendingCount,
+        }}
         vehicles={vehicles}
       />
     </div>

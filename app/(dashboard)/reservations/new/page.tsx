@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { BookingPaymentStatus } from "@prisma/client";
+import { BookingPaymentStatus, BookingStatus } from "@prisma/client";
 import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
@@ -76,7 +76,7 @@ export default async function NewReservationPage({
       prisma.booking.findMany({
         where: {
           agencyId: session.user.agencyId,
-          status: { notIn: ["CANCELED", "COMPLETED"] },
+          status: { in: [BookingStatus.CONFIRMED, BookingStatus.ACTIVE] },
         },
         select: {
           id: true,
