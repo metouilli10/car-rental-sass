@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { FlatIcon, type FlatIconName } from "@/components/shared/flat-icon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Bell, Wallet, type LucideIcon } from "lucide-react";
+import { Bell, Wallet, ShieldAlert, type LucideIcon } from "lucide-react";
 
 interface NavLinkProps {
   href: string;
@@ -30,6 +30,7 @@ const flatIconMap: Record<string, FlatIconName> = {
 const lucideIconMap: Record<string, LucideIcon> = {
   Bell,
   Wallet,
+  ShieldAlert,
 };
 
 function NavLinkInner({

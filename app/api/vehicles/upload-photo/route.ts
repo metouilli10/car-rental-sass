@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabaseAdmin, getPublicUrl } from "@/lib/supabase";
+import { enforceUploadRateLimit } from "@/lib/security/upload-rate-limit";
 import { randomUUID } from "crypto";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -36,6 +37,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "L'image ne doit pas dépasser 5 Mo." },
         { status: 400 }
+      );
+    }
+
+    const rateLimit = enforceUploadRateLimit({
+      request,
+      agencyId: session.user.agencyId,
+      scope: "vehicles",
+      incomingBytes: file.size,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: rateLimit.message },
+        {
+          status: rateLimit.status,
+          headers: { "Retry-After": String(rateLimit.retryAfterSec) },
+        }
       );
     }
 

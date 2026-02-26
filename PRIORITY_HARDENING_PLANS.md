@@ -124,6 +124,49 @@ Improve speed and usability at scale while reducing long-term maintenance cost.
 2. Execute Plan 2 next to stabilize deployments and operations.
 3. Execute Plan 3 continuously in parallel sprints once P0/P1 guardrails are in place.
 
+## Progress Log
+
+### 2026-02-25: Plan 1 started (Slice 1)
+- Done: Hardened `PATCH /api/bookings/[id]/dates` to block edits on canceled/completed bookings.
+- Done: Added agency ownership validation for `vehicleId` changes in booking date mutation API.
+- Done: Hardened reminder engine vehicle lookup to enforce `(vehicleId, agencyId)` ownership.
+- Verification: Existing automated tests passed (`npm run test`, 6/6).
+
+### 2026-02-25: Plan 1 continued (Slice 2)
+- Done: Added feature-flagged auth protections in `lib/auth.ts`:
+  - rate limiting by `(email, IP)`
+  - temporary lockout after repeated failures
+  - success resets counters
+- Done: Added security flags and tuning variables to `.env.example` (disabled by default).
+- Verification: Existing automated tests passed (`npm run test`, 6/6).
+
+### 2026-02-25: Plan 1 continued (Slice 3)
+- Done: Added feature-flagged upload abuse protection utility (`lib/security/upload-rate-limit.ts`).
+- Done: Applied rate limit + per-window byte quota checks to all upload APIs:
+  - `app/api/vehicles/upload-photo/route.ts`
+  - `app/api/damage-reports/upload-photo/route.ts`
+  - `app/api/customers/upload-document/route.ts`
+- Done: Added upload-limit flags and tunables to `.env.example` (disabled by default).
+- Verification: Existing automated tests passed (`npm run test`, 6/6).
+
+### 2026-02-25: Plan 1 continued (Slice 4)
+- Done: Added centralized security audit logger (`lib/security/audit-log.ts`):
+  - structured server log output for all events
+  - optional DB sink behind `FEATURE_AUDIT_DB_LOG`
+- Done: Added audit events to sensitive mutation APIs:
+  - `app/api/bookings/[id]/dates/route.ts`
+  - `app/api/users/[id]/role/route.ts`
+  - `app/api/users/[id]/status/route.ts`
+  - `app/api/users/[id]/password/route.ts`
+- Done: Added `FEATURE_AUDIT_DB_LOG` to `.env.example` (disabled by default).
+- Verification: Existing automated tests passed (`npm run test`, 6/6).
+
+### 2026-02-25: Plan 1 continued (Slice 5)
+- Done: Added Prisma `SecurityAuditLog` model in `prisma/schema.prisma`.
+- Done: Added non-destructive migration to create `security_audit_logs` table + indexes:
+  - `prisma/migrations/20260225175000_security_audit_logs/migration.sql`
+- Verification: Existing automated tests passed (`npm run test`, 6/6).
+
 ---
 
 ## No-Regression Execution Protocol

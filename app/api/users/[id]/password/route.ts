@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { logSecurityAudit } from "@/lib/security/audit-log";
 import {
   AuthzError,
   canManageUsers,
@@ -36,6 +37,26 @@ export async function PATCH(
     }
 
     if (currentUser.id === id) {
+      await logSecurityAudit({
+        actor: {
+          userId: currentUser.id,
+          role: currentUser.role,
+          email: currentUser.email,
+        },
+        context: {
+          agencyId: currentUser.agencyId,
+          requestId: request.headers.get("x-request-id"),
+          ip: request.headers.get("x-forwarded-for"),
+          userAgent: request.headers.get("user-agent"),
+        },
+        event: {
+          action: "USER_PASSWORD_RESET",
+          entityType: "USER",
+          entityId: id,
+          outcome: "DENIED",
+          details: { reason: "self_reset_blocked" },
+        },
+      });
       return NextResponse.json(
         { error: "Utilisez la page profil pour modifier votre propre mot de passe" },
         { status: 400 },
@@ -48,6 +69,26 @@ export async function PATCH(
     });
 
     if (!target) {
+      await logSecurityAudit({
+        actor: {
+          userId: currentUser.id,
+          role: currentUser.role,
+          email: currentUser.email,
+        },
+        context: {
+          agencyId: currentUser.agencyId,
+          requestId: request.headers.get("x-request-id"),
+          ip: request.headers.get("x-forwarded-for"),
+          userAgent: request.headers.get("user-agent"),
+        },
+        event: {
+          action: "USER_PASSWORD_RESET",
+          entityType: "USER",
+          entityId: id,
+          outcome: "DENIED",
+          details: { reason: "target_not_found" },
+        },
+      });
       return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
     }
 
@@ -59,6 +100,26 @@ export async function PATCH(
         password,
         invitedAt: new Date(),
         invitedById: currentUser.id,
+      },
+    });
+
+    await logSecurityAudit({
+      actor: {
+        userId: currentUser.id,
+        role: currentUser.role,
+        email: currentUser.email,
+      },
+      context: {
+        agencyId: currentUser.agencyId,
+        requestId: request.headers.get("x-request-id"),
+        ip: request.headers.get("x-forwarded-for"),
+        userAgent: request.headers.get("user-agent"),
+      },
+      event: {
+        action: "USER_PASSWORD_RESET",
+        entityType: "USER",
+        entityId: id,
+        outcome: "SUCCESS",
       },
     });
 

@@ -4,8 +4,9 @@ type VehicleStatus = "AVAILABLE" | "RENTED" | "MAINTENANCE" | "UNAVAILABLE";
 type BookingStatus = "DRAFT" | "CONFIRMED" | "ACTIVE" | "COMPLETED" | "CANCELED";
 type PaymentStatus = "PENDING" | "PAID" | "REFUNDED";
 type DepositStatus = "HELD" | "PARTIAL_RETURNED" | "RETURNED" | "FORFEITED";
+type InfractionStatus = "ASSIGNED" | "CONTESTED";
 
-type Status = VehicleStatus | BookingStatus | PaymentStatus | DepositStatus;
+type Status = VehicleStatus | BookingStatus | PaymentStatus | DepositStatus | InfractionStatus;
 
 interface StatusBadgeProps {
   status: Status;
@@ -32,6 +33,10 @@ const statusConfig: Record<
   PENDING: { label: "En attente", variant: "warning" },
   PAID: { label: "Payé", variant: "success" },
   REFUNDED: { label: "Remboursé", variant: "secondary" },
+
+  // Infraction statuses (PENDING/PAID reuse Payment entries above)
+  ASSIGNED: { label: "Assignée", variant: "info" },
+  CONTESTED: { label: "Contestée", variant: "destructive" },
 
   // Deposit statuses
   HELD: { label: "Retenue", variant: "warning" },

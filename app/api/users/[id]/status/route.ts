@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { logSecurityAudit } from "@/lib/security/audit-log";
 import {
   AuthzError,
   canManageUsers,
@@ -58,12 +59,52 @@ export async function PATCH(
     });
 
     if (!target) {
+      await logSecurityAudit({
+        actor: {
+          userId: currentUser.id,
+          role: currentUser.role,
+          email: currentUser.email,
+        },
+        context: {
+          agencyId: currentUser.agencyId,
+          requestId: request.headers.get("x-request-id"),
+          ip: request.headers.get("x-forwarded-for"),
+          userAgent: request.headers.get("user-agent"),
+        },
+        event: {
+          action: "USER_STATUS_UPDATE",
+          entityType: "USER",
+          entityId: id,
+          outcome: "DENIED",
+          details: { reason: "target_not_found" },
+        },
+      });
       return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
     }
 
     const nextStatus = typeof body.isActive === "boolean" ? body.isActive : !target.isActive;
 
     if (currentUser.id === id && nextStatus === false) {
+      await logSecurityAudit({
+        actor: {
+          userId: currentUser.id,
+          role: currentUser.role,
+          email: currentUser.email,
+        },
+        context: {
+          agencyId: currentUser.agencyId,
+          requestId: request.headers.get("x-request-id"),
+          ip: request.headers.get("x-forwarded-for"),
+          userAgent: request.headers.get("user-agent"),
+        },
+        event: {
+          action: "USER_STATUS_UPDATE",
+          entityType: "USER",
+          entityId: id,
+          outcome: "DENIED",
+          details: { reason: "self_deactivation_blocked" },
+        },
+      });
       return NextResponse.json(
         { error: "Vous ne pouvez pas désactiver votre propre compte" },
         { status: 400 },
@@ -92,6 +133,27 @@ export async function PATCH(
     if (!updatedUser) {
       return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
     }
+
+    await logSecurityAudit({
+      actor: {
+        userId: currentUser.id,
+        role: currentUser.role,
+        email: currentUser.email,
+      },
+      context: {
+        agencyId: currentUser.agencyId,
+        requestId: request.headers.get("x-request-id"),
+        ip: request.headers.get("x-forwarded-for"),
+        userAgent: request.headers.get("user-agent"),
+      },
+      event: {
+        action: "USER_STATUS_UPDATE",
+        entityType: "USER",
+        entityId: id,
+        outcome: "SUCCESS",
+        details: { isActive: nextStatus },
+      },
+    });
 
     return NextResponse.json({ user: toUserResponse(updatedUser) });
   } catch (error) {

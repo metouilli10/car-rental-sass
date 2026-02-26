@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BookingStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { logSecurityAudit } from "@/lib/security/audit-log";
 import {
   AuthzError,
   getCurrentUserOrThrow,
@@ -49,11 +50,32 @@ export async function PATCH(
         id: true,
         agencyId: true,
         vehicleId: true,
+        status: true,
         updatedAt: true,
       },
     });
 
     if (!booking) {
+      await logSecurityAudit({
+        actor: {
+          userId: currentUser.id,
+          role: currentUser.role,
+          email: currentUser.email,
+        },
+        context: {
+          agencyId: currentUser.agencyId,
+          requestId: request.headers.get("x-request-id"),
+          ip: request.headers.get("x-forwarded-for"),
+          userAgent: request.headers.get("user-agent"),
+        },
+        event: {
+          action: "BOOKING_DATES_UPDATE",
+          entityType: "BOOKING",
+          entityId: id,
+          outcome: "DENIED",
+          details: { reason: "booking_not_found" },
+        },
+      });
       return NextResponse.json({ error: "Réservation introuvable" }, { status: 404 });
     }
 
@@ -68,6 +90,71 @@ export async function PATCH(
     }
 
     const targetVehicleId = body.vehicleId ?? booking.vehicleId;
+    const isImmutableStatus =
+      booking.status === BookingStatus.CANCELED ||
+      booking.status === BookingStatus.COMPLETED;
+
+    if (isImmutableStatus) {
+      await logSecurityAudit({
+        actor: {
+          userId: currentUser.id,
+          role: currentUser.role,
+          email: currentUser.email,
+        },
+        context: {
+          agencyId: currentUser.agencyId,
+          requestId: request.headers.get("x-request-id"),
+          ip: request.headers.get("x-forwarded-for"),
+          userAgent: request.headers.get("user-agent"),
+        },
+        event: {
+          action: "BOOKING_DATES_UPDATE",
+          entityType: "BOOKING",
+          entityId: id,
+          outcome: "DENIED",
+          details: { reason: "immutable_status", status: booking.status },
+        },
+      });
+      return NextResponse.json(
+        { error: "Impossible de modifier une réservation clôturée ou annulée" },
+        { status: 409 },
+      );
+    }
+
+    const targetVehicle = await prisma.vehicle.findFirst({
+      where: {
+        id: targetVehicleId,
+        agencyId: currentUser.agencyId,
+      },
+      select: { id: true },
+    });
+
+    if (!targetVehicle) {
+      await logSecurityAudit({
+        actor: {
+          userId: currentUser.id,
+          role: currentUser.role,
+          email: currentUser.email,
+        },
+        context: {
+          agencyId: currentUser.agencyId,
+          requestId: request.headers.get("x-request-id"),
+          ip: request.headers.get("x-forwarded-for"),
+          userAgent: request.headers.get("user-agent"),
+        },
+        event: {
+          action: "BOOKING_DATES_UPDATE",
+          entityType: "BOOKING",
+          entityId: id,
+          outcome: "DENIED",
+          details: { reason: "vehicle_not_found_or_cross_agency", vehicleId: targetVehicleId },
+        },
+      });
+      return NextResponse.json(
+        { error: "Véhicule introuvable pour cette agence" },
+        { status: 400 },
+      );
+    }
 
     const conflicting = await prisma.booking.findFirst({
       where: {
@@ -84,6 +171,26 @@ export async function PATCH(
     });
 
     if (conflicting) {
+      await logSecurityAudit({
+        actor: {
+          userId: currentUser.id,
+          role: currentUser.role,
+          email: currentUser.email,
+        },
+        context: {
+          agencyId: currentUser.agencyId,
+          requestId: request.headers.get("x-request-id"),
+          ip: request.headers.get("x-forwarded-for"),
+          userAgent: request.headers.get("user-agent"),
+        },
+        event: {
+          action: "BOOKING_DATES_UPDATE",
+          entityType: "BOOKING",
+          entityId: id,
+          outcome: "DENIED",
+          details: { reason: "schedule_conflict", conflictingBookingId: conflicting.id },
+        },
+      });
       return NextResponse.json({ error: "Conflit" }, { status: 409 });
     }
 
@@ -99,6 +206,31 @@ export async function PATCH(
         startDate: true,
         endDate: true,
         updatedAt: true,
+      },
+    });
+
+    await logSecurityAudit({
+      actor: {
+        userId: currentUser.id,
+        role: currentUser.role,
+        email: currentUser.email,
+      },
+      context: {
+        agencyId: currentUser.agencyId,
+        requestId: request.headers.get("x-request-id"),
+        ip: request.headers.get("x-forwarded-for"),
+        userAgent: request.headers.get("user-agent"),
+      },
+      event: {
+        action: "BOOKING_DATES_UPDATE",
+        entityType: "BOOKING",
+        entityId: id,
+        outcome: "SUCCESS",
+        details: {
+          vehicleId: targetVehicleId,
+          startDate: updated.startDate.toISOString(),
+          endDate: updated.endDate.toISOString(),
+        },
       },
     });
 

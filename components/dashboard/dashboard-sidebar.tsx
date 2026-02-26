@@ -130,6 +130,7 @@ export function DashboardSidebar({ agencyName, role }: DashboardSidebarProps) {
           <NavLink href="/finance" iconName="CreditCard" label="Finance" collapsed={isCollapsed} />
           <NavLink href="/caisse" iconName="Wallet" label="Caisse" collapsed={isCollapsed} />
           <NavLink href="/damage-reports" iconName="ClipboardCheck" label="Inspections" collapsed={isCollapsed} />
+          <NavLink href="/infractions" iconName="ShieldAlert" label="Infractions" collapsed={isCollapsed} />
           <NavLink href="/notifications" iconName="Bell" label="Notifications" collapsed={isCollapsed} />
           {role === "OWNER" ? (
             <NavLink href="/users" iconName="Users" label="Utilisateurs" collapsed={isCollapsed} />

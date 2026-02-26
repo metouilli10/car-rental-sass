@@ -112,6 +112,21 @@ enum InspectionType {
   RETOUR
 }
 
+enum InfractionType {
+  SPEEDING
+  PARKING
+  RED_LIGHT
+  TOLL
+  OTHER
+}
+
+enum InfractionStatus {
+  PENDING
+  ASSIGNED
+  PAID
+  CONTESTED
+}
+
 enum ReminderType {
   OIL_CHANGE
   INSURANCE_EXPIRY
@@ -164,6 +179,7 @@ model Agency {
   expenses         Expense[]
   reminderRules    ReminderRule[]
   notifications    Notification[]
+  infractions      Infraction[]
 
   @@map("agencies")
 }
@@ -249,6 +265,7 @@ model Vehicle {
   bookings      Booking[]
   expenses      Expense[]
   notifications Notification[]
+  infractions   Infraction[]
 
   @@index([agencyId])
   @@index([status])
@@ -284,8 +301,9 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  agency   Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  agency      Agency       @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+  infractions Infraction[]
 
   @@index([agencyId])
   @@map("customers")
@@ -335,6 +353,7 @@ model Booking {
   deposit       Deposit?
   addons        BookingAddon[]
   damageReports DamageReport[]
+  infractions   Infraction[]
 
   @@index([agencyId])
   @@index([vehicleId])
@@ -547,4 +566,59 @@ model NotificationEvent {
 
   @@index([notificationId])
   @@map("notification_events")
+}
+
+model Infraction {
+  id          String           @id @default(cuid())
+  agencyId    String
+  vehicleId   String
+  bookingId   String?
+  customerId  String?
+  date        DateTime
+  time        String?
+  type        InfractionType   @default(OTHER)
+  status      InfractionStatus @default(PENDING)
+  amount      Float?
+  notes       String?
+
+  // Snapshot fields (frozen at assignment)
+  clientName  String?
+  clientCin   String?
+  clientPhone String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency   Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  vehicle  Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  booking  Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([agencyId])
+  @@index([agencyId, date])
+  @@index([agencyId, status])
+  @@index([agencyId, vehicleId, date])
+  @@map("infractions")
+}
+
+model SecurityAuditLog {
+  id          BigInt   @id @default(autoincrement())
+  occurredAt  DateTime @default(now()) @map("occurred_at")
+  agencyId    String   @map("agency_id")
+  actorUserId String?  @map("actor_user_id")
+  actorRole   String   @map("actor_role")
+  actorEmail  String?  @map("actor_email")
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  outcome     String
+  details     Json?
+  requestId   String?  @map("request_id")
+  ip          String?
+  userAgent   String?  @map("user_agent")
+
+  @@index([agencyId, occurredAt])
+  @@index([action, occurredAt])
+  @@index([entityType, entityId, occurredAt])
+  @@map("security_audit_logs")
 }

@@ -242,7 +242,9 @@ export async function computeVehicleReminders(
   vehicleId: string,
   agencyId: string
 ): Promise<void> {
-  const vehicle = await prisma.vehicle.findUnique({ where: { id: vehicleId } });
+  const vehicle = await prisma.vehicle.findFirst({
+    where: { id: vehicleId, agencyId },
+  });
   if (!vehicle) return;
 
   // Load agency reminder rules (use defaults if not configured)

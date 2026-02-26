@@ -34,6 +34,7 @@ const allNavItems = [
   { href: "/finance", label: "Finance", iconName: "payment", exact: false },
   { href: "/caisse", label: "Caisse", iconName: "wallet", exact: false },
   { href: "/damage-reports", label: "Inspections", iconName: "car-insurance", exact: false },
+  { href: "/infractions", label: "Infractions", iconName: "late-payment", exact: false },
 ] satisfies NavItem[];
 
 export interface MobileBottomNavProps {
