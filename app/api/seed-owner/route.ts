@@ -22,8 +22,17 @@ export async function POST(request: NextRequest) {
   }
   const secret = headerSecret || bodySecret;
   const envSecret = process.env.SEED_OWNER_SECRET?.trim();
-  if (!envSecret || !secret || secret !== envSecret) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!envSecret) {
+    return NextResponse.json(
+      { error: "SEED_OWNER_SECRET is not set on the server. Add it in Vercel → Settings → Environment Variables, then redeploy." },
+      { status: 503 }
+    );
+  }
+  if (!secret || secret !== envSecret) {
+    return NextResponse.json(
+      { error: "Invalid code. Check that you entered the exact value set in Vercel for SEED_OWNER_SECRET (no extra spaces)." },
+      { status: 401 }
+    );
   }
 
   try {
