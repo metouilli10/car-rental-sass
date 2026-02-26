@@ -12,9 +12,17 @@ const OWNER_EMAIL = "owner@automaroc.ma";
 const OWNER_PASSWORD = "password123";
 
 export async function POST(request: NextRequest) {
-  const secret = request.headers.get("x-seed-secret")?.trim();
+  const headerSecret = request.headers.get("x-seed-secret")?.trim();
+  let bodySecret: string | null = null;
+  try {
+    const body = await request.json();
+    if (body && typeof body.secret === "string") bodySecret = body.secret.trim();
+  } catch {
+    /* no body */
+  }
+  const secret = headerSecret || bodySecret;
   const envSecret = process.env.SEED_OWNER_SECRET?.trim();
-  if (!envSecret || secret !== envSecret) {
+  if (!envSecret || !secret || secret !== envSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
