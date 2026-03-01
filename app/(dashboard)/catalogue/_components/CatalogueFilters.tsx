@@ -44,20 +44,23 @@ function parseDateFromUrl(value: string | null): Date | undefined {
 export function CatalogueFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const startParam = searchParams.get("start");
+  const endParam = searchParams.get("end");
+  const searchParam = searchParams.get("search");
 
   const initialStart = useMemo(
-    () => parseDateFromUrl(searchParams.get("start")) ?? startOfDayLocal(new Date()),
-    [searchParams.get("start")]
+    () => parseDateFromUrl(startParam) ?? startOfDayLocal(new Date()),
+    [startParam]
   );
   const initialEnd = useMemo(() => {
-    const end = parseDateFromUrl(searchParams.get("end"));
+    const end = parseDateFromUrl(endParam);
     if (end) return end;
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return startOfDayLocal(tomorrow);
-  }, [searchParams.get("end")]);
+  }, [endParam]);
   
-  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [search, setSearch] = useState(searchParam || "");
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [startDate, setStartDate] = useState<Date | undefined>(initialStart);
   const [endDate, setEndDate] = useState<Date | undefined>(initialEnd);
@@ -65,15 +68,15 @@ export function CatalogueFilters() {
 
   // Sync state from URL when searchParams change (e.g. back/forward or external update)
   useEffect(() => {
-    const start = parseDateFromUrl(searchParams.get("start")) ?? startOfDayLocal(new Date());
-    const end = parseDateFromUrl(searchParams.get("end"));
+    const start = parseDateFromUrl(startParam) ?? startOfDayLocal(new Date());
+    const end = parseDateFromUrl(endParam);
     setStartDate(start);
     setEndDate(end ?? (() => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       return startOfDayLocal(tomorrow);
     })());
-  }, [searchParams.get("start"), searchParams.get("end")]);
+  }, [startParam, endParam]);
 
   // Debounce search input -- 300ms delay before triggering URL update
   useEffect(() => {
