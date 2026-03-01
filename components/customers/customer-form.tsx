@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
+import { unstable_rethrow } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { customerSchema, CustomerFormData } from "@/lib/validations/customer";
@@ -127,6 +128,7 @@ export function CustomerForm({
         setError(result.error);
       }
     } catch (err) {
+      unstable_rethrow(err);
       setError(err instanceof Error ? err.message : "Une erreur s'est produite");
     } finally {
       setIsLoading(false);

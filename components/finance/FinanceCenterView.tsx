@@ -1,8 +1,4 @@
-"use client";
-
-import { useState } from "react";
-import { FinanceHeader } from "@/components/finance/FinanceHeader";
-import { AddExpenseDialog } from "@/components/finance/AddExpenseDialog";
+import { FinanceHeaderActions } from "@/components/finance/FinanceHeaderActions";
 import { ExecutiveSnapshot } from "@/components/finance/ExecutiveSnapshot";
 import { RevenueChart } from "@/components/finance/RevenueChart";
 import { VehicleRevenueList } from "@/components/finance/VehicleRevenueList";
@@ -63,23 +59,13 @@ export function FinanceCenterView({
   alerts,
   vehicles,
 }: FinanceCenterViewProps) {
-  const [isAddExpenseOpen, setAddExpenseOpen] = useState(false);
-
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <FinanceHeader
+      <FinanceHeaderActions
         range={period.range}
         from={period.from}
         to={period.to}
-        onAddExpense={() => setAddExpenseOpen(true)}
-      />
-
-      <AddExpenseDialog
         vehicles={vehicles}
-        open={isAddExpenseOpen}
-        onOpenChange={setAddExpenseOpen}
-        hideTrigger
       />
 
       {/* Sections wrapper — uses flex + order for mobile reordering */}

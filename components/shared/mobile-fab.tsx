@@ -27,7 +27,7 @@ const FAB_ACTIONS: FabAction[] = [
     ariaLabel: "Ajouter un client",
   },
   {
-    href: "/reservations/new",
+    href: "/bookings/create",
     label: "Nouvelle réservation",
     icon: Calendar,
     ariaLabel: "Créer une nouvelle réservation",
@@ -38,37 +38,41 @@ const FAB_ACTIONS: FabAction[] = [
 export function MobileFAB() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const isReservationWizard = pathname === "/reservations/new";
+  const isReservationWizard =
+    pathname === "/reservations/new" || pathname === "/bookings/create";
   if (isReservationWizard) return null;
 
   return (
     <>
-      {/* Backdrop — closes speed-dial */}
+      {/* Backdrop — closes speed-dial when tapping outside; lower z-index than FAB */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/25 md:hidden"
+          className="fixed inset-0 z-[90] bg-black/25 md:hidden"
           aria-hidden="true"
           onClick={() => setOpen(false)}
         />
       )}
 
-      {/* FAB container — mobile only, above bottom nav (bottom nav height ~56px + gap) */}
-      <div className="fixed bottom-[76px] right-4 z-50 flex flex-col items-end gap-3 md:hidden">
+      {/* FAB container — higher z-index so it stays above backdrop on mobile */}
+      <div className="fixed bottom-[76px] right-4 z-[100] flex flex-col items-end gap-3 md:hidden">
         {/* Speed-dial items (ordered bottom to top visually) */}
         <div className="flex flex-col items-end gap-3" role="group" aria-label="Actions rapides">
           {FAB_ACTIONS.map((action, i) => {
             const Icon = action.icon;
             const delay = open ? `${i * 40}ms` : "0ms";
             return (
-              <div
+              <Link
                 key={action.href}
-                className="flex items-center gap-2.5 transition-all duration-200"
+                href={action.href}
+                aria-label={action.ariaLabel}
+                onClick={() => setOpen(false)}
                 style={{
                   opacity: open ? 1 : 0,
                   transform: open ? "translateY(0) scale(1)" : "translateY(12px) scale(0.92)",
                   pointerEvents: open ? "auto" : "none",
                   transitionDelay: delay,
                 }}
+                className="flex items-center gap-2.5 transition-all duration-200 touch-manipulation"
               >
                 {/* Label chip */}
                 <span
@@ -82,19 +86,16 @@ export function MobileFAB() {
                 </span>
 
                 {/* Icon button */}
-                <Link
-                  href={action.href}
-                  aria-label={action.ariaLabel}
-                  onClick={() => setOpen(false)}
+                <span
                   className={`h-11 w-11 rounded-full shadow-md flex items-center justify-center transition-colors ${
                     action.primary
-                      ? "bg-primary text-white hover:bg-primary/90"
-                      : "bg-white text-foreground border border-border/30 hover:bg-muted/50"
+                      ? "bg-primary text-white"
+                      : "bg-white text-foreground border border-border/30"
                   }`}
                 >
                   <Icon className="h-5 w-5" />
-                </Link>
-              </div>
+                </span>
+              </Link>
             );
           })}
         </div>

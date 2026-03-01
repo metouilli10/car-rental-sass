@@ -4,7 +4,7 @@ import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PhotoUpload } from "./photo-upload";
+import { PhotoGridUploader } from "@/components/inspections/PhotoGridUploader";
 import { SECTION_LABELS } from "@/lib/validations/damage-report";
 import { cn } from "@/lib/utils";
 
@@ -102,7 +102,7 @@ export function SectionChecklist({
           {/* Photos */}
           <div className="space-y-2">
             <Label>Photos</Label>
-            <PhotoUpload
+            <PhotoGridUploader
               photos={photos}
               onPhotosChange={onPhotosChange}
               maxPhotos={5}

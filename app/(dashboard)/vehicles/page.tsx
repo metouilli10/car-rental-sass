@@ -1,12 +1,11 @@
 import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
-import { reconcilePastDueBookings } from "@/lib/actions/bookings";
 import { Pagination } from "@/components/shared/pagination";
 import Link from "next/link";
 import { Plus, Car } from "lucide-react";
 import { VehiclesSearchBar } from "@/components/vehicles/vehicles-search-bar";
 import { VehiclesList } from "@/components/vehicles/vehicles-list";
-import type { VehicleStatus } from "@prisma/client";
+import type { BookingStatus, VehicleStatus } from "@prisma/client";
 
 const PAGE_SIZE = 25;
 
@@ -30,10 +29,9 @@ export default async function VehiclesPage({
   const session = await getSession();
   if (!session) return null;
 
-  await reconcilePastDueBookings();
-
   const { status, page: pageParam, q } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
+  const now = new Date();
 
   const statusFilter =
     status && (VALID_STATUSES as readonly string[]).includes(status)
@@ -43,10 +41,45 @@ export default async function VehiclesPage({
   const searchQuery = q?.trim() || undefined;
 
   const baseWhere = { agencyId: session.user.agencyId };
+  const currentRentalStatuses: BookingStatus[] = ["ACTIVE", "CONFIRMED"];
+  const currentRentalWhere = {
+    OR: [
+      { status: "RENTED" as VehicleStatus },
+      {
+        bookings: {
+          some: {
+            status: { in: currentRentalStatuses },
+            startDate: { lte: now },
+            endDate: { gte: now },
+          },
+        },
+      },
+    ],
+  };
+  const isRentedView = statusFilter === "RENTED";
+  const isAvailableView = statusFilter === "AVAILABLE";
+  const currentAvailableWhere = {
+    status: "AVAILABLE" as VehicleStatus,
+    NOT: {
+      bookings: {
+        some: {
+          status: { in: currentRentalStatuses },
+          startDate: { lte: now },
+          endDate: { gte: now },
+        },
+      },
+    },
+  };
 
   const where = {
     ...baseWhere,
-    ...(statusFilter ? { status: statusFilter } : {}),
+    ...(statusFilter
+      ? isRentedView
+        ? currentRentalWhere
+        : isAvailableView
+        ? currentAvailableWhere
+        : { status: statusFilter }
+      : {}),
     ...(searchQuery
       ? {
           OR: [
@@ -58,7 +91,7 @@ export default async function VehiclesPage({
       : {}),
   };
 
-  const [vehicles, total, statusCounts] = await Promise.all([
+  const [vehicles, total, statusCounts, currentRentedCount, currentAvailableCount] = await Promise.all([
     prisma.vehicle.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -66,7 +99,14 @@ export default async function VehiclesPage({
       skip: (page - 1) * PAGE_SIZE,
       include: {
         bookings: {
-          where: { status: "ACTIVE" },
+          where:
+            isRentedView || isAvailableView
+              ? {
+                  status: { in: currentRentalStatuses },
+                  startDate: { lte: now },
+                  endDate: { gte: now },
+                }
+              : { status: "ACTIVE" },
           take: 1,
           select: {
             id: true,
@@ -83,10 +123,21 @@ export default async function VehiclesPage({
       where: baseWhere,
       _count: { status: true },
     }),
+    prisma.vehicle.count({
+      where: {
+        ...baseWhere,
+        ...currentRentalWhere,
+      },
+    }),
+    prisma.vehicle.count({
+      where: {
+        ...baseWhere,
+        ...currentAvailableWhere,
+      },
+    }),
   ]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  const isRentedView = statusFilter === "RENTED";
 
   const countMap: Record<string, number> = {};
   let totalCount = 0;
@@ -94,6 +145,8 @@ export default async function VehiclesPage({
     countMap[item.status] = item._count.status;
     totalCount += item._count.status;
   }
+  countMap.RENTED = currentRentedCount;
+  countMap.AVAILABLE = currentAvailableCount;
 
   const emptyMessage = statusFilter === "AVAILABLE"
     ? "Aucun véhicule disponible"
@@ -187,7 +240,9 @@ export default async function VehiclesPage({
             <Car className="h-7 w-7 text-blue-600/80" />
           </div>
           <p className="text-gray-700 text-sm font-medium mb-1">
-            {emptyMessage}
+            {!statusFilter && !searchQuery
+              ? "Votre flotte est vide. Ajoutez votre premier véhicule."
+              : emptyMessage}
           </p>
           <p className="text-gray-400 text-xs mb-5">
             {!searchQuery && !statusFilter

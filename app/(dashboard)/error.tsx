@@ -35,6 +35,12 @@ export default function DashboardError({
               <p className="font-mono text-xs break-all">{error.message}</p>
             </div>
           )}
+          {error.digest && (
+            <div className="p-3 rounded-lg bg-muted text-sm">
+              <p className="text-xs text-muted-foreground">Digest</p>
+              <p className="font-mono text-xs break-all">{error.digest}</p>
+            </div>
+          )}
           <div className="flex gap-3 justify-center">
             <Button
               onClick={reset}

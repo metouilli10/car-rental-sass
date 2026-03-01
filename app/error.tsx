@@ -34,6 +34,12 @@ export default function GlobalError({
                 <p className="font-mono text-xs break-all">{error.message}</p>
               </div>
             )}
+            {error.digest && (
+              <div className="p-4 rounded-lg bg-gray-100 text-sm">
+                <p className="text-xs text-gray-500">Digest</p>
+                <p className="font-mono text-xs break-all">{error.digest}</p>
+              </div>
+            )}
             <div className="flex gap-3 justify-center">
               <Button onClick={reset}>Réessayer</Button>
               <Button

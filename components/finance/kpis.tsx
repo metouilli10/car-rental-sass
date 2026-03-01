@@ -34,7 +34,7 @@ export function FinanceKpis({
       icon: TrendingUp,
     },
     {
-      label: "Caisse",
+      label: "Flux cash",
       value: cashInHand,
       icon: PiggyBank,
     },

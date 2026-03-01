@@ -74,7 +74,7 @@ export function KpiGrid({
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  {item.key === "cash" ? "Caisse estimee sur la periode" : periodLabel}
+                  {item.key === "cash" ? "Flux net cash sur la periode" : periodLabel}
                   <span className="text-muted-foreground/70"> • Mise a jour live</span>
                 </p>
               )}

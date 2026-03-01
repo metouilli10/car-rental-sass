@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
@@ -14,9 +16,15 @@ import {
   Shield,
   ClipboardCheck,
   Sticker,
+  Rocket,
+  Building2,
 } from "lucide-react";
-import { SearchOverlay } from "@/components/shared/search-overlay";
 import type { ReminderType, NotificationSeverity } from "@prisma/client";
+
+const SearchOverlay = dynamic(
+  () => import("@/components/shared/search-overlay").then((mod) => mod.SearchOverlay),
+  { ssr: false }
+);
 
 interface NotifItem {
   id: string;
@@ -31,6 +39,7 @@ interface TopNavBarProps {
   userName: string;
   userEmail: string;
   agencyName: string;
+  agencyLogoUrl?: string | null;
   notifCount?: number;
   topNotifs?: NotifItem[];
 }
@@ -55,6 +64,7 @@ export function TopNavBar({
   userName,
   userEmail,
   agencyName,
+  agencyLogoUrl,
   notifCount = 0,
   topNotifs = [],
 }: TopNavBarProps) {
@@ -101,19 +111,20 @@ export function TopNavBar({
 
   return (
     <>
-      <header className="sticky top-0 z-40 h-16 bg-white/90 backdrop-blur-md border-b border-border/40 flex items-center justify-between px-4 sm:px-6 shrink-0">
+      <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-4 shadow-sm sm:px-6">
         {/* ── Zone B: Center spacer ─────────────────────────────── */}
         <div className="flex-1" />
 
         {/* ── Zone C: Right — Search + Bell + Profile ───────────── */}
-        <div className="flex-none flex items-center gap-1.5 sm:gap-2">
-          {/* Search icon button */}
+        <div className="flex-none flex items-center gap-2 sm:gap-2.5">
+          {/* Search shell */}
           <button
             onClick={() => setSearchOpen(true)}
             aria-label="Rechercher (Ctrl+K)"
-            className="relative h-9 w-9 flex items-center justify-center rounded-lg bg-[#F3F4F6] text-muted-foreground hover:bg-gray-200/70 hover:text-foreground transition-all duration-200"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-sm text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
           >
             <Search className="h-4 w-4" />
+            <span className="hidden text-xs font-medium sm:inline">Recherche</span>
             <span className="sr-only">Ctrl+K</span>
           </button>
 
@@ -125,7 +136,7 @@ export function TopNavBar({
                 setProfileOpen(false);
               }}
               aria-label={`Notifications${notifCount > 0 ? ` (${notifCount} actives)` : ""}`}
-              className="relative h-9 w-9 flex items-center justify-center rounded-lg bg-[#F3F4F6] text-muted-foreground hover:bg-gray-200/70 hover:text-foreground hover:scale-105 active:scale-100 transition-all duration-200"
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
             >
               <Bell className="h-[18px] w-[18px]" />
               {notifCount > 0 && (
@@ -135,13 +146,13 @@ export function TopNavBar({
 
             {/* Notification Dropdown */}
             {notifOpen && (
-              <div className="fixed left-4 right-4 top-[4.5rem] z-50 w-auto max-w-none bg-white rounded-2xl shadow-card-lg border border-border/30 overflow-hidden animate-scale-in origin-top-right sm:absolute sm:left-auto sm:right-0 sm:top-full sm:z-auto sm:mt-2 sm:w-96 sm:max-w-sm">
-                <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between">
+              <div className="fixed left-4 right-4 top-[4.5rem] z-50 w-auto max-w-none overflow-hidden rounded-2xl border border-border bg-popover shadow-card-lg animate-scale-in origin-top-right sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 sm:max-w-sm">
+                <div className="flex items-center justify-between border-b border-border px-5 py-4">
                   <h3 className="text-sm font-semibold text-foreground">
                     Rappels &amp; alertes
                   </h3>
                   {notifCount > 0 && (
-                    <span className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
+                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                       {notifCount} active{notifCount > 1 ? "s" : ""}
                     </span>
                   )}
@@ -169,7 +180,7 @@ export function TopNavBar({
                             setNotifOpen(false);
                             router.push(`/notifications`);
                           }}
-                          className="w-full flex items-start gap-3.5 px-5 py-3.5 text-left transition-colors duration-150 hover:bg-muted/40 bg-primary/[0.02]"
+                          className="flex w-full items-start gap-3.5 bg-transparent px-5 py-3.5 text-left transition-colors duration-150 hover:bg-muted/40"
                         >
                           <div
                             className={`mt-0.5 h-9 w-9 rounded-xl ${colors.bg} flex items-center justify-center shrink-0`}
@@ -199,7 +210,7 @@ export function TopNavBar({
                   )}
                 </div>
 
-                <div className="px-5 py-3 border-t border-border/30">
+                <div className="border-t border-border px-5 py-3">
                   <button
                     onClick={() => {
                       setNotifOpen(false);
@@ -215,7 +226,7 @@ export function TopNavBar({
           </div>
 
           {/* Divider */}
-          <div className="h-6 w-px bg-border/50 mx-0.5" />
+          <div className="mx-0.5 h-6 w-px bg-border/80" />
 
           {/* Profile Section */}
           <div ref={profileRef} className="relative">
@@ -226,10 +237,20 @@ export function TopNavBar({
               }}
               aria-label="Menu profil"
               aria-expanded={profileOpen}
-              className="flex items-center gap-2 sm:gap-2.5 rounded-xl px-2 sm:px-2.5 py-1.5 min-h-[36px] hover:bg-muted/50 transition-all duration-200"
+              className="flex min-h-[40px] items-center gap-2 rounded-xl border border-transparent px-2 py-1.5 transition-colors duration-200 hover:border-border hover:bg-muted/40 sm:gap-2.5 sm:px-2.5"
             >
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-white text-xs font-semibold shadow-sm">
-                {initials}
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-primary/80 text-xs font-semibold text-white shadow-sm">
+                {agencyLogoUrl ? (
+                  <Image
+                    src={agencyLogoUrl}
+                    alt={agencyName}
+                    width={32}
+                    height={32}
+                    className="h-full w-full object-cover object-center"
+                  />
+                ) : (
+                  initials
+                )}
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-sm font-medium text-foreground leading-tight">
@@ -248,8 +269,8 @@ export function TopNavBar({
 
             {/* Profile Dropdown */}
             {profileOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-card-lg border border-border/30 overflow-hidden animate-scale-in origin-top-right">
-                <div className="px-4 py-3.5 border-b border-border/30">
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border bg-popover shadow-card-lg animate-scale-in origin-top-right">
+                <div className="border-b border-border px-4 py-3.5">
                   <p className="text-sm font-semibold text-foreground truncate">
                     {userName}
                   </p>
@@ -258,25 +279,45 @@ export function TopNavBar({
                   </p>
                 </div>
                 <div className="py-1.5">
-                  <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 hover:bg-muted/40 hover:text-foreground transition-colors duration-150">
+                  <button className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 transition-colors duration-150 hover:bg-muted/40 hover:text-foreground">
                     <User className="h-4 w-4 text-muted-foreground" />
                     Profil
                   </button>
                   <button
                     onClick={() => {
                       setProfileOpen(false);
+                      router.push("/dashboard?getting-started=1");
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 transition-colors duration-150 hover:bg-muted/40 hover:text-foreground"
+                  >
+                    <Rocket className="h-4 w-4 text-muted-foreground" />
+                    Getting Started
+                  </button>
+                  <button
+                    onClick={() => {
+                      setProfileOpen(false);
+                      router.push("/settings/agency");
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 transition-colors duration-150 hover:bg-muted/40 hover:text-foreground"
+                  >
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    Agence
+                  </button>
+                  <button
+                    onClick={() => {
+                      setProfileOpen(false);
                       router.push("/settings/notifications");
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 hover:bg-muted/40 hover:text-foreground transition-colors duration-150"
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 transition-colors duration-150 hover:bg-muted/40 hover:text-foreground"
                   >
                     <Settings className="h-4 w-4 text-muted-foreground" />
                     Paramètres
                   </button>
                 </div>
-                <div className="border-t border-border/30 py-1.5">
+                <div className="border-t border-border py-1.5">
                   <button
                     onClick={() => signOut({ callbackUrl: "/login" })}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500/80 hover:bg-red-50/50 hover:text-red-600 transition-colors duration-150"
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-500/80 transition-colors duration-150 hover:bg-red-50/70 hover:text-red-600 dark:hover:bg-red-500/10"
                   >
                     <LogOut className="h-4 w-4" />
                     Déconnexion
@@ -289,7 +330,7 @@ export function TopNavBar({
       </header>
 
       {/* Search overlay — rendered outside header to avoid stacking context issues */}
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      {searchOpen ? <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} /> : null}
     </>
   );
 }

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { PaymentType } from "@prisma/client";
+import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
 
 /**
  * Record payment received for a booking from the dashboard "Encaisser" action.
@@ -73,6 +74,12 @@ export async function recordPaymentReceivedByBooking(
       data: { paidNow, remainingAmount, paymentStatus },
     });
 
+    try {
+      await syncAgencyOnboardingState(session.user.agencyId);
+    } catch (syncError) {
+      console.error("syncAgencyOnboardingState error:", syncError);
+    }
+
     revalidatePath("/payments");
     revalidatePath("/finance");
     revalidatePath("/dashboard");
@@ -111,6 +118,32 @@ export async function markPaymentReceived(paymentId: string, amount?: number) {
         ...(amount !== undefined && { amount }),
       },
     });
+
+    const paidRentalSum = await prisma.payment.aggregate({
+      where: {
+        bookingId: payment.bookingId,
+        category: "RENTAL",
+        status: "PAID",
+      },
+      _sum: { amount: true },
+    });
+    const paidNow = Number(paidRentalSum._sum.amount ?? 0);
+    const bookingTotal =
+      payment.booking.totalTtc > 0 ? payment.booking.totalTtc : payment.booking.totalPrice;
+    const remainingAmount = Math.max(0, bookingTotal - paidNow);
+    const paymentStatus =
+      remainingAmount <= 0 ? "PAID" : paidNow > 0 ? "PARTIAL" : "PENDING";
+
+    await prisma.booking.update({
+      where: { id: payment.bookingId },
+      data: { paidNow, remainingAmount, paymentStatus },
+    });
+
+    try {
+      await syncAgencyOnboardingState(session.user.agencyId);
+    } catch (syncError) {
+      console.error("syncAgencyOnboardingState error:", syncError);
+    }
 
     revalidatePath("/payments");
     revalidatePath("/finance");

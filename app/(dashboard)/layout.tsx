@@ -1,11 +1,15 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-cache";
 import { TopNavBar } from "@/components/shared/top-nav-bar";
-import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
 import { MobileFAB } from "@/components/shared/mobile-fab";
 import { Toaster } from "sonner";
-import { getNotificationsSummary } from "@/lib/actions/notifications";
+import { getNotificationsSummary } from "@/lib/notifications/queries";
+import { prisma } from "@/lib/prisma";
+
+export const runtime = "nodejs";
+export const preferredRegion = ["fra1"];
 
 export default async function DashboardLayout({
   children,
@@ -19,31 +23,48 @@ export default async function DashboardLayout({
   }
 
   const agencyId = session.user.agencyId ?? "";
-  // Fetch real notification summary for the bell icon (guard against missing agencyId)
-  const notifSummary =
-    agencyId ?
-      await getNotificationsSummary(agencyId).catch(() => ({ count: 0, items: [] }))
-    : { count: 0, items: [] };
+  let displayAgencyName = session.user.agencyName || "Agence";
+  const dashboardChrome =
+    agencyId
+      ? await Promise.all([
+          prisma.agency.findUnique({
+            where: { id: agencyId },
+            select: { setupCompletedAt: true, name: true, logoUrl: true },
+          }),
+          getNotificationsSummary(agencyId).catch(() => ({ count: 0, items: [] })),
+        ])
+      : null;
+  const agency = dashboardChrome?.[0] ?? null;
+  const notifSummary = dashboardChrome?.[1] ?? { count: 0, items: [] };
+
+  if (agencyId) {
+    if (!agency?.setupCompletedAt) {
+      redirect("/setup");
+    }
+
+    displayAgencyName = agency.name;
+  }
 
   return (
     <div className="flex min-h-screen bg-background" suppressHydrationWarning>
       {/* Collapsible Sidebar */}
-      <DashboardSidebar agencyName={session.user.agencyName ?? "Agence"} role={session.user.role} />
+      <Sidebar agencyName={displayAgencyName} role={session.user.role} />
 
       <Toaster richColors position="top-right" />
 
       {/* Right side — TopNav + Content */}
-      <div className="flex-1 flex flex-col min-w-0" suppressHydrationWarning>
+      <div className="flex-1 flex flex-col min-w-0 bg-muted/40" suppressHydrationWarning>
         <TopNavBar
           userName={session.user.name || "Utilisateur"}
           userEmail={session.user.email || ""}
-          agencyName={session.user.agencyName || "Agence"}
+          agencyName={displayAgencyName}
+          agencyLogoUrl={agency?.logoUrl ?? undefined}
           notifCount={notifSummary.count}
           topNotifs={notifSummary.items}
         />
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto" suppressHydrationWarning>
+        <main className="flex-1 overflow-auto bg-muted/40" suppressHydrationWarning>
           <div className="min-h-full" suppressHydrationWarning>
             <div className="mx-auto w-full max-w-7xl px-4 pt-4 pb-24 sm:px-6 sm:py-6 lg:px-8" suppressHydrationWarning>
               {children}

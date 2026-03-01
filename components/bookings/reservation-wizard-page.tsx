@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { unstable_rethrow, useRouter } from "next/navigation";
 import { AlertTriangle, Clock3 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -441,7 +441,8 @@ export function ReservationWizardPage({
       } else {
         router.push("/bookings");
       }
-    } catch {
+    } catch (err) {
+      unstable_rethrow(err);
       setFormError("Une erreur est survenue pendant la création.");
     } finally {
       setIsSubmitting(false);

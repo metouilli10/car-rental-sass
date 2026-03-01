@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { vehicleSchema, VehicleFormData } from "@/lib/validations/vehicle";
 import { computeVehicleReminders } from "@/lib/reminders/engine";
 import { canDelete } from "@/lib/authz";
+import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
+import { brandKeyFromMake } from "@/lib/brands";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -20,6 +22,7 @@ function toDateOrNull(value: string | undefined | null): Date | null {
 function buildVehiclePayload(validatedData: VehicleFormData) {
   return {
     make: validatedData.make,
+    brandKey: brandKeyFromMake(validatedData.make),
     model: validatedData.model,
     year: validatedData.year,
     plate: validatedData.plate,
@@ -88,6 +91,7 @@ export async function createVehicle(data: VehicleFormData) {
 
     revalidatePath("/vehicles");
     revalidatePath("/catalogue");
+    revalidatePath("/dashboard");
   } catch (error) {
     console.error("createVehicle error:", error);
     return { error: "Erreur lors de la création du véhicule" };
@@ -100,6 +104,12 @@ export async function createVehicle(data: VehicleFormData) {
       revalidatePath("/notifications");
     } catch (err) {
       console.error("computeVehicleReminders error:", err);
+    }
+
+    try {
+      await syncAgencyOnboardingState(session.user.agencyId);
+    } catch (err) {
+      console.error("syncAgencyOnboardingState error:", err);
     }
   }
 

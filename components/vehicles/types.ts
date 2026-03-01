@@ -8,6 +8,7 @@ export interface ActiveVehicleBooking {
 export interface VehicleListItem {
   id: string;
   make: string;
+  brandKey: string;
   model: string;
   plate: string;
   year: number;

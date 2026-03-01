@@ -36,7 +36,7 @@ export default function LoginPage() {
             : "Email ou mot de passe incorrect",
         );
       } else {
-        router.push("/dashboard");
+        router.push("/post-login");
         router.refresh();
       }
     } catch (error) {
@@ -273,10 +273,10 @@ export default function LoginPage() {
                 <p className="text-sm text-center text-muted-foreground">
                   Pas encore de compte?{" "}
                   <Link
-                    href="#"
+                    href="/signup"
                     className="text-[#2c2cf2] hover:text-[#2c2cf2]/80 font-semibold transition-colors"
                   >
-                    Contactez-nous
+                    Créer mon agence
                   </Link>
                 </p>
 

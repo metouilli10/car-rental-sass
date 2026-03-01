@@ -51,7 +51,7 @@ export const kpiDefinitions: Record<KpiKind, KpiDefinition> = {
   },
   cash: {
     key: "cash",
-    label: "Caisse",
+    label: "Flux cash",
     icon: PiggyBank,
     tone: {
       cardClassName: "border-amber-200/70 bg-amber-50/40",

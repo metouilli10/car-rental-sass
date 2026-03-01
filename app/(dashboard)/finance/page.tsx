@@ -7,6 +7,7 @@ import {
   startOfQuarter,
   subDays,
 } from "date-fns";
+import { unstable_cache } from "next/cache";
 import type { ExpenseCategory } from "@prisma/client";
 import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
@@ -118,10 +119,235 @@ function deltaPercent(current: number, previous: number): number | null {
 /* ── Fixed vs variable categorization ────────────────────── */
 
 const FIXED_CATEGORIES: ExpenseCategory[] = ["ASSURANCE", "TAXES", "SALAIRES", "LOYER"];
+const FINANCE_QUERY_CACHE_SECONDS = 60;
+const FINANCE_VEHICLES_CACHE_SECONDS = 300;
 
 function isFixedCategory(cat: ExpenseCategory) {
   return FIXED_CATEGORIES.includes(cat);
 }
+
+const getFinanceSnapshotCached = unstable_cache(
+  async (
+    agencyId: string,
+    windowFromIso: string,
+    windowToIso: string,
+    prevWindowFromIso: string,
+    prevWindowToIso: string
+  ) => {
+    const window = {
+      from: new Date(windowFromIso),
+      to: new Date(windowToIso),
+    };
+    const prevWindow = {
+      from: new Date(prevWindowFromIso),
+      to: new Date(prevWindowToIso),
+    };
+    const expenseDelegate = (prisma as unknown as { expense?: any }).expense;
+
+    const paymentDateFilter = (w: { from: Date; to: Date }) => ({
+      OR: [
+        { paidAt: { gte: w.from, lte: w.to } },
+        { AND: [{ paidAt: null }, { createdAt: { gte: w.from, lte: w.to } }] },
+      ],
+    });
+
+    const refundDateFilter = (w: { from: Date; to: Date }) => ({
+      updatedAt: { gte: w.from, lte: w.to },
+    });
+
+    const rentalRevenueWhere = (w: { from: Date; to: Date }) => ({
+      booking: { agencyId },
+      status: "PAID" as const,
+      category: "RENTAL" as const,
+      ...paymentDateFilter(w),
+    });
+
+    const [
+      revenueAgg,
+      expensesAgg,
+      cashIncomeAgg,
+      refundAgg,
+      cashRefundAgg,
+      cashExpenseAgg,
+      expenseCategoryAgg,
+      prevRevenueAgg,
+      prevExpensesAgg,
+      prevCashIncomeAgg,
+      prevRefundAgg,
+      prevCashRefundAgg,
+      prevCashExpenseAgg,
+      vehicleRevenueByBooking,
+      unpaidBookingsAgg,
+      depositsHeldAgg,
+      depositsHeldCount,
+      refundedPaymentsAgg,
+      activeVehicleCount,
+    ] = await Promise.all([
+      prisma.payment.aggregate({
+        where: rentalRevenueWhere(window),
+        _sum: { amount: true },
+      }),
+      expenseDelegate
+        ? expenseDelegate.aggregate({
+            where: { agencyId, date: { gte: window.from, lte: window.to } },
+            _sum: { amount: true },
+          })
+        : Promise.resolve({ _sum: { amount: 0 } }),
+      prisma.payment.aggregate({
+        where: { ...rentalRevenueWhere(window), type: "CASH" },
+        _sum: { amount: true },
+      }),
+      prisma.payment.aggregate({
+        where: {
+          booking: { agencyId },
+          status: "REFUNDED",
+          ...refundDateFilter(window),
+        },
+        _sum: { amount: true },
+      }),
+      prisma.payment.aggregate({
+        where: {
+          booking: { agencyId },
+          status: "REFUNDED",
+          type: "CASH",
+          ...refundDateFilter(window),
+        },
+        _sum: { amount: true },
+      }),
+      expenseDelegate
+        ? expenseDelegate.aggregate({
+            where: { agencyId, method: "CASH", date: { gte: window.from, lte: window.to } },
+            _sum: { amount: true },
+          })
+        : Promise.resolve({ _sum: { amount: 0 } }),
+      expenseDelegate
+        ? expenseDelegate.groupBy({
+            by: ["category"],
+            where: { agencyId, date: { gte: window.from, lte: window.to } },
+            _sum: { amount: true },
+          })
+        : Promise.resolve([]),
+      prisma.payment.aggregate({
+        where: rentalRevenueWhere(prevWindow),
+        _sum: { amount: true },
+      }),
+      expenseDelegate
+        ? expenseDelegate.aggregate({
+            where: { agencyId, date: { gte: prevWindow.from, lte: prevWindow.to } },
+            _sum: { amount: true },
+          })
+        : Promise.resolve({ _sum: { amount: 0 } }),
+      prisma.payment.aggregate({
+        where: { ...rentalRevenueWhere(prevWindow), type: "CASH" },
+        _sum: { amount: true },
+      }),
+      prisma.payment.aggregate({
+        where: {
+          booking: { agencyId },
+          status: "REFUNDED",
+          ...refundDateFilter(prevWindow),
+        },
+        _sum: { amount: true },
+      }),
+      prisma.payment.aggregate({
+        where: {
+          booking: { agencyId },
+          status: "REFUNDED",
+          type: "CASH",
+          ...refundDateFilter(prevWindow),
+        },
+        _sum: { amount: true },
+      }),
+      expenseDelegate
+        ? expenseDelegate.aggregate({
+            where: { agencyId, method: "CASH", date: { gte: prevWindow.from, lte: prevWindow.to } },
+            _sum: { amount: true },
+          })
+        : Promise.resolve({ _sum: { amount: 0 } }),
+      prisma.payment.groupBy({
+        by: ["bookingId"],
+        where: rentalRevenueWhere(window),
+        _sum: { amount: true },
+      }),
+      prisma.booking.aggregate({
+        where: {
+          agencyId,
+          paymentStatus: { in: ["PENDING", "PARTIAL"] },
+          status: { notIn: ["CANCELED", "DRAFT"] },
+        },
+        _sum: { remainingAmount: true },
+        _count: true,
+      }),
+      prisma.deposit.aggregate({
+        where: { booking: { agencyId }, status: "HELD" },
+        _sum: { amount: true },
+      }),
+      prisma.deposit.count({
+        where: { booking: { agencyId }, status: "HELD" },
+      }),
+      prisma.payment.aggregate({
+        where: { booking: { agencyId }, status: "REFUNDED", ...paymentDateFilter(window) },
+        _sum: { amount: true },
+        _count: true,
+      }),
+      prisma.vehicle.count({
+        where: { agencyId, status: { not: "UNAVAILABLE" } },
+      }),
+    ]);
+
+    const vehicleRevenueBookings =
+      vehicleRevenueByBooking.length > 0
+        ? await prisma.booking.findMany({
+            where: {
+              agencyId,
+              id: { in: vehicleRevenueByBooking.map((entry) => entry.bookingId) },
+            },
+            select: {
+              id: true,
+              vehicle: {
+                select: { make: true, model: true },
+              },
+            },
+          })
+        : [];
+
+    return {
+      revenueAgg,
+      expensesAgg,
+      cashIncomeAgg,
+      refundAgg,
+      cashRefundAgg,
+      cashExpenseAgg,
+      expenseCategoryAgg,
+      prevRevenueAgg,
+      prevExpensesAgg,
+      prevCashIncomeAgg,
+      prevRefundAgg,
+      prevCashRefundAgg,
+      prevCashExpenseAgg,
+      vehicleRevenueByBooking,
+      vehicleRevenueBookings,
+      unpaidBookingsAgg,
+      depositsHeldAgg,
+      depositsHeldCount,
+      refundedPaymentsAgg,
+      activeVehicleCount,
+    };
+  },
+  ["finance-snapshot"],
+  { revalidate: FINANCE_QUERY_CACHE_SECONDS }
+);
+
+const getFinanceVehiclesCached = unstable_cache(
+  async (agencyId: string) =>
+    prisma.vehicle.findMany({
+      where: { agencyId },
+      select: { id: true, make: true, model: true, plate: true },
+      orderBy: [{ make: "asc" }, { model: "asc" }],
+    }),
+  ["finance-vehicles"],
+  { revalidate: FINANCE_VEHICLES_CACHE_SECONDS }
+);
 
 /* ── Page ─────────────────────────────────────────────────── */
 
@@ -131,178 +357,85 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
 
   const params = await searchParams;
   const agencyId = session.user.agencyId;
+  if (!agencyId) return null;
   const window = resolveFinanceWindow(params);
   const prevWindow = computePreviousWindow(window);
-
-  const expenseDelegate = (prisma as unknown as { expense?: any }).expense;
-
-  // Date filter for payments (uses paidAt or createdAt fallback)
-  const paymentDateFilter = (w: { from: Date; to: Date }) => ({
-    OR: [
-      { paidAt: { gte: w.from, lte: w.to } },
-      { AND: [{ paidAt: null }, { createdAt: { gte: w.from, lte: w.to } }] },
-    ],
-  });
-
   const [
-    // Current period
-    revenueAgg,
-    expensesAgg,
-    cashIncomeAgg,
-    cashExpenseAgg,
-    expenseCategoryAgg,
-    // Previous period (for deltas)
-    prevRevenueAgg,
-    prevExpensesAgg,
-    prevCashIncomeAgg,
-    prevCashExpenseAgg,
-    // Revenue per vehicle
-    vehiclePayments,
-    // Alerts data
-    unpaidBookings,
-    depositsHeldAgg,
-    depositsHeldCount,
-    refundedPayments,
-    // Metrics
-    paidBookingsCount,
-    activeVehicleCount,
-    // Vehicles for AddExpenseDialog
+    {
+      revenueAgg,
+      expensesAgg,
+      cashIncomeAgg,
+      refundAgg,
+      cashRefundAgg,
+      cashExpenseAgg,
+      expenseCategoryAgg,
+      prevRevenueAgg,
+      prevExpensesAgg,
+      prevCashIncomeAgg,
+      prevRefundAgg,
+      prevCashRefundAgg,
+      prevCashExpenseAgg,
+      vehicleRevenueByBooking,
+      vehicleRevenueBookings,
+      unpaidBookingsAgg,
+      depositsHeldAgg,
+      depositsHeldCount,
+      refundedPaymentsAgg,
+      activeVehicleCount,
+    },
     vehicles,
   ] = await Promise.all([
-    /* ── Current period aggregates ── */
-    prisma.payment.aggregate({
-      where: { booking: { agencyId }, status: "PAID", ...paymentDateFilter(window) },
-      _sum: { amount: true },
-    }),
-    expenseDelegate
-      ? expenseDelegate.aggregate({
-          where: { agencyId, date: { gte: window.from, lte: window.to } },
-          _sum: { amount: true },
-        })
-      : Promise.resolve({ _sum: { amount: 0 } }),
-    prisma.payment.aggregate({
-      where: { booking: { agencyId }, status: "PAID", type: "CASH", ...paymentDateFilter(window) },
-      _sum: { amount: true },
-    }),
-    expenseDelegate
-      ? expenseDelegate.aggregate({
-          where: { agencyId, method: "CASH", date: { gte: window.from, lte: window.to } },
-          _sum: { amount: true },
-        })
-      : Promise.resolve({ _sum: { amount: 0 } }),
-    expenseDelegate
-      ? expenseDelegate.groupBy({
-          by: ["category"],
-          where: { agencyId, date: { gte: window.from, lte: window.to } },
-          _sum: { amount: true },
-        })
-      : Promise.resolve([]),
-
-    /* ── Previous period aggregates (for deltas) ── */
-    prisma.payment.aggregate({
-      where: { booking: { agencyId }, status: "PAID", ...paymentDateFilter(prevWindow) },
-      _sum: { amount: true },
-    }),
-    expenseDelegate
-      ? expenseDelegate.aggregate({
-          where: { agencyId, date: { gte: prevWindow.from, lte: prevWindow.to } },
-          _sum: { amount: true },
-        })
-      : Promise.resolve({ _sum: { amount: 0 } }),
-    prisma.payment.aggregate({
-      where: { booking: { agencyId }, status: "PAID", type: "CASH", ...paymentDateFilter(prevWindow) },
-      _sum: { amount: true },
-    }),
-    expenseDelegate
-      ? expenseDelegate.aggregate({
-          where: { agencyId, method: "CASH", date: { gte: prevWindow.from, lte: prevWindow.to } },
-          _sum: { amount: true },
-        })
-      : Promise.resolve({ _sum: { amount: 0 } }),
-
-    /* ── Revenue per vehicle ── */
-    prisma.payment.findMany({
-      where: { booking: { agencyId }, status: "PAID", ...paymentDateFilter(window) },
-      select: {
-        amount: true,
-        booking: {
-          select: { vehicle: { select: { make: true, model: true } } },
-        },
-      },
-    }),
-
-    /* ── Alerts: unpaid bookings ── */
-    prisma.booking.findMany({
-      where: {
-        agencyId,
-        paymentStatus: { in: ["PENDING", "PARTIAL"] },
-        status: { notIn: ["CANCELED", "DRAFT"] },
-      },
-      select: { remainingAmount: true },
-    }),
-
-    /* ── Alerts: deposits held ── */
-    prisma.deposit.aggregate({
-      where: { booking: { agencyId }, status: "HELD" },
-      _sum: { amount: true },
-    }),
-    prisma.deposit.count({
-      where: { booking: { agencyId }, status: "HELD" },
-    }),
-
-    /* ── Alerts: refunded payments ── */
-    prisma.payment.findMany({
-      where: { booking: { agencyId }, status: "REFUNDED", ...paymentDateFilter(window) },
-      select: { amount: true },
-    }),
-
-    /* ── Metrics: distinct paid bookings (for panier moyen) ── */
-    prisma.payment.findMany({
-      where: { booking: { agencyId }, status: "PAID", ...paymentDateFilter(window) },
-      select: { bookingId: true },
-      distinct: ["bookingId"],
-    }),
-
-    /* ── Metrics: active vehicles ── */
-    prisma.vehicle.count({
-      where: { agencyId, status: { not: "UNAVAILABLE" } },
-    }),
-
-    /* ── Vehicles for AddExpenseDialog ── */
-    prisma.vehicle.findMany({
-      where: { agencyId },
-      select: { id: true, make: true, model: true, plate: true },
-      orderBy: [{ make: "asc" }, { model: "asc" }],
-    }),
+    getFinanceSnapshotCached(
+      agencyId,
+      window.from.toISOString(),
+      window.to.toISOString(),
+      prevWindow.from.toISOString(),
+      prevWindow.to.toISOString()
+    ),
+    getFinanceVehiclesCached(agencyId),
   ]);
 
   /* ── Compute derived values ── */
 
   const revenuePeriod = Number(revenueAgg._sum.amount ?? 0);
+  const refundedPeriod = Number(refundAgg._sum.amount ?? 0);
   const expensesPeriod = Number(expensesAgg._sum.amount ?? 0);
-  const netProfit = revenuePeriod - expensesPeriod;
+  const netProfit = revenuePeriod - refundedPeriod - expensesPeriod;
 
   const cashIncome = Number(cashIncomeAgg._sum.amount ?? 0);
+  const cashRefunds = Number(cashRefundAgg._sum.amount ?? 0);
   const cashExpense = Number(cashExpenseAgg._sum.amount ?? 0);
-  const cashInHand = cashIncome - cashExpense;
+  const cashInHand = cashIncome - cashRefunds - cashExpense;
 
   // Previous period
   const prevRevenue = Number(prevRevenueAgg._sum.amount ?? 0);
+  const prevRefunds = Number(prevRefundAgg._sum.amount ?? 0);
   const prevExpenses = Number(prevExpensesAgg._sum.amount ?? 0);
-  const prevNet = prevRevenue - prevExpenses;
+  const prevNet = prevRevenue - prevRefunds - prevExpenses;
   const prevCashIn = Number(prevCashIncomeAgg._sum.amount ?? 0);
+  const prevCashRefunds = Number(prevCashRefundAgg._sum.amount ?? 0);
   const prevCashOut = Number(prevCashExpenseAgg._sum.amount ?? 0);
-  const prevCash = prevCashIn - prevCashOut;
+  const prevCash = prevCashIn - prevCashRefunds - prevCashOut;
 
   // Deltas
   const cashDelta = deltaPercent(cashInHand, prevCash);
   const netDelta = deltaPercent(netProfit, prevNet);
 
   // Revenue per vehicle (group in JS)
+  const bookingVehicleMap = new Map(
+    vehicleRevenueBookings.map((booking) => [
+      booking.id,
+      `${booking.vehicle.make} ${booking.vehicle.model}`,
+    ])
+  );
   const vehicleRevenueMap = new Map<string, number>();
-  for (const p of vehiclePayments) {
-    const name = `${p.booking.vehicle.make} ${p.booking.vehicle.model}`;
-    vehicleRevenueMap.set(name, (vehicleRevenueMap.get(name) ?? 0) + Number(p.amount));
+  for (const bookingRevenue of vehicleRevenueByBooking) {
+    const name = bookingVehicleMap.get(bookingRevenue.bookingId);
+    if (!name) continue;
+    vehicleRevenueMap.set(
+      name,
+      (vehicleRevenueMap.get(name) ?? 0) + Number(bookingRevenue._sum.amount ?? 0)
+    );
   }
   const vehicleRevenueTotal = Array.from(vehicleRevenueMap.values()).reduce((a, b) => a + b, 0);
   const vehicleRevenue = Array.from(vehicleRevenueMap.entries())
@@ -314,15 +447,15 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
     .sort((a, b) => b.amount - a.amount);
 
   // Unpaid bookings
-  const unpaidAmount = unpaidBookings.reduce((sum, b) => sum + Number(b.remainingAmount), 0);
-  const unpaidCount = unpaidBookings.length;
+  const unpaidAmount = Number(unpaidBookingsAgg._sum.remainingAmount ?? 0);
+  const unpaidCount = unpaidBookingsAgg._count;
 
   // Deposits held
   const depositsHeld = Number(depositsHeldAgg._sum.amount ?? 0);
 
   // Refunds pending
-  const refundsPending = refundedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const refundsPendingCount = refundedPayments.length;
+  const refundsPending = Number(refundedPaymentsAgg._sum.amount ?? 0);
+  const refundsPendingCount = refundedPaymentsAgg._count;
 
   // Fixed vs Variable expenses
   let fixedAmount = 0;
@@ -341,7 +474,7 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
   const fixedPercentOfRevenue = revenuePeriod > 0 ? (fixedAmount / revenuePeriod) * 100 : 0;
 
   // Key metrics
-  const paidBookingsTotal = paidBookingsCount.length;
+  const paidBookingsTotal = vehicleRevenueByBooking.length;
   const revenuePerVehicle = activeVehicleCount > 0 ? revenuePeriod / activeVehicleCount : 0;
   const panierMoyen = paidBookingsTotal > 0 ? revenuePeriod / paidBookingsTotal : 0;
 

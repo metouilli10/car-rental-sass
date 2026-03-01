@@ -9,7 +9,9 @@ async function main() {
   // Create Agency
   const agency = await prisma.agency.upsert({
     where: { id: "agency-1" },
-    update: {},
+    update: {
+      setupCompletedAt: new Date(),
+    },
     create: {
       id: "agency-1",
       name: "Auto Maroc Location",
@@ -19,6 +21,7 @@ async function main() {
       city: "Casablanca",
       country: "Morocco",
       currency: "MAD",
+      setupCompletedAt: new Date(),
     },
   });
   console.log("✅ Agency created:", agency.name);

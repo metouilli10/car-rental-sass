@@ -1,3 +1,4 @@
+import type { BookingStatus } from "@prisma/client";
 import type { DashboardPeriod } from "./ranges";
 
 export type TrendTone = "positive" | "negative" | "neutral";
@@ -190,3 +191,195 @@ export const BUSINESS_RULES: BusinessRules = {
   depositDueRule: "deposit_held_and_booking_completed_due_at_return_or_end_date",
   lateReturnRule: "end_date_before_now_and_not_completed_or_canceled",
 };
+
+export type DashboardV3Period = "today" | "7d" | "month" | "custom";
+
+export interface DashboardV3ResolvedPeriod {
+  key: DashboardV3Period;
+  label: string;
+  start: string;
+  end: string;
+}
+
+export interface DashboardV3Pulse {
+  net: {
+    amount: number;
+    subtitle: string;
+    trend?: TrendMetric;
+  };
+  toCollect: {
+    amount: number;
+    bookingCount: number;
+    overdueCount: number;
+    subtitle: string;
+  };
+  occupancy: {
+    rate: number;
+    rented: number;
+    total: number;
+    subtitle: string;
+  };
+  risks: {
+    count: number;
+    exposureAmount: number;
+    breakdown: {
+      unpaidCount: number;
+      depositDueCount: number;
+      lateReturnCount: number;
+    };
+    subtitle: string;
+  };
+}
+
+export type DashboardV3ActionGroupId =
+  | "collections"
+  | "deposits"
+  | "late_returns"
+  | "notifications";
+
+export type DashboardV3ActionType = "collection" | "deposit_release" | "link";
+
+export interface DashboardV3ActionItem {
+  id: string;
+  label: string;
+  sublabel: string;
+  amount?: number;
+  dueLabel?: string;
+  isOverdue?: boolean;
+  primaryAction: string;
+  primaryHref: string;
+  actionType: DashboardV3ActionType;
+  bookingId?: string;
+  depositId?: string;
+  customerName?: string;
+  vehicleLabel?: string;
+  plate?: string;
+}
+
+export interface DashboardV3ActionGroup {
+  id: DashboardV3ActionGroupId;
+  title: string;
+  count: number;
+  totalAmount?: number;
+  ctaLabel: string;
+  ctaHref: string;
+  items: DashboardV3ActionItem[];
+}
+
+export interface DashboardV3FleetSnapshot {
+  rented: number;
+  available: number;
+  maintenance: number;
+  inactive: number;
+  totalActive: number;
+}
+
+export interface DashboardV3Onboarding {
+  eligible: boolean;
+  vehicleAdded: boolean;
+  reservationCreated: boolean;
+  paymentRecorded: boolean;
+  dashboardExplored: boolean;
+  completed: boolean;
+  dismissed: boolean;
+}
+
+export type DashboardV3BookingTabKey =
+  | "active"
+  | "start_today"
+  | "end_today"
+  | "overdue";
+
+export interface DashboardV3BookingTabItem {
+  id: string;
+  bookingId: string;
+  customerName: string;
+  vehicleLabel: string;
+  plate: string;
+  startDate: string | null;
+  endDate: string | null;
+  status: BookingStatus;
+  remainingAmount: number;
+  isOverdue: boolean;
+  detailsHref: string;
+}
+
+export interface DashboardV3BookingTab {
+  key: DashboardV3BookingTabKey;
+  label: string;
+  count: number;
+  items: DashboardV3BookingTabItem[];
+}
+
+export interface DashboardV3ActiveBookingsDTO {
+  tabs: DashboardV3BookingTab[];
+  defaultTab?: DashboardV3BookingTabKey;
+}
+
+export interface DashboardV3DTO {
+  period: DashboardV3ResolvedPeriod;
+  pulse: DashboardV3Pulse;
+  actionCenter: {
+    groups: DashboardV3ActionGroup[];
+    isAllClear: boolean;
+  };
+  fleetSnapshot: DashboardV3FleetSnapshot;
+  onboarding: DashboardV3Onboarding;
+}
+
+export interface DashboardV3DueDepositItem {
+  id: string;
+  depositId: string;
+  bookingId: string;
+  customerName: string;
+  vehicleLabel: string;
+  plate: string;
+  amount: number;
+  dueLabel: string;
+  isOverdue: boolean;
+  primaryHref: string;
+}
+
+export interface DashboardV3CollectionSheetItem {
+  id: string;
+  bookingId: string;
+  customerName: string;
+  vehicleLabel: string;
+  plate: string;
+  amount: number;
+  dueLabel: string;
+  isOverdue: boolean;
+  primaryHref: string;
+}
+
+export interface DashboardV3CollectionsSheetDTO {
+  count: number;
+  overdueCount: number;
+  totalAmount: number;
+  items: DashboardV3CollectionSheetItem[];
+}
+
+export interface DashboardV3LateReturnSheetItem {
+  id: string;
+  bookingId: string;
+  customerName: string;
+  vehicleLabel: string;
+  plate: string;
+  dueLabel: string;
+  isOverdue: boolean;
+  amount?: number;
+  primaryHref: string;
+}
+
+export interface DashboardV3LateReturnsSheetDTO {
+  count: number;
+  exposedCount: number;
+  totalAmount: number;
+  items: DashboardV3LateReturnSheetItem[];
+}
+
+export interface DashboardV3DueDepositsSheetDTO {
+  count: number;
+  totalAmount: number;
+  items: DashboardV3DueDepositItem[];
+}

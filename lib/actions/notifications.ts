@@ -4,42 +4,16 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import type { Notification, Vehicle } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { addDays } from "date-fns";
-
-export type NotificationWithVehicle = Notification & {
-  vehicle: Pick<Vehicle, "make" | "model" | "plate" | "id">;
-};
+import {
+  getNotificationsSummary,
+  type NotificationWithVehicle,
+} from "@/lib/notifications/queries";
 
 // ─── Read ──────────────────────────────────────────────────────────────────
 
-export async function getNotificationsSummary(agencyId: string): Promise<{
-  count: number;
-  items: NotificationWithVehicle[];
-}> {
-  const items = await prisma.notification.findMany({
-    where: {
-      agencyId,
-      status: "OPEN",
-      severity: { in: ["WARNING", "DUE"] },
-    },
-    include: {
-      vehicle: { select: { id: true, make: true, model: true, plate: true } },
-    },
-    orderBy: [{ severity: "desc" }, { updatedAt: "asc" }],
-    take: 5,
-  });
-
-  const count = await prisma.notification.count({
-    where: {
-      agencyId,
-      status: "OPEN",
-      severity: { in: ["WARNING", "DUE"] },
-    },
-  });
-
-  return { count, items };
-}
+export { getNotificationsSummary };
 
 export async function getAllNotifications(
   agencyId: string,

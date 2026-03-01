@@ -73,11 +73,11 @@ export function ExecutiveSnapshot({
   const cards = [
     {
       key: "cash",
-      label: "Cash Disponible",
+      label: "Flux net cash",
       icon: Wallet,
       value: cashInHand,
       delta: buildDelta(cashDelta),
-      subtitle: periodLabel,
+      subtitle: `${periodLabel} · encaissements cash - décaissements cash`,
       cardClass: "border-blue-200/70 bg-blue-50/30",
       iconWrapClass: "bg-blue-100 text-blue-700",
     },

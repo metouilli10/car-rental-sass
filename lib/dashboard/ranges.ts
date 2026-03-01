@@ -1,4 +1,5 @@
 export type DashboardPeriod = "today" | "tomorrow" | "week" | "month";
+export type DashboardV3Period = "today" | "7d" | "month" | "custom";
 
 export interface DateRange {
   start: Date;
@@ -103,3 +104,71 @@ export function periodLabel(period: DashboardPeriod): string {
 
 export const getPeriodLabel = periodLabel;
 
+export interface DashboardV3PeriodInput {
+  period?: string;
+  start?: string;
+  end?: string;
+}
+
+export interface DashboardV3ResolvedPeriod {
+  key: DashboardV3Period;
+  label: string;
+  range: DateRange;
+}
+
+function parseDateValue(raw?: string): Date | null {
+  if (!raw) return null;
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export function resolveDashboardV3Period(
+  input: DashboardV3PeriodInput,
+  now = new Date()
+): DashboardV3ResolvedPeriod {
+  if (input.period === "custom") {
+    const startDate = parseDateValue(input.start);
+    const endDate = parseDateValue(input.end);
+    if (startDate && endDate && startDate.getTime() <= endDate.getTime()) {
+      return {
+        key: "custom",
+        label: "Personnalisee",
+        range: {
+          start: atStartOfDay(startDate),
+          end: atEndOfDay(endDate),
+        },
+      };
+    }
+  }
+
+  if (input.period === "month") {
+    return {
+      key: "month",
+      label: "Ce mois",
+      range: {
+        start: new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0),
+        end: atEndOfDay(now),
+      },
+    };
+  }
+
+  if (input.period === "7d" || input.period === "week") {
+    return {
+      key: "7d",
+      label: "7 jours",
+      range: {
+        start: atStartOfDay(now),
+        end: atEndOfDay(addDays(now, 6)),
+      },
+    };
+  }
+
+  return {
+    key: "today",
+    label: "Aujourd'hui",
+    range: {
+      start: atStartOfDay(now),
+      end: atEndOfDay(now),
+    },
+  };
+}

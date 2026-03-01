@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bookingSchema, BookingFormData } from "@/lib/validations/booking";
 import { canDelete } from "@/lib/authz";
+import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
 
 async function validateBookingRelationsForAgency(params: {
   agencyId: string;
@@ -143,6 +144,7 @@ export async function createBooking(data: BookingFormData) {
                   amount: validatedData.paidNow,
                   type: normalizedPaymentType,
                   status: "PAID",
+                  paidAt: new Date(),
                 }
               : {
                   amount: 0,
@@ -172,6 +174,11 @@ export async function createBooking(data: BookingFormData) {
     revalidatePath("/bookings");
     revalidatePath("/dashboard");
     revalidatePath("/bookings/create");
+    try {
+      await syncAgencyOnboardingState(session.user.agencyId);
+    } catch (syncError) {
+      console.error("syncAgencyOnboardingState error:", syncError);
+    }
     return { success: true, bookingId: createdBooking.id };
   } catch (error) {
     console.error("createBooking error:", error);
@@ -399,16 +406,13 @@ export async function completeBooking(bookingId: string) {
 
 /**
  * Reconcile past-due ACTIVE bookings: set them to COMPLETED and their vehicles to AVAILABLE.
- * Called when the dashboard loads so vehicle status stays in sync without a cron.
+ * Called on dashboard load as a best-effort background sync.
  */
-export async function reconcilePastDueBookings() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.agencyId) return;
-
+export async function reconcilePastDueBookings(agencyId: string) {
   const now = new Date();
   const pastDue = await prisma.booking.findMany({
     where: {
-      agencyId: session.user.agencyId,
+      agencyId,
       status: "ACTIVE",
       endDate: { lt: now },
     },

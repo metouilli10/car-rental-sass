@@ -16,6 +16,11 @@ const PERIOD_ITEMS = [
   { id: "month", label: "Ce mois" },
 ] as const;
 
+const ACTIVE_PILL_CLASS =
+  "inline-flex items-center rounded-full bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors";
+const INACTIVE_PILL_CLASS =
+  "inline-flex items-center rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground";
+
 function toMonthValue(value: Date): string {
   const year = value.getFullYear();
   const month = String(value.getMonth() + 1).padStart(2, "0");
@@ -125,10 +130,7 @@ export function PeriodTabs({ period }: PeriodTabsProps) {
           key={item.id}
           href={`/dashboard?period=${item.id}`}
           className={cn(
-            "inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-            period.key === item.id
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "border border-border bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+            period.key === item.id ? ACTIVE_PILL_CLASS : INACTIVE_PILL_CLASS
           )}
         >
           {item.label}
@@ -138,10 +140,7 @@ export function PeriodTabs({ period }: PeriodTabsProps) {
         <label
           htmlFor={inputId}
           className={cn(
-            "inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-            period.key === "custom"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "border border-border bg-muted/30 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+            period.key === "custom" ? ACTIVE_PILL_CLASS : INACTIVE_PILL_CLASS
           )}
         >
           {formatCustomMonthLabel(customMonth, period.key === "custom")}

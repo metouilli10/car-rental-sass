@@ -1,19 +1,16 @@
+import { Suspense } from "react";
 import { getSession } from "@/lib/auth-cache";
-import { periodLabel, resolveDashboardPeriod } from "@/lib/dashboard/ranges";
-import { getDashboardData } from "@/lib/dashboard/queries";
-import { reconcilePastDueBookings } from "@/lib/actions/bookings";
-import { Badge } from "@/components/ui/badge";
-import { KpiCard } from "@/components/dashboard/KpiCard";
-import { PeriodFilterBar } from "@/components/dashboard/PeriodFilterBar";
-import { ActionCenter } from "@/components/dashboard/ActionCenter";
-import { ParkStatusCard } from "@/components/dashboard/ParkStatusCard";
-import { CashCard } from "@/components/dashboard/CashCard";
-import { MonthPerformanceCard } from "@/components/dashboard/MonthPerformanceCard";
-import { TopVehiclesCard } from "@/components/dashboard/TopVehiclesCard";
-import { DashboardHeader } from "../components/DashboardHeader";
+import { getDashboardDataV3 } from "@/lib/dashboard/v3-queries";
+import { DashboardHeaderV3 } from "@/components/dashboard/DashboardHeaderV3";
+import { PulseCards } from "@/components/dashboard/PulseCards";
+import { ActionCenterCard } from "@/components/dashboard/ActionCenterCard";
+import { FleetSnapshotBar } from "@/components/dashboard/FleetSnapshotBar";
+import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardActiveBookingsSection } from "./DashboardActiveBookingsSection";
 
 interface DashboardPageProps {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -24,95 +21,92 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   const agencyId = session.user.agencyId;
-  await reconcilePastDueBookings();
   const params = await searchParams;
-  const selectedPeriod = resolveDashboardPeriod(params.period);
-  const dashboard = await getDashboardData({
-    agencyId,
-    period: selectedPeriod,
-    includeTopVehicles: true,
-  });
-  const selectedPeriodLabel = periodLabel(dashboard.period);
-  const occupancyLabel = periodLabel(dashboard.ceoSnapshot.occupancy.labelPeriod);
+  const periodInput = {
+    period: params.period,
+    start: params.start,
+    end: params.end,
+  };
+  let dashboard = null;
+  let dashboardErrorDetails: string | null = null;
+  try {
+    dashboard = await getDashboardDataV3({
+      agencyId,
+      periodInput,
+    });
+  } catch (error) {
+    console.error("DashboardPage getDashboardDataV3 failed", { agencyId, error });
+    const e = error as { code?: string; message?: string; name?: string };
+    const code = e.code ? `code=${e.code}` : null;
+    const name = e.name ? `name=${e.name}` : null;
+    const message = e.message ? `message=${e.message}` : null;
+    dashboardErrorDetails = [code, name, message].filter(Boolean).join(" | ");
+  }
+
+  if (!dashboard) {
+    return (
+      <div className="-mx-4 -my-4 min-h-screen bg-muted/40 pb-24 sm:-mx-6 sm:-my-6 lg:-mx-8 md:pb-0">
+        <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 lg:px-8 xl:max-w-[1320px]">
+          <div className="flex flex-col gap-7">
+            <DashboardHeaderV3
+              period={{
+                key: "today",
+                label: "Aujourd'hui",
+                start: new Date().toISOString(),
+                end: new Date().toISOString(),
+              }}
+            />
+            <Card className="rounded-xl border border-amber-200 bg-amber-50/80 dark:border-amber-500/30 dark:bg-amber-500/10">
+              <CardHeader>
+                <CardTitle className="text-base text-amber-900 dark:text-amber-100">
+                  Donnees temporairement indisponibles
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-amber-900 dark:text-amber-100">
+                  Le tableau de bord rencontre une erreur temporaire de chargement.
+                  Rechargez la page dans quelques secondes.
+                </p>
+                {dashboardErrorDetails && (
+                  <p className="mt-2 break-all font-mono text-xs text-amber-900 dark:text-amber-100/90">
+                    {dashboardErrorDetails}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="-mx-4 -my-4 min-h-screen bg-slate-50 pb-24 sm:-mx-6 sm:-my-6 lg:-mx-8 md:pb-0">
+    <div className="-mx-4 -my-4 min-h-screen bg-muted/40 pb-24 sm:-mx-6 sm:-my-6 lg:-mx-8 md:pb-0">
       <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 lg:px-8 xl:max-w-[1320px]">
-        <div className="flex flex-col gap-6">
-          <DashboardHeader />
+        <div className="flex flex-col gap-7">
+          <DashboardHeaderV3 period={dashboard.period} />
+          <OnboardingChecklist
+            onboarding={dashboard.onboarding}
+            forceVisible={params["getting-started"] === "1" && !dashboard.onboarding.completed}
+          />
+          <PulseCards pulse={dashboard.pulse} />
+          <ActionCenterCard actionCenter={dashboard.actionCenter} period={dashboard.period} />
+          <FleetSnapshotBar snapshot={dashboard.fleetSnapshot} />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={dashboard.ownerAlerts.lateReturnsCount > 0 ? "destructive" : "secondary"}>
-              {dashboard.ownerAlerts.lateReturnsCount} retours en retard
-            </Badge>
-            <Badge variant={dashboard.ownerAlerts.followUpsTodayCount > 0 ? "warning" : "secondary"}>
-              {dashboard.ownerAlerts.followUpsTodayCount} clients a relancer aujourd&apos;hui
-            </Badge>
-          </div>
-
-          <section className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              title={`Encaissements (${selectedPeriodLabel})`}
-              value={dashboard.ceoSnapshot.encaissements.amount}
-              subtitle={`Paiements location encaisses (${selectedPeriodLabel.toLowerCase()})`}
-              trend={dashboard.ceoSnapshot.encaissements.trend}
-            />
-            <KpiCard
-              title="Impayes / A encaisser (En cours)"
-              value={dashboard.ceoSnapshot.pendingCollections.amount}
-              subtitle={`${dashboard.ceoSnapshot.pendingCollections.pendingBookingsCount} dossiers, ${dashboard.ceoSnapshot.pendingCollections.urgentCount} urgents (${selectedPeriodLabel.toLowerCase()})`}
-              risk={dashboard.ceoSnapshot.pendingCollections.urgentCount > 0 ? "warning" : "none"}
-            />
-            <KpiCard
-              title={
-                dashboard.ceoSnapshot.occupancy.labelPeriod === "today"
-                  ? "Taux d'occupation (Aujourd'hui)"
-                  : `Utilisation (${occupancyLabel})`
-              }
-              value={dashboard.ceoSnapshot.occupancy.rate}
-              valueSuffix="%"
-              subtitle={
-                dashboard.ceoSnapshot.occupancy.labelPeriod === "today"
-                  ? `${dashboard.ceoSnapshot.occupancy.rented}/${dashboard.ceoSnapshot.occupancy.total} loues - ${dashboard.ceoSnapshot.occupancy.maintenance} en maintenance`
-                  : [
-                      `${dashboard.ceoSnapshot.occupancy.rented}/${dashboard.ceoSnapshot.occupancy.total} loues`,
-                      dashboard.ceoSnapshot.occupancy.occupiedDays != null &&
-                      dashboard.ceoSnapshot.occupancy.availableDays != null
-                        ? ` • ${dashboard.ceoSnapshot.occupancy.occupiedDays} / ${dashboard.ceoSnapshot.occupancy.availableDays} jours-vehicule`
-                        : "",
-                    ].join("")
-                  }
-            />
-            <KpiCard
-              title={`Cautions a rembourser (${selectedPeriodLabel})`}
-              value={dashboard.ceoSnapshot.depositsToRefund.totalHeld}
-              subtitle={`${dashboard.ceoSnapshot.depositsToRefund.dueCount} dues, ${dashboard.ceoSnapshot.depositsToRefund.overdueCount} en retard`}
-              risk={dashboard.ceoSnapshot.depositsToRefund.overdueCount > 0 ? "destructive" : "none"}
-            />
-          </section>
-
-          <PeriodFilterBar selectedPeriod={selectedPeriod} stats={dashboard.periodStats} />
-
-          <section className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-            <div className="xl:col-span-8">
-              <ActionCenter
-                pendingCollections={dashboard.actionCenter.pendingCollections}
-                depositsToRelease={dashboard.actionCenter.depositsToRelease}
-                lateReturns={dashboard.actionCenter.lateReturns}
-              />
-            </div>
-            <div className="xl:col-span-4">
-              <ParkStatusCard status={dashboard.parkStatus} />
-            </div>
-          </section>
-
-          <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <CashCard cash={dashboard.cash} />
-            <MonthPerformanceCard data={dashboard.monthPerformance} />
-          </section>
-
-          <TopVehiclesCard data={dashboard.topVehicles} />
-
+          <Suspense
+            fallback={
+              <Card className="rounded-xl border border-border bg-card shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-base text-foreground">Réservations actives</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">Chargement des réservations en cours...</p>
+                </CardContent>
+              </Card>
+            }
+          >
+            <DashboardActiveBookingsSection agencyId={agencyId} periodInput={periodInput} />
+          </Suspense>
         </div>
       </div>
     </div>

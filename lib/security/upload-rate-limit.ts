@@ -95,7 +95,7 @@ function getOrCreateState(key: string, nowMs: number): UploadRateState {
 export function enforceUploadRateLimit(params: {
   request: NextRequest;
   agencyId: string;
-  scope: "vehicles" | "damage-reports" | "customers";
+  scope: "vehicles" | "damage-reports" | "customers" | "agencies";
   incomingBytes: number;
 }): UploadRateLimitResult {
   if (!FEATURE_UPLOAD_RATE_LIMIT) {

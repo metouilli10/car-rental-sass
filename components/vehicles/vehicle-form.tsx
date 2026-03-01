@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
+import { unstable_rethrow } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { vehicleSchema, VehicleFormData } from "@/lib/validations/vehicle";
@@ -448,6 +449,7 @@ export function VehicleForm({
         setError(result.error);
       }
     } catch (err) {
+      unstable_rethrow(err);
       setError(
         err instanceof Error ? err.message : "Une erreur s'est produite"
       );

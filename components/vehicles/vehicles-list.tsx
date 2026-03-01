@@ -3,9 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Car } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { getBrandLogoPath } from "@/lib/brand-logos";
+import { brandLogoSrc } from "@/lib/brands";
 import { VehicleActionsMenu } from "@/components/vehicles/vehicle-actions-menu";
 import { VehicleDetailsDrawer } from "@/components/vehicles/vehicle-details-drawer";
 import type { VehicleListItem } from "@/components/vehicles/types";
@@ -85,7 +84,7 @@ export function VehiclesList({ vehicles, isRentedView }: VehiclesListProps) {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {vehicles.map((vehicle) => {
-                const brandLogoPath = getBrandLogoPath(vehicle.make);
+                const logoSrc = brandLogoSrc(vehicle.brandKey);
                 const activeBooking = vehicle.bookings?.[0];
 
                 return (
@@ -97,21 +96,17 @@ export function VehiclesList({ vehicles, isRentedView }: VehiclesListProps) {
                     <td className="px-6 py-4.5 md:px-8 md:py-6">
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-blue-100">
-                          {brandLogoPath ? (
-                            <div className="relative h-7 w-7">
-                              <Image
-                                src={brandLogoPath}
-                                alt={`Logo ${vehicle.make}`}
-                                fill
-                                className="object-contain"
-                                sizes="28px"
-                              />
-                            </div>
-                          ) : (
-                            <Car className="h-4 w-4 text-blue-600/80" />
-                          )}
+                          <div className="relative h-6 w-6">
+                            <Image
+                              src={logoSrc}
+                              alt={`${vehicle.make} logo`}
+                              fill
+                              className="object-contain"
+                              sizes="24px"
+                            />
+                          </div>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <div className="text-sm font-semibold leading-snug text-gray-900">
                             {vehicle.make} {vehicle.model}
                           </div>
@@ -187,7 +182,7 @@ export function VehiclesList({ vehicles, isRentedView }: VehiclesListProps) {
 
         <div className="divide-y divide-border sm:hidden">
           {vehicles.map((vehicle) => {
-            const brandLogoPath = getBrandLogoPath(vehicle.make);
+            const logoSrc = brandLogoSrc(vehicle.brandKey);
             return (
               <div
                 key={vehicle.id}
@@ -195,24 +190,20 @@ export function VehiclesList({ vehicles, isRentedView }: VehiclesListProps) {
                 onClick={() => setSelectedVehicleId(vehicle.id)}
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-100">
-                  {brandLogoPath ? (
-                    <div className="relative h-8 w-8">
-                      <Image
-                        src={brandLogoPath}
-                        alt={`Logo ${vehicle.make}`}
-                        fill
-                        className="object-contain"
-                        sizes="32px"
-                      />
-                    </div>
-                  ) : (
-                    <Car className="h-5 w-5 text-blue-600/80" />
-                  )}
+                  <div className="relative h-7 w-7">
+                    <Image
+                      src={logoSrc}
+                      alt={`${vehicle.make} logo`}
+                      fill
+                      className="object-contain"
+                      sizes="28px"
+                    />
+                  </div>
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-semibold text-gray-900">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="min-w-0 break-words text-sm font-semibold leading-snug text-gray-900">
                       {vehicle.make} {vehicle.model}
                     </span>
                     <span

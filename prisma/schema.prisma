@@ -162,12 +162,22 @@ enum NotificationEventStatus {
 model Agency {
   id       String @id @default(cuid())
   name     String
-  address  String
-  phone    String
-  email    String
+  address  String?
+  phone    String?
+  email    String?
   city     String
+  rcNumber String?
+  logoUrl  String?
   country  String @default("Morocco")
   currency String @default("MAD")
+  setupCompletedAt DateTime?
+
+  onboardingVehicleAdded        Boolean @default(false)
+  onboardingReservationCreated  Boolean @default(false)
+  onboardingPaymentRecorded     Boolean @default(false)
+  onboardingDashboardExplored   Boolean @default(false)
+  onboardingCompleted           Boolean @default(false)
+  onboardingDismissed           Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -215,6 +225,7 @@ model Vehicle {
   id                String        @id @default(cuid())
   agencyId          String
   make              String
+  brandKey          String        @default("other")
   model             String
   year              Int
   plate             String        @unique
@@ -269,6 +280,7 @@ model Vehicle {
 
   @@index([agencyId])
   @@index([status])
+  @@index([agencyId, status], map: "vehicles_agency_status_idx")
   @@map("vehicles")
 }
 
@@ -364,6 +376,8 @@ model Booking {
   @@index([paymentStatus])
   @@index([vehicleId, status])
   @@index([agencyId, status])
+  @@index([agencyId, status, startDate, endDate], map: "bookings_agency_status_start_end_idx")
+  @@index([agencyId, status, endDate], map: "bookings_agency_status_end_idx")
   @@map("bookings")
 }
 
@@ -402,6 +416,9 @@ model Payment {
   @@index([bookingId])
   @@index([status])
   @@index([category])
+  @@index([status, category, paidAt], map: "payments_status_category_paid_at_idx")
+  @@index([status, updatedAt], map: "payments_status_updated_at_idx")
+  @@index([bookingId, status, category], map: "payments_booking_status_category_idx")
   @@map("payments")
 }
 
@@ -420,6 +437,8 @@ model Deposit {
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([status])
+  @@index([status, heldAt], map: "deposits_status_held_at_idx")
+  @@index([status, returnedAt], map: "deposits_status_returned_at_idx")
   @@map("deposits")
 }
 
@@ -550,6 +569,7 @@ model Notification {
   @@index([agencyId])
   @@index([vehicleId])
   @@index([status])
+  @@index([agencyId, status, severity, updatedAt], map: "notifications_agency_status_severity_updated_at_idx")
   @@map("notifications")
 }
 

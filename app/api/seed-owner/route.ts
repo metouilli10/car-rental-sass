@@ -38,7 +38,9 @@ export async function POST(request: NextRequest) {
   try {
     const agency = await prisma.agency.upsert({
       where: { id: "agency-1" },
-      update: {},
+      update: {
+        setupCompletedAt: new Date(),
+      },
       create: {
         id: "agency-1",
         name: "Auto Maroc Location",
@@ -48,6 +50,7 @@ export async function POST(request: NextRequest) {
         city: "Casablanca",
         country: "Morocco",
         currency: "MAD",
+        setupCompletedAt: new Date(),
       },
     });
 

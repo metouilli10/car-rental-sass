@@ -97,6 +97,11 @@ export function ReservationSummarySticky({
             <p className="text-sm text-muted-foreground">
               Payé : {formatMad(paidNow)} · Reste : {formatMad(remainingAmount)}
             </p>
+            {remainingAmount > 0 ? (
+              <p className="text-xs text-amber-700">
+                Enregistrez un paiement pour suivre vos revenus.
+              </p>
+            ) : null}
             <Button
               variant="outline"
               size="sm"

@@ -40,7 +40,7 @@ export function FinancialAlerts({
       amount: unpaidAmount,
       count: unpaidCount,
       countLabel: `${unpaidCount} dossier${unpaidCount !== 1 ? "s" : ""}`,
-      href: "/bookings?paymentStatus=PENDING",
+      href: "/bookings?filter=unpaid",
       iconClass: "text-amber-600",
     },
     {
