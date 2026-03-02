@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
-import type { UserRole } from "@prisma/client";
 import type { ClientListItem } from "@/components/customers/clients-page-v2";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,12 +9,16 @@ import { CustomerRowActions } from "@/components/customers/customer-row-actions"
 
 interface ClientCardProps {
   client: ClientListItem;
-  currentUserRole: UserRole;
+  canManageCustomers: boolean;
+  canDeleteCustomers: boolean;
 }
 
-export function ClientCard({ client, currentUserRole }: ClientCardProps) {
+export function ClientCard({
+  client,
+  canManageCustomers,
+  canDeleteCustomers,
+}: ClientCardProps) {
   const hasOutstandingBalance = client.balance > 0;
-  const canDelete = currentUserRole === "OWNER" || currentUserRole === "MANAGER";
 
   return (
     <Card className="rounded-xl border border-slate-200 shadow-sm">
@@ -40,7 +43,12 @@ export function ClientCard({ client, currentUserRole }: ClientCardProps) {
             )}
           </div>
           <div className="shrink-0">
-            <CustomerRowActions customerId={client.id} canDelete={canDelete} compact />
+            <CustomerRowActions
+              customerId={client.id}
+              canDelete={canDeleteCustomers}
+              canManage={canManageCustomers}
+              compact
+            />
           </div>
         </div>
 

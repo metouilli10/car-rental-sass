@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import { canDeleteCustomer } from "@/lib/permissions";
+import { canDeleteCustomer, canManageCustomers } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { customerSchema, CustomerFormData } from "@/lib/validations/customer";
 
@@ -13,6 +13,15 @@ export async function createCustomer(data: CustomerFormData) {
 
   if (!session) {
     throw new Error("Non autorisé");
+  }
+
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+
+  if (!canManageCustomers(session.user.role, currentUser?.permissionOverrides ?? null)) {
+    return { error: "Vous n'avez pas l'autorisation de creer un client" };
   }
 
   try {
@@ -53,6 +62,15 @@ export async function createCustomerForBooking(data: CustomerFormData) {
     throw new Error("Non autorisé");
   }
 
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+
+  if (!canManageCustomers(session.user.role, currentUser?.permissionOverrides ?? null)) {
+    return { error: "Vous n'avez pas l'autorisation de creer un client" };
+  }
+
   try {
     const validatedData = customerSchema.parse(data);
 
@@ -89,6 +107,15 @@ export async function updateCustomer(id: string, data: CustomerFormData) {
 
   if (!session) {
     throw new Error("Non autorisé");
+  }
+
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+
+  if (!canManageCustomers(session.user.role, currentUser?.permissionOverrides ?? null)) {
+    return { error: "Vous n'avez pas l'autorisation de modifier un client" };
   }
 
   try {
@@ -137,7 +164,12 @@ export async function deleteCustomer(id: string) {
     throw new Error("Non autorisé");
   }
 
-  if (!canDeleteCustomer(session.user.role)) {
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+
+  if (!canDeleteCustomer(session.user.role, currentUser?.permissionOverrides ?? null)) {
     return {
       error: "Vous n'avez pas l'autorisation de supprimer un client",
     };

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { UserRole } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logSecurityAudit } from "@/lib/security/audit-log";
+import {
+  normalizePermissionOverrides,
+  sanitizePermissionOverridePatch,
+  type PermissionKey,
+} from "@/lib/permissions";
 import { toManagedUser } from "@/lib/users/serializers";
 import {
   AuthzError,
@@ -10,8 +15,8 @@ import {
   requireRole,
 } from "@/lib/authz";
 
-type UpdateStatusPayload = {
-  isActive?: boolean;
+type UpdateUserPermissionsPayload = {
+  overrides?: Record<string, boolean | null>;
 };
 
 export async function PATCH(
@@ -23,17 +28,35 @@ export async function PATCH(
     requireRole(currentUser.role, ["OWNER"]);
 
     if (!canManageUsers(currentUser.role)) {
-      return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
+      return NextResponse.json({ error: "Acces interdit" }, { status: 403 });
     }
 
     const { id } = await params;
-    const body = (await request.json().catch(() => ({}))) as UpdateStatusPayload;
+    const body = (await request.json().catch(() => ({}))) as UpdateUserPermissionsPayload;
+    const rawOverrides = body.overrides;
+
+    if (!rawOverrides || typeof rawOverrides !== "object" || Array.isArray(rawOverrides)) {
+      return NextResponse.json({ error: "Payload invalide" }, { status: 400 });
+    }
+
+    const { normalized, changedKeys, invalidKeys } = sanitizePermissionOverridePatch(rawOverrides);
+
+    if (invalidKeys.length > 0) {
+      return NextResponse.json(
+        { error: `Permissions invalides: ${invalidKeys.join(", ")}` },
+        { status: 400 },
+      );
+    }
 
     const target = await prisma.user.findFirst({
-      where: { id, agencyId: currentUser.agencyId },
+      where: {
+        id,
+        agencyId: currentUser.agencyId,
+      },
       select: {
         id: true,
-        isActive: true,
+        role: true,
+        permissionOverrides: true,
       },
     });
 
@@ -51,19 +74,18 @@ export async function PATCH(
           userAgent: request.headers.get("user-agent"),
         },
         event: {
-          action: "USER_STATUS_UPDATE",
+          action: "USER_PERMISSIONS_UPDATE",
           entityType: "USER",
           entityId: id,
           outcome: "DENIED",
           details: { reason: "target_not_found" },
         },
       });
+
       return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
     }
 
-    const nextStatus = typeof body.isActive === "boolean" ? body.isActive : !target.isActive;
-
-    if (currentUser.id === id && nextStatus === false) {
+    if (target.role === "OWNER") {
       await logSecurityAudit({
         actor: {
           userId: currentUser.id,
@@ -77,22 +99,39 @@ export async function PATCH(
           userAgent: request.headers.get("user-agent"),
         },
         event: {
-          action: "USER_STATUS_UPDATE",
+          action: "USER_PERMISSIONS_UPDATE",
           entityType: "USER",
           entityId: id,
           outcome: "DENIED",
-          details: { reason: "self_deactivation_blocked" },
+          details: { reason: "owner_target_blocked" },
         },
       });
+
       return NextResponse.json(
-        { error: "Vous ne pouvez pas désactiver votre propre compte" },
+        { error: "Les permissions du proprietaire ne sont pas modifiables" },
         { status: 400 },
       );
     }
 
-    await prisma.user.updateMany({
-      where: { id, agencyId: currentUser.agencyId },
-      data: { isActive: nextStatus },
+    const previousOverrides = normalizePermissionOverrides(target.permissionOverrides ?? null);
+    const appliedChangedKeys = changedKeys.filter((key) => {
+      const permissionKey = key as PermissionKey;
+      const previousValue =
+        previousOverrides && Object.prototype.hasOwnProperty.call(previousOverrides, key)
+          ? previousOverrides[permissionKey]
+          : null;
+      const nextValue =
+        normalized && Object.prototype.hasOwnProperty.call(normalized, key)
+          ? normalized[permissionKey]
+          : null;
+      return previousValue !== nextValue;
+    });
+
+    await prisma.user.update({
+      where: { id },
+      data: {
+        permissionOverrides: normalized ?? Prisma.DbNull,
+      },
     });
 
     const updatedUser = await prisma.user.findFirst({
@@ -127,11 +166,14 @@ export async function PATCH(
         userAgent: request.headers.get("user-agent"),
       },
       event: {
-        action: "USER_STATUS_UPDATE",
+        action: "USER_PERMISSIONS_UPDATE",
         entityType: "USER",
         entityId: id,
         outcome: "SUCCESS",
-        details: { isActive: nextStatus },
+        details: {
+          changedKeys: appliedChangedKeys,
+          overrideCount: normalized ? Object.keys(normalized).length : 0,
+        },
       },
     });
 
@@ -140,7 +182,8 @@ export async function PATCH(
     if (error instanceof AuthzError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
-    console.error("PATCH /api/users/[id]/status error:", error);
+
+    console.error("PATCH /api/users/[id]/permissions error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

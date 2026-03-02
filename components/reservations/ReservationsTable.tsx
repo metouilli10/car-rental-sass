@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookingActionsDropdown } from "@/components/bookings/booking-actions-dropdown";
 import type { BookingListItem } from "@/components/bookings/bookings-control-center";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { ReservationRiskBadges } from "@/components/reservations/ReservationRiskBadges";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import {
   toDate,
   getDurationDays,
@@ -28,10 +29,11 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
       <div className="max-h-[72vh] overflow-y-auto overflow-x-hidden">
         <table className="w-full table-fixed border-collapse">
           <colgroup>
-            <col style={{ width: "32%" }} />
             <col style={{ width: "26%" }} />
             <col style={{ width: "20%" }} />
-            <col style={{ width: "12%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "10%" }} />
             <col style={{ width: "10%" }} />
           </colgroup>
           <thead className="sticky top-0 z-20 border-b border-muted bg-white">
@@ -44,6 +46,9 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
               </th>
               <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                 Financier
+              </th>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                Risque
               </th>
               <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                 Statut
@@ -74,7 +79,12 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
                   className="transition-colors duration-200 hover:bg-slate-50"
                 >
                   {/* Réservation: client + vehicle merged */}
-                  <td className="px-4 py-3 text-sm align-top">
+                  <td
+                    className={cn(
+                      "px-4 py-3 text-sm align-top",
+                      booking.risk.hasOverlapConflict && "border-l-2 border-l-red-500"
+                    )}
+                  >
                     <div className="min-w-0 break-words">
                       <Link
                         href={`/customers/${booking.customer.id}`}
@@ -121,20 +131,38 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
 
                   {/* Financier */}
                   <td className="px-4 py-3 text-sm align-top">
-                    <div className="font-semibold text-foreground">
-                      {formatCurrency(booking.totalPrice)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Payé: {paidNowValue !== null ? formatCurrency(paidNowValue) : "--"}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Reste: {remainingValue !== null ? formatCurrency(remainingValue) : "--"}
-                    </div>
-                    {booking.deposit && (
-                      <div className="mt-1">
-                        <StatusBadge status={booking.deposit.status} />
+                    <div
+                      className={cn(
+                        "rounded-xl p-2",
+                        booking.risk.hasUnpaidDeposit &&
+                          "border border-amber-200 bg-amber-50/80"
+                      )}
+                    >
+                      <div className="font-semibold text-foreground">
+                        {formatCurrency(booking.totalPrice)}
                       </div>
-                    )}
+                      <div className="text-xs text-muted-foreground">
+                        Paye: {paidNowValue !== null ? formatCurrency(paidNowValue) : "--"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Reste: {remainingValue !== null ? formatCurrency(remainingValue) : "--"}
+                      </div>
+                      {booking.deposit && (
+                        <div className="mt-1">
+                          <StatusBadge status={booking.deposit.status} />
+                        </div>
+                      )}
+                      {booking.risk.hasUnpaidDeposit ? (
+                        <p className="mt-1 text-xs font-medium text-amber-700">
+                          Caution non encaissee
+                        </p>
+                      ) : null}
+                    </div>
+                  </td>
+
+                  {/* Risque */}
+                  <td className="px-4 py-3 text-sm align-top">
+                    <ReservationRiskBadges signals={booking.risk.signals} />
                   </td>
 
                   {/* Statut */}

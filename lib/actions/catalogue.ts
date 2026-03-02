@@ -74,6 +74,7 @@ export async function createCatalogueBooking(data: RapidBookingData) {
           pricePerDay: data.pricePerDay,
           totalPrice: data.totalPrice,
           depositAmount: data.depositAmount,
+          depositStatus: "RECEIVED",
           status: data.isRapidMode ? BookingStatus.DRAFT : BookingStatus.CONFIRMED,
           notes: data.notes,
           payments: {

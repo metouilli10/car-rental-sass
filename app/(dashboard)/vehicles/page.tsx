@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth-cache";
+import { canManageVehicles } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Pagination } from "@/components/shared/pagination";
 import Link from "next/link";
@@ -32,6 +33,14 @@ export default async function VehiclesPage({
   const { status, page: pageParam, q } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
   const now = new Date();
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+  const canManage = canManageVehicles(
+    session.user.role,
+    currentUser?.permissionOverrides ?? null,
+  );
 
   const statusFilter =
     status && (VALID_STATUSES as readonly string[]).includes(status)
@@ -172,13 +181,15 @@ export default async function VehiclesPage({
             Gérez votre parc automobile
           </p>
         </div>
-        <Link
-          href="/vehicles/add"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors duration-200 shadow-sm shrink-0"
-        >
-          <Plus className="h-4 w-4" />
-          Ajouter un véhicule
-        </Link>
+        {canManage ? (
+          <Link
+            href="/vehicles/add"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors duration-200 shadow-sm shrink-0"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter un véhicule
+          </Link>
+        ) : null}
       </div>
 
       {/* ── Section 1: Status filter ── */}
@@ -261,7 +272,7 @@ export default async function VehiclesPage({
         </div>
       ) : (
         <>
-          <VehiclesList vehicles={vehicles} isRentedView={isRentedView} />
+        <VehiclesList vehicles={vehicles} isRentedView={isRentedView} canManageVehicles={canManage} />
           {totalPages > 1 ? (
             <div className="rounded-xl border border-border bg-white shadow-sm">
               <Pagination

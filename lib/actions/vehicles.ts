@@ -4,10 +4,10 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import { canManageVehicles } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { vehicleSchema, VehicleFormData } from "@/lib/validations/vehicle";
 import { computeVehicleReminders } from "@/lib/reminders/engine";
-import { canDelete } from "@/lib/authz";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
 import { brandKeyFromMake } from "@/lib/brands";
 
@@ -64,6 +64,15 @@ export async function createVehicle(data: VehicleFormData) {
 
   if (!session) {
     throw new Error("Non autorisé");
+  }
+
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+
+  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+    return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
   }
 
   let vehicleId: string | null = null;
@@ -123,6 +132,15 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
     throw new Error("Non autorisé");
   }
 
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+
+  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+    return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
+  }
+
   try {
     const validatedData = vehicleSchema.parse(data);
 
@@ -176,6 +194,15 @@ export async function deactivateVehicle(id: string) {
     throw new Error("Non autorisé");
   }
 
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+
+  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+    return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
+  }
+
   try {
     const vehicle = await prisma.vehicle.findFirst({
       where: { id, agencyId: session.user.agencyId },
@@ -206,6 +233,15 @@ export async function setVehicleMaintenance(id: string) {
 
   if (!session) {
     throw new Error("Non autorisé");
+  }
+
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+
+  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+    return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
   }
 
   try {
@@ -242,7 +278,12 @@ export async function deleteVehicle(id: string) {
     throw new Error("Non autorisé");
   }
 
-  if (!canDelete(session.user.role)) {
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+
+  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
     return {
       error: "Vous n'avez pas l'autorisation de supprimer un véhicule",
     };

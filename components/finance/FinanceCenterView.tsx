@@ -1,7 +1,8 @@
+import type { ExpenseCategory } from "@prisma/client";
 import { FinanceHeaderActions } from "@/components/finance/FinanceHeaderActions";
 import { ExecutiveSnapshot } from "@/components/finance/ExecutiveSnapshot";
-import { RevenueChart } from "@/components/finance/RevenueChart";
-import { VehicleRevenueList } from "@/components/finance/VehicleRevenueList";
+import { VehicleProfitabilityList } from "@/components/finance/VehicleProfitabilityList";
+import { NetProfitBreakdown } from "@/components/finance/NetProfitBreakdown";
 import { CostStructureCard } from "@/components/finance/CostStructureCard";
 import { KeyMetricsCard } from "@/components/finance/KeyMetricsCard";
 import { FinancialAlerts } from "@/components/finance/FinancialAlerts";
@@ -27,7 +28,17 @@ type FinanceCenterViewProps = {
     cashDelta: number | null;
     netDelta: number | null;
   };
-  vehicleRevenue: Array<{ name: string; amount: number; percentage: number }>;
+  vehicleProfitability: Array<{
+    vehicleId: string;
+    label: string;
+    revenue: number;
+    costs: number;
+    profit: number;
+    marginPercent: number;
+  }>;
+  expenseBreakdown: Partial<Record<ExpenseCategory, number>>;
+  revenuePeriod: number;
+  refundedPeriod: number;
   costStructure: {
     fixedAmount: number;
     variableAmount: number;
@@ -45,6 +56,9 @@ type FinanceCenterViewProps = {
     depositsToReturnCount: number;
     refundsPending: number;
     refundsPendingCount: number;
+    hasDeficit?: boolean;
+    netMarginPercent?: number | null;
+    losingVehicles?: string[];
   };
   vehicles: Array<{ id: string; make: string; model: string; plate: string }>;
 };
@@ -53,7 +67,10 @@ export function FinanceCenterView({
   period,
   kpis,
   deltas,
-  vehicleRevenue,
+  vehicleProfitability,
+  expenseBreakdown,
+  revenuePeriod,
+  refundedPeriod,
   costStructure,
   metrics,
   alerts,
@@ -85,8 +102,19 @@ export function FinanceCenterView({
           />
         </div>
 
-        {/* 2. Financial Alerts — second on mobile, last on desktop */}
-        <div className="order-2 lg:order-5">
+        {/* 2. Net Profit Breakdown — stacked list */}
+        <div className="order-2">
+          <NetProfitBreakdown
+            revenue={revenuePeriod}
+            refunded={refundedPeriod}
+            expenseBreakdown={expenseBreakdown}
+            netProfit={kpis.netProfit}
+            periodLabel={period.label}
+          />
+        </div>
+
+        {/* 3. Financial Alerts — unified (operational + margin) */}
+        <div className="order-3 lg:order-5">
           <FinancialAlerts
             unpaidAmount={alerts.unpaidAmount}
             unpaidCount={alerts.unpaidCount}
@@ -94,17 +122,19 @@ export function FinanceCenterView({
             depositsToReturnCount={alerts.depositsToReturnCount}
             refundsPending={alerts.refundsPending}
             refundsPendingCount={alerts.refundsPendingCount}
+            hasDeficit={alerts.hasDeficit}
+            netMarginPercent={alerts.netMarginPercent}
+            losingVehicles={alerts.losingVehicles}
           />
         </div>
 
-        {/* 3. Performance — chart + vehicle revenue */}
-        <div className="order-3 lg:order-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <RevenueChart />
-          <VehicleRevenueList items={vehicleRevenue} />
+        {/* 4. Vehicle profitability */}
+        <div className="order-4 lg:order-2">
+          <VehicleProfitabilityList items={vehicleProfitability} />
         </div>
 
-        {/* 4. Cost Structure + Key Metrics */}
-        <div className="order-4 lg:order-3 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* 5. Cost Structure + Key Metrics */}
+        <div className="order-5 lg:order-3 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <CostStructureCard
             fixedAmount={costStructure.fixedAmount}
             variableAmount={costStructure.variableAmount}

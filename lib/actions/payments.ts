@@ -7,6 +7,16 @@ import { prisma } from "@/lib/prisma";
 import type { PaymentType } from "@prisma/client";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
 
+function mapDepositRecordStatusToBookingStatus(
+  status: "HELD" | "RETURNED" | "PARTIAL_RETURNED" | "FORFEITED"
+): "RECEIVED" | "RETURNED" {
+  if (status === "HELD") {
+    return "RECEIVED";
+  }
+
+  return "RETURNED";
+}
+
 /**
  * Record payment received for a booking from the dashboard "Encaisser" action.
  * Finds a PENDING payment for the booking and marks it PAID (with the given amount), or creates one if none.
@@ -178,13 +188,22 @@ export async function updateDepositStatus(
       return { error: "Caution non trouvée" };
     }
 
-    await prisma.deposit.update({
-      where: { id: depositId },
-      data: {
-        status,
-        returnedAt: new Date(),
-        notes: notes || null,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.deposit.update({
+        where: { id: depositId },
+        data: {
+          status,
+          returnedAt: new Date(),
+          notes: notes || null,
+        },
+      });
+
+      await tx.booking.update({
+        where: { id: deposit.bookingId },
+        data: {
+          depositStatus: mapDepositRecordStatusToBookingStatus(status),
+        },
+      });
     });
 
     revalidatePath("/payments");

@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { type ManagedUser } from "@/components/users/users-page";
+import { type ManagedUser } from "@/components/users/types";
 
 type UpdateRoleDialogProps = {
   open: boolean;

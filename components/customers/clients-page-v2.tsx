@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import type { UserRole } from "@prisma/client";
 import {
   Calendar,
   FileText,
@@ -40,7 +39,8 @@ export interface ClientListItem {
 
 interface ClientsPageV2Props {
   customers: ClientListItem[];
-  currentUserRole: UserRole;
+  canManageCustomers: boolean;
+  canDeleteCustomers: boolean;
   stats: {
     totalClients: number;
     clientsWithReservations: number;
@@ -69,7 +69,13 @@ const DEFAULT_FILTERS: ToolbarFilters = {
   createdTo: "",
 };
 
-export function ClientsPageV2({ customers, currentUserRole, stats, pagination }: ClientsPageV2Props) {
+export function ClientsPageV2({
+  customers,
+  canManageCustomers,
+  canDeleteCustomers,
+  stats,
+  pagination,
+}: ClientsPageV2Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showDeleted, setShowDeleted] = useState(false);
   const [searchInput, setSearchInput] = useState("");
@@ -315,6 +321,7 @@ export function ClientsPageV2({ customers, currentUserRole, stats, pagination }:
       <div className="space-y-6 bg-slate-50/70 p-1">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <PageHeader
+            canManageCustomers={canManageCustomers}
             onExport={exportCustomersToCsv}
             canExport={filteredCustomers.length > 0}
           />
@@ -336,19 +343,21 @@ export function ClientsPageV2({ customers, currentUserRole, stats, pagination }:
             canExport={filteredCustomers.length > 0}
           />
           {filteredCustomers.length === 0 ? (
-            <EmptyClientsState />
+            <EmptyClientsState canManageCustomers={canManageCustomers} />
           ) : (
             <>
               <div className="md:hidden">
                 <ClientCardList
                   clients={filteredCustomers}
-                  currentUserRole={currentUserRole}
+                  canDeleteCustomers={canDeleteCustomers}
+                  canManageCustomers={canManageCustomers}
                 />
               </div>
               <div className="hidden md:block">
                 <ClientsTable
                   rows={filteredCustomers}
-                  currentUserRole={currentUserRole}
+                  canDeleteCustomers={canDeleteCustomers}
+                  canManageCustomers={canManageCustomers}
                   selectedId={selectedId}
                   onSelect={setSelectedId}
                 />
@@ -362,27 +371,31 @@ export function ClientsPageV2({ customers, currentUserRole, stats, pagination }:
   );
 }
 
-function EmptyClientsState() {
+function EmptyClientsState({ canManageCustomers }: { canManageCustomers: boolean }) {
   return (
     <div className="rounded-xl border border-dashed border-slate-300 px-6 py-14 text-center">
       <h3 className="text-base font-semibold text-slate-900">Aucun client ne correspond</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         Ajustez vos filtres ou ajoutez un nouveau client.
       </p>
-      <Button asChild className="mt-4">
-        <Link href="/customers/add">
-          <UserPlus className="h-4 w-4" />
-          Ajouter un client
-        </Link>
-      </Button>
+      {canManageCustomers ? (
+        <Button asChild className="mt-4">
+          <Link href="/customers/add">
+            <UserPlus className="h-4 w-4" />
+            Ajouter un client
+          </Link>
+        </Button>
+      ) : null}
     </div>
   );
 }
 
 function PageHeader({
+  canManageCustomers,
   onExport,
   canExport,
 }: {
+  canManageCustomers: boolean;
   onExport: () => void;
   canExport: boolean;
 }) {
@@ -404,12 +417,14 @@ function PageHeader({
         >
           Exporter
         </Button>
-        <Button asChild className="h-10" aria-label="Ajouter un client">
-          <Link href="/customers/add">
-            <UserPlus className="h-4 w-4" />
-            Ajouter un client
-          </Link>
-        </Button>
+        {canManageCustomers ? (
+          <Button asChild className="h-10" aria-label="Ajouter un client">
+            <Link href="/customers/add">
+              <UserPlus className="h-4 w-4" />
+              Ajouter un client
+            </Link>
+          </Button>
+        ) : null}
       </div>
     </div>
   );

@@ -14,12 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { type ManagedUser } from "@/components/users/users-page";
+import { type ManagedUser } from "@/components/users/types";
 
 type ResetPasswordDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user: ManagedUser | null;
+  onSuccess?: () => void;
 };
 
 type ResetPasswordResponse = { success: true } | { error: string };
@@ -28,6 +29,7 @@ export function ResetPasswordDialog({
   open,
   onOpenChange,
   user,
+  onSuccess,
 }: ResetPasswordDialogProps) {
   const [tempPassword, setTempPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -74,6 +76,7 @@ export function ResetPasswordDialog({
       }
 
       toast.success("Mot de passe réinitialisé");
+      onSuccess?.();
       onOpenChange(false);
     } catch (error) {
       console.error(error);

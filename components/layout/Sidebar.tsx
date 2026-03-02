@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { UserRole } from "@prisma/client";
 import { PanelLeftClose, PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { EffectivePermissions } from "@/lib/permissions";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarSection } from "./SidebarSection";
 import { SidebarItem } from "./SidebarItem";
@@ -16,9 +17,10 @@ const COLLAPSED_WIDTH = 64;
 export interface SidebarProps {
   agencyName: string;
   role: UserRole;
+  permissions: EffectivePermissions;
 }
 
-export function Sidebar({ agencyName, role }: SidebarProps) {
+export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -50,6 +52,15 @@ export function Sidebar({ agencyName, role }: SidebarProps) {
 
   const isCollapsed = mounted ? collapsed : false;
   const width = isCollapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH;
+  const showOperations =
+    permissions["bookings.view"] ||
+    permissions["calendar.view"] ||
+    permissions["customers.view"] ||
+    permissions["vehicles.view"] ||
+    permissions["catalogue.view"];
+  const showFinance = permissions["caisse.view"] || permissions["finance.view"];
+  const showControl = permissions["inspections.view"] || permissions["infractions.view"];
+  const showSystem = permissions["notifications.view"] || role === "OWNER";
 
   return (
     <aside
@@ -122,33 +133,61 @@ export function Sidebar({ agencyName, role }: SidebarProps) {
           </SidebarSection>
 
           {/* OPÉRATIONS */}
-          <SidebarSection label="Opérations" collapsed={isCollapsed}>
-            <SidebarItem href="/bookings" iconName="Calendar" label="Réservations" collapsed={isCollapsed} />
-            <SidebarItem href="/calendrier" iconName="CalendarRange" label="Calendrier" collapsed={isCollapsed} />
-            <SidebarItem href="/customers" iconName="Users" label="Clients" collapsed={isCollapsed} />
-            <SidebarItem href="/vehicles" iconName="Car" label="Véhicules" collapsed={isCollapsed} />
-            <SidebarItem href="/catalogue" iconName="BookOpen" label="Catalogue" collapsed={isCollapsed} />
-          </SidebarSection>
+          {showOperations ? (
+            <SidebarSection label="Opérations" collapsed={isCollapsed}>
+              {permissions["bookings.view"] ? (
+                <SidebarItem href="/bookings" iconName="Calendar" label="Réservations" collapsed={isCollapsed} />
+              ) : null}
+              {permissions["calendar.view"] ? (
+                <SidebarItem href="/calendrier" iconName="CalendarRange" label="Calendrier" collapsed={isCollapsed} />
+              ) : null}
+              {permissions["customers.view"] ? (
+                <SidebarItem href="/customers" iconName="Users" label="Clients" collapsed={isCollapsed} />
+              ) : null}
+              {permissions["vehicles.view"] ? (
+                <SidebarItem href="/vehicles" iconName="Car" label="Véhicules" collapsed={isCollapsed} />
+              ) : null}
+              {permissions["catalogue.view"] ? (
+                <SidebarItem href="/catalogue" iconName="BookOpen" label="Catalogue" collapsed={isCollapsed} />
+              ) : null}
+            </SidebarSection>
+          ) : null}
 
           {/* FINANCE */}
-          <SidebarSection label="Finance" collapsed={isCollapsed}>
-            <SidebarItem href="/caisse" iconName="Wallet" label="Caisse" collapsed={isCollapsed} />
-            <SidebarItem href="/finance" iconName="CreditCard" label="Finance" collapsed={isCollapsed} />
-          </SidebarSection>
+          {showFinance ? (
+            <SidebarSection label="Finance" collapsed={isCollapsed}>
+              {permissions["caisse.view"] ? (
+                <SidebarItem href="/caisse" iconName="Wallet" label="Caisse" collapsed={isCollapsed} />
+              ) : null}
+              {permissions["finance.view"] ? (
+                <SidebarItem href="/finance" iconName="CreditCard" label="Finance" collapsed={isCollapsed} />
+              ) : null}
+            </SidebarSection>
+          ) : null}
 
           {/* CONTRÔLE */}
-          <SidebarSection label="Contrôle" collapsed={isCollapsed}>
-            <SidebarItem href="/damage-reports" iconName="ClipboardCheck" label="Inspections" collapsed={isCollapsed} />
-            <SidebarItem href="/infractions" iconName="ShieldAlert" label="Infractions" collapsed={isCollapsed} />
-          </SidebarSection>
+          {showControl ? (
+            <SidebarSection label="Contrôle" collapsed={isCollapsed}>
+              {permissions["inspections.view"] ? (
+                <SidebarItem href="/damage-reports" iconName="ClipboardCheck" label="Inspections" collapsed={isCollapsed} />
+              ) : null}
+              {permissions["infractions.view"] ? (
+                <SidebarItem href="/infractions" iconName="ShieldAlert" label="Infractions" collapsed={isCollapsed} />
+              ) : null}
+            </SidebarSection>
+          ) : null}
 
           {/* SYSTÈME */}
-          <SidebarSection label="Système" collapsed={isCollapsed}>
-            <SidebarItem href="/notifications" iconName="Bell" label="Notifications" collapsed={isCollapsed} />
-            {role === "OWNER" && (
-              <SidebarItem href="/users" iconName="Users" label="Utilisateurs" collapsed={isCollapsed} />
-            )}
-          </SidebarSection>
+          {showSystem ? (
+            <SidebarSection label="Système" collapsed={isCollapsed}>
+              {permissions["notifications.view"] ? (
+                <SidebarItem href="/notifications" iconName="Bell" label="Notifications" collapsed={isCollapsed} />
+              ) : null}
+              {role === "OWNER" && (
+                <SidebarItem href="/users" iconName="Users" label="Utilisateurs" collapsed={isCollapsed} />
+              )}
+            </SidebarSection>
+          ) : null}
         </nav>
       </TooltipProvider>
 

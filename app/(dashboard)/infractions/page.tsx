@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth-cache";
+import { getEffectivePermissions } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 import { getInfractions, getInfractionCounts } from "@/lib/actions/infractions";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -30,6 +32,18 @@ export default async function InfractionsPage({
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+  const permissions = getEffectivePermissions(
+    session.user.role,
+    currentUser?.permissionOverrides ?? null,
+  );
+
+  if (!permissions["infractions.view"]) {
+    redirect("/dashboard");
+  }
 
   const params = await searchParams;
   const page = parseInt(params.page || "1", 10);

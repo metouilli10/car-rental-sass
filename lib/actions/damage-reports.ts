@@ -6,6 +6,16 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { InspectionFormData } from "@/lib/validations/damage-report";
 
+function mapDepositRecordStatusToBookingStatus(
+  status: "HELD" | "RETURNED" | "PARTIAL_RETURNED" | "FORFEITED"
+): "RECEIVED" | "RETURNED" {
+  if (status === "HELD") {
+    return "RECEIVED";
+  }
+
+  return "RETURNED";
+}
+
 export async function createInspection(data: InspectionFormData) {
   const session = await getServerSession(authOptions);
 
@@ -90,6 +100,12 @@ export async function createInspection(data: InspectionFormData) {
             returnedAt: new Date(),
           },
         });
+        await tx.booking.update({
+          where: { id: booking.id },
+          data: {
+            depositStatus: mapDepositRecordStatusToBookingStatus(depositStatus),
+          },
+        });
       } else if (data.depositAction === "RELEASE" && booking.deposit) {
         await tx.deposit.update({
           where: { id: booking.deposit.id },
@@ -99,12 +115,24 @@ export async function createInspection(data: InspectionFormData) {
             notes: "Caution libérée après inspection",
           },
         });
+        await tx.booking.update({
+          where: { id: booking.id },
+          data: {
+            depositStatus: "RETURNED",
+          },
+        });
       } else if (data.depositAction === "HOLD" && booking.deposit) {
         await tx.deposit.update({
           where: { id: booking.deposit.id },
           data: {
             status: "HELD",
             notes: "Caution retenue après inspection",
+          },
+        });
+        await tx.booking.update({
+          where: { id: booking.id },
+          data: {
+            depositStatus: "RECEIVED",
           },
         });
       }

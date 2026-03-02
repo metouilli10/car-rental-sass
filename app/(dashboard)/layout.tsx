@@ -7,6 +7,7 @@ import { MobileFAB } from "@/components/shared/mobile-fab";
 import { Toaster } from "sonner";
 import { getNotificationsSummary } from "@/lib/notifications/queries";
 import { prisma } from "@/lib/prisma";
+import { getEffectivePermissions } from "@/lib/permissions";
 
 export const runtime = "nodejs";
 export const preferredRegion = ["fra1"];
@@ -45,10 +46,26 @@ export default async function DashboardLayout({
     displayAgencyName = agency.name;
   }
 
+  const currentUser = agencyId
+    ? await prisma.user.findFirst({
+        where: {
+          id: session.user.id,
+          agencyId,
+        },
+        select: {
+          permissionOverrides: true,
+        },
+      })
+    : null;
+  const permissions = getEffectivePermissions(
+    session.user.role,
+    currentUser?.permissionOverrides ?? null,
+  );
+
   return (
     <div className="flex min-h-screen bg-background" suppressHydrationWarning>
       {/* Collapsible Sidebar */}
-      <Sidebar agencyName={displayAgencyName} role={session.user.role} />
+      <Sidebar agencyName={displayAgencyName} role={session.user.role} permissions={permissions} />
 
       <Toaster richColors position="top-right" />
 
@@ -74,7 +91,7 @@ export default async function DashboardLayout({
       </div>
 
       {/* Mobile bottom navigation */}
-      <MobileBottomNav role={session.user.role} />
+      <MobileBottomNav role={session.user.role} permissions={permissions} />
 
       {/* Mobile FAB — speed-dial for quick actions */}
       <MobileFAB />

@@ -16,6 +16,7 @@ import {
 interface VehicleActionsMenuProps {
   vehicleId: string;
   vehicleStatus: string;
+  canManageVehicles?: boolean;
   onEdit: (vehicleId: string) => void;
   onToggleActive?: (vehicleId: string) => void;
   onSetMaintenance?: (vehicleId: string) => void;
@@ -24,6 +25,7 @@ interface VehicleActionsMenuProps {
 export function VehicleActionsMenu({
   vehicleId,
   vehicleStatus,
+  canManageVehicles = true,
   onEdit,
   onToggleActive,
   onSetMaintenance,
@@ -75,6 +77,10 @@ export function VehicleActionsMenu({
   const isActive = vehicleStatus === "AVAILABLE";
   const isInMaintenance = vehicleStatus === "MAINTENANCE";
   const isBusy = isToggling || isSettingMaintenance;
+
+  if (!canManageVehicles) {
+    return null;
+  }
 
   return (
     <div onClick={(event) => event.stopPropagation()}>

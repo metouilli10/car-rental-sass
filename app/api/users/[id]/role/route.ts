@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logSecurityAudit } from "@/lib/security/audit-log";
+import { toManagedUser } from "@/lib/users/serializers";
 import {
   AuthzError,
   canManageUsers,
@@ -12,28 +13,6 @@ import {
 type UpdateRolePayload = {
   role?: UserRole;
 };
-
-function toUserResponse(user: {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  isActive: boolean;
-  invitedAt: Date | null;
-  lastLoginAt: Date | null;
-  createdAt: Date;
-}) {
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    isActive: user.isActive,
-    invitedAt: user.invitedAt?.toISOString() ?? null,
-    lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
-    createdAt: user.createdAt.toISOString(),
-  };
-}
 
 export async function PATCH(
   request: NextRequest,
@@ -100,6 +79,7 @@ export async function PATCH(
         invitedAt: true,
         lastLoginAt: true,
         createdAt: true,
+        permissionOverrides: true,
       },
     });
 
@@ -128,7 +108,7 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ user: toUserResponse(updatedUser) });
+    return NextResponse.json({ user: toManagedUser(updatedUser) });
   } catch (error) {
     if (error instanceof AuthzError) {
       return NextResponse.json({ error: error.message }, { status: error.status });

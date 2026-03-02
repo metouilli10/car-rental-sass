@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, UserPlus } from "lucide-react";
-import type { UserRole } from "@prisma/client";
 import type { ClientListItem } from "@/components/customers/clients-page-v2";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,19 +11,20 @@ import { CustomerRowActions } from "@/components/customers/customer-row-actions"
 
 interface ClientsTableProps {
   rows: ClientListItem[];
-  currentUserRole: UserRole;
+  canManageCustomers: boolean;
+  canDeleteCustomers: boolean;
   selectedId: string | null;
   onSelect: (id: string) => void;
 }
 
 export function ClientsTable({
   rows,
-  currentUserRole,
+  canManageCustomers,
+  canDeleteCustomers,
   selectedId,
   onSelect,
 }: ClientsTableProps) {
   const router = useRouter();
-  const canDelete = currentUserRole === "OWNER" || currentUserRole === "MANAGER";
 
   if (rows.length === 0) {
     return (
@@ -33,12 +33,14 @@ export function ClientsTable({
         <p className="mt-1 text-sm text-muted-foreground">
           Ajustez vos filtres ou ajoutez un nouveau client.
         </p>
-        <Button asChild className="mt-4">
-          <Link href="/customers/add">
-            <UserPlus className="h-4 w-4" />
-            Ajouter un client
-          </Link>
-        </Button>
+        {canManageCustomers ? (
+          <Button asChild className="mt-4">
+            <Link href="/customers/add">
+              <UserPlus className="h-4 w-4" />
+              Ajouter un client
+            </Link>
+          </Button>
+        ) : null}
       </div>
     );
   }
@@ -151,7 +153,8 @@ export function ClientsTable({
                   <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                     <CustomerRowActions
                       customerId={customer.id}
-                      canDelete={canDelete}
+                      canDelete={canDeleteCustomers}
+                      canManage={canManageCustomers}
                       compact
                     />
                   </td>

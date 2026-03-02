@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import type { UserRole } from "@prisma/client";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { logSecurityAudit } from "@/lib/security/audit-log";
 import {
   AuthzError,
   canManageUsers,
   getCurrentUserOrThrow,
   requireRole,
 } from "@/lib/authz";
+import { toManagedUser } from "@/lib/users/serializers";
 
 type CreateUserPayload = {
   name?: string;
@@ -15,28 +17,6 @@ type CreateUserPayload = {
   role?: UserRole;
   tempPassword?: string;
 };
-
-function toUserResponse(user: {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  isActive: boolean;
-  invitedAt: Date | null;
-  lastLoginAt: Date | null;
-  createdAt: Date;
-}) {
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    isActive: user.isActive,
-    invitedAt: user.invitedAt?.toISOString() ?? null,
-    lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
-    createdAt: user.createdAt.toISOString(),
-  };
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -99,10 +79,35 @@ export async function POST(request: NextRequest) {
         invitedAt: true,
         lastLoginAt: true,
         createdAt: true,
+        permissionOverrides: true,
       },
     });
 
-    return NextResponse.json({ user: toUserResponse(createdUser) }, { status: 201 });
+    await logSecurityAudit({
+      actor: {
+        userId: currentUser.id,
+        role: currentUser.role,
+        email: currentUser.email,
+      },
+      context: {
+        agencyId: currentUser.agencyId,
+        requestId: request.headers.get("x-request-id"),
+        ip: request.headers.get("x-forwarded-for"),
+        userAgent: request.headers.get("user-agent"),
+      },
+      event: {
+        action: "USER_CREATED",
+        entityType: "USER",
+        entityId: createdUser.id,
+        outcome: "SUCCESS",
+        details: {
+          email: createdUser.email,
+          role: createdUser.role,
+        },
+      },
+    });
+
+    return NextResponse.json({ user: toManagedUser(createdUser) }, { status: 201 });
   } catch (error) {
     if (error instanceof AuthzError) {
       return NextResponse.json({ error: error.message }, { status: error.status });

@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Pagination } from "@/components/shared/pagination";
 import { Button } from "@/components/ui/button";
 import { BookingsControlCenter, type BookingListItem } from "@/components/bookings/bookings-control-center";
+import { buildBookingRiskSummary, summarizeCustomerRiskHistory } from "@/lib/bookings/risk";
 import type { Prisma } from "@prisma/client";
 import Link from "next/link";
 
@@ -40,6 +41,7 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
     const selectedClientId = params.clientId || params.customerId;
     const filter = params.filter;
     const now = new Date();
+    const today = new Date();
 
     const where: Prisma.BookingWhereInput = {
       agencyId,
@@ -63,13 +65,17 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
       where,
       select: {
         id: true,
+        vehicleId: true,
+        customerId: true,
         paymentStatus: true,
         paidNow: true,
         remainingAmount: true,
         startDate: true,
         endDate: true,
+        actualReturnDate: true,
         totalPrice: true,
         depositAmount: true,
+        depositStatus: true,
         status: true,
         customer: { select: { id: true, name: true, phone: true } },
         vehicle: { select: { id: true, make: true, model: true, plate: true } },
@@ -89,11 +95,122 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
   ]);
 
     const totalPages = Math.ceil(total / PAGE_SIZE);
+    const bookingIds = bookings.map((booking) => booking.id);
+    const vehicleIds = Array.from(new Set(bookings.map((booking) => booking.vehicleId)));
+    const customerIds = Array.from(new Set(bookings.map((booking) => booking.customerId)));
+
+    const minStartDate =
+      bookings.length > 0
+        ? bookings.reduce(
+            (minDate, booking) =>
+              booking.startDate < minDate ? booking.startDate : minDate,
+            bookings[0].startDate
+          )
+        : null;
+    const maxEndDate =
+      bookings.length > 0
+        ? bookings.reduce(
+            (maxDate, booking) => (booking.endDate > maxDate ? booking.endDate : maxDate),
+            bookings[0].endDate
+          )
+        : null;
+
+    const [overlapCandidates, customerHistoryRows] = await Promise.all([
+      vehicleIds.length > 0 && minStartDate && maxEndDate
+        ? prisma.booking.findMany({
+            where: {
+              agencyId,
+              vehicleId: { in: vehicleIds },
+              status: { notIn: ["CANCELED", "COMPLETED"] },
+              startDate: { lte: maxEndDate },
+              endDate: { gte: minStartDate },
+            },
+            select: {
+              id: true,
+              vehicleId: true,
+              startDate: true,
+              endDate: true,
+              status: true,
+            },
+          })
+        : Promise.resolve([]),
+      customerIds.length > 0
+        ? prisma.booking.findMany({
+            where: {
+              agencyId,
+              customerId: { in: customerIds },
+              ...(bookingIds.length > 0 ? { id: { notIn: bookingIds } } : {}),
+            },
+            select: {
+              id: true,
+              customerId: true,
+              endDate: true,
+              actualReturnDate: true,
+              status: true,
+              _count: {
+                select: {
+                  infractions: true,
+                },
+              },
+              damageReports: {
+                where: {
+                  inspectionType: "RETOUR",
+                },
+                orderBy: {
+                  reportedAt: "desc",
+                },
+                take: 1,
+                select: {
+                  depositAction: true,
+                },
+              },
+            },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const historyByCustomerId = new Map<string, (typeof customerHistoryRows)[number][]>();
+
+    for (const historyRow of customerHistoryRows) {
+      const current = historyByCustomerId.get(historyRow.customerId);
+      if (current) {
+        current.push(historyRow);
+      } else {
+        historyByCustomerId.set(historyRow.customerId, [historyRow]);
+      }
+    }
+
     // Serialize to plain JSON-safe shape so client never gets non-serializable values
     const bookingsData: BookingListItem[] = bookings.map((b) => ({
       ...b,
       startDate: b.startDate instanceof Date ? b.startDate.toISOString() : b.startDate,
       endDate: b.endDate instanceof Date ? b.endDate.toISOString() : b.endDate,
+      actualReturnDate:
+        b.actualReturnDate instanceof Date
+          ? b.actualReturnDate.toISOString()
+          : b.actualReturnDate,
+      risk: buildBookingRiskSummary({
+        booking: {
+          id: b.id,
+          customerId: b.customerId,
+          vehicleId: b.vehicleId,
+          startDate: b.startDate,
+          endDate: b.endDate,
+          status: b.status,
+          depositStatus: b.depositStatus,
+          depositRecordStatus: b.deposit?.status ?? null,
+        },
+        overlapCandidates,
+        customerHistory: summarizeCustomerRiskHistory({
+          bookings: (historyByCustomerId.get(b.customerId) ?? []).map((historyRow) => ({
+            status: historyRow.status,
+            infractionCount: historyRow._count.infractions,
+            returnDepositAction: historyRow.damageReports[0]?.depositAction ?? null,
+            hasReturnInspection: historyRow.damageReports.length > 0,
+          })),
+        }),
+        today,
+      }),
     }));
 
     return (

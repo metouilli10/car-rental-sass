@@ -26,10 +26,16 @@ import {
 interface CustomerRowActionsProps {
   customerId: string;
   canDelete: boolean;
+  canManage?: boolean;
   compact?: boolean;
 }
 
-export function CustomerRowActions({ customerId, canDelete, compact }: CustomerRowActionsProps) {
+export function CustomerRowActions({
+  customerId,
+  canDelete,
+  canManage = true,
+  compact,
+}: CustomerRowActionsProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,12 +86,14 @@ export function CustomerRowActions({ customerId, canDelete, compact }: CustomerR
                     Voir détails
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/customers/${customerId}/edit`}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Modifier
-                  </Link>
-                </DropdownMenuItem>
+                {canManage ? (
+                  <DropdownMenuItem asChild>
+                    <Link href={`/customers/${customerId}/edit`}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Modifier
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem asChild>
                   <Link href={`/bookings/create?customerId=${customerId}`}>
                     <CalendarPlus className="mr-2 h-4 w-4" />
@@ -119,12 +127,14 @@ export function CustomerRowActions({ customerId, canDelete, compact }: CustomerR
           </>
         ) : (
           <>
-            <Button asChild size="sm" variant="ghost" aria-label="Modifier le client">
-              <Link href={`/customers/${customerId}/edit`}>
-                <Pencil className="h-4 w-4" />
-                Modifier
-              </Link>
-            </Button>
+            {canManage ? (
+              <Button asChild size="sm" variant="ghost" aria-label="Modifier le client">
+                <Link href={`/customers/${customerId}/edit`}>
+                  <Pencil className="h-4 w-4" />
+                  Modifier
+                </Link>
+              </Button>
+            ) : null}
 
             <DropdownMenu>
           <DropdownMenuTrigger asChild>

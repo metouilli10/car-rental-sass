@@ -26,9 +26,10 @@ const statusLabels: Record<string, string> = {
 interface VehiclesListProps {
   vehicles: VehicleListItem[];
   isRentedView: boolean;
+  canManageVehicles: boolean;
 }
 
-export function VehiclesList({ vehicles, isRentedView }: VehiclesListProps) {
+export function VehiclesList({ vehicles, isRentedView, canManageVehicles }: VehiclesListProps) {
   const router = useRouter();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
 
@@ -164,6 +165,7 @@ export function VehiclesList({ vehicles, isRentedView }: VehiclesListProps) {
                       <VehicleActionsMenu
                         vehicleId={vehicle.id}
                         vehicleStatus={vehicle.status}
+                        canManageVehicles={canManageVehicles}
                         onEdit={handleEdit}
                         onToggleActive={(id) => {
                           if (selectedVehicleId === id) closeDrawer();
@@ -225,10 +227,11 @@ export function VehiclesList({ vehicles, isRentedView }: VehiclesListProps) {
                 </div>
 
                 <div onClick={(event) => event.stopPropagation()}>
-                  <VehicleActionsMenu
-                    vehicleId={vehicle.id}
-                    vehicleStatus={vehicle.status}
-                    onEdit={handleEdit}
+                    <VehicleActionsMenu
+                      vehicleId={vehicle.id}
+                      vehicleStatus={vehicle.status}
+                      canManageVehicles={canManageVehicles}
+                      onEdit={handleEdit}
                     onToggleActive={(id) => {
                       if (selectedVehicleId === id) closeDrawer();
                     }}

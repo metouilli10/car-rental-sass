@@ -204,6 +204,7 @@ model User {
   invitedAt DateTime?
   invitedById String?
   lastLoginAt DateTime?
+  permissionOverrides Json?
   agencyId String
 
   createdAt DateTime @default(now())

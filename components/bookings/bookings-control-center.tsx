@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BookingPaymentStatus, BookingStatus, UserRole } from "@prisma/client";
+import { BookingDepositStatus, BookingPaymentStatus, BookingStatus, UserRole } from "@prisma/client";
 import { Search, X } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,9 +19,9 @@ import {
   startOfDay,
   endOfDay,
   isSameDay,
-  isInRangeInclusive,
   intersectsRange,
 } from "@/lib/bookings/list-utils";
+import type { BookingRiskSummary } from "@/lib/bookings/risk";
 import { ReservationCardList } from "@/components/reservations/ReservationCardList";
 import { ReservationsTable } from "@/components/reservations/ReservationsTable";
 
@@ -36,11 +37,15 @@ type QuickFilter = "none" | "active" | "startToday" | "endToday" | "overdue";
 
 export interface BookingListItem {
   id: string;
+  vehicleId: string;
+  customerId: string;
   startDate: DateLike;
   endDate: DateLike;
+  actualReturnDate?: DateLike | null;
   totalPrice: number;
   depositAmount: number;
   status: BookingStatus;
+  depositStatus: BookingDepositStatus;
   paymentStatus?: BookingPaymentStatus;
   paidNow?: number | null;
   remainingAmount?: number | null;
@@ -58,6 +63,7 @@ export interface BookingListItem {
   deposit: {
     status: "HELD" | "PARTIAL_RETURNED" | "RETURNED" | "FORFEITED";
   } | null;
+  risk: BookingRiskSummary;
 }
 
 interface BookingsControlCenterProps {
@@ -230,6 +236,10 @@ export function BookingsControlCenter({ bookings, role }: BookingsControlCenterP
     customStartDate.length > 0 ||
     customEndDate.length > 0;
 
+  const overlapConflictCount = filteredBookings.filter(
+    (booking) => booking.risk.hasOverlapConflict
+  ).length;
+
   const resetFilters = () => {
     setSearchInput("");
     setSearchQuery("");
@@ -400,6 +410,19 @@ export function BookingsControlCenter({ bookings, role }: BookingsControlCenterP
           ) : null}
         </div>
       </div>
+
+      {overlapConflictCount > 0 ? (
+        <Alert
+          variant="destructive"
+          className="border-destructive/40 bg-red-50 text-red-700 [&>svg]:text-red-600"
+        >
+          <AlertTitle>Conflits de reservation detectes</AlertTitle>
+          <AlertDescription>
+            {overlapConflictCount} reservation(s) affichee(s) ont un chevauchement sur le
+            meme vehicule.
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       {filteredBookings.length === 0 ? (
         <div className="rounded-2xl border bg-white px-6 py-14 text-center shadow-card">

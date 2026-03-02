@@ -2,17 +2,21 @@
 
 import Link from "next/link";
 import { UserPlus } from "lucide-react";
-import type { UserRole } from "@prisma/client";
 import type { ClientListItem } from "@/components/customers/clients-page-v2";
 import { Button } from "@/components/ui/button";
 import { ClientCard } from "./ClientCard";
 
 interface ClientCardListProps {
   clients: ClientListItem[];
-  currentUserRole: UserRole;
+  canManageCustomers: boolean;
+  canDeleteCustomers: boolean;
 }
 
-export function ClientCardList({ clients, currentUserRole }: ClientCardListProps) {
+export function ClientCardList({
+  clients,
+  canManageCustomers,
+  canDeleteCustomers,
+}: ClientCardListProps) {
   if (clients.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 px-6 py-14 text-center">
@@ -20,12 +24,14 @@ export function ClientCardList({ clients, currentUserRole }: ClientCardListProps
         <p className="mt-1 text-sm text-muted-foreground">
           Ajustez vos filtres ou ajoutez un nouveau client.
         </p>
-        <Button asChild className="mt-4">
-          <Link href="/customers/add">
-            <UserPlus className="h-4 w-4" />
-            Ajouter un client
-          </Link>
-        </Button>
+        {canManageCustomers ? (
+          <Button asChild className="mt-4">
+            <Link href="/customers/add">
+              <UserPlus className="h-4 w-4" />
+              Ajouter un client
+            </Link>
+          </Button>
+        ) : null}
       </div>
     );
   }
@@ -33,7 +39,12 @@ export function ClientCardList({ clients, currentUserRole }: ClientCardListProps
   return (
     <div className="space-y-3">
       {clients.map((client) => (
-        <ClientCard key={client.id} client={client} currentUserRole={currentUserRole} />
+        <ClientCard
+          key={client.id}
+          client={client}
+          canDeleteCustomers={canDeleteCustomers}
+          canManageCustomers={canManageCustomers}
+        />
       ))}
     </div>
   );

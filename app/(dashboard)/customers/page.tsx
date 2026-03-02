@@ -1,5 +1,6 @@
 import { startOfMonth } from "date-fns";
 import { getSession } from "@/lib/auth-cache";
+import { canDeleteCustomer, canManageCustomers } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { ClientsPageV2 } from "@/components/customers/clients-page-v2";
 
@@ -20,6 +21,18 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   const page = Math.max(1, Number(params.page) || 1);
   const where = { agencyId: session.user.agencyId };
   const monthStart = startOfMonth(new Date());
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+  const canManage = canManageCustomers(
+    session.user.role,
+    currentUser?.permissionOverrides ?? null,
+  );
+  const canDelete = canDeleteCustomer(
+    session.user.role,
+    currentUser?.permissionOverrides ?? null,
+  );
 
   const [customers, total, withReservations, withoutDocuments, createdThisMonth, financialByCustomer] =
     await Promise.all([
@@ -106,7 +119,8 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         totalSpent: financialMap.get(customer.id)?.totalSpent ?? 0,
         balance: financialMap.get(customer.id)?.balance ?? 0,
       }))}
-      currentUserRole={session.user.role}
+      canManageCustomers={canManage}
+      canDeleteCustomers={canDelete}
       stats={{
         totalClients: total,
         clientsWithReservations: withReservations,

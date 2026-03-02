@@ -21,8 +21,8 @@ type AuditEvent = {
   details?: Record<string, unknown>;
 };
 
-function envFlag(name: string): boolean {
-  return process.env[name] === "true";
+function envFlagDefaultTrue(name: string): boolean {
+  return process.env[name] !== "false";
 }
 
 function normalizeJson(value: unknown): string {
@@ -70,7 +70,7 @@ export async function logSecurityAudit(params: {
   console.info("[security_audit]", normalizeJson(payload));
 
   // Optional DB sink (feature-flagged). Safe no-op if table is absent.
-  if (!envFlag("FEATURE_AUDIT_DB_LOG")) {
+  if (!envFlagDefaultTrue("FEATURE_AUDIT_DB_LOG")) {
     return;
   }
 

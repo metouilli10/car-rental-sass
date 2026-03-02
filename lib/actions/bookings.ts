@@ -135,6 +135,7 @@ export async function createBooking(data: BookingFormData) {
         flowVersion: "reservation_flow_v2",
         depositAmount: validatedData.depositAmount,
         status: validatedData.status,
+        depositStatus: "RECEIVED",
         paymentStatus,
         notes: validatedData.notes || null,
         payments: {

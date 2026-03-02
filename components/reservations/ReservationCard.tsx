@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookingActionsDropdown } from "@/components/bookings/booking-actions-dropdown";
 import type { BookingListItem } from "@/components/bookings/bookings-control-center";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { ReservationRiskBadges } from "@/components/reservations/ReservationRiskBadges";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import {
   toDate,
   getDurationDays,
@@ -35,7 +36,12 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
     typeof booking.remainingAmount === "number" ? booking.remainingAmount : null;
 
   return (
-    <Card className="overflow-hidden">
+    <Card
+      className={cn(
+        "overflow-hidden",
+        booking.risk.hasOverlapConflict && "border-red-200"
+      )}
+    >
       <CardContent className="p-4">
         <div className="flex flex-col gap-3">
           {/* Top row: client name + status pill */}
@@ -78,13 +84,25 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
             )}
           </div>
 
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-2">
+            <ReservationRiskBadges
+              signals={booking.risk.signals}
+              compact
+            />
+          </div>
+
           {/* Finance block */}
-          <div className="text-sm">
+          <div
+            className={cn(
+              "rounded-xl p-2 text-sm",
+              booking.risk.hasUnpaidDeposit && "border border-amber-200 bg-amber-50/80"
+            )}
+          >
             <span className="font-semibold text-foreground">
               {formatCurrency(booking.totalPrice)}
             </span>
             <span className="ml-1 text-muted-foreground">
-              Payé: {paidNowValue !== null ? formatCurrency(paidNowValue) : "--"} · Reste:{" "}
+              Paye: {paidNowValue !== null ? formatCurrency(paidNowValue) : "--"} · Reste:{" "}
               {remainingValue !== null ? formatCurrency(remainingValue) : "--"}
             </span>
             {booking.deposit && (
@@ -92,6 +110,11 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
                 <StatusBadge status={booking.deposit.status} />
               </span>
             )}
+            {booking.risk.hasUnpaidDeposit ? (
+              <p className="mt-1 text-xs font-medium text-amber-700">
+                Caution non encaissee
+              </p>
+            ) : null}
           </div>
 
           {/* Bottom: actions */}

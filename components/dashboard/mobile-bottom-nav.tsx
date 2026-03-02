@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import type { UserRole } from "@prisma/client";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { EffectivePermissions } from "@/lib/permissions";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { FlatIcon, type FlatIconName } from "@/components/shared/flat-icon";
 
@@ -24,40 +25,65 @@ const primaryNavItems = [
   { href: "/customers", label: "Clients", iconName: "people", exact: false },
 ] satisfies NavItem[];
 
-const allNavItems = [
-  { href: "/dashboard", label: "Tableau de bord", iconName: "dashboard", exact: true },
-  { href: "/vehicles", label: "Véhicules", iconName: "car", exact: false },
-  { href: "/catalogue", label: "Catalogue", iconName: "catalogue", exact: false },
-  { href: "/customers", label: "Clients", iconName: "people", exact: false },
-  { href: "/bookings", label: "Réservations", iconName: "booking", exact: false },
-  { href: "/calendrier", label: "Calendrier", iconName: "schedule", exact: false },
-  { href: "/finance", label: "Finance", iconName: "payment", exact: false },
-  { href: "/caisse", label: "Caisse", iconName: "wallet", exact: false },
-  { href: "/damage-reports", label: "Inspections", iconName: "car-insurance", exact: false },
-  { href: "/infractions", label: "Infractions", iconName: "late-payment", exact: false },
-] satisfies NavItem[];
-
 export interface MobileBottomNavProps {
   role: UserRole;
+  permissions: EffectivePermissions;
 }
 
-export function MobileBottomNav({ role }: MobileBottomNavProps) {
+export function MobileBottomNav({ role, permissions }: MobileBottomNavProps) {
   const pathname = usePathname();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const effectivePrimaryNavItems = [
+    permissions["dashboard.view"] ? primaryNavItems[0] : null,
+    permissions["bookings.view"] ? primaryNavItems[1] : null,
+    permissions["vehicles.view"] ? primaryNavItems[2] : null,
+    permissions["customers.view"] ? primaryNavItems[3] : null,
+  ].filter(Boolean) as NavItem[];
 
-  const effectiveAllNavItems: NavItem[] =
+  const effectiveAllNavItems: NavItem[] = [
+    permissions["dashboard.view"]
+      ? { href: "/dashboard", label: "Tableau de bord", iconName: "dashboard", exact: true }
+      : null,
+    permissions["vehicles.view"]
+      ? { href: "/vehicles", label: "Véhicules", iconName: "car", exact: false }
+      : null,
+    permissions["catalogue.view"]
+      ? { href: "/catalogue", label: "Catalogue", iconName: "catalogue", exact: false }
+      : null,
+    permissions["customers.view"]
+      ? { href: "/customers", label: "Clients", iconName: "people", exact: false }
+      : null,
+    permissions["bookings.view"]
+      ? { href: "/bookings", label: "Réservations", iconName: "booking", exact: false }
+      : null,
+    permissions["calendar.view"]
+      ? { href: "/calendrier", label: "Calendrier", iconName: "schedule", exact: false }
+      : null,
+    permissions["finance.view"]
+      ? { href: "/finance", label: "Finance", iconName: "payment", exact: false }
+      : null,
+    permissions["caisse.view"]
+      ? { href: "/caisse", label: "Caisse", iconName: "wallet", exact: false }
+      : null,
+    permissions["inspections.view"]
+      ? { href: "/damage-reports", label: "Inspections", iconName: "car-insurance", exact: false }
+      : null,
+    permissions["infractions.view"]
+      ? { href: "/infractions", label: "Infractions", iconName: "late-payment", exact: false }
+      : null,
     role === "OWNER"
-      ? [...allNavItems, { href: "/users", label: "Utilisateurs", iconName: "people", exact: false }]
-      : allNavItems;
+      ? { href: "/users", label: "Utilisateurs", iconName: "people", exact: false }
+      : null,
+  ].filter(Boolean) as NavItem[];
 
-  const isMoreActive = !primaryNavItems.some((item) =>
+  const isMoreActive = !effectivePrimaryNavItems.some((item) =>
     item.exact ? pathname === item.href : pathname.startsWith(item.href)
   );
 
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 z-50 h-16 bg-white border-t border-border/40 flex items-center justify-around px-1 md:hidden">
-        {primaryNavItems.map((item) => {
+        {effectivePrimaryNavItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
             : pathname.startsWith(item.href);

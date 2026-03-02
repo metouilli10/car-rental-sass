@@ -8,8 +8,10 @@ import {
   subDays,
 } from "date-fns";
 import { unstable_cache } from "next/cache";
+import { redirect } from "next/navigation";
 import type { ExpenseCategory } from "@prisma/client";
 import { getSession } from "@/lib/auth-cache";
+import { getEffectivePermissions } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { FinanceCenterView } from "@/components/finance/FinanceCenterView";
 
@@ -177,6 +179,7 @@ const getFinanceSnapshotCached = unstable_cache(
       prevCashRefundAgg,
       prevCashExpenseAgg,
       vehicleRevenueByBooking,
+      vehicleExpensesByVehicle,
       unpaidBookingsAgg,
       depositsHeldAgg,
       depositsHeldCount,
@@ -269,6 +272,17 @@ const getFinanceSnapshotCached = unstable_cache(
         where: rentalRevenueWhere(window),
         _sum: { amount: true },
       }),
+      expenseDelegate
+        ? expenseDelegate.groupBy({
+            by: ["vehicleId"],
+            where: {
+              agencyId,
+              vehicleId: { not: null },
+              date: { gte: window.from, lte: window.to },
+            },
+            _sum: { amount: true },
+          })
+        : Promise.resolve([]),
       prisma.booking.aggregate({
         where: {
           agencyId,
@@ -304,6 +318,7 @@ const getFinanceSnapshotCached = unstable_cache(
             },
             select: {
               id: true,
+              vehicleId: true,
               vehicle: {
                 select: { make: true, model: true },
               },
@@ -327,6 +342,7 @@ const getFinanceSnapshotCached = unstable_cache(
       prevCashExpenseAgg,
       vehicleRevenueByBooking,
       vehicleRevenueBookings,
+      vehicleExpensesByVehicle,
       unpaidBookingsAgg,
       depositsHeldAgg,
       depositsHeldCount,
@@ -353,11 +369,23 @@ const getFinanceVehiclesCached = unstable_cache(
 
 export default async function FinancePage({ searchParams }: FinancePageProps) {
   const session = await getSession();
-  if (!session) return null;
+  if (!session) redirect("/login");
 
   const params = await searchParams;
   const agencyId = session.user.agencyId;
-  if (!agencyId) return null;
+  if (!agencyId) redirect("/dashboard");
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId },
+    select: { permissionOverrides: true },
+  });
+  const permissions = getEffectivePermissions(
+    session.user.role,
+    currentUser?.permissionOverrides ?? null,
+  );
+
+  if (!permissions["finance.view"]) {
+    redirect("/dashboard");
+  }
   const window = resolveFinanceWindow(params);
   const prevWindow = computePreviousWindow(window);
   const [
@@ -377,6 +405,7 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
       prevCashExpenseAgg,
       vehicleRevenueByBooking,
       vehicleRevenueBookings,
+      vehicleExpensesByVehicle,
       unpaidBookingsAgg,
       depositsHeldAgg,
       depositsHeldCount,
@@ -421,30 +450,57 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
   const cashDelta = deltaPercent(cashInHand, prevCash);
   const netDelta = deltaPercent(netProfit, prevNet);
 
-  // Revenue per vehicle (group in JS)
-  const bookingVehicleMap = new Map(
-    vehicleRevenueBookings.map((booking) => [
-      booking.id,
-      `${booking.vehicle.make} ${booking.vehicle.model}`,
+  // Vehicle profitability: revenue and direct costs by vehicleId
+  const bookingToVehicle = new Map(
+    vehicleRevenueBookings.map((b) => [
+      b.id,
+      {
+        vehicleId: b.vehicleId,
+        label: `${b.vehicle.make} ${b.vehicle.model}`,
+      },
     ])
   );
-  const vehicleRevenueMap = new Map<string, number>();
-  for (const bookingRevenue of vehicleRevenueByBooking) {
-    const name = bookingVehicleMap.get(bookingRevenue.bookingId);
-    if (!name) continue;
-    vehicleRevenueMap.set(
-      name,
-      (vehicleRevenueMap.get(name) ?? 0) + Number(bookingRevenue._sum.amount ?? 0)
-    );
+  const vehicleRevenueById = new Map<string, { revenue: number; label: string }>();
+  for (const entry of vehicleRevenueByBooking) {
+    const info = bookingToVehicle.get(entry.bookingId);
+    if (!info) continue;
+    const current = vehicleRevenueById.get(info.vehicleId);
+    const amount = Number(entry._sum.amount ?? 0);
+    if (current) {
+      current.revenue += amount;
+    } else {
+      vehicleRevenueById.set(info.vehicleId, { revenue: amount, label: info.label });
+    }
   }
-  const vehicleRevenueTotal = Array.from(vehicleRevenueMap.values()).reduce((a, b) => a + b, 0);
-  const vehicleRevenue = Array.from(vehicleRevenueMap.entries())
-    .map(([name, amount]) => ({
-      name,
-      amount,
-      percentage: vehicleRevenueTotal > 0 ? (amount / vehicleRevenueTotal) * 100 : 0,
-    }))
-    .sort((a, b) => b.amount - a.amount);
+  const vehicleExpensesById = new Map<string, number>();
+  for (const row of vehicleExpensesByVehicle as Array<{
+    vehicleId: string | null;
+    _sum: { amount: number | null };
+  }>) {
+    if (row.vehicleId) {
+      vehicleExpensesById.set(row.vehicleId, Number(row._sum.amount ?? 0));
+    }
+  }
+  const allVehicleIds = new Set([
+    ...vehicleRevenueById.keys(),
+    ...vehicleExpensesById.keys(),
+  ]);
+  const vehicleLabelById = new Map(
+    vehicles.map((v) => [v.id, `${v.make} ${v.model}`])
+  );
+  const vehicleProfitability = Array.from(allVehicleIds)
+    .map((vehicleId) => {
+      const { revenue, label } = vehicleRevenueById.get(vehicleId) ?? {
+        revenue: 0,
+        label: vehicleLabelById.get(vehicleId) ?? "Véhicule inconnu",
+      };
+      const costs = vehicleExpensesById.get(vehicleId) ?? 0;
+      const profit = revenue - costs;
+      const marginPercent =
+        revenue > 0 ? (profit / revenue) * 100 : (costs > 0 ? -100 : 0);
+      return { vehicleId, label, revenue, costs, profit, marginPercent };
+    })
+    .sort((a, b) => b.profit - a.profit);
 
   // Unpaid bookings
   const unpaidAmount = Number(unpaidBookingsAgg._sum.remainingAmount ?? 0);
@@ -472,6 +528,15 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
     }
   }
   const fixedPercentOfRevenue = revenuePeriod > 0 ? (fixedAmount / revenuePeriod) * 100 : 0;
+
+  // Expense breakdown by category (for NetProfitBreakdown)
+  const expenseBreakdown: Partial<Record<ExpenseCategory, number>> = {};
+  for (const item of expenseCategoryAgg as Array<{
+    category: ExpenseCategory;
+    _sum: { amount: number | null };
+  }>) {
+    expenseBreakdown[item.category] = Number(item._sum.amount ?? 0);
+  }
 
   // Key metrics
   const paidBookingsTotal = vehicleRevenueByBooking.length;
@@ -501,7 +566,10 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
           cashDelta,
           netDelta,
         }}
-        vehicleRevenue={vehicleRevenue}
+        vehicleProfitability={vehicleProfitability}
+        expenseBreakdown={expenseBreakdown}
+        revenuePeriod={revenuePeriod}
+        refundedPeriod={refundedPeriod}
         costStructure={{
           fixedAmount,
           variableAmount,
@@ -519,6 +587,12 @@ export default async function FinancePage({ searchParams }: FinancePageProps) {
           depositsToReturnCount: depositsHeldCount,
           refundsPending,
           refundsPendingCount,
+          hasDeficit: netProfit < 0,
+          netMarginPercent:
+            revenuePeriod > 0 ? (netProfit / revenuePeriod) * 100 : null,
+          losingVehicles: vehicleProfitability
+            .filter((v) => v.profit < 0)
+            .map((v) => v.label),
         }}
         vehicles={vehicles}
       />
