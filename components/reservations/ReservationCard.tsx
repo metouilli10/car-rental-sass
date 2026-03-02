@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { Eye } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -25,6 +26,7 @@ interface ReservationCardProps {
 }
 
 export function ReservationCard({ booking, role, today }: ReservationCardProps) {
+  const router = useRouter();
   const startDate = toDate(booking.startDate);
   const endDate = toDate(booking.endDate);
   const durationDays = getDurationDays(startDate, endDate);
@@ -37,8 +39,17 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
 
   return (
     <Card
+      role="button"
+      tabIndex={0}
+      onClick={() => router.push(`/bookings/${booking.id}`)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          router.push(`/bookings/${booking.id}`);
+        }
+      }}
       className={cn(
-        "overflow-hidden",
+        "cursor-pointer overflow-hidden transition-colors hover:bg-muted/50",
         booking.risk.hasOverlapConflict && "border-red-200"
       )}
     >
@@ -48,6 +59,7 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
           <div className="flex items-start justify-between gap-2">
             <Link
               href={`/customers/${booking.customer.id}`}
+              onClick={(e) => e.stopPropagation()}
               className="font-semibold text-foreground underline-offset-4 hover:underline min-w-0 truncate"
             >
               {booking.customer.name}
@@ -59,6 +71,7 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
           <div className="text-sm text-muted-foreground">
             <Link
               href={`/vehicles/${booking.vehicle.id}/edit`}
+              onClick={(e) => e.stopPropagation()}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
               {booking.vehicle.make} {booking.vehicle.model}
@@ -118,7 +131,7 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
           </div>
 
           {/* Bottom: actions */}
-          <div className="flex justify-end gap-1 pt-1">
+          <div className="flex justify-end gap-1 pt-1" onClick={(e) => e.stopPropagation()}>
             <Button asChild size="icon" variant="ghost" aria-label="Voir la réservation" className="h-10 w-10">
               <Link href={`/bookings/${booking.id}`}>
                 <Eye className="h-4 w-4" />
