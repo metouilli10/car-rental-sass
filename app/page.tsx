@@ -774,7 +774,7 @@ export default function Home() {
               Plus de clarté. Plus de maîtrise chaque jour.
             </h2>
             <p className="text-blue-100/70 text-lg mt-4">
-              Quand l'information est centralisée, votre équipe agit plus vite et votre agence tourne avec moins de friction.
+              Quand l&apos;information est centralisée, votre équipe agit plus vite et votre agence tourne avec moins de friction.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-6 mt-14">
