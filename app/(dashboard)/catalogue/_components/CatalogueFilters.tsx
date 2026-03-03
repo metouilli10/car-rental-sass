@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Gearbox } from "@prisma/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,11 +25,9 @@ import {
   Search, 
   LayoutGrid, 
   List,
-  Filter,
-  X
+  Filter
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 /** Normalize to start of day in local time so calendar highlights match the selected range. */
 function startOfDayLocal(d: Date): Date {
@@ -41,12 +40,21 @@ function parseDateFromUrl(value: string | null): Date | undefined {
   return Number.isNaN(d.getTime()) ? undefined : startOfDayLocal(d);
 }
 
-export function CatalogueFilters() {
+interface CatalogueFiltersProps {
+  categories: string[];
+}
+
+export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
+  const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const startParam = searchParams.get("start");
   const endParam = searchParams.get("end");
   const searchParam = searchParams.get("search");
+  const categoryParam = searchParams.get("category") || "";
+  const gearboxParam = searchParams.get("gearbox") || "";
+  const availabilityParam = searchParams.get("availability") || "";
+  const sortParam = searchParams.get("sort") || "availability";
 
   const initialStart = useMemo(
     () => parseDateFromUrl(startParam) ?? startOfDayLocal(new Date()),
@@ -66,17 +74,34 @@ export function CatalogueFilters() {
   const [endDate, setEndDate] = useState<Date | undefined>(initialEnd);
   const [view, setView] = useState<"grid" | "list">("grid");
 
+  const updateQueryParams = (updates: Record<string, string | undefined>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    });
+
+    const nextQuery = params.toString();
+    const currentQuery = searchParams.toString();
+    if (nextQuery === currentQuery) return;
+
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  };
+
   // Sync state from URL when searchParams change (e.g. back/forward or external update)
   useEffect(() => {
     const start = parseDateFromUrl(startParam) ?? startOfDayLocal(new Date());
     const end = parseDateFromUrl(endParam);
+    setSearch(searchParam || "");
+    setDebouncedSearch(searchParam || "");
     setStartDate(start);
     setEndDate(end ?? (() => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       return startOfDayLocal(tomorrow);
     })());
-  }, [startParam, endParam]);
+  }, [endParam, searchParam, startParam]);
 
   // Debounce search input -- 300ms delay before triggering URL update
   useEffect(() => {
@@ -87,14 +112,22 @@ export function CatalogueFilters() {
   // Update URL when debounced search or date filters change
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
+
     if (debouncedSearch) params.set("search", debouncedSearch);
     else params.delete("search");
-    
+
     if (startDate) params.set("start", startOfDayLocal(startDate).toISOString());
+    else params.delete("start");
+
     if (endDate) params.set("end", startOfDayLocal(endDate).toISOString());
-    
-    router.push(`?${params.toString()}`, { scroll: false });
-  }, [debouncedSearch, startDate, endDate, router, searchParams]);
+    else params.delete("end");
+
+    const nextQuery = params.toString();
+    const currentQuery = searchParams.toString();
+    if (nextQuery === currentQuery) return;
+
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [debouncedSearch, endDate, pathname, router, searchParams, startDate]);
 
   return (
     <div className="sticky top-0 z-30 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mb-6 pb-4 pt-2" suppressHydrationWarning>
@@ -192,7 +225,10 @@ export function CatalogueFilters() {
             </Button>
           </div>
 
-          <Select defaultValue="availability">
+          <Select
+            value={sortParam}
+            onValueChange={(value) => updateQueryParams({ sort: value })}
+          >
             <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Trier par" />
             </SelectTrigger>
@@ -206,20 +242,72 @@ export function CatalogueFilters() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1" suppressHydrationWarning>
-          <Badge variant="outline" className="gap-1 cursor-pointer hover:bg-accent">
-            Boîte: Tous <X className="h-3 w-3" />
-          </Badge>
-          <Badge variant="outline" className="gap-1 cursor-pointer hover:bg-accent">
-            Type: Tous <X className="h-3 w-3" />
-          </Badge>
-          <Badge variant="outline" className="gap-1 cursor-pointer hover:bg-accent">
-            Places: Toutes <X className="h-3 w-3" />
-          </Badge>
-          <Badge variant="outline" className="gap-1 cursor-pointer hover:bg-accent">
-            Clim: Tous <X className="h-3 w-3" />
-          </Badge>
-          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
-            <Filter className="h-3 w-3" /> Plus de filtres
+          <Select
+            value={gearboxParam || "all"}
+            onValueChange={(value) =>
+              updateQueryParams({ gearbox: value === "all" ? undefined : value })
+            }
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Boîte" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Boîte: Toutes</SelectItem>
+              <SelectItem value={Gearbox.MANUAL}>Manuelle</SelectItem>
+              <SelectItem value={Gearbox.AUTO}>Automatique</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={categoryParam || "all"}
+            onValueChange={(value) =>
+              updateQueryParams({ category: value === "all" ? undefined : value })
+            }
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Type: Tous</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={availabilityParam || "all"}
+            onValueChange={(value) =>
+              updateQueryParams({ availability: value === "all" ? undefined : value })
+            }
+          >
+            <SelectTrigger className="w-[190px]">
+              <SelectValue placeholder="Disponibilité" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Disponibilité: Toutes</SelectItem>
+              <SelectItem value="AVAILABLE">Disponible</SelectItem>
+              <SelectItem value="RETURNING_TODAY">Retour aujourd&apos;hui</SelectItem>
+              <SelectItem value="UNAVAILABLE">Indisponible</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 text-xs gap-1"
+            onClick={() =>
+              updateQueryParams({
+                category: undefined,
+                gearbox: undefined,
+                availability: undefined,
+                sort: "availability",
+              })
+            }
+          >
+            <Filter className="h-3 w-3" /> Réinitialiser filtres
           </Button>
         </div>
       </div>

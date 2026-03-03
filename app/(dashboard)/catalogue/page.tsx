@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { CatalogueFilters } from "./_components/CatalogueFilters";
 import { VehicleCard } from "./_components/VehicleCard";
-import { BookingStatus } from "@prisma/client";
+import { BookingStatus, Gearbox } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +15,8 @@ interface CataloguePageProps {
     end?: string;
     category?: string;
     gearbox?: string;
+    availability?: string;
+    sort?: string;
   }>;
 }
 
@@ -24,6 +26,13 @@ export default async function CataloguePage({ searchParams }: CataloguePageProps
 
   const params = await searchParams;
   const search = params.search || "";
+  const category = params.category || "";
+  const availability = params.availability || "";
+  const sort = params.sort || "availability";
+  const gearbox =
+    params.gearbox === Gearbox.AUTO || params.gearbox === Gearbox.MANUAL
+      ? params.gearbox
+      : undefined;
   const startDate = params.start ? new Date(params.start) : new Date();
   const endDate = params.end ? new Date(params.end) : new Date(Date.now() + 86400000);
 
@@ -32,6 +41,8 @@ export default async function CataloguePage({ searchParams }: CataloguePageProps
     prisma.vehicle.findMany({
       where: {
         agencyId: session.user.agencyId,
+        ...(category ? { category } : {}),
+        ...(gearbox ? { gearbox } : {}),
         OR: search ? [
           { make: { contains: search } },
           { model: { contains: search } },
@@ -81,6 +92,39 @@ export default async function CataloguePage({ searchParams }: CataloguePageProps
     return { ...vehicle, availability: { status: "AVAILABLE" as const } };
   });
 
+  const filteredVehicles = vehiclesWithAvailability.filter((vehicle) => {
+    if (!availability) return true;
+    return vehicle.availability.status === availability;
+  });
+
+  const availabilityPriority = {
+    AVAILABLE: 0,
+    RETURNING_TODAY: 1,
+    UNAVAILABLE: 2,
+  } as const;
+
+  const sortedVehicles = [...filteredVehicles].sort((left, right) => {
+    switch (sort) {
+      case "price_desc":
+        return right.pricePerDay - left.pricePerDay;
+      case "name":
+        return `${left.make} ${left.model}`.localeCompare(`${right.make} ${right.model}`);
+      case "price_asc":
+        return left.pricePerDay - right.pricePerDay;
+      case "availability":
+      default: {
+        const byAvailability =
+          availabilityPriority[left.availability.status] - availabilityPriority[right.availability.status];
+        if (byAvailability !== 0) return byAvailability;
+        return left.pricePerDay - right.pricePerDay;
+      }
+    }
+  });
+
+  const categories = [...new Set(vehicles.map((vehicle) => vehicle.category))].sort((a, b) =>
+    a.localeCompare(b)
+  );
+
   return (
     <div className="space-y-8" suppressHydrationWarning>
       <PageHeader
@@ -88,9 +132,9 @@ export default async function CataloguePage({ searchParams }: CataloguePageProps
         description="Sélectionnez des dates pour voir les véhicules disponibles"
       />
 
-      <CatalogueFilters />
+      <CatalogueFilters categories={categories} />
 
-      {vehiclesWithAvailability.length === 0 ? (
+      {sortedVehicles.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center" suppressHydrationWarning>
           <p className="text-lg font-medium text-muted-foreground">
             Aucun véhicule ne correspond à vos filtres.
@@ -98,7 +142,7 @@ export default async function CataloguePage({ searchParams }: CataloguePageProps
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" suppressHydrationWarning>
-          {vehiclesWithAvailability.map((vehicle) => (
+          {sortedVehicles.map((vehicle) => (
             <VehicleCard 
               key={vehicle.id} 
               vehicle={vehicle} 
