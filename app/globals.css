@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Modern Soft SaaS Palette */
+    /* LocaPro palette: Blue Control x Amber Action */
     --background: 225 14% 97%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -12,29 +12,29 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    /* Primary Blue */
+    /* Primary: Blue Control */
     --primary: 220 84% 54%;
     --primary-foreground: 0 0% 100%;
 
     /* Semantic Colors */
-    --success: 142 76% 36%;
-    --warning: 38 92% 50%;
-    --danger: 0 72% 51%;
-    --info: 221 83% 53%;
+    --success: 145 67% 36%;
+    --warning: 34 76% 50%;
+    --danger: 0 61% 54%;
+    --info: 223 68% 54%;
 
-    /* Neutral secondary */
+    /* Quiet neutral surfaces */
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 10% 3.9%;
 
-    /* Warm gray muted */
+    /* Muted text and surfaces */
     --muted: 220 14% 96%;
     --muted-foreground: 240 3.8% 46.1%;
 
-    /* Accent = Primary */
-    --accent: 220 84% 54%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent: Amber Action */
+    --accent: 34 76% 50%;
+    --accent-foreground: 240 10% 3.9%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 61% 54%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 91%;
@@ -54,18 +54,18 @@
     --card-shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
 
     /* Primary gradient */
-    --primary-gradient: linear-gradient(135deg, hsl(220, 84%, 54%) 0%, hsl(213, 80%, 48%) 100%);
-    --primary-gradient-hover: linear-gradient(135deg, hsl(220, 84%, 48%) 0%, hsl(213, 80%, 42%) 100%);
+    --primary-gradient: linear-gradient(135deg, hsl(220 84% 54%) 0%, hsl(213 80% 48%) 100%);
+    --primary-gradient-hover: linear-gradient(135deg, hsl(220 84% 48%) 0%, hsl(213 80% 42%) 100%);
 
     --chart-1: 220 84% 54%;
-    --chart-2: 240 10% 3.9%;
-    --chart-3: 240 4.8% 95.9%;
-    --chart-4: 213 80% 48%;
-    --chart-5: 200 80% 50%;
+    --chart-2: 34 76% 50%;
+    --chart-3: 240 10% 3.9%;
+    --chart-4: 145 67% 36%;
+    --chart-5: 213 80% 48%;
   }
 
   .dark {
-    /* Dark Midnight Steel Theme */
+    /* Dark Blue Theme */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
@@ -73,23 +73,19 @@
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    /* Lighter blue for dark mode */
     --primary: 217 80% 65%;
     --primary-foreground: 240 10% 3.9%;
 
-    /* Dark gray secondary */
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
 
-    /* Dark muted */
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
 
-    /* Accent = Primary */
-    --accent: 217 80% 65%;
+    --accent: 34 76% 58%;
     --accent-foreground: 240 10% 3.9%;
 
-    --destructive: 0 72% 40%;
+    --destructive: 0 61% 46%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 240 3.7% 15.9%;
@@ -281,5 +277,57 @@
     stroke-dasharray: 200;
     animation: draw 1s ease-out forwards;
     animation-delay: 0.5s;
+  }
+
+  /* ─── Landing Page Redesign ─── */
+
+  /* Hero gradient background */
+  .hero-gradient {
+    background: linear-gradient(165deg, #1e3a8a 0%, #1d4ed8 40%, #2563eb 70%, #3b82f6 100%);
+  }
+
+  /* Dark section gradient */
+  .section-gradient-dark {
+    background: linear-gradient(165deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%);
+  }
+
+  /* Decorative dot grid overlay */
+  .hero-dots {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Soft glow orbs */
+  .hero-glow-1 {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  .hero-glow-2 {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(96,165,250,0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+  }
+
+  /* Screenshot frame perspective */
+  .screenshot-frame {
+    transform: perspective(2000px) rotateX(2deg);
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .screenshot-frame:hover {
+    transform: perspective(2000px) rotateX(0deg);
+  }
+
+  /* Pill badge */
+  .pill-badge {
+    @apply inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest rounded-full;
   }
 }

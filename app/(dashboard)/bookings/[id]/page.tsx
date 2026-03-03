@@ -11,6 +11,7 @@ import {
 } from "@/components/reservations/ReservationOperationalAlerts";
 import { InspectionsPanel } from "@/components/reservations/InspectionsPanel";
 import { ReservationActivity } from "@/components/reservations/ReservationActivity";
+import { ReservationContractPanel } from "@/components/reservations/ReservationContractPanel";
 import { getDepositStatus, getPaymentStatus, getReservationTone } from "@/lib/reservations/presentation";
 import { canDelete } from "@/lib/authz";
 
@@ -153,6 +154,11 @@ export default async function BookingDetailsPage({
               notes: booking.notes,
             }}
             whatsappLink={whatsappLink}
+          />
+          <ReservationContractPanel
+            bookingId={booking.id}
+            contractImageUrl={booking.contractImageUrl}
+            contractSignedAt={booking.contractSignedAt?.toISOString() ?? null}
           />
         </div>
 

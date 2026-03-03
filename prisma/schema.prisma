@@ -354,6 +354,8 @@ model Booking {
   paidNow          Float                  @default(0)
   remainingAmount  Float                  @default(0)
   flowVersion      String?
+  contractImageUrl String?
+  contractSignedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -1,0 +1,3 @@
+ALTER TABLE "bookings"
+  ADD COLUMN IF NOT EXISTS "contractImageUrl" TEXT,
+  ADD COLUMN IF NOT EXISTS "contractSignedAt" TIMESTAMP(3);

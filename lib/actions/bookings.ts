@@ -187,6 +187,50 @@ export async function createBooking(data: BookingFormData) {
   }
 }
 
+export async function attachBookingContract(bookingId: string, contractImageUrl: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new Error("Non autorisé");
+  }
+
+  const normalizedUrl = contractImageUrl.trim();
+
+  if (!normalizedUrl) {
+    return { error: "Le document du contrat est requis" };
+  }
+
+  try {
+    const booking = await prisma.booking.findFirst({
+      where: {
+        id: bookingId,
+        agencyId: session.user.agencyId,
+      },
+      select: { id: true },
+    });
+
+    if (!booking) {
+      return { error: "Réservation non trouvée" };
+    }
+
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        contractImageUrl: normalizedUrl,
+        contractSignedAt: new Date(),
+      },
+    });
+
+    revalidatePath(`/bookings/${bookingId}`);
+    revalidatePath("/bookings");
+
+    return { success: true };
+  } catch (error) {
+    console.error("attachBookingContract error:", error);
+    return { error: "Erreur lors de l'enregistrement du contrat" };
+  }
+}
+
 export async function saveBookingDraftPlaceholder(data: {
   step: number;
   vehicleId?: string;

@@ -3,833 +3,1083 @@ import Image from "next/image";
 import {
   ArrowRight,
   Check,
-  Star,
-  X as CloseIcon,
-  Car,
-  Calendar,
-  Users,
-  FileText,
-  Wallet,
-  BarChart3,
   MessageCircle,
   Banknote,
   FileCheck,
   Zap,
   Headphones,
   Shield,
-  Clock,
-  CreditCard,
-  Bell,
-  MousePointerClick,
-  TrendingUp,
 } from "lucide-react";
 import { FAQItem } from "./_components/FAQItem";
-import { MobileMenuButton } from "./_components/MobileMenu";
+import { Reveal } from "./_components/Reveal";
+import { ScrollNav } from "./_components/ScrollNav";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA
 // ─────────────────────────────────────────────────────────────────────────────
 
-const features = [
+const featureSections = [
   {
-    icon: Car,
-    title: "Parc véhicules",
-    benefit: "Voyez en un instant quel véhicule est disponible",
-    description: "Statut en temps réel, historique complet, alertes maintenance.",
+    id: "fleet",
+    eyebrow: "GESTION DE FLOTTE",
+    heading: "Tous vos véhicules. Un seul endroit.",
+    body: "Ajoutez vos véhicules en quelques clics et suivez leur statut en temps réel : disponible, en location, en maintenance ou indisponible. Accédez aux documents, à l'historique et aux échéances importantes sans chercher dans plusieurs outils.",
+    bullets: [
+      "Fiches véhicules complètes avec photos et documents",
+      "Rappels de maintenance et de conformité",
+      "Statuts clairs pour savoir tout de suite ce qui est disponible",
+    ],
+    screenshot: "/screenshots/catalogue.png",
+    screenshotAlt: "Catalogue de véhicules LocaPro",
+    layout: "copy-left" as const,
   },
   {
-    icon: Calendar,
-    title: "Réservations",
-    benefit: "Ne ratez plus jamais un départ ou un retour",
-    description: "Calendrier visuel, rappels automatiques, gestion des conflits.",
+    id: "reservations",
+    eyebrow: "RESERVATIONS",
+    heading: "Réservez en 2 minutes. Suivez tout jusqu'au retour.",
+    body: "Créez une réservation rapidement, appliquez vos tarifs, suppléments, remises, taxes et cautions automatiquement, puis suivez les paiements et l'état du dossier jusqu'au retour du véhicule.",
+    bullets: [
+      "Workflow de réservation guidé et rapide",
+      "Calcul automatique des montants, taxes et cautions",
+      "Visibilité immédiate sur paiements, retards et soldes",
+    ],
+    screenshot: "/screenshots/reservations.png",
+    screenshotAlt: "Reservations LocaPro",
+    layout: "copy-right" as const,
   },
   {
-    icon: Users,
-    title: "Fichier clients",
-    benefit: "Retrouvez n'importe quel client en 2 secondes",
-    description: "Historique complet, documents scannés, notes importantes.",
+    id: "planning",
+    eyebrow: "PLANNING & DISPONIBILITES",
+    heading: "Zéro double réservation. Zéro surprise.",
+    body: "Avec une vue disponibilité et un calendrier interactif, vous savez quels véhicules sont libres, occupés ou à risque de conflit. Votre équipe planifie plus vite et évite les doubles réservations.",
+    bullets: [
+      "Recherche rapide par dates et disponibilité",
+      "Calendrier clair pour visualiser les mouvements de la flotte",
+      "Moins de conflits, moins d'aller-retour manuels",
+    ],
+    screenshot: "/screenshots/dashboard.png",
+    screenshotAlt: "Planning et disponibilites LocaPro",
+    layout: "copy-left" as const,
   },
   {
-    icon: FileText,
-    title: "Contrats PDF",
-    benefit: "Générez un contrat pro en 1 clic",
-    description: "Modèles personnalisés, signature, envoi par email ou WhatsApp.",
+    id: "finance",
+    eyebrow: "FINANCES",
+    heading: "Vos finances, sans zones d'ombre.",
+    body: "Le centre financier et la caisse vous aident à suivre encaissements, dépenses, impayés, cautions détenues et rentabilité. Vous pilotez mieux votre cash et vous repérez plus vite les points de fuite.",
+    bullets: [
+      "Montants à encaisser visibles",
+      "Suivi des mouvements de caisse",
+      "Vision plus nette sur les soldes et la rentabilité",
+    ],
+    screenshot: "/screenshots/finance.png",
+    screenshotAlt: "Centre financier LocaPro",
+    layout: "copy-left" as const,
   },
   {
-    icon: Wallet,
-    title: "Paiements & cautions",
-    benefit: "Sachez exactement qui vous doit quoi",
-    description: "Suivi espèces/carte/virement, cautions bloquées, relances.",
+    id: "clients",
+    eyebrow: "GESTION CLIENTS",
+    heading: "Chaque client reste documenté, clair et facile à retrouver.",
+    body: "Centralisez les documents, les coordonnées, l'historique de réservations et le suivi des paiements pour travailler avec plus de fiabilité et moins d'improvisation.",
+    bullets: [
+      "Documents clients rangés au même endroit",
+      "Historique complet par client",
+      "Export simple pour vos suivis et rapports",
+    ],
+    screenshot: "/screenshots/clients.png",
+    screenshotAlt: "Gestion clients LocaPro",
+    layout: "copy-right" as const,
   },
   {
-    icon: BarChart3,
-    title: "Tableau de bord",
-    benefit: "Prenez de meilleures décisions",
-    description: "CA mensuel, taux d'utilisation, véhicules les plus rentables.",
+    id: "inspections",
+    eyebrow: "INSPECTIONS & CAUTIONS",
+    heading: "Documentez l'état du véhicule et réduisez les litiges.",
+    body: "Au départ comme au retour, enregistrez les constats, ajoutez les photos, estimez les dommages et décidez rapidement du sort de la caution. Chaque dossier devient plus clair, plus défendable et plus professionnel.",
+    bullets: [
+      "Photos et preuves rattachées au dossier",
+      "Évaluation plus claire des dommages",
+      "Décision de caution plus simple et mieux tracée",
+    ],
+    screenshot: "/screenshots/reservations.png",
+    screenshotAlt: "Inspections et cautions LocaPro",
+    layout: "copy-left" as const,
   },
-];
-
-const problems = [
-  "Retours en retard que vous découvrez trop tard",
-  "Cautions perdues ou mal suivies",
-  "Paiements notés sur papier ou WhatsApp",
-  "Contrats faits à la main, jamais retrouvés",
-  "Des heures perdues à chercher une info",
+  {
+    id: "infractions",
+    eyebrow: "INFRACTIONS",
+    heading: "Les PV restent rattachés au bon véhicule, au bon client, au bon dossier.",
+    body: "Enregistrez les infractions, attribuez la responsabilité et suivez leur statut sans perdre le fil. Vous gardez un historique propre, exploitable et facile à retrouver.",
+    bullets: [
+      "Lien direct avec véhicule, réservation et client",
+      "Suivi du statut de traitement",
+      "Recherche simple grâce aux filtres",
+    ],
+    screenshot: "/screenshots/finance.png",
+    screenshotAlt: "Infractions LocaPro",
+    layout: "copy-right" as const,
+  },
 ];
 
 const differentiators = [
   {
     icon: MessageCircle,
     title: "WhatsApp intégré",
-    description: "Contactez vos clients en 1 clic",
+    description: "Confirmations et suivis sans copier-coller permanent",
   },
   {
     icon: Banknote,
     title: "Dirhams (MAD)",
-    description: "Fait pour le marché marocain",
+    description: "Tarifs, encaissements et cautions dans votre réalité locale",
   },
   {
     icon: FileCheck,
-    title: "Contrats locaux",
-    description: "Modèles adaptés au Maroc",
+    title: "Documents traçables",
+    description: "Des dossiers plus clairs, plus défendables en cas de litige",
   },
   {
     icon: Zap,
-    title: "Ultra simple",
-    description: "Aucune formation requise",
+    title: "Prise en main rapide",
+    description: "Une interface claire, orientée action dès le premier jour",
   },
   {
     icon: Headphones,
     title: "Support humain",
-    description: "En français, réactif",
+    description: "En français, réactif, concret et utile sur le terrain",
   },
 ];
 
-const monitoring = [
+const qualitativeProof = [
   {
-    icon: Bell,
-    color: "text-red-500",
-    bg: "bg-red-50",
-    title: "Alertes critiques",
-    description: "Retours en retard, paiements impayés, cautions à libérer — vous êtes prévenu avant que ça coûte.",
+    title: "Réservations centralisées",
+    body: "Tous vos dossiers avancent dans un seul flux de travail, sans perdre d'information entre outils.",
   },
   {
-    icon: Clock,
-    color: "text-[#2563EB]",
-    bg: "bg-[#2563EB]/10",
-    title: "Opérations du jour",
-    description: "Tous les départs et retours prévus aujourd'hui, en un coup d'œil.",
+    title: "Suivi en temps réel",
+    body: "Statuts, retours, encaissements et actions critiques restent visibles immédiatement.",
   },
   {
-    icon: TrendingUp,
-    color: "text-emerald-500",
-    bg: "bg-emerald-50",
-    title: "Performance en direct",
-    description: "CA du jour, de la semaine, du mois. Voyez votre agence grandir.",
+    title: "Conçu pour le terrain",
+    body: "Pensé pour les agences qui travaillent vite, avec WhatsApp, plusieurs urgences et peu de marge d'erreur.",
   },
 ];
 
-const stats = [
-  { value: "2h", label: "gagnées par jour en moyenne" },
-  { value: "95%", label: "des cautions mieux suivies" },
-  { value: "0", label: "formation nécessaire" },
+const proofCases = [
+  {
+    kicker: "Retours du jour",
+    title: "Vous voyez tout de suite ce qui doit sortir, revenir ou être encaissé.",
+    body: "Le tableau de bord remonte les départs, retours, retards et montants à encaisser sans que l'équipe ait à recouper plusieurs fichiers.",
+    outcome: "Moins d'oublis sur les actions critiques",
+  },
+  {
+    kicker: "Cautions & litiges",
+    title: "Chaque dossier garde ses preuves, ses photos et sa décision de caution.",
+    body: "Au retour, les constats et documents restent rattachés au bon client et au bon véhicule. Le dossier est plus propre en cas de discussion.",
+    outcome: "Moins de flou au moment de trancher",
+  },
+  {
+    kicker: "Disponibilité",
+    title: "Le planning réduit les conflits avant qu'ils ne deviennent un problème.",
+    body: "Avec une vue claire sur la flotte disponible, l'équipe réserve plus vite et évite les doubles réservations qui coûtent du temps et de la confiance.",
+    outcome: "Moins de frictions dans l'organisation",
+  },
 ];
 
-const steps = [
+const businessStats = [
   {
-    number: "01",
-    title: "Demandez votre démo",
-    description: "15 minutes pour voir Locapro en action",
-    icon: MousePointerClick,
+    value: "90%",
+    label: "des actions critiques visibles dans un seul flux de travail",
   },
   {
-    number: "02",
-    title: "On importe vos données",
-    description: "Véhicules, clients — on s'occupe de tout",
-    icon: Zap,
+    value: "3x",
+    label: "moins d'aller-retour pour retrouver une information critique",
   },
   {
-    number: "03",
-    title: "Vous gérez sereinement",
-    description: "Votre agence sous contrôle dès le jour 1",
-    icon: Check,
+    value: "0",
+    label: "outil de plus à surveiller pour faire tourner l'agence",
   },
 ];
 
 const pricing = [
   {
     name: "Starter",
-    price: "799",
+    price: "0",
     period: "/mois",
-    tagline: "Pour démarrer (1-5 véhicules)",
+    tagline: "Pour démarrer (jusqu'à 5 véhicules)",
     features: [
-      "Gestion véhicules illimitée",
-      "Réservations & clients",
-      "Contrats PDF",
-      "Support par email",
+      "Jusqu'à 5 véhicules",
+      "Réservations illimitées",
+      "Tableau de bord de base",
+      "Prise en main simple",
     ],
     cta: "Démarrer",
     popular: false,
   },
   {
     name: "Pro",
-    price: "1 499",
+    price: "499",
     period: "/mois",
-    tagline: "Pour les agences en croissance",
+    tagline: "Pour piloter l'agence au quotidien",
     features: [
       "Tout Starter +",
-      "Paiements & cautions",
-      "Tableau de bord avancé",
-      "Rapports détaillés",
+      "Véhicules illimités",
+      "Centre financier",
+      "Inspections & cautions",
       "WhatsApp intégré",
       "Support prioritaire",
     ],
-    cta: "Essayer 14 jours",
+    cta: "Essayer gratuitement",
     popular: true,
     badge: "Le plus choisi",
   },
   {
-    name: "Entreprise",
-    price: "Sur mesure",
-    period: "",
-    tagline: "Multi-agences & besoins spécifiques",
+    name: "Agence+",
+    price: "899",
+    period: "/mois",
+    tagline: "Pour les structures multi-utilisateurs",
     features: [
       "Tout Pro +",
+      "Multi-utilisateurs",
       "Multi-agences",
-      "API & intégrations",
+      "API",
       "Accompagnement dédié",
     ],
-    cta: "Parler à un expert",
+    cta: "Parler à l'équipe",
     popular: false,
   },
 ];
 
 const faqs = [
   {
-    q: "Est-ce que Locapro est compliqué à utiliser ?",
-    a: "Pas du tout. Locapro a été conçu pour être utilisable immédiatement, sans aucune formation. Si vous savez utiliser WhatsApp, vous saurez utiliser Locapro.",
+    q: "Est-ce que LocaPro est compliqué à utiliser ?",
+    a: "Non. LocaPro est conçu pour des actions claires, des statuts visibles et une prise en main rapide, même pour une équipe qui travaille déjà sous pression.",
     defaultOpen: true,
   },
   {
     q: "Puis-je l'utiliser sur mon téléphone ?",
-    a: "Oui ! Locapro fonctionne parfaitement sur ordinateur, tablette et smartphone. Gérez votre agence où que vous soyez.",
+    a: "Oui. LocaPro fonctionne sur ordinateur, tablette et smartphone pour garder un accès simple à l'activité, même en déplacement.",
     defaultOpen: false,
   },
   {
     q: "Mes données sont-elles sécurisées ?",
-    a: "Absolument. Vos données sont chiffrées et sauvegardées quotidiennement sur des serveurs sécurisés. Vous restez propriétaire de vos données.",
+    a: "Oui. Vos données restent centralisées, protégées et gérées dans un environnement sécurisé. Vous gardez la maîtrise de vos informations.",
     defaultOpen: false,
   },
   {
     q: "Que se passe-t-il si j'annule ?",
-    a: "Vous pouvez annuler à tout moment, sans frais. Vos données restent accessibles pendant 30 jours pour export.",
+    a: "Vous pouvez arrêter à tout moment. L'objectif de LocaPro est de réduire la friction, pas d'en créer.",
     defaultOpen: false,
   },
   {
     q: "Comment fonctionne l'essai gratuit ?",
-    a: "Vous avez 14 jours pour tester toutes les fonctionnalités Pro, sans carte bancaire. À la fin, vous choisissez votre forfait ou vous partez sans rien payer.",
+    a: "Vous pouvez commencer sans carte bancaire et découvrir la logique de pilotage de LocaPro avant de choisir la formule adaptée à votre agence.",
     defaultOpen: false,
   },
 ];
 
-const trustItems = [
-  { icon: CreditCard, text: "Essai 14 jours — sans carte" },
-  { icon: Headphones, text: "Support local en français" },
-  { icon: Shield, text: "Annulable à tout moment" },
-];
-
-const callouts = [
-  { label: "Alertes auto", position: "top-[12%] left-[2%]", delay: "0s" },
-  { label: "Contrats PDF 1 clic", position: "top-[40%] right-[0%]", delay: "0.3s" },
-  { label: "Suivi paiements", position: "bottom-[20%] left-[5%]", delay: "0.6s" },
+const heroCallouts = [
+  { label: "Tableau de bord en temps réel", position: "top-[8%] left-[2%]", delay: "0s" },
+  { label: "Planning et disponibilités", position: "top-[35%] right-[-2%]", delay: "0.4s" },
+  { label: "Centre financier", position: "bottom-[15%] left-[3%]", delay: "0.8s" },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MAIN PAGE (Server Component -- no "use client")
+// REUSABLE COMPONENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function BrowserFrame({
+  src,
+  alt,
+  priority = false,
+  className = "",
+}: {
+  src: string;
+  alt: string;
+  priority?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={`relative bg-white rounded-2xl border border-gray-200/60 shadow-2xl shadow-gray-400/20 overflow-hidden ring-1 ring-gray-900/5 ${className}`}>
+      <div className="bg-gray-50/80 border-b border-gray-100 px-4 py-2.5 flex items-center gap-2">
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#28CA41]" />
+        </div>
+        <div className="flex-1 mx-4">
+          <div className="bg-white border border-gray-200 rounded-md px-3 py-1 text-xs text-gray-400 max-w-[200px] mx-auto text-center">
+            app.locapro.ma
+          </div>
+        </div>
+      </div>
+      <div className="relative overflow-hidden bg-gray-50">
+        <Image
+          src={src}
+          alt={alt}
+          width={1920}
+          height={1080}
+          className="w-full h-auto"
+          priority={priority}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SectionCurve({
+  position,
+  colorClass,
+}: {
+  position: "top" | "bottom";
+  colorClass: string;
+}) {
+  const placement =
+    position === "top" ? "top-0 -translate-y-full rotate-180" : "bottom-0 translate-y-full";
+
+  return (
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-x-0 h-16 lg:h-24 ${placement} ${colorClass}`}
+    >
+      <svg
+        viewBox="0 0 1440 120"
+        preserveAspectRatio="none"
+        className="h-full w-full fill-current"
+      >
+        <path d="M0,96L80,85.3C160,75,320,53,480,48C640,43,800,53,960,64C1120,75,1280,85,1360,90.7L1440,96L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z" />
+      </svg>
+    </div>
+  );
+}
+
+function FeatureSection({
+  section,
+  index,
+  bgClass,
+}: {
+  section: (typeof featureSections)[number];
+  index: number;
+  bgClass: string;
+}) {
+  const isLeft = section.layout === "copy-left";
+  const panelClass =
+    index % 2 === 0
+      ? "border-slate-200 bg-white"
+      : "border-blue-100 bg-gradient-to-br from-slate-50 via-white to-blue-50/60";
+
+  const copyBlock = (
+    <div className="flex flex-col justify-center max-w-xl">
+      <div className="pill-badge bg-blue-50 text-blue-600 mb-5">
+        {section.eyebrow}
+      </div>
+      <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight leading-tight text-gray-900">
+        {section.heading}
+      </h2>
+      <p className="text-gray-600 text-lg leading-relaxed mt-5">
+        {section.body}
+      </p>
+      <ul className="space-y-3.5 mt-7">
+        {section.bullets.map((bullet) => (
+          <li key={bullet} className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Check className="w-3 h-3 text-blue-600" />
+            </div>
+            <span className="text-gray-700 text-[15px]">{bullet}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 shadow-sm mt-8 text-sm font-medium text-gray-700 w-fit">
+        <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+        {section.bullets[0]}
+      </div>
+    </div>
+  );
+
+  const screenshotBlock = (
+    <div className="relative">
+      <div className="absolute -inset-4 bg-gradient-to-br from-blue-100/80 via-white to-amber-50 rounded-[2rem] blur-2xl" />
+      <div className="relative rounded-[2rem] bg-gradient-to-br from-white via-blue-50/70 to-amber-50/70 p-3 lg:p-4 shadow-2xl shadow-blue-100/60 ring-1 ring-slate-200/80">
+        <BrowserFrame
+          src={section.screenshot}
+          alt={section.screenshotAlt}
+          className="relative screenshot-frame"
+        />
+      </div>
+      <div className="absolute -bottom-4 right-4 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur px-4 py-3 shadow-xl shadow-slate-300/20">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">
+          LocaPro
+        </div>
+        <div className="mt-1 text-sm font-semibold text-gray-900">{section.eyebrow}</div>
+      </div>
+    </div>
+  );
+
+  return (
+    <section className={`py-16 lg:py-20 px-6 lg:px-8 ${bgClass}`}>
+      <div className="max-w-[1200px] mx-auto">
+        <Reveal
+          className={`grid lg:grid-cols-2 gap-12 lg:gap-20 items-center rounded-[2.5rem] border p-8 lg:p-14 ${panelClass}`}
+          delayMs={index * 60}
+        >
+          {isLeft ? (
+            <>
+              {copyBlock}
+              {screenshotBlock}
+            </>
+          ) : (
+            <>
+              <div className="order-2 lg:order-1">{screenshotBlock}</div>
+              <div className="order-1 lg:order-2">{copyBlock}</div>
+            </>
+          )}
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans antialiased overflow-x-hidden">
       {/* ─── NAVIGATION ─── */}
-      <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-lg border-b border-gray-100/80 z-50">
-        <div className="max-w-6xl mx-auto px-5 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center">
-              <Image
-                src="/assets/locapro-logo.png"
-                alt="Locapro"
-                width={130}
-                height={32}
-                className="h-7 w-auto"
-                priority
-              />
-            </Link>
-
-            <div className="hidden md:flex items-center gap-7">
-              <a href="#features" className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">
-                Fonctionnalités
-              </a>
-              <a href="#pricing" className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">
-                Tarifs
-              </a>
-              <a href="#faq" className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">
-                FAQ
-              </a>
-            </div>
-
-            <div className="hidden md:flex items-center gap-3">
-              <Link
-                href="/login"
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium px-4 py-2"
-              >
-                Connexion
-              </Link>
-              <Link
-                href="/login"
-                className="px-5 py-2.5 bg-[#2563EB] text-white text-sm font-semibold rounded-full hover:bg-[#1D4ED8] transition-all hover:shadow-lg hover:shadow-[#2563EB]/25 active:scale-[0.98]"
-              >
-                Essai gratuit
-              </Link>
-            </div>
-
-            <MobileMenuButton />
-          </div>
-        </div>
-      </nav>
+      <ScrollNav />
 
       {/* ─── HERO ─── */}
-      <section className="pt-28 lg:pt-36 pb-12 lg:pb-20 px-5 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-10">
-            {/* Morocco-specific tagline */}
-            <p className="inline-flex items-center gap-2 text-sm font-medium text-[#2563EB] mb-4">
-              <span>🇲🇦</span>
-              Pensé pour les agences marocaines
-            </p>
+      <section className="relative overflow-hidden hero-gradient">
+        {/* Decorative background layers */}
+        <div className="absolute inset-0 hero-dots opacity-40" />
+        <div className="hero-glow-1 top-[-200px] right-[-100px]" />
+        <div className="hero-glow-2 bottom-[-100px] left-[-150px]" />
 
-            <h1 className="text-[2.5rem] leading-[1.1] md:text-5xl lg:text-[3.5rem] font-bold tracking-tight mb-6">
-              Gérez votre agence de location{" "}
-              <span className="relative whitespace-nowrap">
-                <span className="relative z-10">sans stress</span>
-                <svg className="absolute -bottom-1.5 left-0 w-full h-3 z-0" viewBox="0 0 200 12" fill="none" preserveAspectRatio="none">
-                  <path d="M2 10C40 4 100 2 198 8" stroke="#2563EB" strokeWidth="4" strokeLinecap="round" className="animate-draw"/>
-                </svg>
-              </span>
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-600 leading-relaxed max-w-2xl mx-auto font-medium">
-              Véhicules, réservations, clients, contrats PDF, paiements — tout ce dont votre agence a besoin, dans une seule application simple.
-            </p>
+        <div className="relative pt-36 lg:pt-44 pb-0 px-6 lg:px-8">
+          <div className="max-w-[1200px] mx-auto">
+            {/* Text content */}
+            <Reveal className="text-center max-w-4xl mx-auto">
+              {/* Eyebrow badge */}
+              <div className="inline-flex items-center gap-2.5 px-5 py-2 bg-white/10 border border-white/20 rounded-full backdrop-blur-sm mb-8">
+                <span className="text-base">🇲🇦</span>
+                <span className="text-xs font-semibold uppercase tracking-widest text-white/90">
+                  FAIT POUR LES AGENCES MAROCAINES
+                </span>
+              </div>
+
+              {/* Headline */}
+              <h1 className="text-4xl md:text-5xl lg:text-[3.75rem] font-bold text-white tracking-tight leading-[1.08]">
+                Toute votre agence,
+                <br className="hidden sm:block" />
+                <span className="text-blue-200">sous controle.</span>
+              </h1>
+
+              {/* Subheadline */}
+              <p className="text-lg md:text-xl text-blue-100/80 max-w-2xl mx-auto mt-7 leading-relaxed font-medium">
+                Réservations, flotte, paiements, clients : tout dans un seul outil. Fini les erreurs. Fini le chaos.
+              </p>
+
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+                <Link
+                  href="/signup"
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-amber-500 hover:bg-amber-400 text-white text-base font-semibold rounded-full transition-all hover:shadow-xl hover:shadow-amber-500/25 active:scale-[0.98]"
+                >
+                  Démarrer gratuitement
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+                <Link
+                  href="#product-demo"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-white/30 text-white text-base font-semibold rounded-full hover:bg-white/10 transition-all active:scale-[0.98]"
+                >
+                  Voir la demo
+                </Link>
+              </div>
+
+              {/* Trust bar */}
+              <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 mt-7 text-sm text-blue-200/70">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>Pensé pour les agences marocaines</span>
+                </div>
+                <span className="hidden sm:inline">·</span>
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>WhatsApp intégré</span>
+                </div>
+                <span className="hidden sm:inline">·</span>
+                <div className="flex items-center gap-2">
+                  <Headphones className="w-3.5 h-3.5" />
+                  <span>Français et arabe</span>
+                </div>
+              </div>
+
+              <p className="text-sm text-blue-100/60 mt-5 max-w-xl mx-auto">
+                Mettez fin aux tableaux Excel, aux papiers dispersés et aux suivis oubliés.
+              </p>
+            </Reveal>
+
+            {/* Hero screenshot — extends into next section */}
+            <Reveal className="relative max-w-5xl mx-auto mt-16 mb-[-80px] lg:mb-[-120px] z-10" delayMs={120}>
+              {/* Floating callout tags */}
+              {heroCallouts.map((callout) => (
+                <div
+                  key={callout.label}
+                  className={`absolute ${callout.position} z-20 hidden lg:flex items-center gap-2 px-4 py-2.5 bg-white rounded-full shadow-xl shadow-black/10 border border-gray-100 text-sm font-semibold text-gray-800 animate-float`}
+                  style={{ animationDelay: callout.delay }}
+                >
+                  <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                  {callout.label}
+                </div>
+              ))}
+
+              <BrowserFrame
+                src="/screenshots/dashboard.png"
+                alt="Tableau de bord LocaPro"
+                priority
+                className="screenshot-frame shadow-2xl shadow-black/30 ring-1 ring-white/10"
+              />
+            </Reveal>
           </div>
+        </div>
+        <SectionCurve position="bottom" colorClass="text-white" />
+      </section>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
-            <Link
-              href="/login"
-              className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#2563EB] text-white text-base font-semibold rounded-full hover:bg-[#1D4ED8] transition-all hover:shadow-xl hover:shadow-[#2563EB]/25 active:scale-[0.98]"
-            >
-              Démarrer l&apos;essai gratuit
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-            <Link
-              href="/login"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 border border-gray-200 text-gray-700 text-base font-semibold rounded-full hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-[0.98]"
-            >
-              Voir la démo
-            </Link>
-          </div>
-
-          {/* Social Proof */}
-          <p className="text-center text-sm text-gray-500 mb-8">
-            <span className="font-semibold text-gray-700">Déjà utilisé par 120+ agences</span> au Maroc
+      {/* ─── SOCIAL PROOF BAR ─── */}
+      <section className="relative pt-32 lg:pt-44 pb-24 lg:pb-32 px-6 lg:px-8 bg-white">
+        <div className="max-w-[1200px] mx-auto text-center">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 tracking-tight">
+            Moins de dispersion. Plus de controle.
+          </h2>
+          <p className="text-lg text-gray-500 mt-4 max-w-2xl mx-auto leading-relaxed">
+            LocaPro aide les agences a centraliser leurs dossiers, suivre les actions critiques et mieux piloter l&apos;activite au quotidien.
           </p>
 
-          {/* Trust Row */}
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-14">
-            {trustItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.text} className="flex items-center gap-2 text-sm text-gray-500">
-                  <Icon className="w-4 h-4 text-[#2563EB]" />
-                  <span>{item.text}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Product Mockup with Callouts */}
-          <div className="relative mx-auto max-w-4xl">
-            {/* Soft gradient background for depth */}
-            <div className="absolute -inset-8 bg-gradient-to-b from-[#2563EB]/5 via-[#2563EB]/10 to-transparent rounded-[2rem] blur-2xl" />
-            <div className="absolute -inset-4 bg-gradient-to-tr from-gray-100/80 to-white/50 rounded-3xl" />
-
-            {/* Callout Labels */}
-            {callouts.map((callout) => (
-              <div
-                key={callout.label}
-                className={`absolute ${callout.position} z-20 hidden lg:flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-xl shadow-gray-900/10 border border-gray-100 text-sm font-semibold text-gray-800 animate-float`}
-                style={{ animationDelay: callout.delay }}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-5xl mx-auto">
+            {qualitativeProof.map((item, index) => (
+              <Reveal
+                key={item.title}
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-8 text-left"
+                delayMs={index * 80}
               >
-                <div className="w-2.5 h-2.5 rounded-full bg-[#2563EB] animate-pulse" />
-                {callout.label}
-              </div>
+                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
+                <div className="text-gray-600 text-sm leading-relaxed mt-3">
+                  {item.body}
+                </div>
+              </Reveal>
             ))}
+          </div>
+        </div>
+        <SectionCurve position="bottom" colorClass="text-slate-50" />
+      </section>
 
-            {/* Browser Frame */}
-            <div className="relative bg-white rounded-2xl border border-gray-200/80 shadow-2xl shadow-gray-400/20 overflow-hidden ring-1 ring-gray-900/5">
-              <div className="bg-gray-50 border-b border-gray-100 px-4 py-2.5 flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#28CA41]" />
-                </div>
-                <div className="flex-1 mx-4">
-                  <div className="bg-white border border-gray-200 rounded-md px-3 py-1 text-xs text-gray-400 max-w-[200px] mx-auto text-center">
-                    app.locapro.ma
-                  </div>
-                </div>
+      {/* ─── FEATURE SECTIONS ─── */}
+      <div id="features" className="py-10 lg:py-14 bg-white">
+        <FeatureSection section={featureSections[0]} index={0} bgClass="bg-white" />
+        <FeatureSection section={featureSections[1]} index={1} bgClass="bg-white" />
+        <FeatureSection section={featureSections[2]} index={2} bgClass="bg-white" />
+
+        {/* ─── DASHBOARD SHOWCASE (full-width break) ─── */}
+        <section
+          id="product-demo"
+          className="relative my-16 lg:my-24 py-24 lg:py-32 px-6 lg:px-8 section-gradient-dark text-white overflow-hidden"
+        >
+          <SectionCurve position="top" colorClass="text-white" />
+          <SectionCurve position="bottom" colorClass="text-white" />
+          <div className="absolute inset-0 hero-dots opacity-25" />
+          <div className="hero-glow-1 top-[-260px] right-[-120px] opacity-40" />
+          <div className="hero-glow-2 bottom-[-220px] left-[-140px] opacity-30" />
+          <div className="max-w-[1200px] mx-auto">
+            <Reveal className="text-center max-w-3xl mx-auto">
+              <div className="pill-badge bg-white/10 text-white border border-white/10 mb-5">
+                TABLEAU DE BORD
               </div>
-              <div className="aspect-[16/10] relative overflow-hidden bg-gray-50">
-                <Image
-                  src="/assets/dashboard-screenshot.png"
-                  alt="Tableau de bord Locapro"
-                  width={1920}
-                  height={1080}
-                  className="w-full h-full object-cover object-top"
-                  priority
+              <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-bold tracking-tight leading-tight text-white">
+                Chaque matin, commencez avec les bonnes priorités.
+              </h2>
+              <p className="text-lg text-blue-100/80 mt-5 leading-relaxed">
+                Le tableau de bord met en avant ce qui demande votre attention : retours du jour, retards, montants à encaisser, cautions à libérer et points de risque.
+              </p>
+
+              {/* Feature pills */}
+              <div className="flex flex-wrap justify-center gap-3 mt-8">
+                {["KPIs utiles", "Alertes visibles", "Vue d'ensemble immédiate"].map(
+                  (pill) => (
+                    <span
+                      key={pill}
+                      className="px-4 py-2 bg-white/10 border border-white/10 rounded-full text-sm font-medium text-white"
+                    >
+                      {pill}
+                    </span>
+                  )
+                )}
+              </div>
+            </Reveal>
+
+            {/* Full-width screenshot */}
+            <Reveal className="relative max-w-6xl mx-auto mt-16" delayMs={100}>
+              <div className="absolute -inset-6 bg-gradient-to-b from-blue-300/30 to-transparent rounded-[2.5rem] blur-3xl" />
+              <div className="relative rounded-[2.5rem] bg-white/10 border border-white/10 p-3 lg:p-5 shadow-2xl shadow-black/20 backdrop-blur-sm">
+                <BrowserFrame
+                  src="/screenshots/dashboard.png"
+                  alt="Tableau de bord LocaPro"
+                  className="relative screenshot-frame shadow-2xl shadow-black/20"
                 />
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
+            </Reveal>
 
-      {/* ─── PAIN POINTS ─── */}
-      <section className="py-20 px-5 lg:px-8 bg-gray-50/70">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div>
-              <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Le problème</p>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-8 leading-tight">
-                Vous reconnaissez ces situations ?
-              </h2>
-              <ul className="space-y-4">
-                {problems.map((problem) => (
-                  <li key={problem} className="flex items-start gap-3 text-gray-600">
-                    <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CloseIcon className="w-3 h-3 text-red-500" />
-                    </div>
-                    <span className="text-[15px]">{problem}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="flex items-center justify-center">
-              <div className="relative w-full max-w-sm">
-                <div className="absolute inset-0 bg-[#2563EB]/10 rounded-3xl blur-2xl scale-110" />
-                <div className="relative text-center p-10 bg-white rounded-2xl shadow-xl">
-                  <div className="w-14 h-14 bg-[#2563EB] rounded-xl flex items-center justify-center mx-auto mb-5">
-                    <Check className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-3">
-                    Locapro règle tout ça.
-                  </h3>
-                  <p className="text-gray-500 text-sm">Une seule application. Zéro prise de tête.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── FEATURES ─── */}
-      <section id="features" className="py-20 px-5 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Fonctionnalités</p>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              Tout ce qu&apos;il vous faut, rien de plus
-            </h2>
-            <p className="text-gray-500 max-w-xl mx-auto">
-              Conçu spécialement pour les agences de location au Maroc. Simple, complet, efficace.
+            {/* Outcome callout */}
+            <p className="text-center mt-10 text-lg font-semibold text-white">
+              Moins de réaction dans l&apos;urgence.{" "}
+              <span className="text-amber-300">Plus d&apos;anticipation.</span>
             </p>
           </div>
+        </section>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <div
-                  key={feature.title}
-                  className="group p-6 rounded-2xl bg-white shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all duration-300 hover:-translate-y-1"
-                >
-                  <div className="w-11 h-11 bg-gray-100 group-hover:bg-[#2563EB] rounded-xl flex items-center justify-center mb-5 transition-colors duration-300">
-                    <Icon className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors duration-300" />
-                  </div>
-                  <h3 className="text-lg font-bold mb-1.5 text-gray-900">{feature.title}</h3>
-                  <p className="text-[#2563EB] font-medium text-sm mb-2">{feature.benefit}</p>
-                  <p className="text-gray-500 text-sm leading-relaxed">{feature.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+        <FeatureSection section={featureSections[3]} index={3} bgClass="bg-white" />
+        <FeatureSection section={featureSections[4]} index={4} bgClass="bg-white" />
+        <FeatureSection section={featureSections[5]} index={5} bgClass="bg-white" />
+        <FeatureSection section={featureSections[6]} index={6} bgClass="bg-white" />
+      </div>
 
-      {/* ─── MOROCCO SECTION ─── */}
-      <section className="py-20 px-5 lg:px-8 bg-gray-900 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#2563EB]/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-[#2563EB]/10 rounded-full blur-3xl" />
+      {/* ─── MOROCCO DIFFERENTIATION ─── */}
+      <section
+        id="why-locapro"
+        className="py-24 lg:py-32 px-6 lg:px-8 section-gradient-dark text-white relative overflow-hidden"
+      >
+        <SectionCurve position="top" colorClass="text-white" />
+        <SectionCurve position="bottom" colorClass="text-white" />
+        <div className="absolute inset-0 hero-dots opacity-30" />
+        <div className="hero-glow-1 top-[-300px] right-[-200px] opacity-40" />
+        <div className="hero-glow-2 bottom-[-200px] left-[-100px] opacity-30" />
 
-        <div className="max-w-6xl mx-auto relative">
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-full backdrop-blur-sm">
-              <span className="text-lg">🇲🇦</span>
-              <span className="text-sm font-semibold">Conçu pour le Maroc</span>
-            </div>
+        <div className="max-w-[1200px] mx-auto relative">
+          {/* Badge */}
+          <div className="flex justify-center mb-8">
+            <Reveal className="inline-flex items-center gap-2.5 px-5 py-2 bg-white/10 border border-white/20 rounded-full backdrop-blur-sm">
+              <span className="text-base">🇲🇦</span>
+              <span className="text-sm font-semibold text-white">Conçu pour le Maroc</span>
+            </Reveal>
           </div>
 
-          <h2 className="text-center text-3xl md:text-4xl font-bold tracking-tight mb-4">
-            Pensé pour les agences marocaines
-          </h2>
-          <p className="text-center text-gray-400 max-w-xl mx-auto mb-12">
-            Pas un logiciel étranger adapté.{" "}
-            <span className="text-white font-medium">Créé pour votre réalité.</span>
-          </p>
+          <Reveal>
+            <h2 className="text-center text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight leading-tight">
+              Pensé pour les agences marocaines
+            </h2>
+            <p className="text-center text-blue-200/60 max-w-xl mx-auto mt-4 text-lg leading-relaxed">
+              Pas juste un logiciel de plus.{" "}
+              <span className="text-white font-medium">Un vrai outil de pilotage adapté à votre réalité terrain.</span>
+            </p>
+          </Reveal>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {differentiators.map((item) => {
+          {/* Differentiator cards */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-16">
+            {differentiators.map((item, index) => {
               const Icon = item.icon;
               return (
-                <div
+                <Reveal
                   key={item.title}
-                  className="text-center p-5 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-[#2563EB]/50 hover:bg-white/10 transition-all duration-300"
+                  className="text-center p-6 bg-white/[0.04] backdrop-blur-sm rounded-2xl border border-white/10 hover:border-blue-400/30 hover:bg-white/[0.08] transition-all duration-300"
+                  delayMs={index * 70}
                 >
-                  <div className="w-10 h-10 bg-[#2563EB]/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <Icon className="w-5 h-5 text-[#2563EB]" />
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <Icon className="w-6 h-6 text-blue-300" />
                   </div>
                   <h4 className="font-semibold text-white text-sm mb-1">{item.title}</h4>
-                  <p className="text-xs text-gray-400">{item.description}</p>
-                </div>
+                  <p className="text-xs text-blue-200/50 leading-relaxed">{item.description}</p>
+                </Reveal>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* ─── MONITORING BENEFITS ─── */}
-      <section className="py-20 px-5 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div className="order-2 lg:order-1">
-              <div className="relative">
-                <div className="absolute -inset-4 bg-gradient-to-br from-[#2563EB]/10 to-gray-100 rounded-2xl blur-xl" />
-                <div className="relative rounded-xl border border-gray-200 overflow-hidden shadow-xl">
-                  <Image
-                    src="/assets/dashboard-screenshot.png"
-                    alt="Tableau de bord"
-                    width={1920}
-                    height={1080}
-                    className="w-full h-auto"
-                  />
-                </div>
-              </div>
+      {/* ─── TESTIMONIALS ─── */}
+      <section id="testimonials" className="py-24 lg:py-32 px-6 lg:px-8 bg-white">
+        <div className="max-w-[1200px] mx-auto grid lg:grid-cols-[0.9fr_1.1fr] gap-12 lg:gap-16 items-start">
+          <div className="max-w-md">
+            <div className="pill-badge bg-blue-50 text-blue-600 mb-5">
+              PREUVES TERRAIN
             </div>
-
-            <div className="order-1 lg:order-2">
-              <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Automatisation</p>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-8 leading-tight">
-                Ce que Locapro surveille pour vous
-              </h2>
-
-              <div className="space-y-5">
-                {monitoring.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={item.title} className="flex gap-4">
-                      <div className={`w-10 h-10 ${item.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                        <Icon className={`w-5 h-5 ${item.color}`} />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-1">{item.title}</h4>
-                        <p className="text-gray-500 text-sm leading-relaxed">{item.description}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <Link
-                href="/login"
-                className="group inline-flex items-center gap-2 mt-8 px-6 py-3 bg-gray-900 text-white font-semibold rounded-full hover:bg-gray-800 transition-all active:scale-[0.98]"
-              >
-                Voir la démo
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── RESULTS & TESTIMONIAL ─── */}
-      <section className="py-20 px-5 lg:px-8 bg-gray-50/70">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Résultats</p>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Des résultats concrets
+            <h2 className="text-3xl md:text-4xl lg:text-[2.9rem] font-bold tracking-tight text-gray-900 leading-tight">
+              Ce que LocaPro clarifie au quotidien.
             </h2>
+            <p className="text-gray-500 mt-5 text-lg leading-relaxed">
+              Des situations concrètes, mieux gérées quand les informations, documents et actions restent au même endroit.
+            </p>
+            <div className="space-y-3 mt-8">
+              {[
+                "Moins de temps perdu à chercher une information",
+                "Des retours et paiements plus simples à suivre",
+                "Des dossiers plus propres en cas de litige",
+              ].map((point) => (
+                <div
+                  key={point}
+                  className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-gray-700 mr-2"
+                >
+                  <div className="w-2 h-2 rounded-full bg-blue-600" />
+                  {point}
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-5 mb-14">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center p-8 rounded-2xl bg-white shadow-sm">
-                <div className="text-4xl md:text-5xl font-bold text-[#2563EB] mb-2 tracking-tight">
-                  {stat.value}
+          <div className="grid md:grid-cols-2 gap-6">
+            {proofCases.map((item, index) => (
+              <Reveal
+                key={item.kicker}
+                className={`rounded-3xl border p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+                  index === 0
+                    ? "md:col-span-2 bg-gradient-to-br from-slate-50 via-white to-blue-50/60 border-blue-100 shadow-lg shadow-blue-100/30"
+                    : "bg-white border-slate-200 shadow-sm"
+                }`}
+                delayMs={index * 90}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-700">
+                    <div className="w-2 h-2 rounded-full bg-blue-600" />
+                    {item.kicker}
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700">
+                    Preuve concrète
+                  </div>
                 </div>
-                <div className="text-gray-500 font-medium text-sm">{stat.label}</div>
-              </div>
+                <blockquote className="text-gray-800 text-[15px] md:text-base leading-relaxed font-medium mb-6">
+                  {item.title}
+                </blockquote>
+                <div className="pt-5 border-t border-slate-200 flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-sm text-gray-600 leading-relaxed">{item.body}</div>
+                    <div className="text-xs text-blue-600 font-semibold mt-3">{item.outcome}</div>
+                  </div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">
+                    LocaPro
+                  </div>
+                </div>
+              </Reveal>
             ))}
           </div>
-
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white p-8 md:p-10 rounded-2xl shadow-md">
-              <div className="flex items-center gap-1 mb-5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                ))}
-              </div>
-              <blockquote className="text-lg md:text-xl font-medium leading-relaxed mb-6 text-gray-900">
-                &quot;Avant Locapro, je passais mes soirées à vérifier les retours et les paiements. Maintenant tout est clair, je peux enfin me concentrer sur mes clients.&quot;
-              </blockquote>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2563EB] to-[#3B82F6] flex items-center justify-center text-white font-bold text-sm">
-                  YA
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900 text-sm">Youssef A.</div>
-                  <div className="text-xs text-gray-500">Gérant d&apos;agence, Casablanca</div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* ─── HOW IT WORKS ─── */}
-      <section className="py-20 px-5 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Comment ça marche</p>
+      {/* ─── OUTCOMES BAND ─── */}
+      <section className="relative py-20 lg:py-24 px-6 lg:px-8 section-gradient-dark text-white overflow-hidden">
+        <SectionCurve position="top" colorClass="text-white" />
+        <SectionCurve position="bottom" colorClass="text-slate-50" />
+        <div className="absolute inset-0 hero-dots opacity-20" />
+        <div className="max-w-[1200px] mx-auto relative">
+          <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Démarrer prend 15 minutes
+              Plus de clarté. Plus de maîtrise chaque jour.
             </h2>
+            <p className="text-blue-100/70 text-lg mt-4">
+              Quand l'information est centralisée, votre équipe agit plus vite et votre agence tourne avec moins de friction.
+            </p>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {steps.map((step, i) => {
-              const Icon = step.icon;
-              return (
-                <div key={step.number} className="relative text-center">
-                  {i < steps.length - 1 && (
-                    <div className="hidden md:block absolute top-10 left-[60%] w-[80%] border-t-2 border-dashed border-gray-200" />
-                  )}
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-[#2563EB]/10 rounded-2xl mb-5 relative">
-                    <Icon className="w-8 h-8 text-[#2563EB]" />
-                    <span className="absolute -top-2 -right-2 w-7 h-7 bg-[#2563EB] rounded-full flex items-center justify-center text-white text-xs font-bold">
-                      {step.number}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{step.title}</h3>
-                  <p className="text-gray-500 text-sm">{step.description}</p>
+          <div className="grid md:grid-cols-3 gap-6 mt-14">
+            {businessStats.map((stat, index) => (
+              <Reveal
+                key={stat.value}
+                className="rounded-3xl border border-white/10 bg-white/[0.06] p-8 text-center backdrop-blur-sm"
+                delayMs={index * 90}
+              >
+                <div className="text-5xl md:text-6xl font-bold tracking-tight text-amber-300">
+                  {stat.value}
                 </div>
-              );
-            })}
+                <p className="mt-4 text-sm leading-relaxed text-blue-100/75">
+                  {stat.label}
+                </p>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ─── PRICING ─── */}
-      <section id="pricing" className="py-20 px-5 lg:px-8 bg-gray-50/70">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">Tarifs</p>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              Un prix simple, sans surprise
-            </h2>
-            <p className="text-gray-500">Choisissez le forfait adapté à votre agence</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-5 max-w-4xl mx-auto items-start mb-8">
-            {pricing.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative p-7 rounded-2xl transition-all duration-300 ${
-                  plan.popular
-                    ? "bg-[#2563EB] text-white shadow-2xl shadow-[#2563EB]/25 md:-mt-4 md:mb-4 md:py-9"
-                    : "bg-white shadow-sm hover:shadow-lg"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-amber-400 text-gray-900 text-xs font-bold rounded-full shadow-lg">
-                    {plan.badge}
-                  </div>
-                )}
-
-                <div className="mb-6">
-                  <h3 className={`text-lg font-bold mb-1 ${plan.popular ? "text-white" : "text-gray-900"}`}>
-                    {plan.name}
-                  </h3>
-                  <p className={`text-sm mb-4 ${plan.popular ? "text-white/70" : "text-gray-500"}`}>
-                    {plan.tagline}
-                  </p>
-                  <div className="flex items-baseline gap-1">
-                    <span className={`text-3xl font-bold tracking-tight ${plan.popular ? "text-white" : "text-gray-900"}`}>
-                      {plan.price}
-                    </span>
-                    {plan.period && (
-                      <span className={plan.popular ? "text-white/70" : "text-gray-500"}>
-                        MAD{plan.period}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5">
-                      <Check className={`w-4 h-4 flex-shrink-0 mt-0.5 ${plan.popular ? "text-white" : "text-[#2563EB]"}`} />
-                      <span className={`text-sm ${plan.popular ? "text-white/90" : "text-gray-600"}`}>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  href="/login"
-                  className={`block w-full py-3 font-semibold text-center text-sm transition-all rounded-full active:scale-[0.98] ${
-                    plan.popular
-                      ? "bg-white text-[#2563EB] hover:bg-gray-100"
-                      : "bg-gray-900 text-white hover:bg-gray-800"
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
+      <section id="pricing" className="py-24 lg:py-32 px-6 lg:px-8 bg-slate-50 relative overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-32 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.12),transparent_55%)]" />
+        <div className="max-w-[1200px] mx-auto">
+          <Reveal className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-16">
+            <div className="max-w-2xl">
+              <div className="pill-badge bg-blue-50 text-blue-600 mb-5">
+                TARIFS
               </div>
-            ))}
+              <h2 className="text-3xl md:text-4xl lg:text-[2.9rem] font-bold tracking-tight text-gray-900 mb-4 leading-tight">
+                Un prix simple. Pas de surprises.
+              </h2>
+              <p className="text-gray-500 text-lg leading-relaxed">
+                Commencez gratuitement. Évoluez quand votre agence en a besoin, sans engagement inutile.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">
+                Inclus
+              </div>
+              <div className="mt-1 text-sm font-medium text-gray-700">
+                Support, mises à jour et prise en main rapide
+              </div>
+            </div>
+          </Reveal>
+
+          <div className="rounded-[2rem] border border-slate-200 bg-white/70 backdrop-blur-sm p-5 lg:p-6 shadow-xl shadow-slate-200/40">
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
+              {pricing.map((plan, index) => (
+                <Reveal
+                  key={plan.name}
+                  className={`relative rounded-2xl transition-all duration-300 ${
+                    plan.popular
+                      ? "bg-blue-600 text-white shadow-2xl shadow-blue-600/25 md:-mt-4 md:mb-4 p-8 md:py-10"
+                      : "bg-white shadow-sm hover:shadow-lg border border-gray-100 p-8"
+                  }`}
+                  delayMs={index * 90}
+                >
+                  {plan.popular && plan.badge && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-lg">
+                      {plan.badge}
+                    </div>
+                  )}
+
+                  <div className="mb-7">
+                    <h3
+                      className={`text-lg font-bold mb-1 ${
+                        plan.popular ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      {plan.name}
+                    </h3>
+                    <p
+                      className={`text-sm mb-5 ${
+                        plan.popular ? "text-blue-100/70" : "text-gray-500"
+                      }`}
+                    >
+                      {plan.tagline}
+                    </p>
+                    <div className="flex items-baseline gap-1">
+                      <span
+                        className={`text-4xl font-bold tracking-tight ${
+                          plan.popular ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        {plan.price}
+                      </span>
+                      {plan.period && (
+                        <span
+                          className={
+                            plan.popular ? "text-blue-100/70" : "text-gray-500"
+                          }
+                        >
+                          MAD{plan.period}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <ul className="space-y-3 mb-7">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5">
+                        <Check
+                          className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
+                            plan.popular ? "text-blue-200" : "text-blue-600"
+                          }`}
+                        />
+                        <span
+                          className={`text-sm ${
+                            plan.popular ? "text-white/90" : "text-gray-600"
+                          }`}
+                        >
+                          {f}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link
+                    href="/signup"
+                    className={`block w-full py-3.5 font-semibold text-center text-sm transition-all rounded-full active:scale-[0.98] ${
+                      plan.popular
+                        ? "bg-white text-blue-600 hover:bg-blue-50"
+                        : "bg-gray-900 text-white hover:bg-gray-800"
+                    }`}
+                  >
+                    {plan.cta}
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
           </div>
 
-          <p className="text-center text-sm text-gray-500">
-            Sans engagement • Annulable à tout moment • Support inclus
+          <p className="text-center text-sm text-gray-500 mt-10">
+            Sans engagement · Annulable à tout moment · Support inclus
           </p>
         </div>
       </section>
 
       {/* ─── FAQ ─── */}
-      <section id="faq" className="py-20 px-5 lg:px-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider mb-3">FAQ</p>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Questions fréquentes
+      <section id="faq" className="py-24 lg:py-32 px-6 lg:px-8 bg-white">
+        <div className="max-w-3xl mx-auto">
+          <Reveal className="text-center mb-14">
+            <div className="pill-badge bg-blue-50 text-blue-600 mb-5">FAQ</div>
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-gray-900">
+              Les questions avant de se lancer
             </h2>
-          </div>
+          </Reveal>
 
-          <div className="bg-white rounded-2xl px-6 shadow-md">
+          <Reveal className="bg-white rounded-2xl px-8 shadow-sm border border-gray-100" delayMs={80}>
             {faqs.map((faq) => (
-              <FAQItem key={faq.q} q={faq.q} a={faq.a} defaultOpen={faq.defaultOpen} />
+              <FAQItem
+                key={faq.q}
+                q={faq.q}
+                a={faq.a}
+                defaultOpen={faq.defaultOpen}
+              />
             ))}
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* ─── FINAL CTA ─── */}
-      <section className="py-20 px-5 lg:px-8 bg-[#2563EB] text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
-        </div>
+      <section
+        id="contact"
+        className="py-24 lg:py-32 px-6 lg:px-8 hero-gradient text-white relative overflow-hidden"
+      >
+        <SectionCurve position="top" colorClass="text-slate-50" />
+        <div className="absolute inset-0 hero-dots opacity-30" />
+        <div className="hero-glow-1 top-[-200px] left-[20%] opacity-40" />
+        <div className="hero-glow-2 bottom-[-150px] right-[20%] opacity-30" />
 
-        <div className="max-w-3xl mx-auto text-center relative">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-5">
-            Prêt à reprendre le contrôle de votre agence ?
+        <Reveal className="max-w-3xl mx-auto text-center relative">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
+            Prêt à reprendre le contrôle ?
           </h2>
-          <p className="text-lg text-white/80 mb-8 max-w-xl mx-auto">
-            Rejoignez les agences qui ont choisi la sérénité. Essai gratuit 14 jours, sans carte bancaire.
+          <p className="text-lg text-blue-100/80 mt-6 max-w-xl mx-auto leading-relaxed">
+            Essayez LocaPro gratuitement. Centralisez vos opérations, réduisez les erreurs et gardez une vision plus claire sur vos retours, vos paiements et vos cautions.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
             <Link
-              href="/login"
-              className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white text-[#2563EB] text-base font-semibold rounded-full hover:bg-gray-100 transition-all active:scale-[0.98]"
+              href="/signup"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-amber-500 hover:bg-amber-400 text-white text-base font-semibold rounded-full transition-all hover:shadow-xl hover:shadow-amber-500/25 active:scale-[0.98]"
             >
-              Démarrer l&apos;essai gratuit
+              Démarrer maintenant
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <Link
-              href="/login"
-              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 border-2 border-white/30 text-white text-base font-semibold rounded-full hover:bg-white/10 transition-all active:scale-[0.98]"
+              href="#product-demo"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-white/30 text-white text-base font-semibold rounded-full hover:bg-white/10 transition-all active:scale-[0.98]"
             >
-              Voir la démo
+              Contactez-nous pour une démo
             </Link>
           </div>
-        </div>
+          <p className="text-sm text-blue-200/50 mt-6">
+            Aucune carte bancaire requise
+          </p>
+        </Reveal>
       </section>
 
       {/* ─── FOOTER ─── */}
-      <footer className="py-14 px-5 lg:px-8 bg-white border-t border-gray-100">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-10 mb-10">
+      <footer className="py-16 lg:py-20 px-6 lg:px-8 bg-gray-900 text-white">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
+            {/* Brand */}
             <div className="lg:col-span-2">
               <Image
                 src="/assets/locapro-logo.png"
-                alt="Locapro"
+                alt="LocaPro"
                 width={140}
                 height={36}
-                className="h-8 w-auto mb-4"
+                className="h-8 w-auto mb-5 brightness-0 invert"
               />
-              <p className="text-gray-500 text-sm leading-relaxed mb-4 max-w-xs">
-                La plateforme tout-en-un pour les agences de location automobile au Maroc.
+              <p className="text-gray-400 text-sm leading-relaxed mb-4 max-w-xs">
+                FAIT POUR LES AGENCES MAROCAINES.
               </p>
-              <p className="text-sm text-gray-400">🇲🇦 Fait avec ❤️ au Maroc</p>
+              <p className="text-sm text-gray-500">
+                🇲🇦 Pensé pour le terrain marocain
+              </p>
             </div>
 
+            {/* Produit */}
             <div>
-              <h4 className="font-semibold text-sm mb-4 text-gray-900">Produit</h4>
-              <ul className="space-y-2.5 text-sm">
-                <li><a href="#features" className="text-gray-500 hover:text-gray-900 transition-colors">Fonctionnalités</a></li>
-                <li><a href="#pricing" className="text-gray-500 hover:text-gray-900 transition-colors">Tarifs</a></li>
-                <li><a href="#" className="text-gray-500 hover:text-gray-900 transition-colors">Démo</a></li>
+              <h4 className="font-semibold text-sm mb-5 text-white">Produit</h4>
+              <ul className="space-y-3 text-sm">
+                <li>
+                  <a href="#features" className="text-gray-400 hover:text-white transition-colors">
+                    Fonctionnalités
+                  </a>
+                </li>
+                <li>
+                  <a href="#pricing" className="text-gray-400 hover:text-white transition-colors">
+                    Tarifs
+                  </a>
+                </li>
+                <li>
+                  <a href="#product-demo" className="text-gray-400 hover:text-white transition-colors">
+                    Démo
+                  </a>
+                </li>
               </ul>
             </div>
 
+            {/* Ressources */}
             <div>
-              <h4 className="font-semibold text-sm mb-4 text-gray-900">Entreprise</h4>
-              <ul className="space-y-2.5 text-sm">
-                <li><a href="#" className="text-gray-500 hover:text-gray-900 transition-colors">À propos</a></li>
-                <li><a href="#" className="text-gray-500 hover:text-gray-900 transition-colors">Contact</a></li>
+              <h4 className="font-semibold text-sm mb-5 text-white">Ressources</h4>
+              <ul className="space-y-3 text-sm">
+                <li>
+                  <a href="#faq" className="text-gray-400 hover:text-white transition-colors">
+                    FAQ
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    API
+                  </a>
+                </li>
               </ul>
             </div>
 
+            {/* Entreprise */}
             <div>
-              <h4 className="font-semibold text-sm mb-4 text-gray-900">Support</h4>
-              <ul className="space-y-2.5 text-sm">
-                <li><a href="#faq" className="text-gray-500 hover:text-gray-900 transition-colors">FAQ</a></li>
-                <li><a href="#" className="text-gray-500 hover:text-gray-900 transition-colors">Documentation</a></li>
+              <h4 className="font-semibold text-sm mb-5 text-white">Entreprise</h4>
+              <ul className="space-y-3 text-sm">
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    À propos
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    Contact
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    CGU
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
 
-          <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-400">© {new Date().getFullYear()} Locapro. Tous droits réservés.</p>
-            <div className="flex gap-6 text-sm text-gray-400">
-              <a href="#" className="hover:text-gray-900 transition-colors">Confidentialité</a>
-              <a href="#" className="hover:text-gray-900 transition-colors">CGU</a>
+          {/* Bottom bar */}
+          <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-500">
+              © {new Date().getFullYear()} LocaPro. Tous droits réservés.
+            </p>
+            <div className="flex gap-6 text-sm text-gray-500">
+              <a href="#" className="hover:text-white transition-colors">
+                Confidentialité
+              </a>
+              <a href="#" className="hover:text-white transition-colors">
+                CGU
+              </a>
             </div>
           </div>
         </div>
       </footer>
-
     </div>
   );
 }
