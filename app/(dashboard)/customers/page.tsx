@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { startOfMonth } from "date-fns";
 import { getSession } from "@/lib/auth-cache";
 import { canDeleteCustomer, canManageCustomers } from "@/lib/permissions";
@@ -13,9 +14,8 @@ interface CustomersPageProps {
 export default async function CustomersPage({ searchParams }: CustomersPageProps) {
   const session = await getSession();
 
-  if (!session) {
-    return null;
-  }
+  if (!session) redirect("/login");
+  if (!session.user.agencyId) redirect("/setup");
 
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);

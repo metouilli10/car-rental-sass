@@ -24,6 +24,9 @@ export default async function DashboardLayout({
   }
 
   const agencyId = session.user.agencyId ?? "";
+  if (!agencyId) {
+    redirect("/setup");
+  }
   let displayAgencyName = session.user.agencyName || "Agence";
   const dashboardChrome =
     agencyId

@@ -26,9 +26,14 @@ export async function getCurrentUserOrThrow(): Promise<CurrentUser> {
     throw new AuthzError("Non autorisé", 401);
   }
 
+  const agencyId = session.user.agencyId;
+  if (!agencyId || typeof agencyId !== "string") {
+    throw new AuthzError("Session invalide : agencyId manquant. Veuillez vous reconnecter.", 401);
+  }
+
   return {
     id: session.user.id,
-    agencyId: session.user.agencyId,
+    agencyId,
     role: session.user.role,
     email: session.user.email ?? "",
   };

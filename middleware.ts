@@ -14,5 +14,10 @@ export const config = {
     "/paiements/:path*",
     "/damage-reports/:path*",
     "/infractions/:path*",
+    "/catalogue/:path*",
+    "/calendrier/:path*",
+    "/caisse/:path*",
+    "/settings/:path*",
+    "/notifications/:path*",
   ],
 };

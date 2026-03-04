@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-cache";
 import { canManageVehicles } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -28,7 +29,8 @@ export default async function VehiclesPage({
   searchParams: Promise<SearchParams>;
 }) {
   const session = await getSession();
-  if (!session) return null;
+  if (!session) redirect("/login");
+  if (!session.user.agencyId) redirect("/setup");
 
   const { status, page: pageParam, q } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);

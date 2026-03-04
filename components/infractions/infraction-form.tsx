@@ -76,7 +76,18 @@ export function InfractionForm({ vehicles }: InfractionFormProps) {
   const date = watch("date");
   const time = watch("time");
 
-  // Debounced match lookup
+  const handleSelectMatch = useCallback(
+    (match: BookingMatch) => {
+      setSelectedMatch(match);
+      setValue("bookingId", match.bookingId);
+      setValue("customerId", match.customerId);
+      setValue("clientName", match.customerName);
+      setValue("clientCin", match.customerCin || "");
+      setValue("clientPhone", match.customerPhone);
+    },
+    [setValue]
+  );
+
   const doMatch = useCallback(
     async (vId: string, d: string, t?: string) => {
       if (!vId || !d) {
@@ -97,20 +108,16 @@ export function InfractionForm({ vehicles }: InfractionFormProps) {
         } else {
           setMatchState("results");
           setMatches(result.matches);
-          // Auto-select if single match
-          if (result.matches.length === 1) {
-            handleSelectMatch(result.matches[0]);
-          }
         }
       } catch {
         setMatchState("no-match");
         setMatches([]);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
+  // Debounced match lookup
   useEffect(() => {
     const timer = setTimeout(() => {
       doMatch(vehicleId, date, time);
@@ -118,14 +125,12 @@ export function InfractionForm({ vehicles }: InfractionFormProps) {
     return () => clearTimeout(timer);
   }, [vehicleId, date, time, doMatch]);
 
-  const handleSelectMatch = (match: BookingMatch) => {
-    setSelectedMatch(match);
-    setValue("bookingId", match.bookingId);
-    setValue("customerId", match.customerId);
-    setValue("clientName", match.customerName);
-    setValue("clientCin", match.customerCin || "");
-    setValue("clientPhone", match.customerPhone);
-  };
+  // Auto-select when exactly one match (runs after state updates from doMatch)
+  useEffect(() => {
+    if (matchState === "results" && matches.length === 1 && !selectedMatch) {
+      handleSelectMatch(matches[0]);
+    }
+  }, [matchState, matches, selectedMatch, handleSelectMatch]);
 
   const handleClearMatch = () => {
     setSelectedMatch(null);

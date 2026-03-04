@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
@@ -27,13 +28,12 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
     const session = await getSession();
 
     if (!session?.user) {
-      return null;
+      redirect("/login");
     }
 
     const agencyId = session.user.agencyId;
     if (!agencyId) {
-      console.error("BookingsPage: session.user.agencyId is missing");
-      throw new Error("Session invalide : agencyId manquant. Veuillez vous reconnecter.");
+      redirect("/setup");
     }
 
     const params = await searchParams;

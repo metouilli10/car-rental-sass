@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getSession } from "@/lib/auth-cache";
 import { getDashboardDataV3 } from "@/lib/dashboard/v3-queries";
@@ -16,9 +17,8 @@ interface DashboardPageProps {
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const session = await getSession();
 
-  if (!session?.user?.agencyId) {
-    return null;
-  }
+  if (!session?.user) redirect("/login");
+  if (!session.user.agencyId) redirect("/setup");
 
   const agencyId = session.user.agencyId;
   const params = await searchParams;
@@ -59,7 +59,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <Card className="rounded-xl border border-amber-200 bg-amber-50/80 dark:border-amber-500/30 dark:bg-amber-500/10">
               <CardHeader>
                 <CardTitle className="text-base text-amber-900 dark:text-amber-100">
-                  Donnees temporairement indisponibles
+                  Données temporairement indisponibles
                 </CardTitle>
               </CardHeader>
               <CardContent>

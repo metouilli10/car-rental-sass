@@ -203,7 +203,9 @@ export async function matchBookingsForInfraction(
   if (!session) throw new Error("Non autorisé");
   const agencyId = session.user.agencyId;
 
-  const infractionDate = new Date(date);
+  // Parse "YYYY-MM-DD" as local midnight (not UTC) to avoid timezone mismatch with DB dates
+  const dateStr = date.includes("T") ? date : `${date}T00:00:00`;
+  const infractionDate = new Date(dateStr);
   if (isNaN(infractionDate.getTime())) {
     return { matches: [] };
   }
@@ -213,7 +215,7 @@ export async function matchBookingsForInfraction(
 
   if (time) {
     const [hours, minutes] = time.split(":").map(Number);
-    const exactDateTime = new Date(infractionDate);
+    const exactDateTime = new Date(dateStr);
     exactDateTime.setHours(hours, minutes, 0, 0);
     rangeStart = exactDateTime;
     rangeEnd = exactDateTime;
