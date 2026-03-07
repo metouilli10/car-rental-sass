@@ -11,6 +11,7 @@ import {
   type InfractionFormData,
 } from "@/lib/validations/infraction";
 import type { InfractionStatus, InfractionType, Prisma } from "@prisma/client";
+import { ZodError } from "zod";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -36,6 +37,9 @@ export async function createInfraction(data: InfractionFormData) {
   const session = await getServerSession(authOptions);
   if (!session) throw new Error("Non autorisé");
   const agencyId = session.user.agencyId;
+  if (!agencyId) {
+    return { error: "Session invalide: agence introuvable. Veuillez vous reconnecter." };
+  }
 
   try {
     const validated = infractionSchema.parse(data);
@@ -83,6 +87,18 @@ export async function createInfraction(data: InfractionFormData) {
     return { success: true, infractionId: infraction.id };
   } catch (error) {
     console.error("createInfraction error:", error);
+    if (error instanceof ZodError) {
+      const firstError = error.issues[0]?.message;
+      return { error: firstError || "Données invalides pour l'infraction" };
+    }
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: string }).code === "P2003"
+    ) {
+      return { error: "Réservation ou client invalide pour cette infraction." };
+    }
     return { error: "Erreur lors de la création de l'infraction" };
   }
 }
@@ -267,21 +283,26 @@ export async function assignInfraction(data: {
   infractionId: string;
   bookingId: string;
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new Error("Non autorisé");
-  const agencyId = session.user.agencyId;
-
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return { error: "Session expirée. Veuillez vous reconnecter." };
+    }
+    const agencyId = session.user.agencyId;
+    if (!agencyId) {
+      return { error: "Agence introuvable pour cet utilisateur." };
+    }
+
     const validated = assignInfractionSchema.parse(data);
 
-    // Verify infraction belongs to agency
+    // Verify infraction belongs to agency and keep metadata for consistency checks.
     const infraction = await prisma.infraction.findFirst({
       where: { id: validated.infractionId, agencyId },
-      select: { id: true },
+      select: { id: true, vehicleId: true, date: true },
     });
     if (!infraction) return { error: "Infraction introuvable" };
 
-    // Verify booking belongs to agency and get customer
+    // Verify booking belongs to agency and fetch customer snapshot.
     const booking = await prisma.booking.findFirst({
       where: { id: validated.bookingId, agencyId },
       include: {
@@ -291,6 +312,18 @@ export async function assignInfraction(data: {
       },
     });
     if (!booking) return { error: "Réservation introuvable" };
+
+    // Safety guard: avoid assigning to a booking from a different vehicle.
+    if (booking.vehicleId !== infraction.vehicleId) {
+      return { error: "La réservation sélectionnée ne correspond pas à ce véhicule." };
+    }
+
+    // Safety guard: infraction date must fall within booking period.
+    if (infraction.date < booking.startDate || infraction.date > booking.endDate) {
+      return {
+        error: "La date de l'infraction est en dehors de la période de réservation sélectionnée.",
+      };
+    }
 
     await prisma.infraction.update({
       where: { id: validated.infractionId },
@@ -306,6 +339,8 @@ export async function assignInfraction(data: {
 
     revalidatePath("/infractions");
     revalidatePath(`/infractions/${validated.infractionId}`);
+    revalidatePath(`/bookings/${booking.id}`);
+    revalidatePath(`/customers/${booking.customer.id}`);
     return { success: true };
   } catch (error) {
     console.error("assignInfraction error:", error);

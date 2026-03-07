@@ -76,13 +76,22 @@ export function InfractionForm({ vehicles }: InfractionFormProps) {
   const date = watch("date");
   const time = watch("time");
 
+  const clearMatchSelection = useCallback(() => {
+    setSelectedMatch(null);
+    setValue("bookingId", undefined);
+    setValue("customerId", undefined);
+    setValue("clientName", undefined);
+    setValue("clientCin", undefined);
+    setValue("clientPhone", undefined);
+  }, [setValue]);
+
   const handleSelectMatch = useCallback(
     (match: BookingMatch) => {
       setSelectedMatch(match);
       setValue("bookingId", match.bookingId);
       setValue("customerId", match.customerId);
       setValue("clientName", match.customerName);
-      setValue("clientCin", match.customerCin || "");
+      setValue("clientCin", match.customerCin ?? undefined);
       setValue("clientPhone", match.customerPhone);
     },
     [setValue]
@@ -93,12 +102,12 @@ export function InfractionForm({ vehicles }: InfractionFormProps) {
       if (!vId || !d) {
         setMatchState("empty");
         setMatches([]);
-        setSelectedMatch(null);
+        clearMatchSelection();
         return;
       }
 
       setMatchState("loading");
-      setSelectedMatch(null);
+      clearMatchSelection();
 
       try {
         const result = await matchBookingsForInfraction(vId, d, t || undefined);
@@ -114,7 +123,7 @@ export function InfractionForm({ vehicles }: InfractionFormProps) {
         setMatches([]);
       }
     },
-    []
+    [clearMatchSelection]
   );
 
   // Debounced match lookup
@@ -132,14 +141,7 @@ export function InfractionForm({ vehicles }: InfractionFormProps) {
     }
   }, [matchState, matches, selectedMatch, handleSelectMatch]);
 
-  const handleClearMatch = () => {
-    setSelectedMatch(null);
-    setValue("bookingId", "");
-    setValue("customerId", "");
-    setValue("clientName", "");
-    setValue("clientCin", "");
-    setValue("clientPhone", "");
-  };
+  const handleClearMatch = clearMatchSelection;
 
   const onSubmit = (data: InfractionFormData) => {
     startTransition(async () => {

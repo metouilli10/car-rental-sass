@@ -3,86 +3,69 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { FlatIcon, type FlatIconName } from "@/components/shared/flat-icon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Bell, Wallet, ShieldAlert, type LucideIcon } from "lucide-react";
+import {
+  BarChart3,
+  Bell,
+  Calendar,
+  CalendarCheck,
+  Car,
+  ClipboardCheck,
+  Grid2x2,
+  LayoutDashboard,
+  ShieldAlert,
+  UserCog,
+  Users,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
+
+const sidebarIconMap = {
+  LayoutDashboard,
+  CalendarCheck,
+  Calendar,
+  Users,
+  Car,
+  Grid2x2,
+  Wallet,
+  BarChart3,
+  ClipboardCheck,
+  ShieldAlert,
+  Bell,
+  UserCog,
+} as const;
+
+type SidebarIconName = keyof typeof sidebarIconMap;
 
 interface SidebarItemProps {
   href: string;
-  iconName: string;
+  iconName: SidebarIconName;
   label: string;
   collapsed?: boolean;
 }
 
-const flatIconMap: Record<string, FlatIconName> = {
-  LayoutDashboard: "dashboard",
-  Car: "car",
-  Users: "people",
-  Calendar: "booking",
-  CalendarRange: "schedule",
-  CreditCard: "payment",
-  AlertTriangle: "late-payment",
-  BookOpen: "catalogue",
-  ClipboardCheck: "car-insurance",
-};
-
-const lucideIconMap: Record<string, LucideIcon> = {
-  Bell,
-  Wallet,
-  ShieldAlert,
-};
-
 export function SidebarItem({ href, iconName, label, collapsed = false }: SidebarItemProps) {
   const pathname = usePathname();
   const isActive = pathname === href || pathname.startsWith(href + "/");
-  const flatIconName = flatIconMap[iconName] ?? null;
-  const LucideIconFallback = lucideIconMap[iconName] ?? null;
-
-  if (!flatIconName && !LucideIconFallback) {
-    return null;
-  }
+  const Icon = sidebarIconMap[iconName] as LucideIcon;
 
   const linkContent = (
     <Link
       href={href}
       className={cn(
-        "group relative flex items-center rounded-lg text-[13px] transition-all duration-150 ease-in-out",
-        collapsed
-          ? "justify-center px-0 py-2 w-full"
-          : "gap-3 px-3 py-2",
+        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150",
+        collapsed ? "justify-center gap-0 px-0 w-full" : "gap-3",
         isActive
-          ? "bg-primary/10 text-primary font-medium"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground hover:translate-x-[2px]"
+          ? "bg-primary/10 text-foreground ring-1 ring-primary/15 shadow-sm before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:rounded-full before:bg-primary"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
       )}
     >
-      {/* Active left accent bar */}
-      {isActive && (
-        <span
-          className={cn(
-            "absolute top-0 left-0 h-full w-[3px] rounded-r bg-primary transition-opacity duration-150",
-            collapsed && "left-0"
-          )}
-          aria-hidden
-        />
-      )}
-
-      {flatIconName ? (
-        <FlatIcon
-          name={flatIconName}
-          size={18}
-          className={cn(
-            "shrink-0 transition-all duration-150",
-            isActive ? "opacity-100" : "opacity-60 group-hover:opacity-90"
-          )}
-        />
-      ) : LucideIconFallback ? (
-        <LucideIconFallback
-          className={cn(
-            "size-[18px] shrink-0 transition-all duration-150",
-            isActive ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground"
-          )}
-        />
-      ) : null}
+      <Icon
+        className={cn(
+          "h-5 w-5 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:text-foreground",
+          isActive && "text-blue-600"
+        )}
+      />
 
       {!collapsed && <span className="truncate">{label}</span>}
     </Link>

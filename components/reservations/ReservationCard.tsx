@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { SyntheticEvent } from "react";
 import { UserRole } from "@prisma/client";
 import { Eye } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -36,16 +37,27 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
   const paidNowValue = typeof booking.paidNow === "number" ? booking.paidNow : null;
   const remainingValue =
     typeof booking.remainingAmount === "number" ? booking.remainingAmount : null;
+  const stopPropagation = (event: SyntheticEvent) => {
+    event.stopPropagation();
+  };
+  const navigateToBooking = () => {
+    router.push(`/bookings/${booking.id}`);
+  };
 
   return (
     <Card
       role="button"
       tabIndex={0}
-      onClick={() => router.push(`/bookings/${booking.id}`)}
+      onClick={(event) => {
+        if (event.defaultPrevented) {
+          return;
+        }
+        navigateToBooking();
+      }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          router.push(`/bookings/${booking.id}`);
+          navigateToBooking();
         }
       }}
       className={cn(
@@ -131,9 +143,14 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
           </div>
 
           {/* Bottom: actions */}
-          <div className="flex justify-end gap-1 pt-1" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex justify-end gap-1 pt-1"
+            onPointerDown={stopPropagation}
+            onTouchStart={stopPropagation}
+            onClick={stopPropagation}
+          >
             <Button asChild size="icon" variant="ghost" aria-label="Voir la réservation" className="h-10 w-10">
-              <Link href={`/bookings/${booking.id}`}>
+              <Link href={`/bookings/${booking.id}`} onClick={stopPropagation}>
                 <Eye className="h-4 w-4" />
               </Link>
             </Button>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { SyntheticEvent } from "react";
 import { useMemo, useTransition } from "react";
 import { toast } from "sonner";
 import { BookingStatus, BookingPaymentStatus, UserRole } from "@prisma/client";
@@ -61,11 +62,22 @@ export function BookingActionsDropdown({
   const handleComingSoon = (label: string) => {
     toast.info(`${label} : Bientôt disponible`);
   };
+  const stopPropagation = (event: SyntheticEvent) => {
+    event.stopPropagation();
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Plus d'actions" disabled={isPending}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Plus d'actions"
+          disabled={isPending}
+          onPointerDown={stopPropagation}
+          onTouchStart={stopPropagation}
+          onClick={stopPropagation}
+        >
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
         </Button>
       </DropdownMenuTrigger>

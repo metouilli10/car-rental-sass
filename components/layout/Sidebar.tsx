@@ -136,10 +136,10 @@ export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
           {showOperations ? (
             <SidebarSection label="Opérations" collapsed={isCollapsed}>
               {permissions["bookings.view"] ? (
-                <SidebarItem href="/bookings" iconName="Calendar" label="Réservations" collapsed={isCollapsed} />
+                <SidebarItem href="/bookings" iconName="CalendarCheck" label="Réservations" collapsed={isCollapsed} />
               ) : null}
               {permissions["calendar.view"] ? (
-                <SidebarItem href="/calendrier" iconName="CalendarRange" label="Calendrier" collapsed={isCollapsed} />
+                <SidebarItem href="/calendrier" iconName="Calendar" label="Calendrier" collapsed={isCollapsed} />
               ) : null}
               {permissions["customers.view"] ? (
                 <SidebarItem href="/customers" iconName="Users" label="Clients" collapsed={isCollapsed} />
@@ -148,7 +148,7 @@ export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
                 <SidebarItem href="/vehicles" iconName="Car" label="Véhicules" collapsed={isCollapsed} />
               ) : null}
               {permissions["catalogue.view"] ? (
-                <SidebarItem href="/catalogue" iconName="BookOpen" label="Catalogue" collapsed={isCollapsed} />
+                <SidebarItem href="/catalogue" iconName="Grid2x2" label="Catalogue" collapsed={isCollapsed} />
               ) : null}
             </SidebarSection>
           ) : null}
@@ -160,7 +160,7 @@ export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
                 <SidebarItem href="/caisse" iconName="Wallet" label="Caisse" collapsed={isCollapsed} />
               ) : null}
               {permissions["finance.view"] ? (
-                <SidebarItem href="/finance" iconName="CreditCard" label="Finance" collapsed={isCollapsed} />
+                <SidebarItem href="/finance" iconName="BarChart3" label="Finance" collapsed={isCollapsed} />
               ) : null}
             </SidebarSection>
           ) : null}
@@ -184,7 +184,7 @@ export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
                 <SidebarItem href="/notifications" iconName="Bell" label="Notifications" collapsed={isCollapsed} />
               ) : null}
               {role === "OWNER" && (
-                <SidebarItem href="/users" iconName="Users" label="Utilisateurs" collapsed={isCollapsed} />
+                <SidebarItem href="/users" iconName="UserCog" label="Utilisateurs" collapsed={isCollapsed} />
               )}
             </SidebarSection>
           ) : null}
@@ -203,16 +203,6 @@ export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
           <>
             <p className="truncate px-1 text-[10.5px] font-medium uppercase tracking-wider text-muted-foreground">
               {agencyName}
-            </p>
-            <p className="mt-0.5 px-1 text-[9px] text-muted-foreground/60">
-              <a
-                href="https://www.flaticon.com/uicons/interface-icons"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="transition-colors hover:text-foreground hover:underline"
-              >
-                Icônes Flaticon
-              </a>
             </p>
           </>
         ) : (

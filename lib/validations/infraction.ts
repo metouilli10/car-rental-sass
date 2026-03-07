@@ -15,29 +15,38 @@ export const infractionStatusSchema = z.enum([
   "CONTESTED",
 ]);
 
+const optionalTrimmedString = z
+  .preprocess((value) => {
+    if (value == null) return undefined;
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }, z.string().optional())
+  .optional();
+
+const optionalAmount = z.preprocess((value) => {
+  if (value == null) return undefined;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    return trimmed.replace(",", ".");
+  }
+  return value;
+}, z.coerce.number().min(0, "Le montant doit être positif").optional());
+
 export const infractionSchema = z.object({
   vehicleId: z.string().min(1, "Le véhicule est requis"),
   date: z.string().min(1, "La date est requise"),
-  time: z
-    .string()
-    .optional()
-    .transform((v) => (v?.trim() ? v.trim() : undefined)),
+  time: optionalTrimmedString,
   type: infractionTypeSchema.default("OTHER"),
-  amount: z.coerce
-    .number()
-    .min(0, "Le montant doit être positif")
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  notes: z
-    .string()
-    .optional()
-    .transform((v) => (v?.trim() ? v.trim() : undefined)),
+  amount: optionalAmount,
+  notes: optionalTrimmedString,
   // Set by match UI, not typed manually
-  bookingId: z.string().optional(),
-  customerId: z.string().optional(),
-  clientName: z.string().optional(),
-  clientCin: z.string().optional(),
-  clientPhone: z.string().optional(),
+  bookingId: optionalTrimmedString,
+  customerId: optionalTrimmedString,
+  clientName: optionalTrimmedString,
+  clientCin: optionalTrimmedString,
+  clientPhone: optionalTrimmedString,
 });
 
 export type InfractionFormData = z.infer<typeof infractionSchema>;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ export function InfractionDetailAssign({
   date,
   time,
 }: InfractionDetailAssignProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [matchState, setMatchState] = useState<
     "empty" | "loading" | "results" | "no-match"
@@ -73,7 +75,10 @@ export function InfractionDetailAssign({
   };
 
   const handleAssign = () => {
-    if (!selectedBookingId) return;
+    if (!selectedBookingId) {
+      toast.error("Veuillez sélectionner une réservation.");
+      return;
+    }
     startTransition(async () => {
       const result = await assignInfraction({
         infractionId,
@@ -83,6 +88,7 @@ export function InfractionDetailAssign({
         toast.error(result.error);
       } else {
         toast.success("Client assigné avec succès");
+        router.refresh();
       }
     });
   };

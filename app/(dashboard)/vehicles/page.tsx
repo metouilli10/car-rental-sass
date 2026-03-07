@@ -274,7 +274,12 @@ export default async function VehiclesPage({
         </div>
       ) : (
         <>
-        <VehiclesList vehicles={vehicles} isRentedView={isRentedView} canManageVehicles={canManage} />
+        <VehiclesList
+          vehicles={vehicles}
+          isRentedView={isRentedView}
+          canManageVehicles={canManage}
+          statusFilter={statusFilter}
+        />
           {totalPages > 1 ? (
             <div className="rounded-xl border border-border bg-white shadow-sm">
               <Pagination

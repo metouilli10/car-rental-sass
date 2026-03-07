@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -27,15 +27,21 @@ interface VehiclesListProps {
   vehicles: VehicleListItem[];
   isRentedView: boolean;
   canManageVehicles: boolean;
+  statusFilter?: string;
 }
 
-export function VehiclesList({ vehicles, isRentedView, canManageVehicles }: VehiclesListProps) {
+export function VehiclesList({ vehicles, isRentedView, canManageVehicles, statusFilter }: VehiclesListProps) {
   const router = useRouter();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [rows, setRows] = useState<VehicleListItem[]>(vehicles);
+
+  useEffect(() => {
+    setRows(vehicles);
+  }, [vehicles]);
 
   const selectedVehicle = useMemo(
-    () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
-    [vehicles, selectedVehicleId],
+    () => rows.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
+    [rows, selectedVehicleId],
   );
 
   const handleEdit = (vehicleId: string) => {
@@ -44,6 +50,15 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles }: Vehi
 
   const closeDrawer = () => {
     setSelectedVehicleId(null);
+  };
+
+  const shouldKeepRowInCurrentView = (nextStatus: string) => {
+    if (!statusFilter) return true;
+    if (statusFilter === "AVAILABLE") return nextStatus === "AVAILABLE";
+    if (statusFilter === "UNAVAILABLE") return nextStatus === "UNAVAILABLE";
+    if (statusFilter === "MAINTENANCE") return nextStatus === "MAINTENANCE";
+    if (statusFilter === "RENTED") return nextStatus === "RENTED";
+    return true;
   };
 
   return (
@@ -84,7 +99,7 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles }: Vehi
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {vehicles.map((vehicle) => {
+              {rows.map((vehicle) => {
                 const logoSrc = brandLogoSrc(vehicle.brandKey);
                 const activeBooking = vehicle.bookings?.[0];
 
@@ -167,10 +182,30 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles }: Vehi
                         vehicleStatus={vehicle.status}
                         canManageVehicles={canManageVehicles}
                         onEdit={handleEdit}
-                        onToggleActive={(id) => {
+                        onToggleActive={(id, nextStatus) => {
+                          if (nextStatus) {
+                            setRows((prev) => {
+                              const updated = prev.map((row) =>
+                                row.id === id ? { ...row, status: nextStatus } : row
+                              );
+                              return shouldKeepRowInCurrentView(nextStatus)
+                                ? updated
+                                : updated.filter((row) => row.id !== id);
+                            });
+                          }
                           if (selectedVehicleId === id) closeDrawer();
                         }}
-                        onSetMaintenance={(id) => {
+                        onSetMaintenance={(id, nextStatus) => {
+                          if (nextStatus) {
+                            setRows((prev) => {
+                              const updated = prev.map((row) =>
+                                row.id === id ? { ...row, status: nextStatus } : row
+                              );
+                              return shouldKeepRowInCurrentView(nextStatus)
+                                ? updated
+                                : updated.filter((row) => row.id !== id);
+                            });
+                          }
                           if (selectedVehicleId === id) closeDrawer();
                         }}
                       />
@@ -183,7 +218,7 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles }: Vehi
         </div>
 
         <div className="divide-y divide-border sm:hidden">
-          {vehicles.map((vehicle) => {
+          {rows.map((vehicle) => {
             const logoSrc = brandLogoSrc(vehicle.brandKey);
             return (
               <div
@@ -232,10 +267,30 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles }: Vehi
                       vehicleStatus={vehicle.status}
                       canManageVehicles={canManageVehicles}
                       onEdit={handleEdit}
-                    onToggleActive={(id) => {
+                    onToggleActive={(id, nextStatus) => {
+                      if (nextStatus) {
+                        setRows((prev) => {
+                          const updated = prev.map((row) =>
+                            row.id === id ? { ...row, status: nextStatus } : row
+                          );
+                          return shouldKeepRowInCurrentView(nextStatus)
+                            ? updated
+                            : updated.filter((row) => row.id !== id);
+                        });
+                      }
                       if (selectedVehicleId === id) closeDrawer();
                     }}
-                    onSetMaintenance={(id) => {
+                    onSetMaintenance={(id, nextStatus) => {
+                      if (nextStatus) {
+                        setRows((prev) => {
+                          const updated = prev.map((row) =>
+                            row.id === id ? { ...row, status: nextStatus } : row
+                          );
+                          return shouldKeepRowInCurrentView(nextStatus)
+                            ? updated
+                            : updated.filter((row) => row.id !== id);
+                        });
+                      }
                       if (selectedVehicleId === id) closeDrawer();
                     }}
                   />

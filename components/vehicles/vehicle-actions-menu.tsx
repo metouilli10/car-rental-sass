@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, Edit2, PowerOff, Power, Loader2, Wrench } from "lucide-react";
 import { toast } from "sonner";
@@ -18,8 +18,8 @@ interface VehicleActionsMenuProps {
   vehicleStatus: string;
   canManageVehicles?: boolean;
   onEdit: (vehicleId: string) => void;
-  onToggleActive?: (vehicleId: string) => void;
-  onSetMaintenance?: (vehicleId: string) => void;
+  onToggleActive?: (vehicleId: string, nextStatus?: string) => void;
+  onSetMaintenance?: (vehicleId: string, nextStatus?: string) => void;
 }
 
 export function VehicleActionsMenu({
@@ -45,8 +45,10 @@ export function VehicleActionsMenu({
       toast.success(
         isActive ? "Véhicule désactivé" : "Véhicule activé",
       );
-      onToggleActive?.(vehicleId);
-      router.refresh();
+      onToggleActive?.(vehicleId, result?.status);
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error(error);
       toast.error("Erreur lors de la mise à jour du statut");
@@ -64,8 +66,10 @@ export function VehicleActionsMenu({
         return;
       }
       toast.success("Véhicule mis en maintenance");
-      onSetMaintenance?.(vehicleId);
-      router.refresh();
+      onSetMaintenance?.(vehicleId, result?.status);
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error(error);
       toast.error("Erreur lors du passage en maintenance");

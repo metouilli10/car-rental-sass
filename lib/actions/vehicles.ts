@@ -222,6 +222,7 @@ export async function deactivateVehicle(id: string) {
 
     revalidatePath("/vehicles");
     revalidatePath("/catalogue");
+    return { success: true as const, status: newStatus };
   } catch (error) {
     console.error("deactivateVehicle error:", error);
     return { error: "Erreur lors de la mise à jour du statut" };
@@ -265,6 +266,7 @@ export async function setVehicleMaintenance(id: string) {
 
     revalidatePath("/vehicles");
     revalidatePath("/catalogue");
+    return { success: true as const, status: "MAINTENANCE" as const };
   } catch (error) {
     console.error("setVehicleMaintenance error:", error);
     return { error: "Erreur lors du passage en maintenance" };
