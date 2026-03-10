@@ -97,6 +97,7 @@ interface PendingBalanceInput {
 }
 
 interface DepositDueInput {
+  amount: number;
   status: DepositStatus;
   bookingStatus: BookingStatus;
   endDate: Date;
@@ -137,6 +138,7 @@ export function computePendingBalance(input: PendingBalanceInput): number {
 }
 
 export function isDepositDue(input: DepositDueInput): boolean {
+  if (input.amount <= 0) return false;
   if (input.status !== "HELD" || input.bookingStatus !== "COMPLETED") {
     return false;
   }

@@ -706,6 +706,7 @@ async function getDashboardDataUncached(input: {
           prisma.deposit.findMany({
             where: {
               status: "HELD",
+              amount: { gt: 0 },
               booking: { agencyId: input.agencyId, status: "COMPLETED" },
             },
             orderBy: [{ heldAt: "asc" }],
@@ -1016,6 +1017,7 @@ async function getDashboardDataUncached(input: {
 
   for (const row of depositRows) {
     const hasDepositDue = isDepositDue({
+      amount: row.amount,
       status: row.status,
       bookingStatus: row.booking.status,
       endDate: row.booking.endDate,

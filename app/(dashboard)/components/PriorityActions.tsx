@@ -64,6 +64,7 @@ export async function PriorityActions({ agencyId, period }: PriorityActionsProps
       prisma.deposit.findMany({
         where: {
           booking: { agencyId, status: "COMPLETED" },
+          amount: { gt: 0 },
           status: "HELD",
           heldAt: { lte: end },
         },

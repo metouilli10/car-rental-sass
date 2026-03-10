@@ -14,6 +14,7 @@ interface BookingLike {
 }
 
 interface DepositLike {
+  amount: number;
   status: DepositStatus;
 }
 
@@ -79,10 +80,11 @@ export function isCollectionOverdue(
 }
 
 export function isDepositReleaseDue(
-  deposit: Pick<DepositLike, "status">,
+  deposit: Pick<DepositLike, "status" | "amount">,
   booking: Pick<BookingLike, "status" | "endDate" | "actualReturnDate">,
   now: Date
 ): boolean {
+  if (deposit.amount <= 0) return false;
   if (deposit.status !== "HELD") return false;
   if (booking.status === "COMPLETED") return true;
   const returnedAt = booking.actualReturnDate ?? booking.endDate;

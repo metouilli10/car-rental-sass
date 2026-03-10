@@ -76,6 +76,7 @@ export async function ActionRequiredPanel({ agencyId }: ActionRequiredPanelProps
     prisma.deposit.findMany({
       where: {
         booking: { agencyId, status: "COMPLETED" },
+        amount: { gt: 0 },
         status: "HELD",
       },
       include: {

@@ -55,6 +55,9 @@ export function getDepositStatus(
   deposit?: { status: DepositStatus } | null,
   bookingDepositStatus?: BookingDepositStatus
 ): { label: "Restituée" | "À restituer" | "Retenue" | "Partiel"; variant: ReservationToneVariant } {
+  if (depositAmount <= 0) {
+    return { label: "Restituée", variant: "success" };
+  }
   const status = deposit?.status;
   if (status === "RETURNED" || bookingDepositStatus === "RETURNED") {
     return { label: "Restituée", variant: "success" };

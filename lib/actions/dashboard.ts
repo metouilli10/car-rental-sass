@@ -132,6 +132,7 @@ export async function getDueDepositsForSheet(
   const deposits = await prisma.deposit.findMany({
     where: {
       booking: { agencyId: session.user.agencyId },
+      amount: { gt: 0 },
       status: "HELD",
     },
     select: {

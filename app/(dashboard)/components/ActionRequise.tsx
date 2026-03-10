@@ -65,6 +65,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
       prisma.deposit.findMany({
         where: {
           booking: { agencyId, status: "COMPLETED" },
+          amount: { gt: 0 },
           status: "HELD",
         },
         include: {
