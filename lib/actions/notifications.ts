@@ -6,10 +6,13 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { addDays } from "date-fns";
-import {
-  getNotificationsSummary,
-  type NotificationWithVehicle,
-} from "@/lib/notifications/queries";
+import { getNotificationsSummary } from "@/lib/notifications/queries";
+
+type NotificationWithVehicle = Prisma.NotificationGetPayload<{
+  include: {
+    vehicle: { select: { id: true; make: true; model: true; plate: true } };
+  };
+}>;
 
 // ─── Read ──────────────────────────────────────────────────────────────────
 

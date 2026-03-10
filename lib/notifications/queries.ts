@@ -1,9 +1,19 @@
 import { unstable_cache } from "next/cache";
-import type { Notification, Prisma, Vehicle } from "@prisma/client";
+import type { NotificationSeverity, Prisma, ReminderType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
-export type NotificationWithVehicle = Notification & {
-  vehicle: Pick<Vehicle, "make" | "model" | "plate" | "id">;
+export type NotificationSummaryItem = {
+  id: string;
+  type: ReminderType;
+  title: string;
+  body: string;
+  severity: NotificationSeverity;
+  vehicle: {
+    id: string;
+    make: string;
+    model: string;
+    plate: string;
+  };
 };
 
 const NOTIFICATIONS_SUMMARY_CACHE_SECONDS = 60;
@@ -20,14 +30,19 @@ async function getNotificationsSummaryUncached(
   agencyId: string
 ): Promise<{
   count: number;
-  items: NotificationWithVehicle[];
+  items: NotificationSummaryItem[];
 }> {
   const where = buildSummaryWhere(agencyId);
 
   const [items, count] = await Promise.all([
     prisma.notification.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        body: true,
+        severity: true,
         vehicle: { select: { id: true, make: true, model: true, plate: true } },
       },
       orderBy: [{ severity: "desc" }, { updatedAt: "asc" }],
@@ -47,7 +62,7 @@ const getNotificationsSummaryCached = unstable_cache(
 
 export async function getNotificationsSummary(agencyId: string): Promise<{
   count: number;
-  items: NotificationWithVehicle[];
+  items: NotificationSummaryItem[];
 }> {
   try {
     return await getNotificationsSummaryCached(agencyId);
@@ -61,4 +76,3 @@ export async function getNotificationsSummary(agencyId: string): Promise<{
     throw error;
   }
 }
-
