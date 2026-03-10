@@ -36,7 +36,9 @@ const ACCORDION_ITEMS = [
 ] as const;
 
 export function ScoreSection() {
-  const [activeId, setActiveId] = useState(ACCORDION_ITEMS[0].id);
+  const [activeId, setActiveId] = useState<(typeof ACCORDION_ITEMS)[number]["id"]>(
+    ACCORDION_ITEMS[0].id
+  );
 
   const activeItem = useMemo(
     () => ACCORDION_ITEMS.find((item) => item.id === activeId) ?? ACCORDION_ITEMS[0],

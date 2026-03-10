@@ -145,6 +145,7 @@ const DotMap = () => {
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const context: CanvasRenderingContext2D = ctx;
 
     const dots = generateDots(dimensions.width, dimensions.height);
     let animationFrameId: number;
@@ -152,14 +153,14 @@ const DotMap = () => {
 
     // Draw background dots
     function drawDots() {
-      ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+      context.clearRect(0, 0, dimensions.width, dimensions.height);
       
       // Draw the dots
       dots.forEach(dot => {
-        ctx.beginPath();
-        ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(37, 99, 235, ${dot.opacity})`; // Blue dots for light theme
-        ctx.fill();
+        context.beginPath();
+        context.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+        context.fillStyle = `rgba(37, 99, 235, ${dot.opacity})`; // Blue dots for light theme
+        context.fill();
       });
     }
 
@@ -178,37 +179,37 @@ const DotMap = () => {
         const y = route.start.y + (route.end.y - route.start.y) * progress;
         
         // Draw the route line
-        ctx.beginPath();
-        ctx.moveTo(route.start.x, route.start.y);
-        ctx.lineTo(x, y);
-        ctx.strokeStyle = route.color;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        context.beginPath();
+        context.moveTo(route.start.x, route.start.y);
+        context.lineTo(x, y);
+        context.strokeStyle = route.color;
+        context.lineWidth = 1.5;
+        context.stroke();
         
         // Draw the start point
-        ctx.beginPath();
-        ctx.arc(route.start.x, route.start.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = route.color;
-        ctx.fill();
+        context.beginPath();
+        context.arc(route.start.x, route.start.y, 3, 0, Math.PI * 2);
+        context.fillStyle = route.color;
+        context.fill();
         
         // Draw the moving point
-        ctx.beginPath();
-        ctx.arc(x, y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = "#3b82f6";
-        ctx.fill();
+        context.beginPath();
+        context.arc(x, y, 3, 0, Math.PI * 2);
+        context.fillStyle = "#3b82f6";
+        context.fill();
         
         // Add glow effect to the moving point
-        ctx.beginPath();
-        ctx.arc(x, y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
-        ctx.fill();
+        context.beginPath();
+        context.arc(x, y, 6, 0, Math.PI * 2);
+        context.fillStyle = "rgba(59, 130, 246, 0.4)";
+        context.fill();
         
         // If the route is complete, draw the end point
         if (progress === 1) {
-          ctx.beginPath();
-          ctx.arc(route.end.x, route.end.y, 3, 0, Math.PI * 2);
-          ctx.fillStyle = route.color;
-          ctx.fill();
+          context.beginPath();
+          context.arc(route.end.x, route.end.y, 3, 0, Math.PI * 2);
+          context.fillStyle = route.color;
+          context.fill();
         }
       });
     }

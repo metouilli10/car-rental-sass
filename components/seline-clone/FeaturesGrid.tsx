@@ -220,10 +220,7 @@ export function FeaturesGrid() {
             <div className="relative mt-4 w-full max-w-md mx-auto h-[240px]">
                 {/* Annotation */}
                 <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-center w-full z-20">
-                    <div className="relative inline-block">
-                        <Image src="/seline-assets/arrow-curved.svg" alt="" width={30} height={30} className="absolute -top-6 -left-8 rotate-[-45deg] opacity-40" />
-                        <span className="font-serif italic text-gray-400 text-sm">our "killer feature" for software as a service</span>
-                    </div>
+                    <span className="font-serif italic text-gray-400 text-sm">our &quot;killer feature&quot; for software as a service</span>
                 </div>
 
                 {/* Card 1 - Background */}
@@ -287,10 +284,10 @@ export function FeaturesGrid() {
                             <span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span>
                         </div>
                         <div className="grid grid-cols-12 gap-0.5">
-                            {Array.from({ length: 48 }).map((_, i) => (
+                            {[1,1,0,1,0,1,1,1,0,1,1,0,1,1,1,0,1,0,1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,1,0,1,1,0,1,1,1,0,1,1,1].map((filled, i) => (
                                 <div 
                                     key={i} 
-                                    className={`w-1.5 h-1.5 rounded-sm ${Math.random() > 0.3 ? 'bg-green-400' : 'bg-gray-100'}`}
+                                    className={`w-1.5 h-1.5 rounded-sm ${filled ? 'bg-green-400' : 'bg-gray-100'}`}
                                 ></div>
                             ))}
                         </div>
@@ -315,7 +312,7 @@ export function FeaturesGrid() {
             </p>
             
             <Link href="#" className="inline-flex items-center text-blue-500 font-medium hover:text-blue-600 mb-10">
-              Seline's guide to funnels <ArrowUpRight className="w-4 h-4 ml-1" />
+              Seline&rsquo;s guide to funnels <ArrowUpRight className="w-4 h-4 ml-1" />
             </Link>
 
             {/* Funnels Visual Mockup */}
@@ -384,11 +381,11 @@ export function FeaturesGrid() {
                     ))}
                 </div>
                 <p className="text-[14px] text-gray-700 mb-6 leading-relaxed">
-                    "Seline has the holy trifecta of everything I want from 21st century analytics. Beautiful design, GDPR-compliance, uncompromising modern analytics features like visitor journeys and custom funnels. <span className="bg-blue-50 text-blue-900 font-medium px-1 rounded">I want all my sites on Seline."</span>
+                    &ldquo;Seline has the holy trifecta of everything I want from 21st century analytics. Beautiful design, GDPR-compliance, uncompromising modern analytics features like visitor journeys and custom funnels. <span className="bg-blue-50 text-blue-900 font-medium px-1 rounded">I want all my sites on Seline.&rdquo;</span>
                 </p>
                 <div className="flex items-center gap-3 mt-auto">
                     <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                            <Image src="/seline-assets/avatar-ari.jpg" alt="Ari Dutilh" width={40} height={40} className="object-cover" />
+                            <Image src="/seline-assets/avatar.png" alt="Ari Dutilh" width={40} height={40} className="object-cover" />
                     </div>
                     <div>
                         <div className="font-bold text-gray-900 text-sm">Ari Dutilh</div>
@@ -407,11 +404,11 @@ export function FeaturesGrid() {
                     ))}
                 </div>
                 <p className="text-[14px] text-gray-700 mb-6 leading-relaxed">
-                    "We switched from Google Analytics, <span className="bg-blue-50 text-blue-900 font-medium px-1 rounded">tried PostHog and eventually gave up...</span> I like Seline because of the simplicity, and I use it almost every day."
+                    &ldquo;We switched from Google Analytics, <span className="bg-blue-50 text-blue-900 font-medium px-1 rounded">tried PostHog and eventually gave up...</span> I like Seline because of the simplicity, and I use it almost every day.&rdquo;
                 </p>
                 <div className="flex items-center gap-3 mt-auto">
                     <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                            <Image src="/seline-assets/avatar-jack.jpg" alt="Jack Qi" width={40} height={40} className="object-cover" />
+                            <Image src="/seline-assets/avatar.png" alt="Jack Qi" width={40} height={40} className="object-cover" />
                     </div>
                     <div>
                         <div className="font-bold text-gray-900 text-sm">Jack Qi</div>
@@ -607,11 +604,11 @@ export function FeaturesGrid() {
         {/* Final Testimonial */}
         <div className="text-center max-w-2xl mx-auto">
             <p className="text-gray-600 mb-6">
-                <span className="bg-blue-50 text-blue-900 font-medium px-1 rounded">"Seline looks so good!</span> The power of small teams..." <span className="text-gray-400">— x.com</span>
+                <span className="bg-blue-50 text-blue-900 font-medium px-1 rounded">&ldquo;Seline looks so good!</span> The power of small teams...&rdquo; <span className="text-gray-400">— x.com</span>
             </p>
             <div className="flex items-center justify-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                    <Image src="/seline-assets/avatar-guillermo.jpg" alt="Guillermo Rauch" width={40} height={40} className="object-cover" />
+                    <Image src="/seline-assets/avatar.png" alt="Guillermo Rauch" width={40} height={40} className="object-cover" />
                 </div>
                 <div className="text-left">
                     <div className="font-bold text-gray-900 text-sm">Guillermo Rauch</div>

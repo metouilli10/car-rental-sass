@@ -98,7 +98,7 @@ export function Hero() {
                 </div>
                 <span className="font-medium text-gray-400">on</span>
                 <Image src="/seline-assets/logo-g2.svg" alt="G2" width={18} height={18} className="opacity-60" />
-                <span className="text-gray-400">— "Seline is the kind of product I'm happy to open every day."</span>
+                <span className="text-gray-400">— &ldquo;Seline is the kind of product I&rsquo;m happy to open every day.&rdquo;</span>
             </div>
         </div>
 

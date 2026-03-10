@@ -48,7 +48,7 @@ export function Introduction() {
                 >
                     Get a demo
                     <div className="w-5 h-5 rounded-full bg-gray-300 overflow-hidden ml-1">
-                        <Image src="/seline-assets/avatar-demo.jpg" alt="" width={20} height={20} className="object-cover" />
+                        <Image src="/seline-assets/avatar.png" alt="" width={20} height={20} className="object-cover" />
                     </div>
                 </Link>
             </div>
@@ -65,11 +65,11 @@ export function Introduction() {
                         ))}
                     </div>
                     <p className="text-[14px] text-gray-700 mb-6 leading-relaxed">
-                        "Previously, I had all of my sites hooked up to Google Analytics, like most people. <span className="bg-blue-50 text-blue-900 font-medium px-1 rounded">But I never looked at the reports.</span> Now, I find myself dropping in and looking at the stats several times a day. It's very easy to digest and understand."
+                        &ldquo;Previously, I had all of my sites hooked up to Google Analytics, like most people. <span className="bg-blue-50 text-blue-900 font-medium px-1 rounded">But I never looked at the reports.</span> Now, I find myself dropping in and looking at the stats several times a day. It&rsquo;s very easy to digest and understand.&rdquo;
                     </p>
                     <div className="flex items-center gap-3 mt-auto">
                         <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                             <Image src="/seline-assets/avatar-chris.jpg" alt="Chris Williams" width={40} height={40} className="object-cover" />
+                             <Image src="/seline-assets/avatar.png" alt="Chris Williams" width={40} height={40} className="object-cover" />
                         </div>
                         <div>
                             <div className="font-bold text-gray-900 text-sm">Chris Williams</div>
@@ -88,11 +88,11 @@ export function Introduction() {
                         ))}
                     </div>
                     <p className="text-[14px] text-gray-700 mb-6 leading-relaxed">
-                        "It just works, no need to navigate endless dashboards or worry about compliance issues. That simplicity <span className="bg-blue-50 text-blue-900 font-medium px-1 rounded">saves us time and helps us stay focused on building our business.</span>"
+                        &ldquo;It just works, no need to navigate endless dashboards or worry about compliance issues. That simplicity <span className="bg-blue-50 text-blue-900 font-medium px-1 rounded">saves us time and helps us stay focused on building our business.</span>&rdquo;
                     </p>
                     <div className="flex items-center gap-3 mt-auto">
                         <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                             <Image src="/seline-assets/avatar-kevin.jpg" alt="Kevin Steba" width={40} height={40} className="object-cover" />
+                             <Image src="/seline-assets/avatar.png" alt="Kevin Steba" width={40} height={40} className="object-cover" />
                         </div>
                         <div>
                             <div className="font-bold text-gray-900 text-sm">Kevin Steba</div>
@@ -117,7 +117,7 @@ export function Introduction() {
             <div className="grid md:grid-cols-2 gap-12 text-lg text-gray-600 leading-relaxed">
                 <div>
                     <p className="mb-6">
-                        Seline's cherry-picked toolkit is similar to Google Analytics, but real-time, simple, privacy-first, and designed for daily use. Including an intuitive all-in-one dashboard, packaged with visitor journey insights and funnels on top of it.
+                        Seline&rsquo;s cherry-picked toolkit is similar to Google Analytics, but real-time, simple, privacy-first, and designed for daily use. Including an intuitive all-in-one dashboard, packaged with visitor journey insights and funnels on top of it.
                     </p>
                 </div>
                 <div>
