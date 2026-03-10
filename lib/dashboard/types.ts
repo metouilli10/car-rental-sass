@@ -274,6 +274,13 @@ export interface DashboardV3FleetSnapshot {
   totalActive: number;
 }
 
+export interface DashboardV3TodayOperations {
+  departures: number;
+  returns: number;
+  overdueReturns: number;
+  availableVehicles: number;
+}
+
 export interface DashboardV3Onboarding {
   eligible: boolean;
   vehicleAdded: boolean;
@@ -319,6 +326,7 @@ export interface DashboardV3ActiveBookingsDTO {
 export interface DashboardV3DTO {
   period: DashboardV3ResolvedPeriod;
   pulse: DashboardV3Pulse;
+  todayOperations: DashboardV3TodayOperations;
   actionCenter: {
     groups: DashboardV3ActionGroup[];
     isAllClear: boolean;

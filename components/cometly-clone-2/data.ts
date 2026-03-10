@@ -110,7 +110,7 @@ export const howItWorksSteps = [
 export const testimonials = [
   {
     quote:
-      "Avant LocaPro, on gérait les réservations sur Excel et WhatsApp. Maintenant tout est centralisé. On voit immédiatement quels véhicules sont disponibles et on évite les doubles réservations.",
+      "Avant Locaryx, on gérait les réservations sur Excel et WhatsApp. Maintenant tout est centralisé. On voit immédiatement quels véhicules sont disponibles et on évite les doubles réservations.",
     name: "Youssef B.",
     role: "Gérant - Agadir Rent Cars",
     company: "Agadir Rent Cars",
@@ -124,7 +124,7 @@ export const testimonials = [
   },
   {
     quote:
-      "Ce que j’aime le plus avec LocaPro, c’est le suivi des clients et des cautions. Avant c’était compliqué de retrouver les infos, maintenant tout est clair.",
+      "Ce que j’aime le plus avec Locaryx, c’est le suivi des clients et des cautions. Avant c’était compliqué de retrouver les infos, maintenant tout est clair.",
     name: "Karim M.",
     role: "Fondateur - Marrakech Drive",
     company: "Marrakech Drive",
@@ -145,7 +145,7 @@ export const testimonials = [
   },
   {
     quote:
-      "LocaPro nous donne enfin une vue claire sur l’activité : réservations, revenus et disponibilité des véhicules. C’est devenu notre outil principal.",
+      "Locaryx nous donne enfin une vue claire sur l’activité : réservations, revenus et disponibilité des véhicules. C’est devenu notre outil principal.",
     name: "Imane K.",
     role: "Directrice - City Rent Agadir",
     company: "City Rent Agadir",
@@ -187,8 +187,8 @@ export const sectionHeadings = {
     subtitle: "Unify all your marketing data into one platform for smarter, faster decisions.",
   },
   testimonials: {
-    title: "Ils utilisent LocaPro pour gérer leur agence",
-    subtitle: "Découvrez comment les agences de location simplifient leur gestion quotidienne avec LocaPro.",
+    title: "Ils utilisent Locaryx pour gérer leur agence",
+    subtitle: "Découvrez comment les agences de location simplifient leur gestion quotidienne avec Locaryx.",
   },
   analytics: {
     title: "Gardez une vue claire sur toute votre agence",
@@ -206,8 +206,8 @@ export const sectionHeadings = {
       "Connect your tools, connect your teams. With over 100 apps already available in our directory, your team’s favourite tools are just a click away.",
   },
   cta: {
-    title: "Découvrez LocaPro en action",
+    title: "Découvrez Locaryx en action",
     subtitle:
-      "Essayez LocaPro et simplifiez la gestion de votre agence. Réservations, véhicules, clients et paiements — tout est centralisé dans une seule plateforme.",
+      "Essayez Locaryx et simplifiez la gestion de votre agence. Réservations, véhicules, clients et paiements — tout est centralisé dans une seule plateforme.",
   },
 };

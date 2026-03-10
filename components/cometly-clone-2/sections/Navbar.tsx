@@ -3,24 +3,21 @@ import { Button } from "@/components/ui/button";
 import { navLinks } from "../data";
 import { ChevronDown, Menu } from "lucide-react";
 import Link from "next/link";
-
-function CometlyLogoMark() {
-  return (
-    <div className="cometly-logo-mark" aria-hidden>
-      <span className="cometly-logo-stripe cometly-logo-stripe-1" />
-      <span className="cometly-logo-stripe cometly-logo-stripe-2" />
-      <span className="cometly-logo-stripe cometly-logo-stripe-3" />
-    </div>
-  );
-}
+import Image from "next/image";
 
 export function Navbar() {
   return (
     <nav className="clone2-navbar absolute top-0 left-0 right-0 z-50">
       <div className="mx-auto flex h-[68px] max-w-[1240px] items-center justify-between px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <CometlyLogoMark />
-          <span className="clone2-logo-text">LocaPro</span>
+          <Image
+            src="/assets/locaryx-logo-white.png"
+            alt="Locaryx"
+            width={1193}
+            height={345}
+            className="h-8 w-auto md:h-9"
+            priority
+          />
         </div>
 
         <div className="hidden lg:flex items-center gap-8">

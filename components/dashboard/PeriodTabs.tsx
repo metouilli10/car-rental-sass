@@ -17,9 +17,9 @@ const PERIOD_ITEMS = [
 ] as const;
 
 const ACTIVE_PILL_CLASS =
-  "inline-flex items-center rounded-full bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors";
+  "inline-flex items-center rounded-full bg-[#2563EB] px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-[#1D4ED8]";
 const INACTIVE_PILL_CLASS =
-  "inline-flex items-center rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground";
+  "inline-flex items-center rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-700";
 
 function toMonthValue(value: Date): string {
   const year = value.getFullYear();

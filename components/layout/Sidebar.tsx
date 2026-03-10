@@ -64,14 +64,14 @@ export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
 
   return (
     <aside
-      className="hidden min-h-screen shrink-0 flex-col overflow-hidden border-r border-border bg-card shadow-sm transition-[width] duration-200 ease-in-out md:flex"
+      className="sidebar-gradient hidden min-h-screen shrink-0 flex-col overflow-hidden border-r border-[#2A3B4F] shadow-sm transition-[width] duration-200 ease-in-out md:flex"
       style={{ width }}
       suppressHydrationWarning
     >
       {/* ─── Header: Logo + Toggle ─── */}
       <div
         className={cn(
-          "flex items-center shrink-0 border-b border-border",
+          "flex items-center shrink-0 border-b border-[#2A3B4F]",
           isCollapsed
             ? "justify-center gap-1 px-2 py-3"
             : "justify-between gap-2 px-4 py-4"
@@ -80,18 +80,18 @@ export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
         {!isCollapsed ? (
           <div className="relative w-36 h-10 overflow-hidden flex-1 min-w-0">
             <Image
-              src="/assets/locapro-logo.png"
-              alt="Locapro"
+              src="/assets/locaryx-logo-white.png"
+              alt="Locaryx"
               fill
               className="object-contain object-left"
               priority
             />
           </div>
         ) : (
-          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-border bg-muted/40">
+          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-[#2A3B4F] bg-[#2F4156]">
             <Image
-              src="/assets/locapro-favicon.png"
-              alt="Locapro"
+              src="/assets/locaryx-icon-white.png"
+              alt="Locaryx"
               fill
               className="object-contain p-0.5"
               sizes="32px"
@@ -101,7 +101,7 @@ export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
         <button
           onClick={toggleCollapsed}
           className={cn(
-            "shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground",
+            "shrink-0 rounded-md p-1.5 text-white/75 transition-colors duration-150 hover:bg-[#2F4156] hover:text-white/85",
             isCollapsed && "mt-0"
           )}
           aria-label={isCollapsed ? "Développer le menu" : "Réduire le menu"}
@@ -194,19 +194,19 @@ export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
       {/* ─── Footer ─── */}
       <div
         className={cn(
-          "shrink-0 border-t border-border py-3",
+          "shrink-0 border-t border-[#2A3B4F] py-3",
           isCollapsed ? "px-2 flex justify-center" : "px-4"
         )}
         title={isCollapsed ? agencyName : undefined}
       >
         {!isCollapsed ? (
           <>
-            <p className="truncate px-1 text-[10.5px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="truncate px-1 text-[10.5px] font-medium uppercase tracking-wider text-white/65">
               {agencyName}
             </p>
           </>
         ) : (
-          <span className="text-[9px] text-muted-foreground/60" aria-hidden>
+          <span className="text-[9px] text-white/55" aria-hidden>
             ...
           </span>
         )}

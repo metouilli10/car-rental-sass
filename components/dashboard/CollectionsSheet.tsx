@@ -125,7 +125,7 @@ export function CollectionsSheet({
           data?.items.map((item) => (
             <div
               key={item.bookingId}
-              className="rounded-xl border border-border bg-background px-4 py-3 transition-colors hover:bg-muted/30"
+              className="rounded-xl border border-border bg-background px-4 py-3 transition-colors hover:bg-slate-50"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 space-y-1">
@@ -157,8 +157,8 @@ export function CollectionsSheet({
                     <Button
                       asChild
                       size="sm"
-                      variant="outline"
-                      className="w-full border-border bg-background text-foreground transition-colors duration-150 hover:bg-muted/50 hover:text-foreground active:text-foreground sm:w-auto"
+                      variant="ghost"
+                      className="w-full text-slate-700 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900 sm:w-auto"
                     >
                       <Link href={item.primaryHref}>Voir reservation</Link>
                     </Button>

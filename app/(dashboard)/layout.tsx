@@ -3,7 +3,6 @@ import { getSession } from "@/lib/auth-cache";
 import { TopNavBar } from "@/components/shared/top-nav-bar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
-import { MobileFAB } from "@/components/shared/mobile-fab";
 import { Toaster } from "sonner";
 import { getNotificationsSummary } from "@/lib/notifications/queries";
 import { prisma } from "@/lib/prisma";
@@ -66,14 +65,14 @@ export default async function DashboardLayout({
   );
 
   return (
-    <div className="flex min-h-screen bg-background" suppressHydrationWarning>
+    <div className="flex min-h-screen bg-[#F8FAFC]" suppressHydrationWarning>
       {/* Collapsible Sidebar */}
       <Sidebar agencyName={displayAgencyName} role={session.user.role} permissions={permissions} />
 
       <Toaster richColors position="top-right" />
 
       {/* Right side — TopNav + Content */}
-      <div className="flex-1 flex flex-col min-w-0 bg-muted/40" suppressHydrationWarning>
+      <div className="flex-1 flex flex-col min-w-0 bg-[#F8FAFC]" suppressHydrationWarning>
         <TopNavBar
           userName={session.user.name || "Utilisateur"}
           userEmail={session.user.email || ""}
@@ -84,7 +83,7 @@ export default async function DashboardLayout({
         />
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto bg-muted/40" suppressHydrationWarning>
+        <main className="flex-1 overflow-auto bg-[#F8FAFC]" suppressHydrationWarning>
           <div className="min-h-full" suppressHydrationWarning>
             <div className="mx-auto w-full max-w-7xl px-4 pt-4 pb-24 sm:px-6 sm:py-6 lg:px-8" suppressHydrationWarning>
               {children}
@@ -94,10 +93,7 @@ export default async function DashboardLayout({
       </div>
 
       {/* Mobile bottom navigation */}
-      <MobileBottomNav role={session.user.role} permissions={permissions} />
-
-      {/* Mobile FAB — speed-dial for quick actions */}
-      <MobileFAB />
+      <MobileBottomNav permissions={permissions} />
     </div>
   );
 }

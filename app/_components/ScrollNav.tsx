@@ -8,7 +8,7 @@ import { MobileMenuButton } from "./MobileMenu";
 const navLinks = [
   { href: "#features", label: "Fonctionnalités" },
   { href: "#pricing", label: "Tarifs" },
-  { href: "#why-locapro", label: "Pourquoi LocaPro" },
+  { href: "#why-locaryx", label: "Pourquoi Locaryx" },
   { href: "#testimonials", label: "Témoignages" },
   { href: "#contact", label: "Contact" },
 ];
@@ -38,13 +38,11 @@ export function ScrollNav() {
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image
-              src="/assets/locapro-logo.png"
-              alt="LocaPro"
+              src={scrolled ? "/assets/locaryx-logo-dark.png" : "/assets/locaryx-logo-white.png"}
+              alt="Locaryx"
               width={130}
               height={32}
-              className={`h-7 w-auto transition-all duration-300 ${
-                scrolled ? "" : "brightness-0 invert"
-              }`}
+              className="h-7 w-auto transition-all duration-300"
               priority
             />
           </Link>

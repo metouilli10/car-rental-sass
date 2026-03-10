@@ -18,7 +18,7 @@ export function FeaturesGrid() {
               <span className="block">depuis une seule plateforme</span>
             </h2>
             <p className="mt-4 max-w-[360px] text-[16px] leading-relaxed text-slate-600">
-              LocaPro centralise les réservations, les véhicules, les clients et les paiements dans un seul outil. Simplifiez votre gestion quotidienne et gagnez du temps sur chaque opération.
+              Locaryx centralise les réservations, les véhicules, les clients et les paiements dans un seul outil. Simplifiez votre gestion quotidienne et gagnez du temps sur chaque opération.
             </p>
             <Button className="mt-6 h-11 rounded-lg bg-blue-600 px-6 text-base font-semibold text-white hover:bg-blue-700">
               Commencer

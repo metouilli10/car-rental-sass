@@ -12,62 +12,56 @@ const CARD_META = [
     key: "net",
     title: "Net",
     icon: Coins,
-    iconWrapClassName: "bg-emerald-100 dark:bg-emerald-500/15",
-    iconClassName: "text-emerald-700 dark:text-emerald-300",
-    headerWashClassName: "from-emerald-50/35 dark:from-emerald-500/5",
+    iconWrapClassName: "bg-emerald-50 text-emerald-600",
+    valueClassName: "text-emerald-600",
   },
   {
     key: "toCollect",
     title: "A encaisser",
     icon: CreditCard,
-    iconWrapClassName: "bg-blue-100 dark:bg-blue-500/15",
-    iconClassName: "text-blue-700 dark:text-blue-300",
-    headerWashClassName: "from-blue-50/35 dark:from-blue-500/5",
+    iconWrapClassName: "bg-blue-50 text-blue-600",
+    valueClassName: "text-blue-600",
   },
   {
     key: "occupancy",
     title: "Occupation",
     icon: CarFront,
-    iconWrapClassName: "bg-amber-100 dark:bg-amber-500/15",
-    iconClassName: "text-amber-700 dark:text-amber-300",
-    headerWashClassName: "from-amber-50/35 dark:from-amber-500/5",
+    iconWrapClassName: "bg-amber-50 text-amber-600",
+    valueClassName: "text-amber-600",
   },
   {
     key: "risks",
     title: "Risques",
     icon: AlertTriangle,
-    iconWrapClassName: "bg-red-100 dark:bg-red-500/15",
-    iconClassName: "text-red-700 dark:text-red-300",
-    headerWashClassName: "from-red-50/35 dark:from-red-500/5",
+    iconWrapClassName: "bg-red-50 text-red-600",
+    valueClassName: "text-red-600",
   },
 ] as const;
 
 export function PulseCards({ pulse }: PulseCardsProps) {
   return (
-    <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <section className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-6 xl:grid-cols-4">
       {CARD_META.map((card) => {
         const Icon = card.icon;
         if (card.key === "occupancy") {
           return (
             <Card
               key={card.key}
-              className={cn(
-                "rounded-xl border border-border bg-card shadow-sm transition-shadow duration-200 hover:translate-y-0 hover:shadow-md"
-              )}
+              className="rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-200 hover:border-slate-300/70 hover:shadow-md"
             >
-              <CardHeader className="pb-2">
-                <div className={cn("flex items-center justify-between rounded-xl bg-gradient-to-r to-transparent px-3 py-2", card.headerWashClassName)}>
-                  <CardTitle className="text-xs font-medium text-muted-foreground">{card.title}</CardTitle>
-                  <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-full", card.iconWrapClassName)}>
-                    <Icon className={`h-4 w-4 ${card.iconClassName}`} />
+              <CardHeader className="p-4 pb-0 md:p-6 md:pb-0">
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-sm font-medium text-slate-500">{card.title}</CardTitle>
+                  <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-full", card.iconWrapClassName)}>
+                    <Icon className="h-5 w-5" />
                   </span>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2 pt-1">
-                <p className="text-[1.75rem] font-semibold tracking-tight text-foreground">
+              <CardContent className="flex flex-col gap-4 p-4 md:gap-5 md:p-6">
+                <p className={cn("text-3xl font-semibold tracking-tight md:text-4xl", card.valueClassName)}>
                   {pulse.occupancy.rate}%
                 </p>
-                <p className="text-xs text-muted-foreground">{pulse.occupancy.subtitle}</p>
+                <p className="text-sm text-slate-500">{pulse.occupancy.subtitle}</p>
               </CardContent>
             </Card>
           );
@@ -82,26 +76,24 @@ export function PulseCards({ pulse }: PulseCardsProps) {
           return (
             <Card
               key={card.key}
-              className={cn(
-                "rounded-xl border border-border bg-card shadow-sm transition-shadow duration-200 hover:translate-y-0 hover:shadow-md"
-              )}
+              className="rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-200 hover:border-slate-300/70 hover:shadow-md"
             >
-              <CardHeader className="pb-2">
-                <div className={cn("flex items-center justify-between rounded-xl bg-gradient-to-r to-transparent px-3 py-2", card.headerWashClassName)}>
-                  <CardTitle className="text-xs font-medium text-muted-foreground">{card.title}</CardTitle>
-                  <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-full", card.iconWrapClassName)}>
-                    <Icon className={`h-4 w-4 ${card.iconClassName}`} />
+              <CardHeader className="p-4 pb-0 md:p-6 md:pb-0">
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-sm font-medium text-slate-500">{card.title}</CardTitle>
+                  <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-full", card.iconWrapClassName)}>
+                    <Icon className="h-5 w-5" />
                   </span>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2 pt-1">
-                <p className="text-[1.75rem] font-semibold tracking-tight text-foreground">
+              <CardContent className="flex flex-col gap-4 p-4 md:gap-5 md:p-6">
+                <p className={cn("text-3xl font-semibold tracking-tight md:text-4xl", card.valueClassName)}>
                   {pulse.risks.count}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-slate-500">
                   {formatCurrency(pulse.risks.exposureAmount)} expose
                 </p>
-                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500">
                   <span>Impayes: {unpaidCount}</span>
                   <span>Cautions: {depositDueCount}</span>
                   <span>Retours: {lateReturnCount}</span>
@@ -118,25 +110,23 @@ export function PulseCards({ pulse }: PulseCardsProps) {
         return (
           <Card
             key={card.key}
-            className={cn(
-              "rounded-xl border border-border bg-card shadow-sm transition-shadow duration-200 hover:translate-y-0 hover:shadow-md"
-            )}
+            className="rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-200 hover:border-slate-300/70 hover:shadow-md"
           >
-            <CardHeader className="pb-2">
-              <div className={cn("flex items-center justify-between rounded-xl bg-gradient-to-r to-transparent px-3 py-2", card.headerWashClassName)}>
-                <CardTitle className="text-xs font-medium text-muted-foreground">
+            <CardHeader className="p-4 pb-0 md:p-6 md:pb-0">
+              <div className="flex items-start justify-between">
+                <CardTitle className="text-sm font-medium text-slate-500">
                   {card.title}
                 </CardTitle>
-                <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-full", card.iconWrapClassName)}>
-                  <Icon className={`h-4 w-4 ${card.iconClassName}`} />
+                <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-full", card.iconWrapClassName)}>
+                  <Icon className="h-5 w-5" />
                 </span>
               </div>
             </CardHeader>
-            <CardContent className="space-y-2 pt-1">
-              <p className="text-[1.75rem] font-semibold tracking-tight text-foreground">
+            <CardContent className="flex flex-col gap-4 p-4 md:gap-5 md:p-6">
+              <p className={cn("text-3xl font-semibold tracking-tight md:text-4xl", card.valueClassName)}>
                 {formatCurrency(value)}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-slate-500">
                 {isZeroState ? "Aucune activite sur la periode" : subtitle}
               </p>
             </CardContent>

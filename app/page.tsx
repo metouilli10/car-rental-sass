@@ -30,7 +30,7 @@ const featureSections = [
       "Statuts clairs pour savoir tout de suite ce qui est disponible",
     ],
     screenshot: "/screenshots/catalogue.png",
-    screenshotAlt: "Catalogue de véhicules LocaPro",
+    screenshotAlt: "Catalogue de véhicules Locaryx",
     layout: "copy-left" as const,
   },
   {
@@ -44,7 +44,7 @@ const featureSections = [
       "Visibilité immédiate sur paiements, retards et soldes",
     ],
     screenshot: "/screenshots/reservations.png",
-    screenshotAlt: "Reservations LocaPro",
+    screenshotAlt: "Reservations Locaryx",
     layout: "copy-right" as const,
   },
   {
@@ -58,7 +58,7 @@ const featureSections = [
       "Moins de conflits, moins d'aller-retour manuels",
     ],
     screenshot: "/screenshots/dashboard.png",
-    screenshotAlt: "Planning et disponibilites LocaPro",
+    screenshotAlt: "Planning et disponibilites Locaryx",
     layout: "copy-left" as const,
   },
   {
@@ -72,7 +72,7 @@ const featureSections = [
       "Vision plus nette sur les soldes et la rentabilité",
     ],
     screenshot: "/screenshots/finance.png",
-    screenshotAlt: "Centre financier LocaPro",
+    screenshotAlt: "Centre financier Locaryx",
     layout: "copy-left" as const,
   },
   {
@@ -86,7 +86,7 @@ const featureSections = [
       "Export simple pour vos suivis et rapports",
     ],
     screenshot: "/screenshots/clients.png",
-    screenshotAlt: "Gestion clients LocaPro",
+    screenshotAlt: "Gestion clients Locaryx",
     layout: "copy-right" as const,
   },
   {
@@ -100,7 +100,7 @@ const featureSections = [
       "Décision de caution plus simple et mieux tracée",
     ],
     screenshot: "/screenshots/reservations.png",
-    screenshotAlt: "Inspections et cautions LocaPro",
+    screenshotAlt: "Inspections et cautions Locaryx",
     layout: "copy-left" as const,
   },
   {
@@ -114,7 +114,7 @@ const featureSections = [
       "Recherche simple grâce aux filtres",
     ],
     screenshot: "/screenshots/finance.png",
-    screenshotAlt: "Infractions LocaPro",
+    screenshotAlt: "Infractions Locaryx",
     layout: "copy-right" as const,
   },
 ];
@@ -249,13 +249,13 @@ const pricing = [
 
 const faqs = [
   {
-    q: "Est-ce que LocaPro est compliqué à utiliser ?",
-    a: "Non. LocaPro est conçu pour des actions claires, des statuts visibles et une prise en main rapide, même pour une équipe qui travaille déjà sous pression.",
+    q: "Est-ce que Locaryx est compliqué à utiliser ?",
+    a: "Non. Locaryx est conçu pour des actions claires, des statuts visibles et une prise en main rapide, même pour une équipe qui travaille déjà sous pression.",
     defaultOpen: true,
   },
   {
     q: "Puis-je l'utiliser sur mon téléphone ?",
-    a: "Oui. LocaPro fonctionne sur ordinateur, tablette et smartphone pour garder un accès simple à l'activité, même en déplacement.",
+    a: "Oui. Locaryx fonctionne sur ordinateur, tablette et smartphone pour garder un accès simple à l'activité, même en déplacement.",
     defaultOpen: false,
   },
   {
@@ -265,12 +265,12 @@ const faqs = [
   },
   {
     q: "Que se passe-t-il si j'annule ?",
-    a: "Vous pouvez arrêter à tout moment. L'objectif de LocaPro est de réduire la friction, pas d'en créer.",
+    a: "Vous pouvez arrêter à tout moment. L'objectif de Locaryx est de réduire la friction, pas d'en créer.",
     defaultOpen: false,
   },
   {
     q: "Comment fonctionne l'essai gratuit ?",
-    a: "Vous pouvez commencer sans carte bancaire et découvrir la logique de pilotage de LocaPro avant de choisir la formule adaptée à votre agence.",
+    a: "Vous pouvez commencer sans carte bancaire et découvrir la logique de pilotage de Locaryx avant de choisir la formule adaptée à votre agence.",
     defaultOpen: false,
   },
 ];
@@ -306,7 +306,7 @@ function BrowserFrame({
         </div>
         <div className="flex-1 mx-4">
           <div className="bg-white border border-gray-200 rounded-md px-3 py-1 text-xs text-gray-400 max-w-[200px] mx-auto text-center">
-            app.locapro.ma
+            app.locaryx.ma
           </div>
         </div>
       </div>
@@ -405,7 +405,7 @@ function FeatureSection({
       </div>
       <div className="absolute -bottom-4 right-4 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur px-4 py-3 shadow-xl shadow-slate-300/20">
         <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">
-          LocaPro
+          Locaryx
         </div>
         <div className="mt-1 text-sm font-semibold text-gray-900">{section.eyebrow}</div>
       </div>
@@ -533,7 +533,7 @@ export default function Home() {
 
               <BrowserFrame
                 src="/screenshots/dashboard.png"
-                alt="Tableau de bord LocaPro"
+                alt="Tableau de bord Locaryx"
                 priority
                 className="screenshot-frame shadow-2xl shadow-black/30 ring-1 ring-white/10"
               />
@@ -550,7 +550,7 @@ export default function Home() {
             Moins de dispersion. Plus de controle.
           </h2>
           <p className="text-lg text-gray-500 mt-4 max-w-2xl mx-auto leading-relaxed">
-            LocaPro aide les agences a centraliser leurs dossiers, suivre les actions critiques et mieux piloter l&apos;activite au quotidien.
+            Locaryx aide les agences a centraliser leurs dossiers, suivre les actions critiques et mieux piloter l&apos;activite au quotidien.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-5xl mx-auto">
@@ -623,7 +623,7 @@ export default function Home() {
               <div className="relative rounded-[2.5rem] bg-white/10 border border-white/10 p-3 lg:p-5 shadow-2xl shadow-black/20 backdrop-blur-sm">
                 <BrowserFrame
                   src="/screenshots/dashboard.png"
-                  alt="Tableau de bord LocaPro"
+                  alt="Tableau de bord Locaryx"
                   className="relative screenshot-frame shadow-2xl shadow-black/20"
                 />
               </div>
@@ -645,7 +645,7 @@ export default function Home() {
 
       {/* ─── MOROCCO DIFFERENTIATION ─── */}
       <section
-        id="why-locapro"
+        id="why-locaryx"
         className="py-24 lg:py-32 px-6 lg:px-8 section-gradient-dark text-white relative overflow-hidden"
       >
         <SectionCurve position="top" colorClass="text-white" />
@@ -703,7 +703,7 @@ export default function Home() {
               PREUVES TERRAIN
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-[2.9rem] font-bold tracking-tight text-gray-900 leading-tight">
-              Ce que LocaPro clarifie au quotidien.
+              Ce que Locaryx clarifie au quotidien.
             </h2>
             <p className="text-gray-500 mt-5 text-lg leading-relaxed">
               Des situations concrètes, mieux gérées quand les informations, documents et actions restent au même endroit.
@@ -754,7 +754,7 @@ export default function Home() {
                     <div className="text-xs text-blue-600 font-semibold mt-3">{item.outcome}</div>
                   </div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-                    LocaPro
+                    Locaryx
                   </div>
                 </div>
               </Reveal>
@@ -953,7 +953,7 @@ export default function Home() {
             Prêt à reprendre le contrôle ?
           </h2>
           <p className="text-lg text-blue-100/80 mt-6 max-w-xl mx-auto leading-relaxed">
-            Essayez LocaPro gratuitement. Centralisez vos opérations, réduisez les erreurs et gardez une vision plus claire sur vos retours, vos paiements et vos cautions.
+            Essayez Locaryx gratuitement. Centralisez vos opérations, réduisez les erreurs et gardez une vision plus claire sur vos retours, vos paiements et vos cautions.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
             <Link
@@ -983,11 +983,11 @@ export default function Home() {
             {/* Brand */}
             <div className="lg:col-span-2">
               <Image
-                src="/assets/locapro-logo.png"
-                alt="LocaPro"
+                src="/assets/locaryx-logo-white.png"
+                alt="Locaryx"
                 width={140}
                 height={36}
-                className="h-8 w-auto mb-5 brightness-0 invert"
+                className="h-8 w-auto mb-5"
               />
               <p className="text-gray-400 text-sm leading-relaxed mb-4 max-w-xs">
                 FAIT POUR LES AGENCES MAROCAINES.
@@ -1067,7 +1067,7 @@ export default function Home() {
           {/* Bottom bar */}
           <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-500">
-              © {new Date().getFullYear()} LocaPro. Tous droits réservés.
+              © {new Date().getFullYear()} Locaryx. Tous droits réservés.
             </p>
             <div className="flex gap-6 text-sm text-gray-500">
               <a href="#" className="hover:text-white transition-colors">

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth-cache";
 import { getDashboardDataV3 } from "@/lib/dashboard/v3-queries";
 import { DashboardHeaderV3 } from "@/components/dashboard/DashboardHeaderV3";
 import { PulseCards } from "@/components/dashboard/PulseCards";
+import { TodayOperationsCard } from "@/components/dashboard/TodayOperationsCard";
 import { ActionCenterCard } from "@/components/dashboard/ActionCenterCard";
 import { FleetSnapshotBar } from "@/components/dashboard/FleetSnapshotBar";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
@@ -45,9 +46,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   if (!dashboard) {
     return (
-      <div className="-mx-4 -my-4 min-h-screen bg-muted/40 pb-24 sm:-mx-6 sm:-my-6 lg:-mx-8 md:pb-0">
+      <div className="-mx-4 -my-4 min-h-screen bg-[#F8FAFC] pb-24 sm:-mx-6 sm:-my-6 lg:-mx-8 md:pb-0">
         <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 lg:px-8 xl:max-w-[1320px]">
-          <div className="flex flex-col gap-7">
+          <div className="flex flex-col gap-6 md:gap-8">
             <DashboardHeaderV3
               period={{
                 key: "today",
@@ -56,19 +57,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 end: new Date().toISOString(),
               }}
             />
-            <Card className="rounded-xl border border-amber-200 bg-amber-50/80 dark:border-amber-500/30 dark:bg-amber-500/10">
+            <Card className="rounded-2xl border border-amber-200 bg-amber-50/80">
               <CardHeader>
-                <CardTitle className="text-base text-amber-900 dark:text-amber-100">
+                <CardTitle className="text-base text-amber-900">
                   Données temporairement indisponibles
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-amber-900 dark:text-amber-100">
+                <p className="text-sm text-amber-900">
                   Le tableau de bord rencontre une erreur temporaire de chargement.
                   Rechargez la page dans quelques secondes.
                 </p>
                 {dashboardErrorDetails && (
-                  <p className="mt-2 break-all font-mono text-xs text-amber-900 dark:text-amber-100/90">
+                  <p className="mt-2 break-all font-mono text-xs text-amber-900">
                     {dashboardErrorDetails}
                   </p>
                 )}
@@ -81,32 +82,39 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   return (
-    <div className="-mx-4 -my-4 min-h-screen bg-muted/40 pb-24 sm:-mx-6 sm:-my-6 lg:-mx-8 md:pb-0">
+    <div className="-mx-4 -my-4 min-h-screen bg-[#F8FAFC] pb-24 sm:-mx-6 sm:-my-6 lg:-mx-8 md:pb-0">
       <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 lg:px-8 xl:max-w-[1320px]">
-        <div className="flex flex-col gap-7">
+        <div className="flex flex-col gap-6 md:gap-8">
           <DashboardHeaderV3 period={dashboard.period} />
           <OnboardingChecklist
             onboarding={dashboard.onboarding}
             forceVisible={params["getting-started"] === "1" && !dashboard.onboarding.completed}
           />
           <PulseCards pulse={dashboard.pulse} />
+          <TodayOperationsCard operations={dashboard.todayOperations} />
           <ActionCenterCard actionCenter={dashboard.actionCenter} period={dashboard.period} />
-          <FleetSnapshotBar snapshot={dashboard.fleetSnapshot} />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:items-start">
+            <div className="order-1 lg:col-span-3">
+              <Suspense
+                fallback={
+                  <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="text-base text-slate-900">Réservations actives</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-slate-500">Chargement des réservations en cours...</p>
+                    </CardContent>
+                  </Card>
+                }
+              >
+                <DashboardActiveBookingsSection agencyId={agencyId} periodInput={periodInput} />
+              </Suspense>
+            </div>
 
-          <Suspense
-            fallback={
-              <Card className="rounded-xl border border-border bg-card shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-base text-foreground">Réservations actives</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">Chargement des réservations en cours...</p>
-                </CardContent>
-              </Card>
-            }
-          >
-            <DashboardActiveBookingsSection agencyId={agencyId} periodInput={periodInput} />
-          </Suspense>
+            <div className="order-2 lg:col-span-2">
+              <FleetSnapshotBar snapshot={dashboard.fleetSnapshot} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

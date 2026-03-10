@@ -7,10 +7,10 @@ export function FinalCTA() {
       <div className="container mx-auto max-w-7xl px-6 lg:px-8">
         <div className="rounded-2xl bg-gradient-to-b from-slate-50 to-white px-6 py-20 text-center md:px-10 lg:px-14">
           <h2 className="mb-6 text-4xl font-bold tracking-tight text-slate-800 md:text-5xl">
-            Découvrez LocaPro en action
+            Découvrez Locaryx en action
           </h2>
           <p className="mx-auto mb-10 max-w-xl text-xl leading-relaxed text-slate-600">
-            Essayez LocaPro et simplifiez la gestion de votre agence.
+            Essayez Locaryx et simplifiez la gestion de votre agence.
             <span className="hidden md:inline"><br /></span>{" "}
             Réservations, véhicules, clients et paiements — tout est centralisé dans une seule plateforme.
           </p>

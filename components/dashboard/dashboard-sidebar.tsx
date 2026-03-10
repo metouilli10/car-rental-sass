@@ -70,8 +70,8 @@ export function DashboardSidebar({ agencyName, role }: DashboardSidebarProps) {
         {!isCollapsed ? (
           <div className="relative w-36 h-10 overflow-hidden flex-1 min-w-0">
             <Image
-              src="/assets/locapro-logo.png"
-              alt="Locapro"
+              src="/assets/locaryx-logo-dark.png"
+              alt="Locaryx"
               fill
               className="object-contain object-left"
               priority
@@ -80,8 +80,8 @@ export function DashboardSidebar({ agencyName, role }: DashboardSidebarProps) {
         ) : (
           <div className="relative h-8 w-8 rounded-lg bg-muted/40 border border-border/40 shrink-0 overflow-hidden">
             <Image
-              src="/assets/locapro-favicon.png"
-              alt="Locapro"
+              src="/assets/locaryx-icon-dark.png"
+              alt="Locaryx"
               fill
               className="object-contain p-1"
               sizes="32px"

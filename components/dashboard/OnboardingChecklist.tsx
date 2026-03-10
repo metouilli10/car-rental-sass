@@ -168,7 +168,7 @@ export function OnboardingChecklist({
             <div className="space-y-0.5">
               <p className="text-sm font-semibold text-slate-900">Vous êtes prêt</p>
               <p className="text-sm text-slate-600">
-                Vous êtes prêt à gérer votre agence avec LocaPro.
+                Vous êtes prêt à gérer votre agence avec Locaryx.
               </p>
             </div>
           </div>
@@ -188,7 +188,7 @@ export function OnboardingChecklist({
                 Démarrage guidé
               </div>
               <div className="space-y-1.5">
-                <h2 className="text-base font-semibold text-slate-900">Bienvenue sur LocaPro 👋</h2>
+                <h2 className="text-base font-semibold text-slate-900">Bienvenue sur Locaryx 👋</h2>
                 <p className="text-sm text-slate-600">
                   Complétez ces étapes pour démarrer votre agence.
                 </p>

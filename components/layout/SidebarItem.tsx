@@ -53,17 +53,18 @@ export function SidebarItem({ href, iconName, label, collapsed = false }: Sideba
     <Link
       href={href}
       className={cn(
-        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150",
+        "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150",
         collapsed ? "justify-center gap-0 px-0 w-full" : "gap-3",
+        isActive && !collapsed && "mx-2",
         isActive
-          ? "bg-primary/10 text-foreground ring-1 ring-primary/15 shadow-sm before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:rounded-full before:bg-primary"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+          ? "bg-[#002e5d] text-white"
+          : "text-[rgba(255,255,255,0.85)] hover:text-[rgba(255,255,255,0.85)] hover:bg-[#002e5d]"
       )}
     >
       <Icon
         className={cn(
-          "h-5 w-5 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:text-foreground",
-          isActive && "text-blue-600"
+          "h-5 w-5 shrink-0 text-[rgba(255,255,255,0.75)] transition-colors duration-200 group-hover:text-[rgba(255,255,255,0.75)]",
+          isActive && "text-[#60A5FA]"
         )}
       />
 

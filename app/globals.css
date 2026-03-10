@@ -4,42 +4,41 @@
 
 @layer base {
   :root {
-    /* LocaPro palette: Blue Control x Amber Action */
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Locaryx palette: Calm neutrals + blue brand accent */
+    --background: 216 45% 98%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Primary: Blue Control */
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Brand */
+    --primary: 210 100% 18%;
+    --primary-foreground: 0 0% 100%;
 
     /* Semantic Colors */
-    --success: 145 67% 36%;
-    --warning: 34 76% 50%;
-    --danger: 0 61% 54%;
-    --info: 223 68% 54%;
+    --success: 160 84% 39%;
+    --warning: 38 92% 50%;
+    --danger: 0 84% 60%;
+    --info: 217 91% 60%;
 
     /* Quiet neutral surfaces */
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 40% 98%;
+    --secondary-foreground: 222 47% 11%;
 
     /* Muted text and surfaces */
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 216 45% 98%;
+    --muted-foreground: 215 19% 47%;
 
-    /* Accent: Amber Action */
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 210 40% 98%;
+    --accent-foreground: 213 20% 65%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 210 32% 92%;
+    --input: 210 32% 92%;
+    --ring: 210 100% 18%;
     --radius: 0.5rem;
 
     /* Dashboard spacing — calm, premium, airy rhythm (+12% global vertical rhythm) */
@@ -49,27 +48,27 @@
     --card-padding: 1.5rem;         /* 24px minimum inside cards */
 
     /* Card shadow system */
-    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+    --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     --card-shadow-hover: 0 4px 12px 0 rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
     --card-shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
 
     /* Primary gradient */
-    --primary-gradient: linear-gradient(135deg, hsl(220 84% 54%) 0%, hsl(213 80% 48%) 100%);
-    --primary-gradient-hover: linear-gradient(135deg, hsl(220 84% 48%) 0%, hsl(213 80% 42%) 100%);
+    --primary-gradient: linear-gradient(135deg, #002e5d 0%, #2274ae 100%);
+    --primary-gradient-hover: linear-gradient(135deg, #001f40 0%, #1d6395 100%);
 
-    --chart-1: 220 84% 54%;
-    --chart-2: 34 76% 50%;
-    --chart-3: 240 10% 3.9%;
-    --chart-4: 145 67% 36%;
-    --chart-5: 213 80% 48%;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
+    --chart-1: 219 83% 54%;
+    --chart-2: 38 92% 50%;
+    --chart-3: 222 47% 11%;
+    --chart-4: 160 84% 39%;
+    --chart-5: 217 91% 60%;
+    --sidebar-background: 210 33% 21%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 219 83% 54%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 211 30% 26%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 31% 24%;
+    --sidebar-ring: 219 83% 54%;
   }
 
   .dark {
@@ -155,6 +154,12 @@
   .btn-gradient:hover {
     background: var(--primary-gradient-hover);
     box-shadow: 0 4px 12px 0 hsl(220 84% 54% / 0.25);
+  }
+
+  .sidebar-gradient {
+    background: #2274ae;
+    background: -webkit-linear-gradient(to bottom, #002e5d, #2274ae);
+    background: linear-gradient(to bottom, #002e5d, #2274ae);
   }
 
   /* Soft alert styles */

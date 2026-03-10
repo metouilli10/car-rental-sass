@@ -10,8 +10,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Locapro — Votre agence, sous contrôle",
+  title: "Locaryx — Votre agence, sous contrôle",
   description: "Système de gestion professionnel pour agences de location de voitures",
+  icons: {
+    icon: "/assets/locaryx-icon-dark.png",
+    shortcut: "/assets/locaryx-icon-dark.png",
+    apple: "/assets/locaryx-icon-dark.png",
+  },
 };
 
 export const viewport: Viewport = {

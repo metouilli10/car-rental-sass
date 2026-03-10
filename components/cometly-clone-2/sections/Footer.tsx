@@ -1,5 +1,6 @@
 import React from "react";
 import { footerColumns } from "../data";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -8,10 +9,15 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-16">
           <div className="col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-6">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold">
-                C
+              <div>
+                <Image
+                  src="/assets/locaryx-logo-dark.png"
+                  alt="Locaryx"
+                  width={1193}
+                  height={345}
+                  className="h-9 w-auto"
+                />
               </div>
-              <span className="text-xl font-bold text-slate-900 tracking-tight">cometly</span>
             </div>
             <div className="flex gap-4">
               {/* Social Icons Placeholders */}
@@ -39,7 +45,7 @@ export function Footer() {
         
         <div className="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-slate-500">
-            © 2026 Comet LLC. All Rights Reserved.
+            © 2026 Locaryx. All Rights Reserved.
           </p>
           <div className="flex gap-6 text-sm text-slate-500">
             <a href="#" className="hover:text-slate-900">Privacy</a>

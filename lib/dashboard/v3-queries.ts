@@ -63,6 +63,10 @@ async function getDashboardDataV3Uncached(input: {
 }): Promise<DashboardV3DTO> {
   const startedAt = Date.now();
   const now = new Date();
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
   const resolvedPeriod = resolveDashboardV3Period(input.periodInput, now);
   const periodQuery = buildPeriodQuery({
     period: resolvedPeriod.key,
@@ -71,7 +75,17 @@ async function getDashboardDataV3Uncached(input: {
   });
 
   const queryStart = Date.now();
-  const [payments, deposits, bookings, vehicles, notifications, agency] = await Promise.all([
+  const [
+    payments,
+    deposits,
+    bookings,
+    vehicles,
+    notifications,
+    agency,
+    departuresToday,
+    returnsToday,
+    overdueReturnsToday,
+  ] = await Promise.all([
     prisma.payment.findMany({
       where: {
         booking: { agencyId: input.agencyId },
@@ -215,6 +229,35 @@ async function getDashboardDataV3Uncached(input: {
         onboardingDismissed: true,
       },
     }),
+    prisma.booking.count({
+      where: {
+        agencyId: input.agencyId,
+        status: { not: "CANCELED" },
+        startDate: {
+          gte: todayStart,
+          lt: tomorrowStart,
+        },
+      },
+    }),
+    prisma.booking.count({
+      where: {
+        agencyId: input.agencyId,
+        status: { not: "CANCELED" },
+        endDate: {
+          gte: todayStart,
+          lt: tomorrowStart,
+        },
+      },
+    }),
+    prisma.booking.count({
+      where: {
+        agencyId: input.agencyId,
+        status: { in: ["CONFIRMED", "ACTIVE"] },
+        endDate: {
+          lt: now,
+        },
+      },
+    }),
   ]);
   logPerf("core-queries", queryStart, {
     agencyId: input.agencyId,
@@ -224,6 +267,9 @@ async function getDashboardDataV3Uncached(input: {
     bookings: bookings.length,
     vehicles: vehicles.length,
     notifications: notifications.length,
+    departuresToday,
+    returnsToday,
+    overdueReturnsToday,
   });
 
   let paidInflows = 0;
@@ -576,6 +622,12 @@ async function getDashboardDataV3Uncached(input: {
         },
         subtitle: `${toCollectCount} impayes, ${depositDueItems.length} cautions, ${lateReturnCount} retours`,
       },
+    },
+    todayOperations: {
+      departures: departuresToday,
+      returns: returnsToday,
+      overdueReturns: overdueReturnsToday,
+      availableVehicles: fleetSnapshot.available,
     },
     actionCenter: {
       groups: actionGroups,

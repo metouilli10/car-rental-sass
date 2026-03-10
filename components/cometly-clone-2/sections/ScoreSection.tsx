@@ -16,7 +16,7 @@ const ACCORDION_ITEMS = [
     id: "revenue",
     title: "Zéro double réservation",
     description:
-      "Le calendrier intelligent de LocaPro détecte automatiquement les conflits et empêche les doubles réservations. Votre planning reste toujours fiable et à jour.",
+      "Le calendrier intelligent de Locaryx détecte automatiquement les conflits et empêche les doubles réservations. Votre planning reste toujours fiable et à jour.",
     image: "/features/682cc4dba83f447ba3b3d56f_21.png",
   },
   {
@@ -30,7 +30,7 @@ const ACCORDION_ITEMS = [
     id: "sync",
     title: "Clients, paiements et cautions centralisés",
     description:
-      "Accédez instantanément aux informations clients, suivez les paiements et gérez les cautions directement depuis LocaPro. Tout votre business reste organisé au même endroit.",
+      "Accédez instantanément aux informations clients, suivez les paiements et gérez les cautions directement depuis Locaryx. Tout votre business reste organisé au même endroit.",
     image: "/features/682e5861ca7159e8997cc307_match-score-p-2000.png",
   },
 ] as const;
@@ -48,14 +48,14 @@ export function ScoreSection() {
       <div className="container mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-5xl text-center">
           <Badge className="mb-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50">
-            Pourquoi LocaPro ?
+            Pourquoi Locaryx ?
           </Badge>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-[42px] md:leading-[1.14]">
             <span className="block">Gérez votre agence plus simplement.</span>
             <span className="block">Plus vite. Sans erreurs.</span>
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-slate-600 md:text-base">
-            LocaPro centralise vos réservations, vos véhicules, vos clients et vos paiements
+            Locaryx centralise vos réservations, vos véhicules, vos clients et vos paiements
             <span className="hidden md:inline"><br /></span>{" "}
             dans une seule plateforme. Automatisez votre gestion quotidienne et gardez
             <span className="hidden md:inline"><br /></span>{" "}

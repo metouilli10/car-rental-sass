@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -112,8 +113,22 @@ export function TopNavBar({
   return (
     <>
       <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-4 shadow-sm sm:px-6">
-        {/* ── Zone B: Center spacer ─────────────────────────────── */}
-        <div className="flex-1" />
+        <div className="min-w-0 flex-1">
+          <Link
+            href="/dashboard"
+            aria-label="Aller au tableau de bord"
+            className="inline-flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-muted/50 md:hidden"
+          >
+            <Image
+              src="/assets/locaryx-logo-dark.png"
+              alt="Locaryx"
+              width={120}
+              height={28}
+              className="h-6 w-auto object-contain"
+              priority
+            />
+          </Link>
+        </div>
 
         {/* ── Zone C: Right — Search + Bell + Profile ───────────── */}
         <div className="flex-none flex items-center gap-2 sm:gap-2.5">
