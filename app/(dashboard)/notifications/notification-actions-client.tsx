@@ -21,7 +21,7 @@ import {
 
 interface NotificationActionsProps {
   id: string;
-  vehicleId: string;
+  vehicleId?: string | null;
   status: string;
 }
 
@@ -80,6 +80,14 @@ export function NotificationActions({
       toast("Notification ignorée");
       router.refresh();
     });
+  };
+
+  const handleOpenVehicle = () => {
+    if (!vehicleId) {
+      toast.error("Véhicule introuvable pour cette notification.");
+      return;
+    }
+    router.push(`/vehicles/${vehicleId}/edit`);
   };
 
   const isActive = status === "OPEN";
@@ -156,8 +164,8 @@ export function NotificationActions({
         size="sm"
         variant="ghost"
         className="h-8 px-2 text-xs text-primary hover:text-primary/80"
-        onClick={() => router.push(`/vehicles/${vehicleId}`)}
-        disabled={isPending}
+        onClick={handleOpenVehicle}
+        disabled={isPending || !vehicleId}
       >
         <ExternalLink className="h-3.5 w-3.5 mr-1" />
         Véhicule
