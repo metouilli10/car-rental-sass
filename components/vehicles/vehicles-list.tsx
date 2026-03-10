@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { brandLogoSrc } from "@/lib/brands";
 import { VehicleActionsMenu } from "@/components/vehicles/vehicle-actions-menu";
-import { VehicleDetailsDrawer } from "@/components/vehicles/vehicle-details-drawer";
 import type { VehicleListItem } from "@/components/vehicles/types";
 
 const statusBadgeStyles: Record<string, string> = {
@@ -32,24 +31,14 @@ interface VehiclesListProps {
 
 export function VehiclesList({ vehicles, isRentedView, canManageVehicles, statusFilter }: VehiclesListProps) {
   const router = useRouter();
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [rows, setRows] = useState<VehicleListItem[]>(vehicles);
 
   useEffect(() => {
     setRows(vehicles);
   }, [vehicles]);
 
-  const selectedVehicle = useMemo(
-    () => rows.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
-    [rows, selectedVehicleId],
-  );
-
   const handleEdit = (vehicleId: string) => {
     router.push(`/vehicles/${vehicleId}/edit`);
-  };
-
-  const closeDrawer = () => {
-    setSelectedVehicleId(null);
   };
 
   const shouldKeepRowInCurrentView = (nextStatus: string) => {
@@ -107,7 +96,7 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles, status
                   <tr
                     key={vehicle.id}
                     className="cursor-pointer transition-colors hover:bg-blue-50/40"
-                    onClick={() => setSelectedVehicleId(vehicle.id)}
+                    onClick={() => router.push(`/vehicles/${vehicle.id}`)}
                   >
                     <td className="px-6 py-4.5 md:px-8 md:py-6">
                       <div className="flex items-center gap-3">
@@ -193,7 +182,6 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles, status
                                 : updated.filter((row) => row.id !== id);
                             });
                           }
-                          if (selectedVehicleId === id) closeDrawer();
                         }}
                         onSetMaintenance={(id, nextStatus) => {
                           if (nextStatus) {
@@ -206,7 +194,6 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles, status
                                 : updated.filter((row) => row.id !== id);
                             });
                           }
-                          if (selectedVehicleId === id) closeDrawer();
                         }}
                       />
                     </td>
@@ -224,7 +211,7 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles, status
               <div
                 key={vehicle.id}
                 className="flex cursor-pointer items-center gap-3 px-4 py-4 transition-colors hover:bg-blue-50/40"
-                onClick={() => setSelectedVehicleId(vehicle.id)}
+                onClick={() => router.push(`/vehicles/${vehicle.id}`)}
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-100">
                   <div className="relative h-7 w-7">
@@ -278,7 +265,6 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles, status
                             : updated.filter((row) => row.id !== id);
                         });
                       }
-                      if (selectedVehicleId === id) closeDrawer();
                     }}
                     onSetMaintenance={(id, nextStatus) => {
                       if (nextStatus) {
@@ -291,7 +277,6 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles, status
                             : updated.filter((row) => row.id !== id);
                         });
                       }
-                      if (selectedVehicleId === id) closeDrawer();
                     }}
                   />
                 </div>
@@ -300,14 +285,6 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles, status
           })}
         </div>
       </div>
-
-      <VehicleDetailsDrawer
-        open={Boolean(selectedVehicle)}
-        onOpenChange={(open) => {
-          if (!open) closeDrawer();
-        }}
-        vehicle={selectedVehicle}
-      />
     </>
   );
 }

@@ -7,6 +7,11 @@ import { authOptions } from "@/lib/auth";
 import { canManageVehicles } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { vehicleSchema, VehicleFormData } from "@/lib/validations/vehicle";
+import {
+  vehicleDocumentSchema,
+  type VehicleDocumentFormData,
+} from "@/lib/validations/vehicle-document";
+import { vehicleReminderSchema, type VehicleReminderFormData } from "@/lib/validations/vehicle-reminder";
 import { computeVehicleReminders } from "@/lib/reminders/engine";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
 import { brandKeyFromMake } from "@/lib/brands";
@@ -323,5 +328,180 @@ export async function deleteVehicle(id: string) {
   } catch (error) {
     console.error("deleteVehicle error:", error);
     return { error: "Erreur lors de la suppression du véhicule" };
+  }
+}
+
+export async function updateVehicleReminderFields(
+  id: string,
+  data: VehicleReminderFormData,
+) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new Error("Non autorisé");
+  }
+
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+
+  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+    return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
+  }
+
+  try {
+    const validated = vehicleReminderSchema.parse(data);
+    const vehicle = await prisma.vehicle.findFirst({
+      where: { id, agencyId: session.user.agencyId },
+      select: { id: true },
+    });
+
+    if (!vehicle) {
+      return { error: "Véhicule non trouvé" };
+    }
+
+    await prisma.vehicle.update({
+      where: { id },
+      data: {
+        nextOilChangeDate: toDateOrNull(validated.nextOilChangeDate),
+        nextOilChangeMileageKm: validated.nextOilChangeMileageKm ?? null,
+        insuranceExpiryDate: toDateOrNull(validated.insuranceExpiryDate),
+        nextTechnicalInspectionDate: toDateOrNull(validated.nextTechnicalInspectionDate),
+        vignetteExpiryDate: toDateOrNull(validated.vignetteExpiryDate),
+        maintenanceNotes: validated.maintenanceNotes?.trim() || null,
+      },
+    });
+
+    try {
+      await computeVehicleReminders(id, session.user.agencyId);
+    } catch (error) {
+      console.error("updateVehicleReminderFields computeVehicleReminders error:", error);
+    }
+
+    revalidatePath("/vehicles");
+    revalidatePath(`/vehicles/${id}`);
+    revalidatePath("/notifications");
+
+    return { success: true as const };
+  } catch (error) {
+    console.error("updateVehicleReminderFields error:", error);
+    return { error: "Erreur lors de la mise à jour des rappels" };
+  }
+}
+
+export async function upsertVehicleDocument(
+  id: string,
+  data: VehicleDocumentFormData,
+) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new Error("Non autorisé");
+  }
+
+  const currentUser = await prisma.user.findFirst({
+    where: { id: session.user.id, agencyId: session.user.agencyId },
+    select: { permissionOverrides: true },
+  });
+
+  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+    return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
+  }
+
+  const vehicleDocumentDelegate = (prisma as typeof prisma & {
+    vehicleDocument?: {
+      upsert: typeof prisma.vehicleDocument.upsert;
+    };
+  }).vehicleDocument;
+
+  if (!vehicleDocumentDelegate) {
+    return {
+      error:
+        "Le module documents n'est pas encore disponible. Redémarrez l'application après avoir appliqué la migration Prisma.",
+    };
+  }
+
+  try {
+    const validated = vehicleDocumentSchema.parse(data);
+    const vehicle = await prisma.vehicle.findFirst({
+      where: { id, agencyId: session.user.agencyId },
+      select: { id: true },
+    });
+
+    if (!vehicle) {
+      return { error: "Véhicule non trouvé" };
+    }
+
+    const startDateInput = typeof validated.startDate === "string" ? validated.startDate : undefined;
+    const expiryDateInput = typeof validated.expiryDate === "string" ? validated.expiryDate : undefined;
+    const referenceInput = typeof validated.reference === "string" ? validated.reference : undefined;
+    const fileUrlInput = typeof validated.fileUrl === "string" ? validated.fileUrl : undefined;
+
+    const startDate = toDateOrNull(startDateInput);
+    const expiryDate = toDateOrNull(expiryDateInput);
+    const reference = referenceInput?.trim() || null;
+    const fileUrl = fileUrlInput?.trim() || null;
+
+    await vehicleDocumentDelegate.upsert({
+      where: {
+        agencyId_vehicleId_type: {
+          agencyId: session.user.agencyId,
+          vehicleId: id,
+          type: validated.type,
+        },
+      },
+      update: {
+        reference,
+        startDate,
+        expiryDate,
+        fileUrl,
+      },
+      create: {
+        agencyId: session.user.agencyId,
+        vehicleId: id,
+        type: validated.type,
+        reference,
+        startDate,
+        expiryDate,
+        fileUrl,
+      },
+    });
+
+    const vehicleUpdateData: Record<string, string | Date | null | undefined> = {};
+    if (validated.type === "INSURANCE") {
+      vehicleUpdateData.insurancePolicyNumber = reference;
+      vehicleUpdateData.insuranceStartDate = startDate;
+      vehicleUpdateData.insuranceExpiryDate = expiryDate;
+    }
+    if (validated.type === "TECHNICAL_INSPECTION") {
+      vehicleUpdateData.lastTechnicalInspectionDate = startDate;
+      vehicleUpdateData.nextTechnicalInspectionDate = expiryDate;
+    }
+    if (validated.type === "VIGNETTE") {
+      vehicleUpdateData.vignetteExpiryDate = expiryDate;
+    }
+
+    if (Object.keys(vehicleUpdateData).length > 0) {
+      await prisma.vehicle.update({
+        where: { id },
+        data: vehicleUpdateData,
+      });
+    }
+
+    try {
+      await computeVehicleReminders(id, session.user.agencyId);
+    } catch (error) {
+      console.error("upsertVehicleDocument computeVehicleReminders error:", error);
+    }
+
+    revalidatePath(`/vehicles/${id}`);
+    revalidatePath("/vehicles");
+    revalidatePath("/notifications");
+
+    return { success: true as const };
+  } catch (error) {
+    console.error("upsertVehicleDocument error:", error);
+    return { error: "Erreur lors de l'enregistrement du document" };
   }
 }

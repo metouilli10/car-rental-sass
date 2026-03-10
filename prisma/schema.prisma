@@ -159,6 +159,13 @@ enum NotificationEventStatus {
   FAILED
 }
 
+enum VehicleDocumentType {
+  INSURANCE
+  TECHNICAL_INSPECTION
+  VIGNETTE
+  REGISTRATION
+}
+
 model Agency {
   id       String @id @default(cuid())
   name     String
@@ -189,6 +196,7 @@ model Agency {
   expenses         Expense[]
   reminderRules    ReminderRule[]
   notifications    Notification[]
+  vehicleDocuments VehicleDocument[]
   infractions      Infraction[]
 
   @@map("agencies")
@@ -277,6 +285,7 @@ model Vehicle {
   bookings      Booking[]
   expenses      Expense[]
   notifications Notification[]
+  documents     VehicleDocument[]
   infractions   Infraction[]
 
   @@index([agencyId])
@@ -589,6 +598,27 @@ model NotificationEvent {
 
   @@index([notificationId])
   @@map("notification_events")
+}
+
+model VehicleDocument {
+  id        String              @id @default(cuid())
+  agencyId  String
+  vehicleId String
+  type      VehicleDocumentType
+  reference String?
+  startDate DateTime?
+  expiryDate DateTime?
+  fileUrl   String?
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  agency  Agency  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@unique([agencyId, vehicleId, type])
+  @@index([agencyId])
+  @@index([vehicleId])
+  @@map("vehicle_documents")
 }
 
 model Infraction {
