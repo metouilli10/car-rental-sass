@@ -1,69 +1,90 @@
 "use client";
 
-import { ShootingStars } from "@/components/ui/shooting-stars";
-import { StarsBackground } from "@/components/ui/stars-background";
-import { Button } from "@/components/ui/button";
-import {
-  ArrowRight,
-  BarChart3,
-  Calendar,
-  CalendarCheck,
-  Car,
-  Users,
-  Wallet,
-} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { CheckCircle2 } from "lucide-react";
 
-const HERO_FEATURES = [
-  { icon: CalendarCheck, label: "Réservations" },
-  { icon: Calendar, label: "Calendrier" },
-  { icon: Car, label: "Véhicules" },
-  { icon: Users, label: "Clients" },
-  { icon: Wallet, label: "Paiements" },
-  { icon: BarChart3, label: "Statistiques" },
+import { Button } from "@/components/ui/button";
+import { Particles } from "@/components/ui/particles";
+import { heroData } from "../data";
+
+const CARD_POSITIONS = [
+  "hero-floating-card hero-floating-card-left",
+  "hero-floating-card hero-floating-card-top",
+  "hero-floating-card hero-floating-card-right",
 ];
 
 export function Hero() {
   return (
-    <section className="hero-section relative overflow-hidden pt-28 pb-20 md:pt-32 md:pb-24">
-      <StarsBackground className="opacity-55" />
-      <ShootingStars />
-
-      <div
-        className="hero-glow absolute left-1/2 top-[190px] -translate-x-1/2 w-[980px] h-[640px] rounded-full blur-[145px] pointer-events-none"
-        aria-hidden
+    <section className="hero-section relative overflow-hidden pt-28 pb-14 md:pt-32 md:pb-16">
+      <Particles
+        className="absolute inset-0 z-[1] opacity-45"
+        quantity={70}
+        ease={90}
+        staticity={45}
+        size={0.8}
+        color="#94a3b8"
+        vx={0.02}
+        vy={0.01}
+        refresh
       />
 
-      <div className="relative z-10 mx-auto max-w-[1240px] text-center px-6 lg:px-8">
-        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-blue-500/60 bg-[#0a1435]/85 pl-2.5 pr-4 py-2 text-sm text-white shadow-[0_0_0_1px_rgba(29,78,216,0.3)_inset,0_8px_30px_rgba(37,99,235,0.2)]">
-          <span className="inline-flex items-center rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-semibold leading-none tracking-wide">
-            NEW
-          </span>
-          <span className="font-medium">Use AI to chat with your ads data</span>
-          <ArrowRight className="h-4 w-4 text-blue-200" />
-        </div>
+      <div className="relative z-10 mx-auto max-w-[1240px] px-6 text-center lg:px-8">
+        <div className="mx-auto max-w-[760px]">
+          <p className="hero-eyebrow">{heroData.eyebrow}</p>
 
-        <h1 className="hero-title mt-10">
-          <span className="hero-title-line">Gérez votre agence de location</span>
-          <span className="hero-title-line">depuis une seule plateforme.</span>
-        </h1>
+          <h1 className="hero-title mt-6">
+            <span className="block md:whitespace-nowrap">Gérez toute votre agence de location</span>
+            <span className="block md:whitespace-nowrap">depuis un seul tableau de bord.</span>
+          </h1>
 
-        <p className="hero-subtitle">
-          Réservations, véhicules, clients, paiements et documents tout votre business au même endroit.
-        </p>
+          <p className="hero-subtitle">{heroData.subheading}</p>
 
-        <Button className="hero-cta">Essayer gratuitement</Button>
-
-        <div className="hero-feature-row mt-12">
-          {HERO_FEATURES.map((feature) => (
-            <div key={feature.label} className="hero-feature-item transition-all duration-200 hover:-translate-y-0.5">
-              <feature.icon className="h-[15px] w-[15px] text-slate-200" />
-              <span>{feature.label}</span>
+          <div className="hero-cta-stack">
+            <div className="hero-cta-row">
+              <Button asChild className="hero-cta-primary">
+                <Link href="/signup">{heroData.ctaPrimary}</Link>
+              </Button>
+              <div className="hero-cta-subrow">
+                <span>ou</span>
+                <Link href="#" className="hero-cta-secondary">
+                  {heroData.ctaSecondary}
+                </Link>
+              </div>
             </div>
-          ))}
+          </div>
+
+          <div className="hero-proof-row items-center justify-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-hidden />
+            <p>{heroData.reviewText}</p>
+          </div>
         </div>
 
-        <div className="hero-dashboard mt-8 md:mt-10">
-          <img src="/screenshots/dashboard.png" alt="Cometly dashboard preview" />
+        <div className="hero-dashboard-wrap">
+          <div className="hero-dashboard">
+            <Image
+              src="/screenshots/dashboard.png"
+              alt="Locaryx dashboard preview"
+              width={1120}
+              height={680}
+              priority
+              className="hero-dashboard-image"
+            />
+
+            {heroData.stats.map((stat, index) => (
+              <article
+                key={stat.title}
+                className={`${CARD_POSITIONS[index]} hero-floating-card-${stat.tone}`}
+              >
+                <div className="hero-floating-card-label">{stat.title}</div>
+                <div className="hero-floating-card-value">{stat.value}</div>
+                <div className="hero-floating-card-detail">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>{stat.detail}</span>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </section>

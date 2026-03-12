@@ -1,12 +1,13 @@
 import React from "react";
-import { features } from "../data";
+import Link from "next/link";
+import { features, sectionHeadings } from "../data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 export function FeaturesGrid() {
   return (
-    <section className="bg-white py-24 lg:py-32">
+    <section className="bg-white py-20 lg:py-24">
       <div className="container mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-16 xl:gap-20">
           <div>
@@ -14,14 +15,13 @@ export function FeaturesGrid() {
               Fonctionnalités
             </Badge>
             <h2 className="max-w-[380px] text-[28px] font-semibold tracking-tight text-slate-900 lg:text-[34px] lg:leading-[1.18]">
-              <span className="block">Gérez toute votre agence</span>
-              <span className="block">depuis une seule plateforme</span>
+              {sectionHeadings.features.title}
             </h2>
             <p className="mt-4 max-w-[360px] text-[16px] leading-relaxed text-slate-600">
-              Locaryx centralise les réservations, les véhicules, les clients et les paiements dans un seul outil. Simplifiez votre gestion quotidienne et gagnez du temps sur chaque opération.
+              {sectionHeadings.features.subtitle}
             </p>
-            <Button className="mt-6 h-11 rounded-lg bg-blue-600 px-6 text-base font-semibold text-white hover:bg-blue-700">
-              Commencer
+            <Button asChild className="mt-6 h-11 rounded-lg bg-blue-600 px-6 text-base font-semibold text-white hover:bg-blue-700">
+              <Link href="/signup">Commencer gratuitement</Link>
             </Button>
           </div>
 

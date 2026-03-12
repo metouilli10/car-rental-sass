@@ -13,63 +13,93 @@ import {
 } from "lucide-react";
 
 export const navLinks = [
-  { label: "Fonctionnalités", hasDropdown: true },
-  { label: "Solutions", hasDropdown: true },
-  { label: "Ressources", hasDropdown: true },
-  { label: "Clients", hasDropdown: false },
+  { label: "Fonctionnalités", hasDropdown: false },
+  { label: "Témoignages", hasDropdown: false },
   { label: "Tarifs", hasDropdown: false },
 ];
 
 export const heroData = {
-  heading: "Smarter Marketing Attribution. Use AI to Turn Data Into Action.",
+  eyebrow: "LE LOGICIEL DE GESTION POUR AGENCES DE LOCATION AU MAROC",
+  heading: "Gérez toute votre agence de location depuis un seul tableau de bord.",
   subheading:
-    "Cometly transforms your marketing and sales data into insights, decisions, and scalable results by accurately attributing every conversion to its true source.",
-  ctaPrimary: "Get Started",
-  ctaSecondary: "Book a demo",
-  trustText: "Trusted by thousands of companies",
+    "Réservations, véhicules, cautions et paiements — tout est centralisé pour éviter les erreurs et gagner du temps chaque jour.",
+  ctaPrimary: "Commencer gratuitement",
+  ctaSecondary: "Voir la démo",
+  ctaMicroText: "Essai gratuit — aucune carte bancaire requise.",
+  trustText: "Ils font confiance à Locaryx pour gérer leur agence",
+  reviewText: "Déjà adopté par des agences de location modernes au Maroc.",
+  localPositioningText: "Conçu pour les agences de location modernes au Maroc.",
+  stats: [
+    {
+      title: "Réservations du jour",
+      value: "14",
+      detail: "Départs et retours à traiter aujourd'hui",
+      tone: "emerald",
+    },
+    {
+      title: "Flotte disponible",
+      value: "9",
+      detail: "Véhicules prêts à être loués",
+      tone: "sky",
+    },
+    {
+      title: "Paiements suivis",
+      value: "24K DH",
+      detail: "Cautions et règlements centralisés",
+      tone: "amber",
+    },
+  ],
 };
+
+export const trustHighlights = [
+  "Évitez les doubles réservations",
+  "Voyez l'état de votre flotte en temps réel",
+  "Suivez les cautions sans confusion",
+  "Gardez toutes les informations clients au même endroit",
+  "Prenez de meilleures décisions avec un tableau de bord clair",
+];
 
 export const features = [
   {
     icon: CalendarCheck,
     title: "Réservations intelligentes",
     description:
-      "Créez et gérez vos réservations en quelques secondes. Le calendrier intelligent évite les conflits et garde votre planning toujours à jour.",
+      "Créez et gérez vos réservations en quelques secondes sans conflit de disponibilité ni oubli dans le planning.",
     linkLabel: "Voir les réservations",
   },
   {
     icon: Car,
     title: "Gestion des véhicules",
     description:
-      "Suivez la disponibilité, l'historique et l'état de chaque véhicule de votre flotte en temps réel.",
+      "Suivez l'état de votre flotte et la disponibilité de chaque véhicule en temps réel.",
     linkLabel: "Voir les véhicules",
   },
   {
     icon: Users,
     title: "Gestion des clients",
     description:
-      "Conservez toutes les informations clients, leurs documents et leur historique de location au même endroit.",
+      "Toutes les informations clients, contrats et documents restent accessibles instantanément au même endroit.",
     linkLabel: "Voir les clients",
   },
   {
     icon: Wallet,
     title: "Paiements et cautions",
     description:
-      "Suivez les paiements, cautions et montants dus sans tableurs ni calculs manuels.",
+      "Suivez les paiements, cautions et remboursements sans confusion ni calcul manuel.",
     linkLabel: "Voir les paiements",
   },
   {
     icon: ClipboardCheck,
-    title: "États de véhicule",
+    title: "État du véhicule",
     description:
-      "Documentez les départs et retours des véhicules avec photos et rapports détaillés.",
+      "Documentez les départs et retours avec photos pour éviter les litiges et garder une trace claire.",
     linkLabel: "Voir les inspections",
   },
   {
     icon: BarChart3,
     title: "Statistiques et rapports",
     description:
-      "Analysez les performances de votre agence : revenus, taux d'occupation et activité.",
+      "Analysez les performances de votre agence et prenez de meilleures décisions avec des données claires.",
     linkLabel: "Voir les rapports",
   },
 ];
@@ -77,75 +107,75 @@ export const features = [
 export const howItWorksSteps = [
   {
     icon: MousePointerClick,
-    title: "Capture website activity",
+    title: "Créez votre compte",
     description:
-      "Install the Cometly Pixel on your website and automatically start tracking all activity (visits, form fills, etc.) from your website users.",
+      "Créez votre espace Locaryx en quelques minutes et configurez les informations essentielles de votre agence.",
   },
   {
     icon: Link,
-    title: "Connect your marketing & sales tools",
+    title: "Ajoutez votre flotte et vos réservations",
     description:
-      "Connect your ad accounts, CRM, and payment tools in just a few clicks to start tracking the actions that matter most.",
+      "Importez ou saisissez vos véhicules, vos disponibilités et vos réservations pour démarrer avec une base claire.",
   },
   {
     icon: Zap,
-    title: "Activate Conversion Sync",
+    title: "Centralisez vos clients et paiements",
     description:
-      "With Cometly’s built-in server-side tracking, you can sync conversions to ad platforms with a single toggle — no devs needed.",
+      "Gardez les dossiers clients, les paiements et les cautions au même endroit pour travailler sans confusion.",
   },
   {
     icon: Activity,
-    title: "Analyze & act on accurate data",
+    title: "Pilotez vos opérations au quotidien",
     description:
-      "Start analyzing your data in real time. Find out exactly which channels, ads, or campaigns are working so you can make smarter decisions.",
+      "Suivez les départs, retours, disponibilités et encaissements depuis un tableau de bord clair et utile.",
   },
   {
     icon: MessageSquare,
-    title: "Use AI to chat with your data",
+    title: "Faites avancer l'agence plus vite",
     description:
-      "Use AI to ask questions about your ad performance and get clear, helpful insights that improve your results — fast.",
+      "Toute l'équipe travaille sur les mêmes informations pour éviter les oublis et gagner du temps chaque jour.",
   },
 ];
 
 export const testimonials = [
   {
     quote:
-      "Avant Locaryx, on gérait les réservations sur Excel et WhatsApp. Maintenant tout est centralisé. On voit immédiatement quels véhicules sont disponibles et on évite les doubles réservations.",
+      "Avant Locaryx, nous avions souvent des conflits de réservation. Maintenant tout est clair sur le tableau de bord.",
     name: "Youssef B.",
     role: "Gérant - Agadir Rent Cars",
     company: "Agadir Rent Cars",
   },
   {
     quote:
-      "Le calendrier est devenu indispensable pour notre agence. Toute l’équipe peut voir les réservations en temps réel et l’organisation est beaucoup plus simple.",
+      "Le calendrier nous fait gagner du temps chaque jour. Toute l'équipe voit les réservations en temps réel.",
     name: "Sarah L.",
     role: "Responsable flotte - Atlas Car Rental",
     company: "Atlas Car Rental",
   },
   {
     quote:
-      "Ce que j’aime le plus avec Locaryx, c’est le suivi des clients et des cautions. Avant c’était compliqué de retrouver les infos, maintenant tout est clair.",
+      "Les cautions et les paiements sont beaucoup plus simples à suivre. On retrouve les informations sans chercher partout.",
     name: "Karim M.",
     role: "Fondateur - Marrakech Drive",
     company: "Marrakech Drive",
   },
   {
     quote:
-      "On gagne énormément de temps sur la gestion quotidienne. Créer une réservation prend quelques secondes et toutes les informations client sont enregistrées.",
+      "Créer une réservation prend quelques secondes et toutes les informations client sont déjà centralisées.",
     name: "Nadia T.",
     role: "Manager - Sahara Mobility",
     company: "Sahara Mobility",
   },
   {
     quote:
-      "Les inspections avec photos nous ont vraiment aidés. On peut documenter l’état du véhicule au départ et au retour sans discussions avec les clients.",
+      "Les inspections avec photos nous évitent beaucoup de discussions au retour du véhicule. Tout est documenté.",
     name: "Rachid A.",
     role: "Responsable opérations - Ocean Cars",
     company: "Ocean Cars",
   },
   {
     quote:
-      "Locaryx nous donne enfin une vue claire sur l’activité : réservations, revenus et disponibilité des véhicules. C’est devenu notre outil principal.",
+      "On a enfin une vue claire sur les réservations, les revenus et la disponibilité de la flotte au même endroit.",
     name: "Imane K.",
     role: "Directrice - City Rent Agadir",
     company: "City Rent Agadir",
@@ -154,60 +184,61 @@ export const testimonials = [
 
 export const footerColumns = [
   {
-    title: "Product",
+    title: "Produit",
     links: [
-      "Features",
-      "Pricing",
-      "Integrations",
-      "AI Ads Manager",
-      "AI Chat",
-      "Server-Side Tracking",
-      "Multi-Touch Attribution",
-      "Analytics",
-      "Conversion Sync",
+      "Fonctionnalités",
+      "Tarifs",
+      "Réservations",
+      "Flotte",
+      "Clients",
+      "Paiements",
+      "Inspections",
+      "Tableau de bord",
     ],
   },
   {
-    title: "Company",
-    links: ["About Us", "Customers", "Case Studies", "Contact Us"],
+    title: "Entreprise",
+    links: ["À propos", "Clients", "Témoignages", "Contact"],
   },
   {
-    title: "Resources",
-    links: ["Blog", "Help Center", "Academy", "Guides", "Community", "Developer Docs"],
+    title: "Ressources",
+    links: ["Blog", "Centre d'aide", "Guides", "FAQ", "Support"],
   },
   {
     title: "Solutions",
-    links: ["SaaS", "Agencies", "Ecommerce"],
+    links: ["Petites agences", "Agences en croissance", "Multi-agences"],
   },
 ];
 
 export const sectionHeadings = {
   features: {
-    title: "Measure conversions and revenue from every marketing source",
-    subtitle: "Unify all your marketing data into one platform for smarter, faster decisions.",
+    title: "Gérez toute votre agence depuis une seule plateforme",
+    subtitle:
+      "Locaryx suit le vrai workflow de votre agence, de la réservation jusqu'au paiement et au retour du véhicule.",
   },
   testimonials: {
     title: "Ils utilisent Locaryx pour gérer leur agence",
-    subtitle: "Découvrez comment les agences de location simplifient leur gestion quotidienne avec Locaryx.",
+    subtitle:
+      "Des retours concrets d'agences qui gagnent du temps et évitent plus d'erreurs au quotidien.",
   },
   analytics: {
     title: "Gardez une vue claire sur toute votre agence",
     subtitle:
-      "Suivez vos réservations, vos véhicules, vos revenus et vos clients depuis un tableau de bord simple et puissant. Prenez de meilleures décisions grâce à des données claires.",
+      "Suivez les revenus, les réservations et la disponibilité de votre flotte en temps réel pour décider plus vite.",
   },
   howItWorks: {
-    title: "Launch With Expert Help",
+    title: "Démarrez sans complexité",
     subtitle:
-      "Getting started with Cometly is fast but you’re not doing it alone. We partner with your team from day one to ensure everything is implemented correctly.",
+      "Locaryx est conçu pour être pris en main rapidement, même par une petite équipe qui veut aller à l'essentiel.",
   },
   integrations: {
-    title: "Connect your marketing & sales stack",
+    title: "Connectez les outils que vous utilisez déjà",
     subtitle:
-      "Connect your tools, connect your teams. With over 100 apps already available in our directory, your team’s favourite tools are just a click away.",
+      "Centralisez vos opérations et gardez une base de travail claire pour toute l'équipe.",
   },
   cta: {
     title: "Découvrez Locaryx en action",
     subtitle:
-      "Essayez Locaryx et simplifiez la gestion de votre agence. Réservations, véhicules, clients et paiements — tout est centralisé dans une seule plateforme.",
+      "Créez votre compte et commencez à gérer votre agence en quelques minutes.",
   },
 };

@@ -1,42 +1,43 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 const ANALYTICS_IMAGES = [
   {
     src: "/analytics/682e538239aebdbdbcb40d2f_Leads & Purchases By Source - Final - 2-p-2000.png",
-    alt: "Leads and purchases by source report",
+    alt: "Vue des revenus et réservations",
   },
   {
     src: "/analytics/682e4c4d544585a6af7ca05a_Ad Metrics - Chart-p-2000.png",
-    alt: "Ad metrics chart report",
+    alt: "Graphique de performance de l'agence",
   },
   {
     src: "/analytics/682e53cc4c58b513672f73d3_CREATIVE-1-p-2000.png",
-    alt: "Creative report table",
+    alt: "Tableau de suivi opérationnel",
   },
   {
     src: "/analytics/682e4faa825c8f0aef8481fd_Start Trial Metrics-p-2000.png",
-    alt: "Sign up and trial metrics chart",
+    alt: "Indicateurs de pilotage en temps réel",
   },
 ];
 
 export function AnalyticsSection() {
   return (
-    <section className="bg-white py-24 lg:py-28">
+    <section className="bg-white py-20 lg:py-24">
       <div className="container mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <Badge className="mb-4 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50">
-            Tableaux de bord puissants
+            Tableau de bord clair
           </Badge>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-5xl md:leading-[1.12]">
-            Gardez une vue claire sur toute votre agence
+            Gardez une vue claire sur votre agence
           </h2>
           <p className="mx-auto mt-5 max-w-3xl text-xl leading-relaxed text-slate-600">
-            Suivez vos réservations, vos véhicules, vos revenus et vos clients depuis un tableau de bord simple et puissant.
+            Suivez les revenus, les réservations et la disponibilité de votre flotte en temps réel.
             <span className="hidden md:inline"><br /></span>{" "}
-            Prenez de meilleures décisions grâce à des données claires.
+            Prenez de meilleures décisions avec un tableau de bord simple et utile.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button
@@ -45,8 +46,8 @@ export function AnalyticsSection() {
             >
               Découvrir les fonctionnalités
             </Button>
-            <Button className="h-11 rounded-xl bg-[#2563eb] px-6 text-base font-semibold text-white hover:bg-[#1d4ed8]">
-              Commencer
+            <Button asChild className="h-11 rounded-xl bg-[#2563eb] px-6 text-base font-semibold text-white hover:bg-[#1d4ed8]">
+              <Link href="/signup">Commencer gratuitement</Link>
             </Button>
           </div>
         </div>

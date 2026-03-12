@@ -9,16 +9,16 @@ export function Navbar() {
   return (
     <nav className="clone2-navbar absolute top-0 left-0 right-0 z-50">
       <div className="mx-auto flex h-[68px] max-w-[1240px] items-center justify-between px-6 lg:px-8">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <Image
-            src="/assets/locaryx-logo-white.png"
+            src="/assets/locaryx-logo-dark.png"
             alt="Locaryx"
             width={1193}
             height={345}
             className="h-8 w-auto md:h-9"
             priority
           />
-        </div>
+        </Link>
 
         <div className="hidden lg:flex items-center gap-8">
           {navLinks.map((link) => (
@@ -35,14 +35,19 @@ export function Navbar() {
         </div>
 
         <div className="hidden lg:flex items-center gap-5">
-          <Link href="#" className="clone2-login-link">
+          <Link href="/login" className="clone2-login-link">
             Connexion
           </Link>
-          <Button className="clone2-book-demo-btn">Commencer</Button>
+          <Button variant="outline" className="clone2-trial-btn">
+            Voir la démo
+          </Button>
+          <Button asChild className="clone2-book-demo-btn">
+            <Link href="/signup">Commencer gratuitement</Link>
+          </Button>
         </div>
 
         <div className="lg:hidden">
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+          <Button variant="ghost" size="icon" className="clone2-mobile-menu">
             <Menu className="h-6 w-6" />
           </Button>
         </div>

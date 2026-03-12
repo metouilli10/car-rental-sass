@@ -1,141 +1,55 @@
-import { ArrowDownToDot, Zap } from "lucide-react"
-import { PricingSection, type PricingTier } from "@/components/ui/pricing-section"
+import RuixenPricing04, { type RuixenPricingPlan } from "@/components/ui/ruixen-pricing-04"
 
-const pricingTiers: PricingTier[] = [
+const pricingTiers: RuixenPricingPlan[] = [
   {
-    name: "Starter",
-    price: {
-      monthly: 249,
-      yearly: 2540,
-    },
-    displayPrice: {
-      monthly: "249 DH",
-      yearly: "212 DH",
-      yearlyBilling: "facturé 2540 DH / an",
-    },
-    description: "Idéal pour les petites agences avec une flotte jusqu'à 15 véhicules.",
-    ctaLabel: "Commencer",
-    icon: (
-      <div className="relative">
-        <Zap className="w-7 h-7 relative z-10 text-zinc-500 dark:text-zinc-400" />
-      </div>
-    ),
+    id: "starter",
+    title: "Starter",
+    desc: "Idéal pour les petites agences avec une flotte jusqu'à 15 véhicules.",
+    monthlyPrice: 249,
+    annuallyMonthlyPrice: 212,
+    annuallyBillingLabel: "Facturé 2540 DH par an",
+    buttonText: "Commencer gratuitement",
     features: [
-      {
-        name: "Gestion des réservations",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Calendrier de disponibilité",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Gestion des clients",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Paiements et cautions",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Inspections véhicule (départ / retour)",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Jusqu'à 15 véhicules",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Support email",
-        description: "",
-        included: true,
-      },
+      "Gestion des réservations",
+      "Calendrier de disponibilité",
+      "Gestion des clients",
+      "Paiements et cautions",
+      "Inspections véhicule (départ / retour)",
+      "Jusqu'à 15 véhicules",
+      "Support email",
     ],
   },
   {
-    name: "Pro",
-    price: {
-      monthly: 499,
-      yearly: 5090,
-    },
-    displayPrice: {
-      monthly: "499 DH",
-      yearly: "424 DH",
-      yearlyBilling: "facturé 5090 DH / an",
-    },
-    description: "Idéal pour les agences avec plus de 15 véhicules.",
-    highlight: true,
+    id: "pro",
+    title: "Pro",
+    desc: "Idéal pour les agences avec plus de 15 véhicules.",
+    monthlyPrice: 499,
+    annuallyMonthlyPrice: 424,
+    annuallyBillingLabel: "Facturé 5090 DH par an",
     badge: "Le plus populaire",
-    ctaLabel: "Commencer",
-    icon: (
-      <div className="relative">
-        <ArrowDownToDot className="w-7 h-7 relative z-10" />
-      </div>
-    ),
+    buttonText: "Commencer gratuitement",
     features: [
-      {
-        name: "Réservations illimitées",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Gestion complète de la flotte",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Clients et documents centralisés",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Paiements et cautions",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Inspections avec photos",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Statistiques et rapports",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Véhicules illimités",
-        description: "",
-        included: true,
-      },
-      {
-        name: "Support prioritaire",
-        description: "",
-        included: true,
-      },
+      "Réservations illimitées",
+      "Gestion complète de la flotte",
+      "Clients et documents centralisés",
+      "Paiements et cautions",
+      "Inspections avec photos",
+      "Statistiques et rapports",
+      "Véhicules illimités",
+      "Support prioritaire",
     ],
   },
 ]
 
 export function PricingModels() {
   return (
-    <PricingSection
-      tiers={pricingTiers}
+    <RuixenPricing04
+      plans={pricingTiers}
       title="Tarifs simples et transparents"
-      subtitle="Choisissez l'offre adaptée à la taille de votre flotte. Économisez 15% avec l'abonnement annuel."
-      monthlyLabel="Mensuel"
-      yearlyLabel="Annuel"
-      monthlyPeriodLabel="mois"
-      yearlyPeriodLabel="mois"
+      subtitle="Choisissez l'offre adaptée à la taille de votre flotte. Commencez gratuitement, sans engagement."
       yearlySaveBadge="Économisez 15%"
-      trustLine="Le prix dépend du nombre de véhicules dans votre flotte. Vous pouvez changer d'offre à tout moment."
-      ctaHelperLines={["Essai gratuit de 14 jours", "Aucune carte bancaire requise"]}
+      trustLine="Le prix dépend du nombre de véhicules dans votre flotte. Vous pouvez changer d'offre à tout moment, sans engagement."
+      ctaHelperLines={["Essai gratuit — aucune carte bancaire requise", "Aucun engagement"]}
     />
   )
 }

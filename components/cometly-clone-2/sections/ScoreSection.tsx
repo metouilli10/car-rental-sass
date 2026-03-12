@@ -7,30 +7,30 @@ import { Badge } from "@/components/ui/badge";
 const ACCORDION_ITEMS = [
   {
     id: "touchpoints",
-    title: "Toutes vos réservations au même endroit",
+    title: "Sans conflits de réservation",
     description:
-      "Créez, modifiez et suivez chaque réservation depuis une seule interface. Consultez la disponibilité de vos véhicules en temps réel et évitez les erreurs de planification.",
+      "Locaryx affiche la disponibilité de votre flotte en temps réel pour éviter les doubles réservations et garder un planning fiable.",
     image: "/features/682e54b71245b7690d67d956_TOUCHPOINTS-1 (2)-p-2000.png",
   },
   {
     id: "revenue",
-    title: "Zéro double réservation",
+    title: "Visibilité complète de votre parc",
     description:
-      "Le calendrier intelligent de Locaryx détecte automatiquement les conflits et empêche les doubles réservations. Votre planning reste toujours fiable et à jour.",
+      "Voyez immédiatement quels véhicules sont disponibles, loués ou en maintenance sans passer d'un outil à l'autre.",
     image: "/features/682cc4dba83f447ba3b3d56f_21.png",
   },
   {
     id: "ai",
-    title: "Suivi complet de votre flotte",
+    title: "Tous vos clients au même endroit",
     description:
-      "Visualisez tous vos véhicules, leur disponibilité, leur historique et leur statut en un coup d'œil. Gérez votre flotte plus efficacement sans passer d'un outil à l'autre.",
+      "Contrats, documents, historique de location et informations clients sont centralisés pour retrouver chaque dossier sans friction.",
     image: "/features/682e59f81245b7690d6b722a_Chat-Bot-UI-Final-p-2000.png",
   },
   {
     id: "sync",
-    title: "Clients, paiements et cautions centralisés",
+    title: "Paiements et cautions sous contrôle",
     description:
-      "Accédez instantanément aux informations clients, suivez les paiements et gérez les cautions directement depuis Locaryx. Tout votre business reste organisé au même endroit.",
+      "Suivez les paiements et les cautions sans erreurs ni oublis pour savoir ce qui est encaissé, dû ou à restituer.",
     image: "/features/682e5861ca7159e8997cc307_match-score-p-2000.png",
   },
 ] as const;
@@ -46,22 +46,20 @@ export function ScoreSection() {
   );
 
   return (
-    <section className="bg-white py-14 md:py-16">
+    <section className="bg-white py-20 md:py-24">
       <div className="container mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-5xl text-center">
           <Badge className="mb-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50">
             Pourquoi Locaryx ?
           </Badge>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-[42px] md:leading-[1.14]">
-            <span className="block">Gérez votre agence plus simplement.</span>
-            <span className="block">Plus vite. Sans erreurs.</span>
+            <span className="block">Gardez votre agence</span>
+            <span className="block">sous contrôle chaque jour.</span>
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-slate-600 md:text-base">
-            Locaryx centralise vos réservations, vos véhicules, vos clients et vos paiements
+            Moins d&apos;erreurs, plus de visibilité et moins de temps perdu sur l&apos;administratif.
             <span className="hidden md:inline"><br /></span>{" "}
-            dans une seule plateforme. Automatisez votre gestion quotidienne et gardez
-            <span className="hidden md:inline"><br /></span>{" "}
-            toujours une vue claire sur votre activité.
+            Locaryx organise les opérations essentielles de votre agence dans un seul outil clair.
           </p>
         </div>
 
