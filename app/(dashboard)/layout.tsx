@@ -65,14 +65,14 @@ export default async function DashboardLayout({
   );
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]" suppressHydrationWarning>
+    <div className="flex min-h-screen bg-[hsl(var(--background))]" suppressHydrationWarning>
       {/* Collapsible Sidebar */}
       <Sidebar agencyName={displayAgencyName} role={session.user.role} permissions={permissions} />
 
       <Toaster richColors position="top-right" />
 
       {/* Right side — TopNav + Content */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#F8FAFC]" suppressHydrationWarning>
+      <div className="flex min-w-0 flex-1 flex-col bg-transparent" suppressHydrationWarning>
         <TopNavBar
           userName={session.user.name || "Utilisateur"}
           userEmail={session.user.email || ""}
@@ -83,9 +83,9 @@ export default async function DashboardLayout({
         />
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto bg-[#F8FAFC]" suppressHydrationWarning>
+        <main className="flex-1 overflow-auto bg-transparent" suppressHydrationWarning>
           <div className="min-h-full" suppressHydrationWarning>
-            <div className="mx-auto w-full max-w-7xl px-4 pt-4 pb-24 sm:px-6 sm:py-6 lg:px-8" suppressHydrationWarning>
+            <div className="mx-auto w-full max-w-[1440px] px-4 pb-24 pt-4 sm:px-6 sm:py-5 lg:px-8" suppressHydrationWarning>
               {children}
             </div>
           </div>

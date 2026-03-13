@@ -16,10 +16,12 @@ const PERIOD_ITEMS = [
   { id: "month", label: "Ce mois" },
 ] as const;
 
-const ACTIVE_PILL_CLASS =
-  "inline-flex items-center rounded-full bg-[#2563EB] px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-[#1D4ED8]";
-const INACTIVE_PILL_CLASS =
-  "inline-flex items-center rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-700";
+const BASE_SEGMENT_CLASS =
+  "inline-flex min-w-[88px] items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium transition-colors";
+const ACTIVE_SEGMENT_CLASS =
+  "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200";
+const INACTIVE_SEGMENT_CLASS =
+  "bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700";
 
 function toMonthValue(value: Date): string {
   const year = value.getFullYear();
@@ -124,13 +126,14 @@ export function PeriodTabs({ period }: PeriodTabsProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="inline-flex flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
       {PERIOD_ITEMS.map((item) => (
         <Link
           key={item.id}
           href={`/dashboard?period=${item.id}`}
           className={cn(
-            period.key === item.id ? ACTIVE_PILL_CLASS : INACTIVE_PILL_CLASS
+            BASE_SEGMENT_CLASS,
+            period.key === item.id ? ACTIVE_SEGMENT_CLASS : INACTIVE_SEGMENT_CLASS
           )}
         >
           {item.label}
@@ -140,7 +143,9 @@ export function PeriodTabs({ period }: PeriodTabsProps) {
         <label
           htmlFor={inputId}
           className={cn(
-            period.key === "custom" ? ACTIVE_PILL_CLASS : INACTIVE_PILL_CLASS
+            BASE_SEGMENT_CLASS,
+            "cursor-pointer",
+            period.key === "custom" ? ACTIVE_SEGMENT_CLASS : INACTIVE_SEGMENT_CLASS
           )}
         >
           {formatCustomMonthLabel(customMonth, period.key === "custom")}

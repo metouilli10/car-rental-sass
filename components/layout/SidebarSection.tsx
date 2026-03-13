@@ -18,7 +18,7 @@ export function SidebarSection({
   return (
     <div className={cn("space-y-0.5", className)}>
       {!collapsed && (
-        <p className="mt-5 mb-2 px-3 text-[11px] uppercase tracking-widest text-white/55">
+        <p className="mb-2 mt-5 px-3 text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
           {label}
         </p>
       )}

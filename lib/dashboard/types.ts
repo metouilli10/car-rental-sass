@@ -325,6 +325,10 @@ export interface DashboardV3ActiveBookingsDTO {
 
 export interface DashboardV3DTO {
   period: DashboardV3ResolvedPeriod;
+  context: {
+    updatedAt: string;
+    activeReservationsCount: number;
+  };
   pulse: DashboardV3Pulse;
   todayOperations: DashboardV3TodayOperations;
   actionCenter: {

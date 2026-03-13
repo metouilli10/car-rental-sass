@@ -1,136 +1,93 @@
-import { AlertTriangle, CarFront, Coins, CreditCard } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
-import type { DashboardV3Pulse } from "@/lib/dashboard/types";
+import type { DashboardV3Pulse, DashboardV3TodayOperations } from "@/lib/dashboard/types";
 
 interface PulseCardsProps {
   pulse: DashboardV3Pulse;
+  operations: DashboardV3TodayOperations;
 }
 
 const CARD_META = [
   {
     key: "net",
     title: "Net",
-    icon: Coins,
-    iconWrapClassName: "bg-emerald-50 text-emerald-600",
-    valueClassName: "text-emerald-600",
+    getMeta: (pulse: DashboardV3Pulse) => pulse.net.subtitle,
   },
   {
     key: "toCollect",
     title: "A encaisser",
-    icon: CreditCard,
-    iconWrapClassName: "bg-blue-50 text-blue-600",
-    valueClassName: "text-blue-600",
+    getMeta: (pulse: DashboardV3Pulse) => pulse.toCollect.subtitle,
   },
   {
     key: "occupancy",
     title: "Occupation",
-    icon: CarFront,
-    iconWrapClassName: "bg-amber-50 text-amber-600",
-    valueClassName: "text-amber-600",
+    getMeta: (pulse: DashboardV3Pulse, operations: DashboardV3TodayOperations) =>
+      `${pulse.occupancy.rented}/${pulse.occupancy.total} loues • ${operations.availableVehicles} dispo`,
   },
   {
     key: "risks",
     title: "Risques",
-    icon: AlertTriangle,
-    iconWrapClassName: "bg-red-50 text-red-600",
-    valueClassName: "text-red-600",
+    getMeta: (pulse: DashboardV3Pulse) =>
+      `${pulse.risks.breakdown.unpaidCount} impayes • ${pulse.risks.breakdown.depositDueCount} cautions • ${pulse.risks.breakdown.lateReturnCount} retours`,
   },
 ] as const;
 
-export function PulseCards({ pulse }: PulseCardsProps) {
+function renderNetMeta(pulse: DashboardV3Pulse) {
+  const trend = pulse.net.trend;
+  if (!trend?.deltaPct) {
+    return <span className="meta-text">{pulse.net.subtitle}</span>;
+  }
+
+  const isPositive = trend.deltaPct > 0;
+  const Icon = isPositive ? ArrowUpRight : ArrowDownRight;
+
   return (
-    <section className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-6 xl:grid-cols-4">
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-[11px] leading-none",
+        isPositive ? "text-emerald-600" : "text-red-600"
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {`${Math.abs(Math.round(trend.deltaPct))}% ${trend.label.toLowerCase()}`}
+    </span>
+  );
+}
+
+export function PulseCards({ pulse, operations }: PulseCardsProps) {
+  return (
+    <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
       {CARD_META.map((card) => {
-        const Icon = card.icon;
-        if (card.key === "occupancy") {
-          return (
-            <Card
-              key={card.key}
-              className="rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-200 hover:border-slate-300/70 hover:shadow-md"
-            >
-              <CardHeader className="p-4 pb-0 md:p-6 md:pb-0">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-sm font-medium text-slate-500">{card.title}</CardTitle>
-                  <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-full", card.iconWrapClassName)}>
-                    <Icon className="h-5 w-5" />
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4 p-4 md:gap-5 md:p-6">
-                <p className={cn("text-3xl font-semibold tracking-tight md:text-4xl", card.valueClassName)}>
-                  {pulse.occupancy.rate}%
-                </p>
-                <p className="text-sm text-slate-500">{pulse.occupancy.subtitle}</p>
-              </CardContent>
-            </Card>
-          );
-        }
-
-        if (card.key === "risks") {
-          const {
-            unpaidCount,
-            depositDueCount,
-            lateReturnCount,
-          } = pulse.risks.breakdown;
-          return (
-            <Card
-              key={card.key}
-              className="rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-200 hover:border-slate-300/70 hover:shadow-md"
-            >
-              <CardHeader className="p-4 pb-0 md:p-6 md:pb-0">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-sm font-medium text-slate-500">{card.title}</CardTitle>
-                  <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-full", card.iconWrapClassName)}>
-                    <Icon className="h-5 w-5" />
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4 p-4 md:gap-5 md:p-6">
-                <p className={cn("text-3xl font-semibold tracking-tight md:text-4xl", card.valueClassName)}>
-                  {pulse.risks.count}
-                </p>
-                <p className="text-sm text-slate-500">
-                  {formatCurrency(pulse.risks.exposureAmount)} expose
-                </p>
-                <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500">
-                  <span>Impayes: {unpaidCount}</span>
-                  <span>Cautions: {depositDueCount}</span>
-                  <span>Retours: {lateReturnCount}</span>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        }
-
-        const value = card.key === "net" ? pulse.net.amount : pulse.toCollect.amount;
-        const subtitle = card.key === "net" ? pulse.net.subtitle : pulse.toCollect.subtitle;
-        const isZeroState = card.key === "net" && value === 0;
+        const value =
+          card.key === "net"
+            ? formatCurrency(pulse.net.amount)
+            : card.key === "toCollect"
+              ? formatCurrency(pulse.toCollect.amount)
+              : card.key === "occupancy"
+                ? `${pulse.occupancy.rate}%`
+                : String(pulse.risks.count);
 
         return (
-          <Card
+          <article
             key={card.key}
-            className="rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-200 hover:border-slate-300/70 hover:shadow-md"
+            className="dashboard-tile flex min-h-[116px] flex-col justify-between p-3 sm:p-4"
           >
-            <CardHeader className="p-4 pb-0 md:p-6 md:pb-0">
-              <div className="flex items-start justify-between">
-                <CardTitle className="text-sm font-medium text-slate-500">
-                  {card.title}
-                </CardTitle>
-                <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-full", card.iconWrapClassName)}>
-                  <Icon className="h-5 w-5" />
+            <div className="space-y-1.5">
+              <p className="text-[12px] font-medium leading-none text-slate-500">{card.title}</p>
+              <p className="metric-value">{value}</p>
+            </div>
+            <div className="flex min-h-[20px] items-center">
+              {card.key === "net" ? (
+                renderNetMeta(pulse)
+              ) : card.key === "risks" ? (
+                <span className="text-[11px] leading-none text-red-600">
+                  {formatCurrency(pulse.risks.exposureAmount)} exposes
                 </span>
-              </div>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4 p-4 md:gap-5 md:p-6">
-              <p className={cn("text-3xl font-semibold tracking-tight md:text-4xl", card.valueClassName)}>
-                {formatCurrency(value)}
-              </p>
-              <p className="text-sm text-slate-500">
-                {isZeroState ? "Aucune activite sur la periode" : subtitle}
-              </p>
-            </CardContent>
-          </Card>
+              ) : (
+                <span className="meta-text">{card.getMeta(pulse, operations)}</span>
+              )}
+            </div>
+          </article>
         );
       })}
     </section>

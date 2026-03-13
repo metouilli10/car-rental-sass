@@ -160,7 +160,7 @@ export function OnboardingChecklist({
   if (showCelebration) {
     return (
       <div className="overflow-hidden">
-        <Card className="rounded-2xl border border-primary/15 bg-white px-5 py-4 shadow-sm ring-1 ring-primary/5 transition-all duration-300">
+        <Card className="rounded-2xl border border-primary/15 bg-white px-4 py-3 shadow-sm ring-1 ring-primary/5 transition-all duration-300">
           <div className="flex items-start gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
               <CheckCircle2 className="h-5 w-5" />
@@ -179,22 +179,22 @@ export function OnboardingChecklist({
 
   return (
     <TooltipProvider delayDuration={150}>
-      <Card className="rounded-2xl border border-primary/10 bg-gradient-to-br from-white to-blue-50/40 px-5 py-5 shadow-sm">
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+      <Card className="rounded-2xl border border-subtle bg-white px-4 py-4 shadow-sm">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-subtle bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                 <Rocket className="h-3.5 w-3.5" />
                 Démarrage guidé
               </div>
-              <div className="space-y-1.5">
-                <h2 className="text-base font-semibold text-slate-900">Bienvenue sur Locaryx 👋</h2>
-                <p className="text-sm text-slate-600">
+              <div className="space-y-1">
+                <h2 className="text-[15px] font-semibold text-slate-900">Bienvenue sur Locaryx</h2>
+                <p className="text-[12px] text-slate-600">
                   Complétez ces étapes pour démarrer votre agence.
                 </p>
               </div>
               <div className="space-y-2">
-                <div className="inline-flex items-center rounded-full border border-primary/10 bg-white/90 px-3 py-1 text-xs font-medium text-primary shadow-sm">
+                <div className="inline-flex items-center rounded-full border border-subtle bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-700">
                   {completedCount} / 4 étapes complétées
                 </div>
                 <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-slate-200/80">
@@ -259,19 +259,19 @@ export function OnboardingChecklist({
                   <Link
                     href={item.href}
                     onClick={item.key === "dashboard" ? handleDashboardStepClick : undefined}
-                    className="flex items-center justify-between rounded-xl border border-border/60 bg-white/90 px-3 py-3 transition hover:border-primary/20 hover:bg-primary/[0.03]"
+                    className="flex items-center justify-between rounded-xl border border-subtle bg-slate-50/60 px-3 py-2.5 transition hover:border-primary/20 hover:bg-white"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <span
-                        className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${
-                          item.done ? "bg-emerald-100 text-emerald-600" : "bg-primary/8 text-primary/80"
+                        className={`inline-flex h-8 w-8 items-center justify-center rounded-xl ${
+                          item.done ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-700"
                         } transition-all duration-300`}
                       >
                         <Icon className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-slate-800">{item.label}</p>
-                        <p className="mt-0.5 truncate text-xs text-slate-500">{item.help}</p>
+                        <p className="mt-0.5 truncate text-[11px] text-slate-500">{item.help}</p>
                       </div>
                     </div>
                     <span className="ml-3 shrink-0">

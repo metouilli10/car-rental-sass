@@ -112,7 +112,7 @@ export function TopNavBar({
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-4 shadow-sm sm:px-6">
+      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between border-b border-subtle bg-white/90 px-4 backdrop-blur-sm sm:px-6">
         <div className="min-w-0 flex-1">
           <Link
             href="/dashboard"
@@ -136,7 +136,7 @@ export function TopNavBar({
           <button
             onClick={() => setSearchOpen(true)}
             aria-label="Rechercher (Ctrl+K)"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-sm text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-subtle bg-slate-50 px-3 text-sm text-slate-500 transition-colors duration-200 hover:bg-white hover:text-slate-900"
           >
             <Search className="h-4 w-4" />
             <span className="hidden text-xs font-medium sm:inline">Recherche</span>
@@ -151,7 +151,7 @@ export function TopNavBar({
                 setProfileOpen(false);
               }}
               aria-label={`Notifications${notifCount > 0 ? ` (${notifCount} actives)` : ""}`}
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+              className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-subtle bg-slate-50 text-slate-500 transition-colors duration-200 hover:bg-white hover:text-slate-900"
             >
               <Bell className="h-[18px] w-[18px]" />
               {notifCount > 0 && (
@@ -241,7 +241,7 @@ export function TopNavBar({
           </div>
 
           {/* Divider */}
-          <div className="mx-0.5 h-6 w-px bg-border/80" />
+          <div className="mx-0.5 h-5 w-px bg-slate-200" />
 
           {/* Profile Section */}
           <div ref={profileRef} className="relative">
@@ -252,9 +252,9 @@ export function TopNavBar({
               }}
               aria-label="Menu profil"
               aria-expanded={profileOpen}
-              className="flex min-h-[40px] items-center gap-2 rounded-xl border border-transparent px-2 py-1.5 transition-colors duration-200 hover:border-border hover:bg-muted/40 sm:gap-2.5 sm:px-2.5"
+              className="flex min-h-[36px] items-center gap-2 rounded-xl border border-transparent px-2 py-1 transition-colors duration-200 hover:bg-slate-50 sm:gap-2.5 sm:px-2.5"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-primary/80 text-xs font-semibold text-white shadow-sm">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-950 text-xs font-semibold text-white">
                 {agencyLogoUrl ? (
                   <Image
                     src={agencyLogoUrl}
@@ -268,10 +268,10 @@ export function TopNavBar({
                 )}
               </div>
               <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium text-foreground leading-tight">
+                <p className="text-sm font-medium leading-tight text-slate-950">
                   {userName}
                 </p>
-                <p className="text-[11px] text-muted-foreground leading-tight">
+                <p className="text-[11px] leading-tight text-slate-500">
                   {agencyName}
                 </p>
               </div>

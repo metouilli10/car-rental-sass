@@ -440,6 +440,7 @@ async function getDashboardDataV3Uncached(input: {
     vehicles,
     rentedVehicleIds: currentRentedVehicleIds,
   });
+  const activeReservationsCount = bookings.filter((booking) => booking.status === "ACTIVE").length;
 
   const occupancyRate =
     resolvedPeriod.key === "today"
@@ -592,6 +593,10 @@ async function getDashboardDataV3Uncached(input: {
       label: resolvedPeriod.label,
       start: resolvedPeriod.range.start.toISOString(),
       end: resolvedPeriod.range.end.toISOString(),
+    },
+    context: {
+      updatedAt: now.toISOString(),
+      activeReservationsCount,
     },
     pulse: {
       net: {

@@ -14,31 +14,31 @@ const ITEMS = [
 
 export function TodayOperationsCard({ operations }: TodayOperationsCardProps) {
   return (
-    <div>
-      <div>
-        <p className="text-sm font-semibold text-slate-900">Aujourd&apos;hui</p>
-        <p className="text-xs text-slate-500">Snapshot des opérations du jour</p>
+    <section className="dashboard-panel p-4">
+      <div className="mb-3">
+        <p className="section-title">Aujourd&apos;hui</p>
+        <p className="meta-text mt-1">Départs, retours et disponibilité immédiate</p>
       </div>
-
-      <section className="mt-2 rounded-2xl border border-slate-200/80 bg-white px-8 py-6 shadow-sm">
-        <div className="grid grid-cols-4 gap-10">
+      <div className="grid grid-cols-2 gap-2">
           {ITEMS.map((item) => {
             const Icon = item.icon;
             const value = operations[item.key];
             return (
-              <div key={item.key} className="flex min-w-0 flex-col items-start gap-4">
-                <div className="flex items-center gap-2">
-                <Icon className={`h-4 w-4 shrink-0 opacity-90 ${item.iconTone}`} />
-                <p className="text-sm text-slate-500">{item.label}</p>
+              <div
+                key={item.key}
+                className="rounded-xl border border-subtle bg-[hsl(var(--surface-muted))] px-3 py-3 transition-colors duration-200 hover:border-default hover:bg-white"
+              >
+                <div className="mb-3 flex items-center gap-2">
+                  <Icon className={`h-3.5 w-3.5 shrink-0 ${item.iconTone}`} />
+                  <p className="text-[12px] font-medium leading-none text-slate-500">{item.label}</p>
                 </div>
-                <p className="text-4xl font-semibold leading-none tracking-tight text-slate-900">
-                  {value}
+                <p className="text-[22px] font-semibold leading-none tracking-tight tabular-nums text-slate-950">
+                  {value.toString().padStart(2, "0")}
                 </p>
               </div>
             );
           })}
-        </div>
-      </section>
-    </div>
+      </div>
+    </section>
   );
 }

@@ -4,7 +4,6 @@ import { getSession } from "@/lib/auth-cache";
 import { getDashboardDataV3 } from "@/lib/dashboard/v3-queries";
 import { DashboardHeaderV3 } from "@/components/dashboard/DashboardHeaderV3";
 import { PulseCards } from "@/components/dashboard/PulseCards";
-import { TodayOperationsCard } from "@/components/dashboard/TodayOperationsCard";
 import { ActionCenterCard } from "@/components/dashboard/ActionCenterCard";
 import { FleetSnapshotBar } from "@/components/dashboard/FleetSnapshotBar";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
@@ -46,9 +45,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   if (!dashboard) {
     return (
-      <div className="-mx-4 -my-4 min-h-screen bg-[#F8FAFC] pb-24 sm:-mx-6 sm:-my-6 lg:-mx-8 md:pb-0">
-        <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 lg:px-8 xl:max-w-[1320px]">
-          <div className="flex flex-col gap-6 md:gap-8">
+      <div className="-mx-4 -my-4 min-h-screen dashboard-shell pb-24 sm:-mx-6 sm:-my-6 md:pb-0 lg:-mx-8">
+        <div className="mx-auto max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-section">
             <DashboardHeaderV3
               period={{
                 key: "today",
@@ -56,14 +55,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 start: new Date().toISOString(),
                 end: new Date().toISOString(),
               }}
+              agencyName={session.user.agencyName || "Agence"}
+              totalVehicles={0}
+              activeReservationsCount={0}
+              updatedAt={new Date().toISOString()}
             />
-            <Card className="rounded-2xl border border-amber-200 bg-amber-50/80">
-              <CardHeader>
-                <CardTitle className="text-base text-amber-900">
+            <Card className="rounded-2xl border border-amber-200 bg-amber-50/80 shadow-sm">
+              <CardHeader className="p-4 pb-3">
+                <CardTitle className="section-title text-amber-900">
                   Données temporairement indisponibles
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 pt-0">
                 <p className="text-sm text-amber-900">
                   Le tableau de bord rencontre une erreur temporaire de chargement.
                   Rechargez la page dans quelques secondes.
@@ -82,26 +85,26 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   return (
-    <div className="-mx-4 -my-4 min-h-screen bg-[#F8FAFC] pb-24 sm:-mx-6 sm:-my-6 lg:-mx-8 md:pb-0">
-      <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 lg:px-8 xl:max-w-[1320px]">
-        <div className="flex flex-col gap-6 md:gap-8">
-          <DashboardHeaderV3 period={dashboard.period} />
-          <OnboardingChecklist
-            onboarding={dashboard.onboarding}
-            forceVisible={params["getting-started"] === "1" && !dashboard.onboarding.completed}
+    <div className="-mx-4 -my-4 min-h-screen dashboard-shell pb-24 sm:-mx-6 sm:-my-6 md:pb-0 lg:-mx-8">
+      <div className="mx-auto max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-section">
+          <DashboardHeaderV3
+            period={dashboard.period}
+            agencyName={session.user.agencyName || "Agence"}
+            totalVehicles={dashboard.fleetSnapshot.totalActive + dashboard.fleetSnapshot.inactive}
+            activeReservationsCount={dashboard.context.activeReservationsCount}
+            updatedAt={dashboard.context.updatedAt}
           />
-          <PulseCards pulse={dashboard.pulse} />
-          <TodayOperationsCard operations={dashboard.todayOperations} />
-          <ActionCenterCard actionCenter={dashboard.actionCenter} period={dashboard.period} />
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:items-start">
-            <div className="order-1 lg:col-span-3">
+          <PulseCards pulse={dashboard.pulse} operations={dashboard.todayOperations} />
+          <div className="grid grid-cols-1 gap-4 xl:items-start xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+            <div className="space-y-4">
               <Suspense
                 fallback={
-                  <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="text-base text-slate-900">Réservations actives</CardTitle>
+                  <Card className="dashboard-panel">
+                    <CardHeader className="p-4 pb-3">
+                      <CardTitle className="section-title">Réservations actives</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-4 pt-0">
                       <p className="text-sm text-slate-500">Chargement des réservations en cours...</p>
                     </CardContent>
                   </Card>
@@ -109,10 +112,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               >
                 <DashboardActiveBookingsSection agencyId={agencyId} periodInput={periodInput} />
               </Suspense>
-            </div>
-
-            <div className="order-2 lg:col-span-2">
               <FleetSnapshotBar snapshot={dashboard.fleetSnapshot} />
+            </div>
+            <div className="space-y-4">
+              <ActionCenterCard actionCenter={dashboard.actionCenter} period={dashboard.period} />
+              <OnboardingChecklist
+                onboarding={dashboard.onboarding}
+                forceVisible={params["getting-started"] === "1" && !dashboard.onboarding.completed}
+              />
             </div>
           </div>
         </div>

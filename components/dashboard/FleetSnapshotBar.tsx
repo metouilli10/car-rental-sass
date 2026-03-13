@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { MoreHorizontal } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { DashboardV3FleetSnapshot } from "@/lib/dashboard/types";
 
@@ -22,6 +21,8 @@ const STATUS_ITEMS = [
 export function FleetSnapshotBar({ snapshot }: FleetSnapshotBarProps) {
   const totalFleet = snapshot.totalActive + snapshot.inactive;
   const safeTotalFleet = totalFleet || 1;
+  const activeFleet = snapshot.totalActive;
+  const rentalRate = totalFleet > 0 ? Math.round((snapshot.rented / totalFleet) * 100) : 0;
   const numberFormatter = new Intl.NumberFormat("fr-FR");
 
   const rows = STATUS_ITEMS.map((item) => {
@@ -34,113 +35,81 @@ export function FleetSnapshotBar({ snapshot }: FleetSnapshotBarProps) {
     };
   });
 
-  // Calculate chart segments
-  const nonZeroRows = rows.filter((row) => row.value > 0);
-  const segmentGap = nonZeroRows.length > 1 ? 6 : 0; // Increased gap for visual separation
-  const usablePct = Math.max(0, 100 - segmentGap * nonZeroRows.length);
-  
-  let cursor = 0;
-  const donutSegments = rows.map((row) => {
-    if (row.value <= 0) {
-      return { ...row, pct: 0, offset: cursor };
-    }
-
-    const pct = totalFleet > 0 ? (row.value / safeTotalFleet) * usablePct : 0;
-    const segment = {
-      ...row,
-      pct,
-      offset: cursor,
-    };
-    cursor += pct + segmentGap;
-    return segment;
-  });
-
   return (
-    <Card className="h-full rounded-3xl border border-slate-100 bg-white shadow-sm">
-      <CardContent className="flex flex-col h-full p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-slate-900">État du parc</h3>
-          <button
-            type="button"
-            className="text-slate-400 hover:text-slate-600 transition-colors"
-            aria-label="Options"
-          >
-            <MoreHorizontal className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="relative mx-auto mb-8">
-          {/* Donut Chart */}
-          <div className="h-48 w-48 relative">
-            <svg viewBox="0 0 200 200" className="h-full w-full rotate-[-90deg]">
-              {/* Background circle (optional, usually not needed if segments cover it, but good for empty state) */}
-              {totalFleet === 0 && (
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="80"
-                  fill="none"
-                  stroke="#f1f5f9"
-                  strokeWidth="24"
-                />
-              )}
-              
-              {donutSegments.map((segment) =>
-                segment.pct > 0 ? (
-                  <circle
-                    key={segment.key}
-                    cx="100"
-                    cy="100"
-                    r="80"
-                    fill="none"
-                    stroke={segment.color}
-                    strokeWidth="24"
-                    strokeLinecap="round"
-                    pathLength={100}
-                    strokeDasharray={`${Math.max(0, segment.pct)} 100`}
-                    strokeDashoffset={-segment.offset}
-                    className="transition-all duration-500 ease-out"
-                  />
-                ) : null
-              )}
-            </svg>
-            
-            {/* Center Text */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-              <span className="text-sm font-medium text-slate-500 mb-1">Total Véhicules</span>
-              <span className="text-4xl font-bold text-[#2e2e48]">
-                {numberFormatter.format(totalFleet)}
-              </span>
-            </div>
+    <Card className="dashboard-panel">
+      <CardContent className="flex flex-col p-4">
+        <div className="mb-4">
+          <div>
+            <h3 className="section-title">État du parc</h3>
+            <p className="meta-text mt-1">Répartition instantanée de la flotte</p>
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-col gap-4 mt-auto">
+        <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="rounded-xl border border-subtle bg-[hsl(var(--surface-muted))] px-3 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">
+              Flotte totale
+            </p>
+            <p className="mt-2 text-[24px] font-semibold leading-none tracking-tight tabular-nums text-slate-950">
+              {numberFormatter.format(totalFleet)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-subtle bg-[hsl(var(--surface-muted))] px-3 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">
+              Actifs
+            </p>
+            <p className="mt-2 text-[24px] font-semibold leading-none tracking-tight tabular-nums text-slate-950">
+              {numberFormatter.format(activeFleet)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-subtle bg-[hsl(var(--surface-muted))] px-3 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">
+              Taux de location
+            </p>
+            <p className="mt-2 text-[24px] font-semibold leading-none tracking-tight tabular-nums text-slate-950">
+              {rentalRate}%
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
           {rows.map((row) => (
             <Link
               key={row.key}
               href={row.href}
-              className="group flex items-center justify-between text-sm hover:bg-slate-50 p-2 -mx-2 rounded-lg transition-colors"
+              className="group rounded-xl border border-transparent px-2 py-2 transition-colors hover:border-subtle hover:bg-slate-50"
             >
-              <div className="flex items-center gap-3">
-                <span 
-                  className="h-3 w-3 rounded-sm" 
-                  style={{ backgroundColor: row.color }} 
-                />
-                <span className="font-medium text-slate-600 group-hover:text-slate-900">
-                  {row.label}
-                </span>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: row.color }}
+                  />
+                  <span className="truncate text-sm font-medium text-slate-600 group-hover:text-slate-900">
+                    {row.label}
+                  </span>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-2.5">
+                  <span className="min-w-[2ch] text-right text-sm font-medium tabular-nums text-slate-500">
+                    {numberFormatter.format(row.value)}
+                  </span>
+                  <div className="h-4 w-px bg-slate-200" />
+                  <span className="min-w-[3ch] text-right text-sm font-semibold tabular-nums text-slate-900">
+                    {row.percent}%
+                  </span>
+                </div>
               </div>
-              
-              <div className="flex items-center gap-3">
-                <span className="text-slate-500 font-medium">
-                  {numberFormatter.format(row.value)}
-                </span>
-                <div className="h-4 w-px bg-slate-200" />
-                <span className="font-bold text-slate-900 min-w-[3ch] text-right">
-                  {row.percent}%
-                </span>
+
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full transition-[width] duration-300 ease-out"
+                  style={{
+                    width: `${row.percent}%`,
+                    backgroundColor: row.color,
+                    opacity: row.value > 0 ? 0.88 : 0.35,
+                  }}
+                />
               </div>
             </Link>
           ))}
