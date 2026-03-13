@@ -78,7 +78,7 @@ export function ActionCenterRow({ item }: ActionCenterRowProps) {
         )}
       </div>
       <Button asChild size="sm" variant="ghost" className="justify-self-start md:justify-self-end">
-        <Link href={item.detailsHref}>Details</Link>
+        <Link href={item.detailsHref}>Détails</Link>
       </Button>
     </div>
   );

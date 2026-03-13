@@ -29,7 +29,7 @@ export default function SetupOwnerPage() {
       if (res.ok && data.ok) {
         setMessage({
           type: "ok",
-          text: "Compte owner créé. Vous pouvez vous connecter avec owner@automaroc.ma / password123",
+          text: "Compte propriétaire créé. Vous pouvez vous connecter avec owner@automaroc.ma / password123",
         });
       } else {
         setMessage({
@@ -47,7 +47,7 @@ export default function SetupOwnerPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-sm space-y-6 rounded-lg border bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-semibold text-center">Configuration compte owner</h1>
+        <h1 className="text-xl font-semibold text-center">Configuration du compte propriétaire</h1>
         <p className="text-sm text-muted-foreground text-center">
           Une seule fois : entrez le code défini dans <code className="bg-gray-100 px-1">SEED_OWNER_SECRET</code> sur Vercel.
         </p>
@@ -65,7 +65,7 @@ export default function SetupOwnerPage() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "En cours…" : "Créer le compte owner"}
+            {loading ? "En cours…" : "Créer le compte propriétaire"}
           </Button>
         </form>
         {message && (

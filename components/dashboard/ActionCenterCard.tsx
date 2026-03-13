@@ -45,7 +45,7 @@ const BUCKET_META: Record<
   { label: string; toneClassName: string; icon: typeof AlertTriangle }
 > = {
   critical: {
-    label: "Critical",
+    label: "Critique",
     toneClassName: "text-red-600",
     icon: AlertTriangle,
   },
@@ -55,7 +55,7 @@ const BUCKET_META: Record<
     icon: Clock3,
   },
   upcoming: {
-    label: "Upcoming",
+    label: "À venir",
     toneClassName: "text-slate-500",
     icon: ShieldCheck,
   },
@@ -99,7 +99,7 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
         <CardHeader className="p-4 pb-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <CardTitle className="section-title">Action Queue</CardTitle>
+              <CardTitle className="section-title">Priorités opérationnelles</CardTitle>
               <p className="meta-text mt-1">Les priorités à traiter maintenant</p>
             </div>
             {actionCenter.isAllClear ? (

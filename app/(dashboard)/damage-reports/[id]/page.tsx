@@ -152,7 +152,7 @@ export default async function InspectionDetailPage({
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Action caution</span>
+              <span className="text-sm text-muted-foreground">Action sur la caution</span>
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                 inspection.depositAction === "RELEASE"
                   ? "bg-emerald-100 text-emerald-700"

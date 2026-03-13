@@ -87,7 +87,7 @@ export function UpdateRoleDialog({
             className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             disabled={isLoading}
           >
-            <option value="MANAGER">Manager</option>
+            <option value="MANAGER">Gestionnaire</option>
             <option value="EMPLOYEE">Employé</option>
           </select>
         </div>

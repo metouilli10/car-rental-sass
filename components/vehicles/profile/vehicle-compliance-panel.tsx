@@ -125,14 +125,14 @@ export function VehicleCompliancePanel({
                         rel="noopener noreferrer"
                         className="font-medium text-blue-600 hover:text-blue-700"
                       >
-                        View file
+                        Voir le fichier
                       </a>
                       <a
                         href={item.fileUrl}
                         download
                         className="font-medium text-blue-600 hover:text-blue-700"
                       >
-                        Download file
+                        Télécharger le fichier
                       </a>
                     </>
                   ) : null}
@@ -179,14 +179,14 @@ export function VehicleCompliancePanel({
               }}
             >
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Reference number" htmlFor="reference">
+                <Field label="Numéro de référence" htmlFor="reference">
                   <Input
                     id="reference"
                     value={form.reference}
                     onChange={(event) => setForm((current) => ({ ...current, reference: event.target.value }))}
                   />
                 </Field>
-                <Field label="Start date" htmlFor="startDate">
+                <Field label="Date de début" htmlFor="startDate">
                   <Input
                     id="startDate"
                     type="date"
@@ -194,7 +194,7 @@ export function VehicleCompliancePanel({
                     onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))}
                   />
                 </Field>
-                <Field label="Expiry date" htmlFor="expiryDate">
+                <Field label="Date d’échéance" htmlFor="expiryDate">
                   <Input
                     id="expiryDate"
                     type="date"
@@ -203,7 +203,7 @@ export function VehicleCompliancePanel({
                   />
                 </Field>
                 <div className="space-y-2">
-                  <Label>Upload document file</Label>
+                  <Label>Téléverser le document</Label>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -249,14 +249,14 @@ export function VehicleCompliancePanel({
                     disabled={isUploading}
                   >
                     {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                    {form.fileUrl ? "Replace file" : "Ajouter fichier"}
+                    {form.fileUrl ? "Remplacer le fichier" : "Ajouter le fichier"}
                   </Button>
                   <p className="text-xs text-slate-500">PDF, JPG ou PNG. Max 8 Mo.</p>
                 </div>
               </div>
 
               <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4">
-                <p className="text-sm font-medium text-slate-900">Document file status</p>
+                <p className="text-sm font-medium text-slate-900">État du document</p>
                 {form.fileUrl ? (
                   <div className="mt-3 space-y-3">
                     {previewIsImage ? (
@@ -272,11 +272,11 @@ export function VehicleCompliancePanel({
                     <div className="flex flex-wrap gap-3 text-sm">
                       <a href={form.fileUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700">
                         <Eye className="h-4 w-4" />
-                        View file
+                        Voir le fichier
                       </a>
                       <a href={form.fileUrl} download className="inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700">
                         <Download className="h-4 w-4" />
-                        Download file
+                        Télécharger le fichier
                       </a>
                     </div>
                   </div>
@@ -287,10 +287,10 @@ export function VehicleCompliancePanel({
 
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => setSelectedItem(null)}>
-                  Cancel
+                  Annuler
                 </Button>
                 <Button type="submit" disabled={isPending || isUploading}>
-                  {isPending ? "Save..." : "Save"}
+                  {isPending ? "Enregistrement..." : "Enregistrer"}
                 </Button>
               </DialogFooter>
             </form>

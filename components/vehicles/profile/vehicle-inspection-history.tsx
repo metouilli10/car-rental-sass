@@ -52,7 +52,7 @@ export function VehicleInspectionHistory({
                     <th className="pb-3 pr-4">Carburant</th>
                     <th className="pb-3 pr-4">Dommages</th>
                     <th className="pb-3 pr-4">Photos</th>
-                    <th className="pb-3 text-right">Action</th>
+                    <th className="pb-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">

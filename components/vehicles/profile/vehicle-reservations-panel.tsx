@@ -56,7 +56,7 @@ export function VehicleReservationsPanel({
                     <th className="pb-3 pr-4">Paiement</th>
                     <th className="pb-3 pr-4">Caution</th>
                     <th className="pb-3 pr-4">Statut</th>
-                    <th className="pb-3 text-right">Action</th>
+                    <th className="pb-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">

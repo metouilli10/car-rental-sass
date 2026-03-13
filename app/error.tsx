@@ -24,7 +24,7 @@ export default function GlobalError({
               <AlertCircle className="w-10 h-10 text-red-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold mb-2">Erreur Application</h1>
+              <h1 className="text-3xl font-bold mb-2">Erreur de l’application</h1>
               <p className="text-gray-600">
                 Une erreur inattendue s&apos;est produite. Veuillez réessayer.
               </p>
@@ -36,7 +36,7 @@ export default function GlobalError({
             )}
             {error.digest && (
               <div className="p-4 rounded-lg bg-gray-100 text-sm">
-                <p className="text-xs text-gray-500">Digest</p>
+                <p className="text-xs text-gray-500">Identifiant technique</p>
                 <p className="font-mono text-xs break-all">{error.digest}</p>
               </div>
             )}

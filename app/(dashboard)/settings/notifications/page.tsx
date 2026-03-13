@@ -98,7 +98,7 @@ export default async function NotificationSettingsPage() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Bell className="h-5 w-5 text-primary" />
-            Notifications in-app
+            Notifications dans l’application
           </CardTitle>
           <p className="text-xs text-muted-foreground">
             Les rappels apparaissent dans la cloche en haut à droite et sur la page Notifications.

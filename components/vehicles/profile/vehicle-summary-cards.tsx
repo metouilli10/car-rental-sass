@@ -61,7 +61,7 @@ export function VehicleSummaryCards({ data }: { data: VehicleProfileData }) {
         label="Infractions ouvertes"
         value={`${openInfractions.length}`}
         badgeClass={openInfractions.length > 0 ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-600"}
-        badgeLabel={openInfractions.length > 0 ? "Action" : "RAS"}
+        badgeLabel={openInfractions.length > 0 ? "À traiter" : "RAS"}
         alert={openInfractions.length > 0}
       />
     </div>

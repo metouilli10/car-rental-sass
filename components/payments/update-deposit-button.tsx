@@ -69,7 +69,7 @@ export function UpdateDepositButton({ depositId }: UpdateDepositButtonProps) {
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="action">Action</Label>
+            <Label htmlFor="action">Décision</Label>
             <Select
               value={action}
               onValueChange={(value: any) => setAction(value)}

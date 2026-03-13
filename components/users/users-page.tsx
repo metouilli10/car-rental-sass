@@ -62,9 +62,9 @@ function getUserStatus(user: ManagedUser): "invite" | "disabled" | "active" {
 }
 
 function roleLabel(role: UserRole): string {
-  if (role === "OWNER") return "Proprietaire";
-  if (role === "MANAGER") return "Manager";
-  return "Employe";
+  if (role === "OWNER") return "Propriétaire";
+  if (role === "MANAGER") return "Gestionnaire";
+  return "Employé";
 }
 
 function roleBadgeVariant(role: UserRole): "default" | "secondary" | "outline" {
@@ -74,8 +74,8 @@ function roleBadgeVariant(role: UserRole): "default" | "secondary" | "outline" {
 }
 
 function statusLabel(status: ReturnType<typeof getUserStatus>): string {
-  if (status === "invite") return "Invite";
-  if (status === "disabled") return "Desactive";
+  if (status === "invite") return "Invité";
+  if (status === "disabled") return "Désactivé";
   return "Actif";
 }
 
@@ -88,8 +88,8 @@ function statusBadgeVariant(
 }
 
 function actionLabel(action: string): string {
-  if (action === "USER_CREATED") return "Creation";
-  if (action === "USER_ROLE_UPDATE") return "Role";
+  if (action === "USER_CREATED") return "Création";
+  if (action === "USER_ROLE_UPDATE") return "Rôle";
   if (action === "USER_STATUS_UPDATE") return "Statut";
   if (action === "USER_PASSWORD_RESET") return "Mot de passe";
   if (action === "USER_PERMISSIONS_UPDATE") return "Permissions";
@@ -103,19 +103,19 @@ function outcomeBadgeVariant(outcome: UserActivityItem["outcome"]): "default" | 
 }
 
 function outcomeLabel(outcome: UserActivityItem["outcome"]): string {
-  if (outcome === "SUCCESS") return "Succes";
-  if (outcome === "DENIED") return "Refuse";
-  return "Echec";
+  if (outcome === "SUCCESS") return "Succès";
+  if (outcome === "DENIED") return "Refusé";
+  return "Échec";
 }
 
 function detailsSummary(item: UserActivityItem): string {
   if (!item.details) {
-    return "Aucun detail";
+    return "Aucun détail";
   }
 
   const entries = Object.entries(item.details);
   if (entries.length === 0) {
-    return "Aucun detail";
+    return "Aucun détail";
   }
 
   return entries
@@ -408,7 +408,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Utilisateurs</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Gere les acces, les permissions et l&apos;historique de votre agence.
+            Gérez les accès, les permissions et l&apos;historique de votre agence.
           </p>
         </div>
         <Button onClick={() => setIsAddOpen(true)}>Ajouter un utilisateur</Button>
@@ -418,7 +418,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
         <TabsList className="grid h-auto w-full grid-cols-3">
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
           <TabsTrigger value="permissions">Permissions</TabsTrigger>
-          <TabsTrigger value="activity">Activite</TabsTrigger>
+          <TabsTrigger value="activity">Activité</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="mt-0">
@@ -428,10 +428,10 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                 <TableRow>
                   <TableHead className="px-5">Nom</TableHead>
                   <TableHead className="px-5">Email</TableHead>
-                  <TableHead className="px-5">Role</TableHead>
+                  <TableHead className="px-5">Rôle</TableHead>
                   <TableHead className="px-5">Statut</TableHead>
-                  <TableHead className="px-5">Overrides</TableHead>
-                  <TableHead className="px-5">Derniere connexion</TableHead>
+                  <TableHead className="px-5">Dérogations</TableHead>
+                  <TableHead className="px-5">Dernière connexion</TableHead>
                   <TableHead className="px-5 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -462,11 +462,11 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                       </TableCell>
                       <TableCell className="px-5">
                         <Badge variant={overrideCount > 0 ? "secondary" : "outline"}>
-                          {overrideCount} override{overrideCount > 1 ? "s" : ""}
+                          {overrideCount} dérogation{overrideCount > 1 ? "s" : ""}
                         </Badge>
                       </TableCell>
                       <TableCell className="px-5 text-muted-foreground">
-                        {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : "Jamais connecte"}
+                        {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : "Jamais connecté"}
                       </TableCell>
                       <TableCell className="px-5 text-right">
                         <UserActionsMenu
@@ -491,7 +491,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
               <div className="border-b border-border/60 px-4 py-3">
                 <h2 className="text-sm font-semibold text-foreground">Utilisateurs</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Selectionnez un compte pour ajuster les overrides.
+                  Sélectionnez un compte pour ajuster les dérogations.
                 </p>
               </div>
               <div className="max-h-[640px] overflow-y-auto">
@@ -531,7 +531,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                     {selectedUser ? `Matrice de ${selectedUser.name}` : "Matrice de permissions"}
                   </h2>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Base par role + overrides explicites.
+                    Base par rôle + dérogations explicites.
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -563,7 +563,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
               ) : selectedUser.role === "OWNER" ? (
                 <div className="px-4 py-8">
                   <div className="rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
-                    Le proprietaire conserve toutes les permissions. Aucun override n&apos;est modifiable.
+                    Le propriétaire conserve toutes les permissions. Aucune dérogation n&apos;est modifiable.
                   </div>
                 </div>
               ) : (
@@ -583,8 +583,8 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                             <TableHeader className="bg-muted/20">
                               <TableRow>
                                 <TableHead>Permission</TableHead>
-                                <TableHead>Defaut role</TableHead>
-                                <TableHead>Override</TableHead>
+                                <TableHead>Défaut du rôle</TableHead>
+                                <TableHead>Dérogation</TableHead>
                                 <TableHead>Effectif</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -603,7 +603,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                                     </TableCell>
                                     <TableCell>
                                       <Badge variant={roleDefaults[item.key] ? "default" : "outline"}>
-                                        {roleDefaults[item.key] ? "Autorise" : "Refuse"}
+                                        {roleDefaults[item.key] ? "Autorisé" : "Refusé"}
                                       </Badge>
                                     </TableCell>
                                     <TableCell>
@@ -617,14 +617,14 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                                         }
                                         className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                       >
-                                        <option value="inherit">Heriter</option>
+                                        <option value="inherit">Hériter</option>
                                         <option value="allow">Autoriser</option>
                                         <option value="deny">Refuser</option>
                                       </select>
                                     </TableCell>
                                     <TableCell>
                                       <Badge variant={effectiveValue ? "default" : "outline"}>
-                                        {effectiveValue ? "Autorise" : "Refuse"}
+                                        {effectiveValue ? "Autorisé" : "Refusé"}
                                       </Badge>
                                     </TableCell>
                                   </TableRow>
@@ -646,9 +646,9 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
           <div className="space-y-4 rounded-2xl border border-border/60 bg-white p-4 shadow-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-foreground">Journal d&apos;activite</h2>
+                <h2 className="text-sm font-semibold text-foreground">Journal d&apos;activité</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Actions critiques liees a la gestion des utilisateurs.
+                  Actions critiques liées à la gestion des utilisateurs.
                 </p>
               </div>
               <Button
@@ -656,7 +656,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                 onClick={() => void loadActivityPage(true)}
                 disabled={isActivityLoading}
               >
-                Rafraichir
+                Rafraîchir
               </Button>
             </div>
 
@@ -684,8 +684,8 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 >
                   <option value="all">Toutes</option>
-                  <option value="USER_CREATED">Creation</option>
-                  <option value="USER_ROLE_UPDATE">Role</option>
+                  <option value="USER_CREATED">Création</option>
+                  <option value="USER_ROLE_UPDATE">Rôle</option>
                   <option value="USER_STATUS_UPDATE">Statut</option>
                   <option value="USER_PASSWORD_RESET">Mot de passe</option>
                   <option value="USER_PERMISSIONS_UPDATE">Permissions</option>
@@ -705,7 +705,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
               </div>
             ) : activityItems.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
-                Aucun evenement pour ce filtre.
+                Aucun événement pour ce filtre.
               </div>
             ) : (
               <>
@@ -717,8 +717,8 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                         <TableHead>Action</TableHead>
                         <TableHead>Acteur</TableHead>
                         <TableHead>Cible</TableHead>
-                        <TableHead>Resultat</TableHead>
-                        <TableHead>Details</TableHead>
+                        <TableHead>Résultat</TableHead>
+                        <TableHead>Détails</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -733,7 +733,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                             <TableCell>
                               <div>
                                 <p className="text-sm font-medium text-foreground">
-                                  {item.actor.email ?? "Systeme"}
+                                  {item.actor.email ?? "Système"}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   {item.actor.role ?? "n/a"}

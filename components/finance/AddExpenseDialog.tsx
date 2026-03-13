@@ -259,7 +259,7 @@ export function AddExpenseDialog({
               value={note}
               onChange={(event) => setNote(event.target.value)}
               disabled={isPending}
-              placeholder="Details utiles pour le suivi..."
+              placeholder="Détails utiles pour le suivi..."
               rows={3}
             />
           </div>

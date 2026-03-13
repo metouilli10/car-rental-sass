@@ -162,7 +162,7 @@ export function AddUserDialog({ open, onOpenChange, onCreated }: AddUserDialogPr
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   disabled={isLoading}
                 >
-                  <option value="MANAGER">Manager</option>
+                  <option value="MANAGER">Gestionnaire</option>
                   <option value="EMPLOYEE">Employé</option>
                 </select>
               </div>
@@ -206,10 +206,10 @@ export function AddUserDialog({ open, onOpenChange, onCreated }: AddUserDialogPr
                     htmlFor="new-user-force-password"
                     className="text-sm font-medium cursor-pointer"
                   >
-                    Forcer changement de mot de passe au prochain login
+                    Forcer le changement de mot de passe à la prochaine connexion
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Option placeholder prête pour une future activation.
+                    Option prévue pour une future activation.
                   </p>
                 </div>
               </div>
@@ -240,7 +240,7 @@ export function AddUserDialog({ open, onOpenChange, onCreated }: AddUserDialogPr
               </div>
               <div className="space-y-1">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Rôle</p>
-                <p className="text-sm font-medium">{createdUser.role === "MANAGER" ? "Manager" : "Employé"}</p>
+                <p className="text-sm font-medium">{createdUser.role === "MANAGER" ? "Gestionnaire" : "Employé"}</p>
               </div>
               <div className="space-y-2">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
