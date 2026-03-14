@@ -36,6 +36,7 @@ export function AgencyProfileForm({
 
   const isSetup = mode === "setup";
   const helperText = "Vous pouvez modifier cela plus tard dans Paramètres.";
+  const logoLabel = getLogoLabel(form.logoUrl);
   const inputClass = cn(
     "h-11",
     isSetup && "h-12 bg-neutral-50 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#2c2cf2]/30"
@@ -199,7 +200,7 @@ export function AgencyProfileForm({
               ) : null}
             </div>
             <p className="truncate text-xs text-muted-foreground">
-              {form.logoUrl || "Téléversez votre logo pour personnaliser votre espace."}
+              {logoLabel || "Téléversez votre logo pour personnaliser votre espace."}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -255,4 +256,19 @@ export function AgencyProfileForm({
       </div>
     </form>
   );
+}
+
+function getLogoLabel(logoUrl: string) {
+  if (!logoUrl) {
+    return "";
+  }
+
+  try {
+    const { pathname } = new URL(logoUrl);
+    const fileName = pathname.split("/").pop();
+
+    return fileName || "Logo prêt";
+  } catch {
+    return "Logo prêt";
+  }
 }
