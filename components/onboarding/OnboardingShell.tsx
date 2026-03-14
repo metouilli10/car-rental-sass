@@ -8,7 +8,7 @@ interface OnboardingShellProps {
 /** Full-page layout shell for onboarding pages (signup, setup). Server-compatible. */
 export function OnboardingShell({ leftPanel, children }: OnboardingShellProps) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-white via-gray-50 to-blue-50/30 p-4">
+    <div className="relative min-h-screen overflow-x-hidden overflow-y-auto bg-gradient-to-br from-white via-gray-50 to-blue-50/30 p-4">
       {/* Animated gradient orbs — matches login page */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
@@ -34,7 +34,7 @@ export function OnboardingShell({ leftPanel, children }: OnboardingShellProps) {
       </div>
 
       {/* Centered container */}
-      <div className="relative mx-auto flex min-h-screen max-w-5xl items-center justify-center">
+      <div className="relative mx-auto flex min-h-[calc(100vh-2rem)] max-w-5xl items-start justify-center py-4 lg:items-center">
         <div className="animate-card-appear w-full overflow-hidden rounded-3xl border border-white/60 bg-white/80 shadow-2xl shadow-black/5 backdrop-blur-xl">
           <div className="grid lg:grid-cols-[360px_1fr]">
             {/* Left: context panel */}
