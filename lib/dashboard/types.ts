@@ -104,9 +104,10 @@ export interface CashMovement {
 }
 
 export interface CashCardData {
-  inflowToday: number;
-  outflowToday: number;
-  balanceToday: number;
+  cashInflowToday: number;
+  cashOutflowToday: number;
+  cashBalanceToday: number;
+  resultToday: number;
   toCollectToday: number;
   latestMovements: CashMovement[];
 }

@@ -15,6 +15,11 @@ import type { DateRange } from "./ranges";
 import { expenseCategoryLabel, paymentMethodLabel } from "@/components/finance/constants";
 import type { PaymentType } from "@prisma/client";
 import type { ExpenseCategory } from "@prisma/client";
+import {
+  calculateFinanceTotals,
+  getDepositReleaseBreakdown,
+  resolveRetainedDepositAmount,
+} from "./finance";
 
 // ─── happenedAt rules (single source of truth) ─────────────────────────────
 // Primary date field per source; fallback to createdAt for legacy rows with null.
@@ -75,9 +80,12 @@ const MOVEMENT_LABELS: Record<CaisseMovementType, string> = {
 };
 
 export interface CaisseByDateResult {
-  entrees: number;
-  sorties: number;
-  solde: number;
+  cashEntrees: number;
+  cashSorties: number;
+  cashSolde: number;
+  earnedEntrees: number;
+  earnedSorties: number;
+  resultatNet: number;
   movements: CaisseMovement[];
   toCollectToday?: number;
 }
@@ -118,6 +126,7 @@ export async function getCaisseByDate(
       where: {
         booking: { agencyId },
         status: "PAID",
+        category: "RENTAL",
         OR: [
           { paidAt: { gte: dayStart, lte: dayEnd } },
           {
@@ -164,11 +173,11 @@ export async function getCaisseByDate(
       },
       orderBy: { heldAt: "desc" },
     }),
-    // 3. Sorties: deposits RETURNED/PARTIAL_RETURNED with returnedAt in day
+    // 3. Deposit releases/retentions recognized in day
     prisma.deposit.findMany({
       where: {
         booking: { agencyId },
-        status: { in: ["RETURNED", "PARTIAL_RETURNED"] },
+        status: { in: ["RETURNED", "PARTIAL_RETURNED", "FORFEITED"] },
         OR: [
           { returnedAt: { gte: dayStart, lte: dayEnd } },
           {
@@ -180,12 +189,25 @@ export async function getCaisseByDate(
       select: {
         id: true,
         amount: true,
+        status: true,
         returnedAt: true,
         createdAt: true,
         booking: {
           select: {
             id: true,
             customer: { select: { name: true } },
+            damageReports: {
+              where: {
+                deductFromDeposit: true,
+                deductedAmount: { gt: 0 },
+              },
+              orderBy: { reportedAt: "desc" },
+              take: 1,
+              select: {
+                deductFromDeposit: true,
+                deductedAmount: true,
+              },
+            },
           },
         },
       },
@@ -196,6 +218,7 @@ export async function getCaisseByDate(
       where: {
         booking: { agencyId },
         status: "REFUNDED",
+        category: "REFUND",
         updatedAt: { gte: dayStart, lte: dayEnd },
       },
       select: {
@@ -304,7 +327,16 @@ export async function getCaisseByDate(
         bookingId: d.booking.id,
       };
     }),
-    ...depositsReturned.map((d) => {
+    ...depositsReturned.flatMap((d) => {
+      const retainedAmount = resolveRetainedDepositAmount(d.amount, d.booking.damageReports);
+      const breakdown = getDepositReleaseBreakdown({
+        amount: d.amount,
+        status: d.status,
+        retainedAmount,
+      });
+      if (breakdown.cashOut <= 0) {
+        return [];
+      }
       const happenedAt = getMovementHappenedAt(
         {
           returnedAt: d.returnedAt,
@@ -313,19 +345,21 @@ export async function getCaisseByDate(
         },
         "deposit_returned"
       );
-      return {
-        id: `deposit-release-${d.id}`,
-        type: "deposit_returned" as const,
-        direction: "out" as const,
-        amount: d.amount,
-        customerName: d.booking.customer.name,
-        label: MOVEMENT_LABELS.deposit_returned,
-        happenedAt,
-        sourceId: d.id,
-        sourceType: "Deposit" as const,
-        reference: "Caution",
-        bookingId: d.booking.id,
-      };
+      return [
+        {
+          id: `deposit-release-${d.id}`,
+          type: "deposit_returned" as const,
+          direction: "out" as const,
+          amount: breakdown.cashOut,
+          customerName: d.booking.customer.name,
+          label: MOVEMENT_LABELS.deposit_returned,
+          happenedAt,
+          sourceId: d.id,
+          sourceType: "Deposit" as const,
+          reference: "Caution",
+          bookingId: d.booking.id,
+        },
+      ];
     }),
     ...refunds.map((p) => {
       const happenedAt = getMovementHappenedAt(
@@ -364,18 +398,22 @@ export async function getCaisseByDate(
     })),
   ].sort((a, b) => b.happenedAt.getTime() - a.happenedAt.getTime());
 
-  const cashExpensesSum = cashExpensesToday.reduce((s, e) => s + Number(e.amount), 0);
-
-  const entrees = round(
-    paymentsPaid.reduce((s, p) => s + p.amount, 0) +
-      depositsHeld.reduce((s, d) => s + d.amount, 0)
-  );
-  const sorties = round(
-    depositsReturned.reduce((s, d) => s + d.amount, 0) +
-      refunds.reduce((s, p) => s + p.amount, 0) +
-      cashExpensesSum
-  );
-  const solde = round(entrees - sorties);
+  const totals = calculateFinanceTotals({
+    rentalPayments: paymentsPaid,
+    refunds,
+    cashExpenses: cashExpensesToday.map((expense) => ({
+      amount: Number(expense.amount),
+    })),
+    heldDeposits: depositsHeld,
+    releasedDeposits: depositsReturned.map((deposit) => ({
+      amount: deposit.amount,
+      status: deposit.status,
+      retainedAmount: resolveRetainedDepositAmount(
+        deposit.amount,
+        deposit.booking.damageReports
+      ),
+    })),
+  });
 
   let toCollectToday: number | undefined;
   if (isToday && toCollectData.length >= 2) {
@@ -420,9 +458,12 @@ export async function getCaisseByDate(
   }
 
   return {
-    entrees,
-    sorties,
-    solde,
+    cashEntrees: totals.cashIn,
+    cashSorties: totals.cashOut,
+    cashSolde: totals.cashBalance,
+    earnedEntrees: totals.earnedIn,
+    earnedSorties: totals.earnedOut,
+    resultatNet: totals.earnedNet,
     movements,
     ...(toCollectToday !== undefined && { toCollectToday }),
   };
@@ -449,6 +490,7 @@ export async function getCaisseByDateRange(
       where: {
         booking: { agencyId },
         status: "PAID",
+        category: "RENTAL",
         OR: [
           { paidAt: { gte: rangeStart, lte: rangeEnd } },
           {
@@ -494,7 +536,7 @@ export async function getCaisseByDateRange(
     prisma.deposit.findMany({
       where: {
         booking: { agencyId },
-        status: { in: ["RETURNED", "PARTIAL_RETURNED"] },
+        status: { in: ["RETURNED", "PARTIAL_RETURNED", "FORFEITED"] },
         OR: [
           { returnedAt: { gte: rangeStart, lte: rangeEnd } },
           {
@@ -506,10 +548,26 @@ export async function getCaisseByDateRange(
       select: {
         id: true,
         amount: true,
+        status: true,
         returnedAt: true,
         createdAt: true,
         booking: {
-          select: { id: true, customer: { select: { name: true } } },
+          select: {
+            id: true,
+            customer: { select: { name: true } },
+            damageReports: {
+              where: {
+                deductFromDeposit: true,
+                deductedAmount: { gt: 0 },
+              },
+              orderBy: { reportedAt: "desc" },
+              take: 1,
+              select: {
+                deductFromDeposit: true,
+                deductedAmount: true,
+              },
+            },
+          },
         },
       },
       orderBy: { returnedAt: "desc" },
@@ -518,6 +576,7 @@ export async function getCaisseByDateRange(
       where: {
         booking: { agencyId },
         status: "REFUNDED",
+        category: "REFUND",
         updatedAt: { gte: rangeStart, lte: rangeEnd },
       },
       select: {
@@ -592,7 +651,16 @@ export async function getCaisseByDateRange(
         bookingId: d.booking.id,
       };
     }),
-    ...depositsReturned.map((d) => {
+    ...depositsReturned.flatMap((d) => {
+      const retainedAmount = resolveRetainedDepositAmount(d.amount, d.booking.damageReports);
+      const breakdown = getDepositReleaseBreakdown({
+        amount: d.amount,
+        status: d.status,
+        retainedAmount,
+      });
+      if (breakdown.cashOut <= 0) {
+        return [];
+      }
       const happenedAt = getMovementHappenedAt(
         {
           returnedAt: d.returnedAt,
@@ -601,19 +669,21 @@ export async function getCaisseByDateRange(
         },
         "deposit_returned"
       );
-      return {
-        id: `deposit-release-${d.id}`,
-        type: "deposit_returned" as const,
-        direction: "out" as const,
-        amount: d.amount,
-        customerName: d.booking.customer.name,
-        label: MOVEMENT_LABELS.deposit_returned,
-        happenedAt,
-        sourceId: d.id,
-        sourceType: "Deposit" as const,
-        reference: "Caution",
-        bookingId: d.booking.id,
-      };
+      return [
+        {
+          id: `deposit-release-${d.id}`,
+          type: "deposit_returned" as const,
+          direction: "out" as const,
+          amount: breakdown.cashOut,
+          customerName: d.booking.customer.name,
+          label: MOVEMENT_LABELS.deposit_returned,
+          happenedAt,
+          sourceId: d.id,
+          sourceType: "Deposit" as const,
+          reference: "Caution",
+          bookingId: d.booking.id,
+        },
+      ];
     }),
     ...refunds.map((p) => {
       const happenedAt = getMovementHappenedAt(
@@ -649,16 +719,30 @@ export async function getCaisseByDateRange(
     })),
   ].sort((a, b) => b.happenedAt.getTime() - a.happenedAt.getTime());
 
-  const entrees = round(
-    paymentsPaid.reduce((s, p) => s + p.amount, 0) +
-      depositsHeld.reduce((s, d) => s + d.amount, 0)
-  );
-  const sorties = round(
-    depositsReturned.reduce((s, d) => s + d.amount, 0) +
-      refunds.reduce((s, p) => s + p.amount, 0) +
-      cashExpenses.reduce((s, e) => s + Number(e.amount), 0)
-  );
-  const solde = round(entrees - sorties);
+  const totals = calculateFinanceTotals({
+    rentalPayments: paymentsPaid,
+    refunds,
+    cashExpenses: cashExpenses.map((expense) => ({
+      amount: Number(expense.amount),
+    })),
+    heldDeposits: depositsHeld,
+    releasedDeposits: depositsReturned.map((deposit) => ({
+      amount: deposit.amount,
+      status: deposit.status,
+      retainedAmount: resolveRetainedDepositAmount(
+        deposit.amount,
+        deposit.booking.damageReports
+      ),
+    })),
+  });
 
-  return { entrees, sorties, solde, movements };
+  return {
+    cashEntrees: totals.cashIn,
+    cashSorties: totals.cashOut,
+    cashSolde: totals.cashBalance,
+    earnedEntrees: totals.earnedIn,
+    earnedSorties: totals.earnedOut,
+    resultatNet: totals.earnedNet,
+    movements,
+  };
 }

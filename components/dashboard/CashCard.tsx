@@ -36,7 +36,7 @@ export function CashCard({ cash }: CashCardProps) {
               Entrees
             </div>
             <p className="mt-1 text-xl font-semibold text-emerald-700">
-              +{formatCurrency(cash.inflowToday)}
+              +{formatCurrency(cash.cashInflowToday)}
             </p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -45,16 +45,20 @@ export function CashCard({ cash }: CashCardProps) {
               Sorties
             </div>
             <p className="mt-1 text-xl font-semibold text-red-700">
-              -{formatCurrency(cash.outflowToday)}
+              -{formatCurrency(cash.cashOutflowToday)}
             </p>
           </div>
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-3">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Solde du jour</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500">Résultat du jour</p>
           <p className="mt-1 text-2xl font-semibold text-slate-900">
-            {cash.balanceToday >= 0 ? "+" : "-"}
-            {formatCurrency(Math.abs(cash.balanceToday))}
+            {cash.resultToday >= 0 ? "+" : "-"}
+            {formatCurrency(Math.abs(cash.resultToday))}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Cash net: {cash.cashBalanceToday >= 0 ? "+" : "-"}
+            {formatCurrency(Math.abs(cash.cashBalanceToday))}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             A encaisser aujourd&apos;hui: {formatCurrency(cash.toCollectToday)}

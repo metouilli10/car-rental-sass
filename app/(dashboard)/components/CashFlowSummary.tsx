@@ -16,15 +16,17 @@ import { FlatIcon } from "@/components/shared/flat-icon";
 interface CashTransaction {
   id: string;
   type: "in" | "out";
-  category: "payment" | "deposit_received" | "deposit_returned" | "refund";
+  category: "payment" | "deposit_received" | "deposit_returned" | "refund" | "expense";
   amount: number;
   customerName: string;
   time: string;
 }
 
 interface CashFlowSummaryProps {
-  entrees: number;
-  sorties: number;
+  cashEntrees: number;
+  cashSorties: number;
+  resultatNet: number;
+  cashSolde: number;
   transactions: CashTransaction[];
 }
 
@@ -42,16 +44,18 @@ const categoryLabels: Record<string, string> = {
   deposit_received: "Caution reçue",
   deposit_returned: "Caution remboursée",
   refund: "Remboursement",
+  expense: "Charge caisse",
 };
 
 export function CashFlowSummary({
-  entrees,
-  sorties,
+  cashEntrees,
+  cashSorties,
+  resultatNet,
+  cashSolde,
   transactions,
 }: CashFlowSummaryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const solde = entrees - sorties;
-  const isPositive = solde >= 0;
+  const isPositive = resultatNet >= 0;
 
   return (
     <Card className="bg-white shadow-md transition-all duration-200">
@@ -84,7 +88,7 @@ export function CashFlowSummary({
             </div>
           </div>
           <p className="text-[1.625rem] font-bold tabular-nums text-emerald-600 tracking-tight">
-            +{formatCashDH(entrees)}
+            +{formatCashDH(cashEntrees)}
           </p>
         </div>
 
@@ -99,16 +103,16 @@ export function CashFlowSummary({
                 Sorties
               </p>
               <p className="text-xs text-muted-foreground/45">
-                Remboursements
+                Remboursements + charges
               </p>
             </div>
           </div>
           <p className="text-[1.625rem] font-bold tabular-nums text-red-600 tracking-tight">
-            -{formatCashDH(sorties)}
+            -{formatCashDH(cashSorties)}
           </p>
         </div>
 
-        {/* Solde du jour — reduced dominance, softer green */}
+        {/* Resultat du jour */}
         <div
           className={`rounded-xl p-5 border transition-colors duration-200 ${
             isPositive
@@ -117,18 +121,22 @@ export function CashFlowSummary({
           }`}
         >
           <p className="text-xs font-semibold text-muted-foreground/50 uppercase tracking-wider mb-2">
-            Solde du jour
+            Résultat du jour
           </p>
           <p className="text-xs text-muted-foreground/45 mb-4">
-            Entrées − Sorties
+            Paiements + cautions retenues − remboursements − charges cash
           </p>
           <p
             className={`text-[2rem] font-bold tabular-nums tracking-tight ${
               isPositive ? "text-emerald-600" : "text-red-600"
             }`}
           >
-            {solde >= 0 ? "+" : ""}
-            {formatCashDH(Math.abs(solde))}
+            {resultatNet >= 0 ? "+" : "-"}
+            {formatCashDH(Math.abs(resultatNet))}
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground/60">
+            Cash net: {cashSolde >= 0 ? "+" : "-"}
+            {formatCashDH(Math.abs(cashSolde))}
           </p>
         </div>
 

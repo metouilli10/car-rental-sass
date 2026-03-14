@@ -5,7 +5,7 @@ import ArrowCircleUpRoundedIcon from "@mui/icons-material/ArrowCircleUpRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { format } from "date-fns";
 
-import { prisma } from "@/lib/prisma";
+import { getCaisseByDate } from "@/lib/dashboard/caisse";
 import { formatCurrency } from "@/lib/utils";
 
 interface DailyCashProps {
@@ -15,105 +15,16 @@ const sectionIconClass = "h-5 w-5 shrink-0";
 
 export async function DailyCash({ agencyId }: DailyCashProps) {
   const now = new Date();
-  const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(now);
-  end.setHours(23, 59, 59, 999);
-
-  const [paymentsToday, depositsReceivedToday, depositsReturnedToday, refundsToday] =
-    await Promise.all([
-      prisma.payment.findMany({
-        where: {
-          booking: { agencyId },
-          status: "PAID",
-          paidAt: { gte: start, lte: end },
-        },
-        select: {
-          id: true,
-          amount: true,
-          paidAt: true,
-          booking: { select: { customer: { select: { name: true } } } },
-        },
-      }),
-      prisma.deposit.findMany({
-        where: {
-          booking: { agencyId },
-          status: "HELD",
-          heldAt: { gte: start, lte: end },
-        },
-        select: {
-          id: true,
-          amount: true,
-          heldAt: true,
-          booking: { select: { customer: { select: { name: true } } } },
-        },
-      }),
-      prisma.deposit.findMany({
-        where: {
-          booking: { agencyId },
-          status: { in: ["RETURNED", "PARTIAL_RETURNED"] },
-          returnedAt: { gte: start, lte: end },
-        },
-        select: {
-          id: true,
-          amount: true,
-          returnedAt: true,
-          booking: { select: { customer: { select: { name: true } } } },
-        },
-      }),
-      prisma.payment.findMany({
-        where: {
-          booking: { agencyId },
-          status: "REFUNDED",
-          updatedAt: { gte: start, lte: end },
-        },
-        select: {
-          id: true,
-          amount: true,
-          updatedAt: true,
-          booking: { select: { customer: { select: { name: true } } } },
-        },
-      }),
-    ]);
-
-  const entrees = [...paymentsToday, ...depositsReceivedToday].reduce((sum, item) => sum + item.amount, 0);
-  const sorties = [...depositsReturnedToday, ...refundsToday].reduce((sum, item) => sum + item.amount, 0);
-  const solde = entrees - sorties;
-
-  const transactions = [
-    ...paymentsToday.map((item) => ({
-      id: item.id,
-      label: "Paiement location",
-      customer: item.booking.customer.name,
-      amount: item.amount,
-      type: "in" as const,
-      time: format(new Date(item.paidAt ?? now), "HH:mm"),
-    })),
-    ...depositsReceivedToday.map((item) => ({
-      id: item.id,
-      label: "Caution reçue",
-      customer: item.booking.customer.name,
-      amount: item.amount,
-      type: "in" as const,
-      time: format(new Date(item.heldAt), "HH:mm"),
-    })),
-    ...depositsReturnedToday.map((item) => ({
-      id: item.id,
-      label: "Caution remboursée",
-      customer: item.booking.customer.name,
-      amount: item.amount,
-      type: "out" as const,
-      time: format(new Date(item.returnedAt ?? now), "HH:mm"),
-    })),
-    ...refundsToday.map((item) => ({
-      id: item.id,
-      label: "Remboursement",
-      customer: item.booking.customer.name,
-      amount: item.amount,
-      type: "out" as const,
-      time: format(new Date(item.updatedAt), "HH:mm"),
-    })),
-  ]
+  const caisse = await getCaisseByDate(agencyId, now);
+  const transactions = caisse.movements
+    .map((movement) => ({
+      id: movement.id,
+      label: movement.label,
+      customer: movement.customerName,
+      amount: movement.amount,
+      type: movement.direction === "in" ? "in" as const : "out" as const,
+      time: format(new Date(movement.happenedAt), "HH:mm"),
+    }))
     .sort((a, b) => b.time.localeCompare(a.time))
     .slice(0, 4);
 
@@ -143,7 +54,7 @@ export async function DailyCash({ agencyId }: DailyCashProps) {
             <p className="text-sm text-slate-600">Entrées</p>
           </div>
           <p className="text-lg font-semibold text-emerald-600 transition-all duration-200">
-            +{formatCurrency(entrees)}
+            +{formatCurrency(caisse.cashEntrees)}
           </p>
         </div>
 
@@ -153,21 +64,25 @@ export async function DailyCash({ agencyId }: DailyCashProps) {
             <p className="text-sm text-slate-600">Sorties</p>
           </div>
           <p className="text-lg font-semibold text-red-600 transition-all duration-200">
-            -{formatCurrency(sorties)}
+            -{formatCurrency(caisse.cashSorties)}
           </p>
         </div>
 
         <div
           className={`rounded-xl border p-5 shadow-sm ${
-            solde >= 0
+            caisse.resultatNet >= 0
               ? "border-emerald-200/60 bg-emerald-50/40"
               : "border-red-200 bg-red-50/40"
           }`}
         >
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Solde du jour</p>
-          <p className={`mt-1 text-2xl font-semibold tracking-tight ${solde >= 0 ? "text-emerald-700" : "text-red-700"}`}>
-            {solde >= 0 ? "+" : "-"}
-            {formatCurrency(Math.abs(solde))}
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Résultat du jour</p>
+          <p className={`mt-1 text-2xl font-semibold tracking-tight ${caisse.resultatNet >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+            {caisse.resultatNet >= 0 ? "+" : "-"}
+            {formatCurrency(Math.abs(caisse.resultatNet))}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Cash net: {caisse.cashSolde >= 0 ? "+" : "-"}
+            {formatCurrency(Math.abs(caisse.cashSolde))}
           </p>
         </div>
 

@@ -6,6 +6,7 @@
 import { describe, it } from "node:test";
 import { strict as assert } from "node:assert";
 import { getMovementHappenedAt } from "./caisse";
+import { getDepositReleaseBreakdown } from "./finance";
 
 describe("getMovementHappenedAt", () => {
   const base = {
@@ -62,5 +63,18 @@ describe("getMovementHappenedAt", () => {
       "refund"
     );
     assert.equal(out.getTime(), base.updatedAt.getTime());
+  });
+});
+
+describe("deposit cash movement amounts", () => {
+  it("partial return only subtracts the refunded portion from cash", () => {
+    const breakdown = getDepositReleaseBreakdown({
+      amount: 1000,
+      status: "PARTIAL_RETURNED",
+      retainedAmount: 300,
+    });
+
+    assert.equal(breakdown.cashOut, 700);
+    assert.equal(breakdown.retainedAmount, 300);
   });
 });

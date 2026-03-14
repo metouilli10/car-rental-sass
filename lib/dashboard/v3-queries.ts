@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import type { BookingStatus, DepositStatus, NotificationSeverity, VehicleStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { computeBookingDue, computeOutstanding } from "./rules";
@@ -26,6 +27,10 @@ import {
   isAgencyEligibleForGuidedOnboarding,
   syncAgencyOnboardingState,
 } from "@/lib/onboarding/agency-onboarding";
+import {
+  calculateFinanceTotals,
+  resolveRetainedDepositAmount,
+} from "./finance";
 
 const DASHBOARD_V3_CORE_CACHE_SECONDS = 60;
 const DASHBOARD_V3_INSIGHTS_CACHE_SECONDS = 120;
@@ -57,35 +62,289 @@ function buildPeriodQuery(input: {
   return params.toString();
 }
 
-async function getDashboardDataV3Uncached(input: {
-  agencyId: string;
-  periodInput: DashboardV3PeriodInput;
-}): Promise<DashboardV3DTO> {
+interface DashboardLiveBookingRow {
+  id: string;
+  vehicleId: string;
+  startDate: Date;
+  endDate: Date;
+  actualReturnDate: Date | null;
+  status: "CONFIRMED" | "ACTIVE";
+  totalPrice: number;
+  totalTtc: number;
+  taxEnabled: boolean;
+  discountAmount: number | null;
+  addonsTotal: number | null;
+  remainingAmount: number | null;
+  paidNow: number;
+  customer: { name: string };
+  vehicle: { make: string; model: string; plate: string };
+  payments: Array<{ amount: number }>;
+}
+
+interface DashboardLiveData {
+  liveBookings: DashboardLiveBookingRow[];
+  deposits: Array<{
+    id: string;
+    amount: number;
+    status: DepositStatus;
+    heldAt: Date;
+    returnedAt: Date | null;
+    bookingId: string;
+    booking: {
+      id: string;
+      status: BookingStatus;
+      endDate: Date;
+      actualReturnDate: Date | null;
+      customer: { name: string };
+      vehicle: { make: string; model: string; plate: string };
+      damageReports: Array<{
+        deductFromDeposit: boolean;
+        deductedAmount: number;
+      }>;
+    };
+  }>;
+  vehicles: Array<{
+    id: string;
+    status: VehicleStatus;
+  }>;
+  notifications: Array<{
+    id: string;
+    title: string;
+    body: string;
+    severity: NotificationSeverity;
+    dueAt: Date | null;
+    vehicle: { id: string; make: string; model: string; plate: string };
+  }>;
+  agency: {
+    createdAt: Date;
+    onboardingVehicleAdded: boolean;
+    onboardingReservationCreated: boolean;
+    onboardingPaymentRecorded: boolean;
+    onboardingDashboardExplored: boolean;
+    onboardingCompleted: boolean;
+    onboardingDismissed: boolean;
+  } | null;
+  departuresToday: number;
+  returnsToday: number;
+  overdueReturnsToday: number;
+  historicalReservationCount: number;
+  historicalPaidPaymentCount: number;
+}
+
+interface DashboardPeriodData {
+  resolvedPeriod: ReturnType<typeof resolveDashboardV3Period>;
+  paidInflows: number;
+  refundedOutflows: number;
+  cashExpensesOutflows: number;
+  periodBookings: Array<{
+    vehicleId: string;
+    startDate: Date;
+    endDate: Date;
+    status: BookingStatus;
+  }>;
+}
+
+async function getDashboardLiveDataUncached(agencyId: string): Promise<DashboardLiveData> {
   const startedAt = Date.now();
   const now = new Date();
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-  const resolvedPeriod = resolveDashboardV3Period(input.periodInput, now);
-  const periodQuery = buildPeriodQuery({
-    period: resolvedPeriod.key,
-    start: resolvedPeriod.range.start.toISOString(),
-    end: resolvedPeriod.range.end.toISOString(),
-  });
 
-  const queryStart = Date.now();
   const [
-    payments,
+    liveBookings,
     deposits,
-    bookings,
     vehicles,
     notifications,
     agency,
     departuresToday,
     returnsToday,
     overdueReturnsToday,
+    historicalReservationCount,
+    historicalPaidPaymentCount,
   ] = await Promise.all([
+    prisma.booking.findMany({
+      where: {
+        agencyId,
+        status: { in: ["CONFIRMED", "ACTIVE"] },
+      },
+      select: {
+        id: true,
+        vehicleId: true,
+        startDate: true,
+        endDate: true,
+        actualReturnDate: true,
+        status: true,
+        totalPrice: true,
+        totalTtc: true,
+        taxEnabled: true,
+        discountAmount: true,
+        addonsTotal: true,
+        remainingAmount: true,
+        paidNow: true,
+        customer: { select: { name: true } },
+        vehicle: { select: { make: true, model: true, plate: true } },
+        payments: {
+          where: {
+            status: "PAID",
+            category: "RENTAL",
+          },
+          select: {
+            amount: true,
+          },
+        },
+      },
+    }) as Promise<DashboardLiveBookingRow[]>,
+    prisma.deposit.findMany({
+      where: {
+        booking: { agencyId },
+        status: { in: ["HELD", "RETURNED", "PARTIAL_RETURNED", "FORFEITED"] },
+      },
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        heldAt: true,
+        returnedAt: true,
+        bookingId: true,
+        booking: {
+          select: {
+            id: true,
+            status: true,
+            endDate: true,
+            actualReturnDate: true,
+            customer: { select: { name: true } },
+            vehicle: { select: { make: true, model: true, plate: true } },
+            damageReports: {
+              where: {
+                deductFromDeposit: true,
+                deductedAmount: { gt: 0 },
+              },
+              orderBy: { reportedAt: "desc" },
+              take: 1,
+              select: {
+                deductFromDeposit: true,
+                deductedAmount: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.vehicle.findMany({
+      where: {
+        agencyId,
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    }),
+    prisma.notification.findMany({
+      where: {
+        agencyId,
+        status: "OPEN",
+        severity: { in: ["WARNING", "DUE"] },
+      },
+      orderBy: [{ severity: "desc" }, { updatedAt: "asc" }],
+      take: 6,
+      select: {
+        id: true,
+        title: true,
+        body: true,
+        severity: true,
+        dueAt: true,
+        vehicle: { select: { id: true, make: true, model: true, plate: true } },
+      },
+    }),
+    prisma.agency.findUnique({
+      where: { id: agencyId },
+      select: {
+        createdAt: true,
+        onboardingVehicleAdded: true,
+        onboardingReservationCreated: true,
+        onboardingPaymentRecorded: true,
+        onboardingDashboardExplored: true,
+        onboardingCompleted: true,
+        onboardingDismissed: true,
+      },
+    }),
+    prisma.booking.count({
+      where: {
+        agencyId,
+        status: { not: "CANCELED" },
+        startDate: {
+          gte: todayStart,
+          lt: tomorrowStart,
+        },
+      },
+    }),
+    prisma.booking.count({
+      where: {
+        agencyId,
+        status: { not: "CANCELED" },
+        endDate: {
+          gte: todayStart,
+          lt: tomorrowStart,
+        },
+      },
+    }),
+    prisma.booking.count({
+      where: {
+        agencyId,
+        status: { in: ["CONFIRMED", "ACTIVE"] },
+        endDate: {
+          lt: now,
+        },
+      },
+    }),
+    prisma.booking.count({
+      where: {
+        agencyId,
+        status: { not: "CANCELED" },
+      },
+    }),
+    prisma.payment.count({
+      where: {
+        booking: { agencyId },
+        status: "PAID",
+      },
+    }),
+  ]);
+
+  logPerf("live-queries", startedAt, {
+    agencyId,
+    liveBookings: liveBookings.length,
+    deposits: deposits.length,
+    vehicles: vehicles.length,
+    notifications: notifications.length,
+    departuresToday,
+    returnsToday,
+    overdueReturnsToday,
+  });
+
+  return {
+    liveBookings,
+    deposits,
+    vehicles,
+    notifications,
+    agency,
+    departuresToday,
+    returnsToday,
+    overdueReturnsToday,
+    historicalReservationCount,
+    historicalPaidPaymentCount,
+  };
+}
+
+async function getDashboardPeriodDataUncached(input: {
+  agencyId: string;
+  periodInput: DashboardV3PeriodInput;
+}): Promise<DashboardPeriodData> {
+  const startedAt = Date.now();
+  const resolvedPeriod = resolveDashboardV3Period(input.periodInput);
+  const [payments, periodBookings, cashExpenseAgg] = await Promise.all([
     prisma.payment.findMany({
       where: {
         booking: { agencyId: input.agencyId },
@@ -119,171 +378,81 @@ async function getDashboardDataV3Uncached(input: {
       },
       select: {
         amount: true,
-        status: true,
         category: true,
-        paidAt: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    }),
-    prisma.deposit.findMany({
-      where: {
-        booking: { agencyId: input.agencyId },
-        status: { in: ["HELD", "RETURNED", "PARTIAL_RETURNED"] },
-      },
-      select: {
-        id: true,
-        amount: true,
         status: true,
-        heldAt: true,
-        returnedAt: true,
-        bookingId: true,
-        booking: {
-          select: {
-            id: true,
-            status: true,
-            endDate: true,
-            actualReturnDate: true,
-            customer: { select: { name: true } },
-            vehicle: { select: { make: true, model: true, plate: true } },
-          },
-        },
       },
     }),
     prisma.booking.findMany({
       where: {
         agencyId: input.agencyId,
         status: { not: "CANCELED" },
-        OR: [
-          {
-            startDate: { lte: resolvedPeriod.range.end },
-            endDate: { gte: resolvedPeriod.range.start },
-          },
-          {
-            status: { in: ["CONFIRMED", "ACTIVE"] },
-          },
-        ],
+        startDate: { lte: resolvedPeriod.range.end },
+        endDate: { gte: resolvedPeriod.range.start },
       },
       select: {
-        id: true,
         vehicleId: true,
         startDate: true,
         endDate: true,
-        actualReturnDate: true,
-        status: true,
-        totalPrice: true,
-        totalTtc: true,
-        taxEnabled: true,
-        discountAmount: true,
-        addonsTotal: true,
-        remainingAmount: true,
-        paidNow: true,
-        customer: { select: { name: true } },
-        vehicle: { select: { make: true, model: true, plate: true } },
-        payments: {
-          where: {
-            status: "PAID",
-            category: "RENTAL",
-          },
-          select: {
-            amount: true,
-          },
-        },
-      },
-    }),
-    prisma.vehicle.findMany({
-      where: {
-        agencyId: input.agencyId,
-      },
-      select: {
-        id: true,
         status: true,
       },
     }),
-    prisma.notification.findMany({
+    prisma.expense.aggregate({
       where: {
         agencyId: input.agencyId,
-        status: "OPEN",
-        severity: { in: ["WARNING", "DUE"] },
+        method: "CASH",
+        date: { gte: resolvedPeriod.range.start, lte: resolvedPeriod.range.end },
       },
-      orderBy: [{ severity: "desc" }, { updatedAt: "asc" }],
-      take: 6,
-      select: {
-        id: true,
-        title: true,
-        body: true,
-        severity: true,
-        dueAt: true,
-        vehicle: { select: { id: true, make: true, model: true, plate: true } },
-      },
-    }),
-    prisma.agency.findUnique({
-      where: { id: input.agencyId },
-      select: {
-        createdAt: true,
-        onboardingVehicleAdded: true,
-        onboardingReservationCreated: true,
-        onboardingPaymentRecorded: true,
-        onboardingDashboardExplored: true,
-        onboardingCompleted: true,
-        onboardingDismissed: true,
-      },
-    }),
-    prisma.booking.count({
-      where: {
-        agencyId: input.agencyId,
-        status: { not: "CANCELED" },
-        startDate: {
-          gte: todayStart,
-          lt: tomorrowStart,
-        },
-      },
-    }),
-    prisma.booking.count({
-      where: {
-        agencyId: input.agencyId,
-        status: { not: "CANCELED" },
-        endDate: {
-          gte: todayStart,
-          lt: tomorrowStart,
-        },
-      },
-    }),
-    prisma.booking.count({
-      where: {
-        agencyId: input.agencyId,
-        status: { in: ["CONFIRMED", "ACTIVE"] },
-        endDate: {
-          lt: now,
-        },
+      _sum: {
+        amount: true,
       },
     }),
   ]);
-  logPerf("core-queries", queryStart, {
-    agencyId: input.agencyId,
-    period: resolvedPeriod.key,
-    payments: payments.length,
-    deposits: deposits.length,
-    bookings: bookings.length,
-    vehicles: vehicles.length,
-    notifications: notifications.length,
-    departuresToday,
-    returnsToday,
-    overdueReturnsToday,
-  });
 
   let paidInflows = 0;
   let refundedOutflows = 0;
   for (const payment of payments) {
-    if (payment.status === "PAID") {
+    if (payment.status === "PAID" && payment.category === "RENTAL") {
       paidInflows += payment.amount;
     } else if (payment.status === "REFUNDED") {
       refundedOutflows += payment.amount;
     }
   }
 
-  let depositInflows = 0;
-  let depositOutflows = 0;
+  logPerf("period-queries", startedAt, {
+    agencyId: input.agencyId,
+    period: resolvedPeriod.key,
+    payments: payments.length,
+    periodBookings: periodBookings.length,
+  });
+
+  return {
+    resolvedPeriod,
+    paidInflows,
+    refundedOutflows,
+    cashExpensesOutflows: Number(cashExpenseAgg._sum.amount ?? 0),
+    periodBookings,
+  };
+}
+
+async function getDashboardDataV3Uncached(input: {
+  agencyId: string;
+  periodInput: DashboardV3PeriodInput;
+}): Promise<DashboardV3DTO> {
+  const startedAt = Date.now();
+  const now = new Date();
+  const [liveData, periodData] = await Promise.all([
+    getDashboardLiveData(input.agencyId),
+    getDashboardPeriodData(input),
+  ]);
+  const resolvedPeriod = periodData.resolvedPeriod;
+  const periodQuery = buildPeriodQuery({
+    period: resolvedPeriod.key,
+    start: resolvedPeriod.range.start.toISOString(),
+    end: resolvedPeriod.range.end.toISOString(),
+  });
+  const { liveBookings, deposits, vehicles, notifications, agency } = liveData;
+  const { paidInflows, refundedOutflows, periodBookings } = periodData;
+
   const depositDueItems: Array<{
     id: string;
     amount: number;
@@ -298,6 +467,12 @@ async function getDashboardDataV3Uncached(input: {
     primaryHref: string;
   }> = [];
   let depositDueAmountTotal = 0;
+  const heldDepositsInPeriod: Array<{ amount: number }> = [];
+  const releasedDepositsInPeriod: Array<{
+    amount: number;
+    status: DepositStatus;
+    retainedAmount: number;
+  }> = [];
 
   for (const deposit of deposits) {
     if (
@@ -305,15 +480,24 @@ async function getDashboardDataV3Uncached(input: {
       deposit.heldAt.getTime() >= resolvedPeriod.range.start.getTime() &&
       deposit.heldAt.getTime() <= resolvedPeriod.range.end.getTime()
     ) {
-      depositInflows += deposit.amount;
+      heldDepositsInPeriod.push({ amount: deposit.amount });
     }
     if (
-      (deposit.status === "RETURNED" || deposit.status === "PARTIAL_RETURNED") &&
+      (deposit.status === "RETURNED" ||
+        deposit.status === "PARTIAL_RETURNED" ||
+        deposit.status === "FORFEITED") &&
       deposit.returnedAt &&
       deposit.returnedAt.getTime() >= resolvedPeriod.range.start.getTime() &&
       deposit.returnedAt.getTime() <= resolvedPeriod.range.end.getTime()
     ) {
-      depositOutflows += deposit.amount;
+      releasedDepositsInPeriod.push({
+        amount: deposit.amount,
+        status: deposit.status,
+        retainedAmount: resolveRetainedDepositAmount(
+          deposit.amount,
+          deposit.booking.damageReports
+        ),
+      });
     }
 
     if (!isDepositReleaseDue(deposit, deposit.booking, now)) continue;
@@ -340,7 +524,14 @@ async function getDashboardDataV3Uncached(input: {
     });
   }
 
-  const netAmount = paidInflows + depositInflows - refundedOutflows - depositOutflows;
+  const financeTotals = calculateFinanceTotals({
+    rentalPayments: [{ amount: paidInflows }],
+    refunds: [{ amount: refundedOutflows }],
+    cashExpenses: [{ amount: periodData.cashExpensesOutflows }],
+    heldDeposits: heldDepositsInPeriod,
+    releasedDeposits: releasedDepositsInPeriod,
+  });
+  const netAmount = financeTotals.earnedNet;
 
   let toCollectAmount = 0;
   let toCollectCount = 0;
@@ -370,7 +561,7 @@ async function getDashboardDataV3Uncached(input: {
   let lateReturnCount = 0;
   const currentRentedVehicleIds = new Set<string>();
 
-  for (const booking of bookings) {
+  for (const booking of liveBookings) {
     const overlapsNow =
       booking.startDate.getTime() <= now.getTime() &&
       booking.endDate.getTime() >= now.getTime();
@@ -387,8 +578,8 @@ async function getDashboardDataV3Uncached(input: {
       totalPrice: booking.totalPrice,
       totalTtc: booking.totalTtc,
       taxEnabled: booking.taxEnabled,
-      discountAmount: booking.discountAmount,
-      addonsTotal: booking.addonsTotal,
+      discountAmount: booking.discountAmount ?? 0,
+      addonsTotal: booking.addonsTotal ?? 0,
     });
     const paidAmount = booking.payments.reduce((sum, payment) => sum + payment.amount, 0);
     const outstanding = computeOutstanding(due, paidAmount);
@@ -419,9 +610,7 @@ async function getDashboardDataV3Uncached(input: {
       });
     }
 
-    const isLateReturn =
-      booking.status !== "COMPLETED" &&
-      booking.endDate.getTime() < now.getTime();
+    const isLateReturn = booking.endDate.getTime() < now.getTime();
     if (isLateReturn) {
       lateReturnCount += 1;
       lateReturnItems.push({
@@ -440,7 +629,7 @@ async function getDashboardDataV3Uncached(input: {
     vehicles,
     rentedVehicleIds: currentRentedVehicleIds,
   });
-  const activeReservationsCount = bookings.filter((booking) => booking.status === "ACTIVE").length;
+  const activeReservationsCount = liveBookings.filter((booking) => booking.status === "ACTIVE").length;
 
   const occupancyRate =
     resolvedPeriod.key === "today"
@@ -451,13 +640,11 @@ async function getDashboardDataV3Uncached(input: {
           rangeStart: resolvedPeriod.range.start,
           rangeEnd: resolvedPeriod.range.end,
           activeVehicleCount: fleetSnapshot.totalActive,
-          bookings: bookings
-            .filter((booking) => booking.status !== "CANCELED")
-            .map((booking) => ({
-              vehicleId: booking.vehicleId,
-              startDate: booking.startDate,
-              endDate: booking.endDate,
-            })),
+          bookings: periodBookings.map((booking) => ({
+            vehicleId: booking.vehicleId,
+            startDate: booking.startDate,
+            endDate: booking.endDate,
+          })),
         });
 
   const notificationItems = sortUrgentNotificationItems(
@@ -572,12 +759,10 @@ async function getDashboardDataV3Uncached(input: {
     vehicles.some((vehicle) => vehicle.status !== "UNAVAILABLE");
   const reservationCreated =
     Boolean(agency?.onboardingReservationCreated) ||
-    bookings.some((booking) => booking.status === "CONFIRMED" || booking.status === "ACTIVE");
+    liveData.historicalReservationCount > 0;
   const paymentRecorded =
     Boolean(agency?.onboardingPaymentRecorded) ||
-    bookings.some(
-      (booking) => booking.paidNow > 0 || booking.payments.some((payment) => payment.amount > 0),
-    );
+    liveData.historicalPaidPaymentCount > 0;
   const dashboardExplored = Boolean(agency?.onboardingDashboardExplored);
   const onboardingEligible = Boolean(
     agency && isAgencyEligibleForGuidedOnboarding(agency.createdAt),
@@ -601,8 +786,8 @@ async function getDashboardDataV3Uncached(input: {
     pulse: {
       net: {
         amount: Math.round(netAmount * 100) / 100,
-        subtitle: `${formatCurrency(paidInflows + depositInflows)} entrees / ${formatCurrency(
-          refundedOutflows + depositOutflows
+        subtitle: `${formatCurrency(financeTotals.earnedIn)} revenus / ${formatCurrency(
+          financeTotals.earnedOut
         )} sorties`,
       },
       toCollect: {
@@ -629,9 +814,9 @@ async function getDashboardDataV3Uncached(input: {
       },
     },
     todayOperations: {
-      departures: departuresToday,
-      returns: returnsToday,
-      overdueReturns: overdueReturnsToday,
+      departures: liveData.departuresToday,
+      returns: liveData.returnsToday,
+      overdueReturns: liveData.overdueReturnsToday,
       availableVehicles: fleetSnapshot.available,
     },
     actionCenter: {
@@ -775,6 +960,22 @@ const getDashboardDataV3Cached = unstable_cache(
   { revalidate: DASHBOARD_V3_CORE_CACHE_SECONDS }
 );
 
+const getDashboardLiveDataCached = unstable_cache(
+  async (agencyId: string, dayStart: string) => getDashboardLiveDataUncached(agencyId),
+  ["dashboard-v3-live"],
+  { revalidate: DASHBOARD_V3_CORE_CACHE_SECONDS }
+);
+
+const getDashboardPeriodDataCached = unstable_cache(
+  async (agencyId: string, period: string, start: string, end: string) =>
+    getDashboardPeriodDataUncached({
+      agencyId,
+      periodInput: { period, start, end },
+    }),
+  ["dashboard-v3-period"],
+  { revalidate: DASHBOARD_V3_CORE_CACHE_SECONDS }
+);
+
 const getDashboardActiveBookingsV3Cached = unstable_cache(
   async (agencyId: string, dayStart: string) =>
     getDashboardActiveBookingsV3Uncached({
@@ -793,13 +994,12 @@ export async function getDashboardDataV3(input: {
   agencyId: string;
   periodInput: DashboardV3PeriodInput;
 }): Promise<DashboardV3DTO> {
-  const resolvedPeriod = resolveDashboardV3Period(input.periodInput);
   try {
     return await getDashboardDataV3Cached(
       input.agencyId,
-      resolvedPeriod.key,
-      resolvedPeriod.range.start.toISOString(),
-      resolvedPeriod.range.end.toISOString()
+      input.periodInput.period ?? "",
+      input.periodInput.start ?? "",
+      input.periodInput.end ?? ""
     );
   } catch (error) {
     if (isIncrementalCacheMissing(error)) {
@@ -807,6 +1007,173 @@ export async function getDashboardDataV3(input: {
     }
     throw error;
   }
+}
+
+export async function getDashboardPeriodSummary(input: {
+  agencyId: string;
+  periodInput: DashboardV3PeriodInput;
+}): Promise<Pick<DashboardV3DTO, "period" | "context" | "pulse">> {
+  const now = new Date();
+  const [liveData, periodData] = await Promise.all([
+    getDashboardLiveData(input.agencyId),
+    getDashboardPeriodData(input),
+  ]);
+  const resolvedPeriod = periodData.resolvedPeriod;
+
+  let depositDueAmountTotal = 0;
+  let depositDueCount = 0;
+  const heldDepositsInPeriod: Array<{ amount: number }> = [];
+  const releasedDepositsInPeriod: Array<{
+    amount: number;
+    status: DepositStatus;
+    retainedAmount: number;
+  }> = [];
+
+  for (const deposit of liveData.deposits) {
+    if (
+      deposit.status === "HELD" &&
+      deposit.heldAt.getTime() >= resolvedPeriod.range.start.getTime() &&
+      deposit.heldAt.getTime() <= resolvedPeriod.range.end.getTime()
+    ) {
+      heldDepositsInPeriod.push({ amount: deposit.amount });
+    }
+    if (
+      (deposit.status === "RETURNED" ||
+        deposit.status === "PARTIAL_RETURNED" ||
+        deposit.status === "FORFEITED") &&
+      deposit.returnedAt &&
+      deposit.returnedAt.getTime() >= resolvedPeriod.range.start.getTime() &&
+      deposit.returnedAt.getTime() <= resolvedPeriod.range.end.getTime()
+    ) {
+      releasedDepositsInPeriod.push({
+        amount: deposit.amount,
+        status: deposit.status,
+        retainedAmount: resolveRetainedDepositAmount(
+          deposit.amount,
+          deposit.booking.damageReports
+        ),
+      });
+    }
+
+    if (isDepositReleaseDue(deposit, deposit.booking, now)) {
+      depositDueAmountTotal += deposit.amount;
+      depositDueCount += 1;
+    }
+  }
+
+  let toCollectAmount = 0;
+  let toCollectCount = 0;
+  let overdueCollectionsCount = 0;
+  let lateReturnCount = 0;
+  const currentRentedVehicleIds = new Set<string>();
+
+  for (const booking of liveData.liveBookings) {
+    const overlapsNow =
+      booking.startDate.getTime() <= now.getTime() &&
+      booking.endDate.getTime() >= now.getTime();
+    if (overlapsNow) {
+      currentRentedVehicleIds.add(booking.vehicleId);
+    }
+
+    const due = computeBookingDue({
+      totalPrice: booking.totalPrice,
+      totalTtc: booking.totalTtc,
+      taxEnabled: booking.taxEnabled,
+      discountAmount: booking.discountAmount ?? 0,
+      addonsTotal: booking.addonsTotal ?? 0,
+    });
+    const paidAmount = booking.payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const outstanding = computeOutstanding(due, paidAmount);
+
+    if (outstanding > 0) {
+      toCollectAmount += outstanding;
+      toCollectCount += 1;
+      if (isCollectionOverdue(booking, outstanding, now)) {
+        overdueCollectionsCount += 1;
+      }
+    }
+
+    if (booking.endDate.getTime() < now.getTime()) {
+      lateReturnCount += 1;
+    }
+  }
+
+  const fleetSnapshot = computeFleetSnapshot({
+    vehicles: liveData.vehicles,
+    rentedVehicleIds: currentRentedVehicleIds,
+  });
+  const occupancyRate =
+    resolvedPeriod.key === "today"
+      ? fleetSnapshot.totalActive > 0
+        ? Math.round((fleetSnapshot.rented / fleetSnapshot.totalActive) * 100)
+        : 0
+      : computeAverageDailyOccupancyFallback({
+          rangeStart: resolvedPeriod.range.start,
+          rangeEnd: resolvedPeriod.range.end,
+          activeVehicleCount: fleetSnapshot.totalActive,
+          bookings: periodData.periodBookings.map((booking) => ({
+            vehicleId: booking.vehicleId,
+            startDate: booking.startDate,
+            endDate: booking.endDate,
+          })),
+        });
+
+  const financeTotals = calculateFinanceTotals({
+    rentalPayments: [{ amount: periodData.paidInflows }],
+    refunds: [{ amount: periodData.refundedOutflows }],
+    cashExpenses: [{ amount: periodData.cashExpensesOutflows }],
+    heldDeposits: heldDepositsInPeriod,
+    releasedDeposits: releasedDepositsInPeriod,
+  });
+  const netAmount = financeTotals.earnedNet;
+  const riskExposure = computeRiskExposure({
+    unpaidAmountTotal: toCollectAmount,
+    depositDueAmountTotal,
+  });
+
+  return {
+    period: {
+      key: resolvedPeriod.key,
+      label: resolvedPeriod.label,
+      start: resolvedPeriod.range.start.toISOString(),
+      end: resolvedPeriod.range.end.toISOString(),
+    },
+    context: {
+      updatedAt: now.toISOString(),
+      activeReservationsCount: liveData.liveBookings.filter((booking) => booking.status === "ACTIVE")
+        .length,
+    },
+    pulse: {
+      net: {
+        amount: Math.round(netAmount * 100) / 100,
+        subtitle: `${formatCurrency(financeTotals.earnedIn)} revenus / ${formatCurrency(
+          financeTotals.earnedOut
+        )} sorties`,
+      },
+      toCollect: {
+        amount: Math.round(toCollectAmount * 100) / 100,
+        bookingCount: toCollectCount,
+        overdueCount: overdueCollectionsCount,
+        subtitle: `${toCollectCount} dossiers, ${overdueCollectionsCount} en retard`,
+      },
+      occupancy: {
+        rate: occupancyRate,
+        rented: fleetSnapshot.rented,
+        total: fleetSnapshot.totalActive,
+        subtitle: `${fleetSnapshot.rented}/${fleetSnapshot.totalActive} vehicules loues`,
+      },
+      risks: {
+        count: toCollectCount + depositDueCount + lateReturnCount,
+        exposureAmount: Math.round(riskExposure * 100) / 100,
+        breakdown: {
+          unpaidCount: toCollectCount,
+          depositDueCount,
+          lateReturnCount,
+        },
+        subtitle: `${toCollectCount} impayes, ${depositDueCount} cautions, ${lateReturnCount} retours`,
+      },
+    },
+  };
 }
 
 export async function getDashboardActiveBookingsV3(input: {
@@ -824,6 +1191,40 @@ export async function getDashboardActiveBookingsV3(input: {
   } catch (error) {
     if (isIncrementalCacheMissing(error)) {
       return getDashboardActiveBookingsV3Uncached(input);
+    }
+    throw error;
+  }
+}
+
+async function getDashboardLiveData(agencyId: string): Promise<DashboardLiveData> {
+  const now = new Date();
+  const dayStart = new Date(now);
+  dayStart.setHours(0, 0, 0, 0);
+  try {
+    return await getDashboardLiveDataCached(agencyId, dayStart.toISOString());
+  } catch (error) {
+    if (isIncrementalCacheMissing(error)) {
+      return getDashboardLiveDataUncached(agencyId);
+    }
+    throw error;
+  }
+}
+
+async function getDashboardPeriodData(input: {
+  agencyId: string;
+  periodInput: DashboardV3PeriodInput;
+}): Promise<DashboardPeriodData> {
+  const resolvedPeriod = resolveDashboardV3Period(input.periodInput);
+  try {
+    return await getDashboardPeriodDataCached(
+      input.agencyId,
+      resolvedPeriod.key,
+      resolvedPeriod.range.start.toISOString(),
+      resolvedPeriod.range.end.toISOString()
+    );
+  } catch (error) {
+    if (isIncrementalCacheMissing(error)) {
+      return getDashboardPeriodDataUncached(input);
     }
     throw error;
   }

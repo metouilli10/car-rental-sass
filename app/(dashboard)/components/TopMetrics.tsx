@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { DashboardPeriod, getPeriodBounds, getPeriodLabel } from "@/lib/dashboard-periods";
 import { formatKpiInteger, formatKpiRatio, formatMadKpi } from "@/lib/kpi-formatters";
+import {
+  calculateFinanceTotals,
+  resolveRetainedDepositAmount,
+} from "@/lib/dashboard/finance";
 import { MetricCard, type MetricCardData } from "./MetricCard";
 
 interface TopMetricsProps {
@@ -48,6 +52,10 @@ export async function TopMetrics({ agencyId, period }: TopMetricsProps) {
     previousRevenue,
     currentRefunds,
     previousRefunds,
+    currentCashExpenses,
+    previousCashExpenses,
+    currentDepositReleases,
+    previousDepositReleases,
   ] = await Promise.all([
     prisma.vehicle.groupBy({
       by: ["status"],
@@ -124,6 +132,76 @@ export async function TopMetrics({ agencyId, period }: TopMetricsProps) {
       },
       _sum: { amount: true },
     }),
+    prisma.expense.aggregate({
+      where: {
+        agencyId,
+        method: "CASH",
+        date: { gte: start, lte: end },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.expense.aggregate({
+      where: {
+        agencyId,
+        method: "CASH",
+        date: { gte: previousStart, lte: previousEnd },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.deposit.findMany({
+      where: {
+        booking: { agencyId },
+        status: { in: ["RETURNED", "PARTIAL_RETURNED", "FORFEITED"] },
+        returnedAt: { gte: start, lte: end },
+      },
+      select: {
+        amount: true,
+        status: true,
+        booking: {
+          select: {
+            damageReports: {
+              where: {
+                deductFromDeposit: true,
+                deductedAmount: { gt: 0 },
+              },
+              orderBy: { reportedAt: "desc" },
+              take: 1,
+              select: {
+                deductFromDeposit: true,
+                deductedAmount: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.deposit.findMany({
+      where: {
+        booking: { agencyId },
+        status: { in: ["RETURNED", "PARTIAL_RETURNED", "FORFEITED"] },
+        returnedAt: { gte: previousStart, lte: previousEnd },
+      },
+      select: {
+        amount: true,
+        status: true,
+        booking: {
+          select: {
+            damageReports: {
+              where: {
+                deductFromDeposit: true,
+                deductedAmount: { gt: 0 },
+              },
+              orderBy: { reportedAt: "desc" },
+              take: 1,
+              select: {
+                deductFromDeposit: true,
+                deductedAmount: true,
+              },
+            },
+          },
+        },
+      },
+    }),
   ]);
 
   const totalVehicles = vehicleStatusCounts.reduce((sum, row) => sum + row._count.id, 0);
@@ -137,8 +215,34 @@ export async function TopMetrics({ agencyId, period }: TopMetricsProps) {
   const revenuePrevious = previousRevenue._sum.amount ?? 0;
   const refundsNow = currentRefunds._sum.amount ?? 0;
   const refundsPrevious = previousRefunds._sum.amount ?? 0;
-  const profitNow = revenueNow - refundsNow;
-  const profitPrevious = revenuePrevious - refundsPrevious;
+  const profitNow = calculateFinanceTotals({
+    rentalPayments: [{ amount: revenueNow }],
+    refunds: [{ amount: refundsNow }],
+    cashExpenses: [{ amount: Number(currentCashExpenses._sum.amount ?? 0) }],
+    heldDeposits: [],
+    releasedDeposits: currentDepositReleases.map((deposit) => ({
+      amount: deposit.amount,
+      status: deposit.status,
+      retainedAmount: resolveRetainedDepositAmount(
+        deposit.amount,
+        deposit.booking.damageReports
+      ),
+    })),
+  }).earnedNet;
+  const profitPrevious = calculateFinanceTotals({
+    rentalPayments: [{ amount: revenuePrevious }],
+    refunds: [{ amount: refundsPrevious }],
+    cashExpenses: [{ amount: Number(previousCashExpenses._sum.amount ?? 0) }],
+    heldDeposits: [],
+    releasedDeposits: previousDepositReleases.map((deposit) => ({
+      amount: deposit.amount,
+      status: deposit.status,
+      retainedAmount: resolveRetainedDepositAmount(
+        deposit.amount,
+        deposit.booking.damageReports
+      ),
+    })),
+  }).earnedNet;
 
   const occupationTrend = getTrendLabel(occupiedRate, previousOccupiedRate);
   const bookingTrend = getTrendLabel(currentBookings, previousBookings);
@@ -204,7 +308,7 @@ export async function TopMetrics({ agencyId, period }: TopMetricsProps) {
       id: "profit",
       label: "Profit mensuel",
       value: formatMadKpi(profitNow),
-      subLabel: "CA - remboursements",
+      subLabel: "CA + cautions retenues - remboursements - charges cash",
       insightText: profitTrend.text,
       insightTone: profitTrend.tone,
       href: "/payments?scope=profit",

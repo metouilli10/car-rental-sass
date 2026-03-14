@@ -1,6 +1,10 @@
 import { Activity, CircleDollarSign, Gauge, TrendingUp } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
+import {
+  calculateFinanceTotals,
+  resolveRetainedDepositAmount,
+} from "@/lib/dashboard/finance";
 import { formatKpiInteger, formatKpiRatio, formatMadKpi } from "@/lib/kpi-formatters";
 import { cn } from "@/lib/utils";
 
@@ -75,7 +79,14 @@ export async function KpiRow({ agencyId }: KpiRowProps) {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-  const [vehicleStatusCounts, monthlyBookings, monthlyRevenue, monthlyRefunds] = await Promise.all([
+  const [
+    vehicleStatusCounts,
+    monthlyBookings,
+    monthlyRevenue,
+    monthlyRefunds,
+    monthlyCashExpenses,
+    monthlyDepositReleases,
+  ] = await Promise.all([
     prisma.vehicle.groupBy({
       by: ["status"],
       where: { agencyId },
@@ -106,6 +117,41 @@ export async function KpiRow({ agencyId }: KpiRowProps) {
       },
       _sum: { amount: true },
     }),
+    prisma.expense.aggregate({
+      where: {
+        agencyId,
+        method: "CASH",
+        date: { gte: startOfMonth, lte: endOfMonth },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.deposit.findMany({
+      where: {
+        booking: { agencyId },
+        status: { in: ["RETURNED", "PARTIAL_RETURNED", "FORFEITED"] },
+        returnedAt: { gte: startOfMonth, lte: endOfMonth },
+      },
+      select: {
+        amount: true,
+        status: true,
+        booking: {
+          select: {
+            damageReports: {
+              where: {
+                deductFromDeposit: true,
+                deductedAmount: { gt: 0 },
+              },
+              orderBy: { reportedAt: "desc" },
+              take: 1,
+              select: {
+                deductFromDeposit: true,
+                deductedAmount: true,
+              },
+            },
+          },
+        },
+      },
+    }),
   ]);
 
   const totalVehicles = vehicleStatusCounts.reduce((sum, row) => sum + row._count.id, 0);
@@ -115,7 +161,20 @@ export async function KpiRow({ agencyId }: KpiRowProps) {
 
   const caMensuel = monthlyRevenue._sum.amount ?? 0;
   const refunded = monthlyRefunds._sum.amount ?? 0;
-  const profitMensuel = caMensuel - refunded;
+  const profitMensuel = calculateFinanceTotals({
+    rentalPayments: [{ amount: caMensuel }],
+    refunds: [{ amount: refunded }],
+    cashExpenses: [{ amount: Number(monthlyCashExpenses._sum.amount ?? 0) }],
+    heldDeposits: [],
+    releasedDeposits: monthlyDepositReleases.map((deposit) => ({
+      amount: deposit.amount,
+      status: deposit.status,
+      retainedAmount: resolveRetainedDepositAmount(
+        deposit.amount,
+        deposit.booking.damageReports
+      ),
+    })),
+  }).earnedNet;
 
   const items: ExecutiveKpi[] = [
     {
@@ -148,7 +207,7 @@ export async function KpiRow({ agencyId }: KpiRowProps) {
       id: "profit",
       label: "Profit mensuel",
       value: formatMadKpi(profitMensuel),
-      subLabel: "CA − remboursements",
+      subLabel: "CA + cautions retenues − remboursements − charges cash",
       icon: TrendingUp,
       color: "amber",
     },

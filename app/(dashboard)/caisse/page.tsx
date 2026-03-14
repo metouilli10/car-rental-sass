@@ -115,7 +115,7 @@ export default async function CaissePage({ searchParams }: CaissePageProps) {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold tabular-nums text-emerald-600">
-              +{formatCurrency(data.entrees)}
+              +{formatCurrency(data.cashEntrees)}
             </p>
           </CardContent>
         </Card>
@@ -130,7 +130,7 @@ export default async function CaissePage({ searchParams }: CaissePageProps) {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold tabular-nums text-red-600">
-              -{formatCurrency(data.sorties)}
+              -{formatCurrency(data.cashSorties)}
             </p>
           </CardContent>
         </Card>
@@ -140,20 +140,23 @@ export default async function CaissePage({ searchParams }: CaissePageProps) {
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100">
                 <Wallet className="h-4 w-4 text-slate-600" />
               </div>
-              <CardTitle className="text-base font-semibold">Solde</CardTitle>
+              <CardTitle className="text-base font-semibold">Résultat net</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <p
               className={`text-2xl font-bold tabular-nums ${
-                data.solde >= 0 ? "text-emerald-600" : "text-red-600"
+                data.resultatNet >= 0 ? "text-emerald-600" : "text-red-600"
               }`}
             >
-              {data.solde >= 0 ? "+" : ""}
-              {formatCurrency(data.solde)}
+              {data.resultatNet >= 0 ? "+" : ""}
+              {formatCurrency(data.resultatNet)}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Paiements location + cautions retenues − remboursements − charges cash
             </p>
             {data.toCollectToday !== undefined && (
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-2 text-xs text-muted-foreground">
                 À encaisser aujourd&apos;hui : {formatCurrency(data.toCollectToday)}
               </p>
             )}

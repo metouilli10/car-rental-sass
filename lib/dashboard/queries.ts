@@ -31,6 +31,11 @@ import type {
   TrendMetric,
   TrendTone,
 } from "./types";
+import {
+  calculateFinanceTotals,
+  getDepositReleaseBreakdown,
+  resolveRetainedDepositAmount,
+} from "./finance";
 
 const PERIODS: DashboardPeriod[] = ["today", "tomorrow", "week", "month"];
 const DASHBOARD_PERF = process.env.DASHBOARD_PERF === "1";
@@ -490,6 +495,7 @@ async function getDashboardDataUncached(input: {
       depositRows,
       depositsHeldToday,
       depositsReleasedToday,
+      cashExpensesToday,
       monthExpensesAgg,
     ],
     periodStats,
@@ -580,6 +586,7 @@ async function getDashboardDataUncached(input: {
             where: {
               booking: { agencyId: input.agencyId },
               status: "PAID",
+              category: "RENTAL",
               paidAt: { gte: todayRange.start, lte: todayRange.end },
             },
             select: {
@@ -743,14 +750,44 @@ async function getDashboardDataUncached(input: {
           prisma.deposit.findMany({
             where: {
               booking: { agencyId: input.agencyId },
-              status: { in: ["RETURNED", "PARTIAL_RETURNED"] },
+              status: { in: ["RETURNED", "PARTIAL_RETURNED", "FORFEITED"] },
               returnedAt: { gte: todayRange.start, lte: todayRange.end },
             },
             select: {
               id: true,
               amount: true,
+              status: true,
               returnedAt: true,
-              booking: { select: { customer: { select: { name: true } } } },
+              booking: {
+                select: {
+                  customer: { select: { name: true } },
+                  damageReports: {
+                    where: {
+                      deductFromDeposit: true,
+                      deductedAmount: { gt: 0 },
+                    },
+                    orderBy: { reportedAt: "desc" },
+                    take: 1,
+                    select: {
+                      deductFromDeposit: true,
+                      deductedAmount: true,
+                    },
+                  },
+                },
+              },
+            },
+          }),
+          prisma.expense.findMany({
+            where: {
+              agencyId: input.agencyId,
+              method: "CASH",
+              date: { gte: todayRange.start, lte: todayRange.end },
+            },
+            select: {
+              id: true,
+              amount: true,
+              date: true,
+              category: true,
             },
           }),
           prisma.expense.aggregate({
@@ -1044,15 +1081,22 @@ async function getDashboardDataUncached(input: {
     return urgent ? sum + row.outstanding : sum;
   }, 0);
 
-  const inflowToday = [...paymentsToday, ...depositsHeldToday].reduce(
-    (sum, item) => sum + item.amount,
-    0
-  );
-  const outflowToday = [...depositsReleasedToday, ...refundsToday].reduce(
-    (sum, item) => sum + item.amount,
-    0
-  );
-  const balanceToday = inflowToday - outflowToday;
+  const cashTodayTotals = calculateFinanceTotals({
+    rentalPayments: paymentsToday,
+    refunds: refundsToday,
+    cashExpenses: cashExpensesToday.map((row) => ({
+      amount: Number(row.amount),
+    })),
+    heldDeposits: depositsHeldToday,
+    releasedDeposits: depositsReleasedToday.map((row) => ({
+      amount: row.amount,
+      status: row.status,
+      retainedAmount: resolveRetainedDepositAmount(
+        row.amount,
+        row.booking.damageReports
+      ),
+    })),
+  });
 
   const latestMovements = [
     ...paymentsToday.map((row) => ({
@@ -1071,14 +1115,29 @@ async function getDashboardDataUncached(input: {
       direction: "in" as const,
       happenedAt: row.heldAt,
     })),
-    ...depositsReleasedToday.map((row) => ({
-      id: `deposit-release-${row.id}`,
-      label: "Caution remboursee",
-      customerName: row.booking.customer.name,
-      amount: row.amount,
-      direction: "out" as const,
-      happenedAt: row.returnedAt ?? now,
-    })),
+    ...depositsReleasedToday.flatMap((row) => {
+      const breakdown = getDepositReleaseBreakdown({
+        amount: row.amount,
+        status: row.status,
+        retainedAmount: resolveRetainedDepositAmount(
+          row.amount,
+          row.booking.damageReports
+        ),
+      });
+      if (breakdown.cashOut <= 0) {
+        return [];
+      }
+      return [
+        {
+          id: `deposit-release-${row.id}`,
+          label: "Caution remboursee",
+          customerName: row.booking.customer.name,
+          amount: breakdown.cashOut,
+          direction: "out" as const,
+          happenedAt: row.returnedAt ?? now,
+        },
+      ];
+    }),
     ...refundsToday.map((row) => ({
       id: `refund-${row.id}`,
       label: "Remboursement",
@@ -1086,6 +1145,14 @@ async function getDashboardDataUncached(input: {
       amount: row.amount,
       direction: "out" as const,
       happenedAt: row.updatedAt,
+    })),
+    ...cashExpensesToday.map((row) => ({
+      id: `expense-${row.id}`,
+      label: "Charge caisse",
+      customerName: "Charge",
+      amount: Number(row.amount),
+      direction: "out" as const,
+      happenedAt: row.date,
     })),
   ]
     .sort((a, b) => b.happenedAt.getTime() - a.happenedAt.getTime())
@@ -1162,9 +1229,10 @@ async function getDashboardDataUncached(input: {
       total: totalVehicles,
     },
     cash: {
-      inflowToday: round(inflowToday),
-      outflowToday: round(outflowToday),
-      balanceToday: round(balanceToday),
+      cashInflowToday: cashTodayTotals.cashIn,
+      cashOutflowToday: cashTodayTotals.cashOut,
+      cashBalanceToday: cashTodayTotals.cashBalance,
+      resultToday: cashTodayTotals.earnedNet,
       toCollectToday: round(toCollectToday),
       latestMovements,
     },
