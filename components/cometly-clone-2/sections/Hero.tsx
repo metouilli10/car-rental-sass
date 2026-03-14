@@ -63,10 +63,10 @@ export function Hero() {
         <div className="hero-dashboard-wrap">
           <div className="hero-dashboard">
             <Image
-              src="/screenshots/dashboard.png"
+              src="/assets/hero2.png"
               alt="Locaryx dashboard preview"
-              width={1120}
-              height={680}
+              width={3200}
+              height={2000}
               priority
               className="hero-dashboard-image"
             />

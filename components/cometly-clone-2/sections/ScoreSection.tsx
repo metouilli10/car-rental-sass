@@ -10,28 +10,28 @@ const ACCORDION_ITEMS = [
     title: "Sans conflits de réservation",
     description:
       "Locaryx affiche la disponibilité de votre flotte en temps réel pour éviter les doubles réservations et garder un planning fiable.",
-    image: "/features/682e54b71245b7690d67d956_TOUCHPOINTS-1 (2)-p-2000.png",
+    image: "/assets/conflits de reservation.png",
   },
   {
     id: "revenue",
     title: "Visibilité complète de votre parc",
     description:
       "Voyez immédiatement quels véhicules sont disponibles, loués ou en maintenance sans passer d'un outil à l'autre.",
-    image: "/features/682cc4dba83f447ba3b3d56f_21.png",
+    image: "/assets/parc.png",
   },
   {
     id: "ai",
     title: "Tous vos clients au même endroit",
     description:
       "Contrats, documents, historique de location et informations clients sont centralisés pour retrouver chaque dossier sans friction.",
-    image: "/features/682e59f81245b7690d6b722a_Chat-Bot-UI-Final-p-2000.png",
+    image: "/assets/clients.png",
   },
   {
     id: "sync",
     title: "Paiements et cautions sous contrôle",
     description:
       "Suivez les paiements et les cautions sans erreurs ni oublis pour savoir ce qui est encaissé, dû ou à restituer.",
-    image: "/features/682e5861ca7159e8997cc307_match-score-p-2000.png",
+    image: "/assets/caution.png",
   },
 ] as const;
 

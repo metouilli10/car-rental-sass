@@ -697,7 +697,7 @@ async function getDashboardDataV3Uncached(input: {
       count: depositDueItems.length,
       totalAmount: depositDueAmountTotal,
       ctaLabel: "Voir tout",
-      ctaHref: `/finance?tab=deposits&filter=due&${periodQuery}`,
+      ctaHref: `/finance?${periodQuery}`,
       items: sortDepositItems(
         depositDueItems.map((item) => ({
           id: item.id,
@@ -730,7 +730,7 @@ async function getDashboardDataV3Uncached(input: {
           amount: item.amount,
           dueLabel: item.dueLabel,
           isOverdue: item.isOverdue,
-          primaryAction: "Relancer",
+          primaryAction: "Voir dossier",
           primaryHref: item.primaryHref,
           actionType: "link" as const,
         }))

@@ -132,7 +132,7 @@ export function LateReturnsSheet({
                   className="w-full border-border bg-background text-foreground transition-colors duration-150 hover:bg-slate-50 hover:text-foreground active:text-foreground sm:w-auto"
                 >
                   <Link href={item.primaryHref}>
-                    Relancer
+                    Voir dossier
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </Button>

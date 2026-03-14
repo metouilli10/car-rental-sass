@@ -152,7 +152,7 @@ export function DepositsDueSheet({
                       variant="ghost"
                       className="w-full text-slate-700 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900 sm:w-auto"
                     >
-                      <Link href={item.primaryHref}>Voir reservation</Link>
+                      <Link href={item.primaryHref}>Voir dossier</Link>
                     </Button>
                   </div>
                 </div>

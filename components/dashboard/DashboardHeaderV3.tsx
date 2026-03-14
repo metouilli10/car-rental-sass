@@ -19,6 +19,8 @@ interface DashboardHeaderV3Props {
   totalVehicles: number;
   activeReservationsCount: number;
   updatedAt: string;
+  onPeriodChange?: (next: { period: string; start?: string; end?: string }) => void;
+  periodPending?: boolean;
 }
 
 function getFreshnessLabel(updatedAt: string, now: number) {
@@ -43,6 +45,8 @@ export function DashboardHeaderV3({
   totalVehicles,
   activeReservationsCount,
   updatedAt,
+  onPeriodChange,
+  periodPending = false,
 }: DashboardHeaderV3Props) {
   const [now, setNow] = useState(() => Date.now());
 
@@ -75,7 +79,7 @@ export function DashboardHeaderV3({
             <span className="text-slate-500">{freshnessLabel}</span>
           </div>
         </div>
-        <PeriodTabs period={period} />
+        <PeriodTabs period={period} onPeriodChange={onPeriodChange} pending={periodPending} />
       </div>
 
       <div className="flex items-center gap-2 self-start">

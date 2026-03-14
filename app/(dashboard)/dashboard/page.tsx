@@ -3,12 +3,12 @@ import { Suspense } from "react";
 import { getSession } from "@/lib/auth-cache";
 import { getDashboardDataV3 } from "@/lib/dashboard/v3-queries";
 import { DashboardHeaderV3 } from "@/components/dashboard/DashboardHeaderV3";
-import { PulseCards } from "@/components/dashboard/PulseCards";
 import { ActionCenterCard } from "@/components/dashboard/ActionCenterCard";
 import { FleetSnapshotBar } from "@/components/dashboard/FleetSnapshotBar";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardActiveBookingsSection } from "./DashboardActiveBookingsSection";
+import { DashboardPeriodShell } from "./DashboardPeriodShell";
 
 interface DashboardPageProps {
   searchParams: Promise<Record<string, string | undefined>>;
@@ -87,15 +87,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   return (
     <div className="-mx-4 -my-4 min-h-screen dashboard-shell pb-24 sm:-mx-6 sm:-my-6 md:pb-0 lg:-mx-8">
       <div className="mx-auto max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-section">
-          <DashboardHeaderV3
-            period={dashboard.period}
+          <div className="flex flex-col gap-section">
+          <DashboardPeriodShell
+            initialPeriod={dashboard.period}
+            initialPulse={dashboard.pulse}
+            operations={dashboard.todayOperations}
             agencyName={session.user.agencyName || "Agence"}
             totalVehicles={dashboard.fleetSnapshot.totalActive + dashboard.fleetSnapshot.inactive}
             activeReservationsCount={dashboard.context.activeReservationsCount}
             updatedAt={dashboard.context.updatedAt}
           />
-          <PulseCards pulse={dashboard.pulse} operations={dashboard.todayOperations} />
           <div className="grid grid-cols-1 gap-4 xl:items-start xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
             <div className="space-y-4">
               <Suspense

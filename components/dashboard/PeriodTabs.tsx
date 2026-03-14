@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { DashboardV3ResolvedPeriod } from "@/lib/dashboard/types";
 
 interface PeriodTabsProps {
   period: DashboardV3ResolvedPeriod;
+  onPeriodChange?: (next: { period: string; start?: string; end?: string }) => void;
+  pending?: boolean;
 }
 
 const PERIOD_ITEMS = [
@@ -69,10 +70,9 @@ function formatCustomMonthLabel(monthValue: string, isActive: boolean): string {
   }).format(selectedMonth);
 }
 
-export function PeriodTabs({ period }: PeriodTabsProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export function PeriodTabs({ period, onPeriodChange, pending = false }: PeriodTabsProps) {
   const inputId = useId();
+  const monthInputRef = useRef<HTMLInputElement | null>(null);
   const [customMonth, setCustomMonth] = useState(() =>
     getCustomMonthValue(period.key, period.start)
   );
@@ -90,13 +90,8 @@ export function PeriodTabs({ period }: PeriodTabsProps) {
       return;
     }
 
-    const params = new URLSearchParams(searchParams.toString());
-
     if (value === currentMonth) {
-      params.set("period", "month");
-      params.delete("start");
-      params.delete("end");
-      router.push(`/dashboard?${params.toString()}`);
+      onPeriodChange?.({ period: "month" });
       return;
     }
 
@@ -119,45 +114,81 @@ export function PeriodTabs({ period }: PeriodTabsProps) {
       0,
     );
 
-    params.set("period", "custom");
-    params.set("start", rangeStart.toISOString());
-    params.set("end", rangeEnd.toISOString());
-    router.push(`/dashboard?${params.toString()}`);
+    onPeriodChange?.({
+      period: "custom",
+      start: rangeStart.toISOString(),
+      end: rangeEnd.toISOString(),
+    });
+  }
+
+  function openCustomMonthPicker() {
+    if (pending) return;
+    const input = monthInputRef.current;
+    if (!input) return;
+
+    if ("showPicker" in input && typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+
+    input.focus();
+    input.click();
   }
 
   return (
     <div className="inline-flex flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
       {PERIOD_ITEMS.map((item) => (
-        <Link
-          key={item.id}
-          href={`/dashboard?period=${item.id}`}
-          className={cn(
-            BASE_SEGMENT_CLASS,
-            period.key === item.id ? ACTIVE_SEGMENT_CLASS : INACTIVE_SEGMENT_CLASS
-          )}
-        >
-          {item.label}
-        </Link>
+        onPeriodChange ? (
+          <button
+            key={item.id}
+            type="button"
+            disabled={pending}
+            onClick={() => onPeriodChange({ period: item.id })}
+            className={cn(
+              BASE_SEGMENT_CLASS,
+              period.key === item.id ? ACTIVE_SEGMENT_CLASS : INACTIVE_SEGMENT_CLASS,
+              "disabled:cursor-wait disabled:opacity-70"
+            )}
+          >
+            {item.label}
+          </button>
+        ) : (
+          <Link
+            key={item.id}
+            href={`/dashboard?period=${item.id}`}
+            className={cn(
+              BASE_SEGMENT_CLASS,
+              period.key === item.id ? ACTIVE_SEGMENT_CLASS : INACTIVE_SEGMENT_CLASS
+            )}
+          >
+            {item.label}
+          </Link>
+        )
       ))}
       <div className="relative">
-        <label
-          htmlFor={inputId}
+        <button
+          type="button"
+          disabled={pending}
+          onClick={openCustomMonthPicker}
           className={cn(
             BASE_SEGMENT_CLASS,
-            "cursor-pointer",
+            "cursor-pointer disabled:cursor-wait disabled:opacity-70",
             period.key === "custom" ? ACTIVE_SEGMENT_CLASS : INACTIVE_SEGMENT_CLASS
           )}
         >
           {formatCustomMonthLabel(customMonth, period.key === "custom")}
-        </label>
+        </button>
         <input
           id={inputId}
+          ref={monthInputRef}
           type="month"
           value={customMonth}
           max={currentMonth}
           onChange={(event) => handleCustomMonthChange(event.target.value)}
           aria-label="Choisir un mois personnalisé"
-          className="absolute inset-0 cursor-pointer opacity-0"
+          disabled={pending}
+          tabIndex={-1}
+          className="pointer-events-none absolute h-0 w-0 opacity-0"
         />
       </div>
     </div>
