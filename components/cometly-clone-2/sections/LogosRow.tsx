@@ -18,15 +18,21 @@ export function LogosRow() {
       <div className="mx-auto max-w-[1240px] px-6 lg:px-8">
         <p className="logo-marquee-label">{heroData.trustText}</p>
         <div className="logo-marquee-viewport">
-          <div className="logo-marquee-track">
+          <div
+            className="logo-marquee-track whitespace-nowrap"
+            style={{ animationDirection: "reverse" }}
+          >
             {MARQUEE_LOGOS.map((logo, index) => (
-              <div key={`${logo.name}-${index}`} className="logo-marquee-item">
+              <div
+                key={`${logo.name}-${index}`}
+                className="logo-marquee-item shrink-0"
+              >
                 <Image
                   src={logo.src}
                   alt={`${logo.name} logo`}
                   width={logo.width}
                   height={logo.height}
-                  className="h-auto w-auto max-h-14 object-contain"
+                  className="h-auto w-auto max-h-10 object-contain md:max-h-12"
                 />
               </div>
             ))}

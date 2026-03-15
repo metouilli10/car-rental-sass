@@ -787,7 +787,7 @@
 
   .hero-dashboard-wrap {
     position: relative;
-    margin-top: 72px;
+    margin-top: 80px;
     padding-bottom: 0;
   }
 
@@ -879,8 +879,8 @@
 
   .logo-marquee-section {
     position: relative;
-    padding: 0 0 40px;
-    margin-top: 12px;
+    padding: 24px 0 48px;
+    margin-top: 0;
     background: transparent;
     z-index: 5;
   }
@@ -924,7 +924,7 @@
 
   @media (max-width: 1024px) {
     .hero-dashboard-wrap {
-      margin-top: 56px;
+      margin-top: 64px;
       padding-bottom: 0;
     }
 
@@ -954,8 +954,8 @@
 
   @media (max-width: 768px) {
     .logo-marquee-section {
-      margin-top: 8px;
-      padding-bottom: 32px;
+      margin-top: 0;
+      padding: 20px 0 40px;
     }
 
     .logo-marquee-label {
@@ -966,7 +966,7 @@
   @media (max-width: 767px) {
     .hero-section {
       padding-top: 104px;
-      padding-bottom: 24px;
+      padding-bottom: 32px;
     }
 
     .hero-stage-glow {
@@ -1023,7 +1023,7 @@
     }
 
     .hero-dashboard-wrap {
-      margin-top: 42px;
+      margin-top: 48px;
       padding-bottom: 32px;
     }
 
@@ -1048,7 +1048,7 @@
     }
 
     .logo-marquee-section {
-      padding: 4px 0 34px;
+      padding: 20px 0 40px;
     }
 
     .logo-marquee-track {

@@ -98,7 +98,7 @@ export default function ClientFeedback({
   return (
     <main className="w-full bg-[#f8fafc]">
       <section
-        className="relative mx-auto h-full max-w-7xl rounded-lg bg-[#f8fafc] py-14 text-black"
+        className="relative mx-auto h-full max-w-7xl rounded-lg bg-[#f8fafc] py-20 text-black md:py-24"
         ref={testimonialRef}
       >
         <article className="mx-auto max-w-screen-md space-y-2 text-center">
