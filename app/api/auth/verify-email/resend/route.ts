@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const email = normalizeEmail(rawEmail);
     const clientIp = normalizeClientIp(request.headers);
 
-    assertPublicAuthRateLimit("resend", email, clientIp);
+    await assertPublicAuthRateLimit("resend", email, clientIp);
 
     const result = await resendOwnerVerificationEmailByEmail({
       email,

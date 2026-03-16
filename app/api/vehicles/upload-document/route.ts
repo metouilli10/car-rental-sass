@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { enforceUploadRateLimit } from "@/lib/security/upload-rate-limit";
 import { getPublicUrl, supabaseAdmin } from "@/lib/supabase";
+import { matchesFileSignature } from "@/lib/security/request-signatures";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"];
 const MAX_SIZE = 8 * 1024 * 1024;
@@ -64,6 +65,14 @@ export async function POST(request: NextRequest) {
     const filePath = `${session.user.agencyId}/${vehicleId}/${sanitizeSegment(documentType)}/${safeBaseName}-${randomUUID()}.${safeExt}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    if (!matchesFileSignature(buffer, file.type)) {
+      return NextResponse.json(
+        { error: "Le contenu du fichier ne correspond pas au format déclaré." },
+        { status: 400 },
+      );
+    }
+
     const { error } = await supabaseAdmin.storage.from("vehicle-documents").upload(filePath, buffer, {
       contentType: file.type,
       upsert: false,

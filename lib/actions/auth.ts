@@ -23,7 +23,7 @@ export async function registerOwnerAccount(data: RegisterOwnerFormData) {
     const requestHeaders = await headers();
     const clientIp = normalizeClientIp(requestHeaders);
 
-    assertPublicAuthRateLimit("signup", email, clientIp);
+    await assertPublicAuthRateLimit("signup", email, clientIp);
 
     const existingUser = await prisma.user.findUnique({
       where: { email },

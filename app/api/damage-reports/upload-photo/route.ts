@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { supabaseAdmin, getPublicUrl } from "@/lib/supabase";
 import { enforceUploadRateLimit } from "@/lib/security/upload-rate-limit";
 import { randomUUID } from "crypto";
+import { matchesFileSignature } from "@/lib/security/request-signatures";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -61,6 +62,13 @@ export async function POST(request: NextRequest) {
     const filePath = `${session.user.agencyId}/inspection-${randomUUID()}.${safeExt}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    if (!matchesFileSignature(buffer, file.type)) {
+      return NextResponse.json(
+        { error: "Le contenu du fichier ne correspond pas au format déclaré." },
+        { status: 400 }
+      );
+    }
 
     const { error } = await supabaseAdmin.storage
       .from("damage-reports")

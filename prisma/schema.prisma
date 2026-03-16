@@ -249,6 +249,22 @@ model EmailVerificationToken {
   @@map("email_verification_tokens")
 }
 
+model RateLimitBucket {
+  id            String   @id @default(cuid())
+  scope         String
+  key           String
+  count         Int      @default(0)
+  windowStartAt DateTime
+  lockedUntil   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([scope, key])
+  @@index([scope, windowStartAt])
+  @@index([lockedUntil])
+  @@map("rate_limit_buckets")
+}
+
 enum Gearbox {
   MANUAL
   AUTO

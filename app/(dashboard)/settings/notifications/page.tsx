@@ -57,12 +57,12 @@ function ChannelCard({
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
       </div>
-      {/* Disabled toggle placeholder */}
-      <div
-        className="h-6 w-11 rounded-full bg-muted border border-border/50 shrink-0 cursor-not-allowed opacity-50"
-        title="Disponible bientôt"
-        aria-disabled="true"
-      />
+      <Badge
+        variant="outline"
+        className="shrink-0 border-amber-300 bg-amber-50 text-amber-800"
+      >
+        Inactif
+      </Badge>
     </div>
   );
 }
@@ -127,13 +127,9 @@ export default async function NotificationSettingsPage() {
                     </p>
                   </div>
                 </div>
-                <div
-                  className={`h-6 w-11 rounded-full shrink-0 flex items-center transition-colors ${
-                    enabled ? "bg-primary justify-end" : "bg-muted justify-start"
-                  }`}
-                >
-                  <div className="h-5 w-5 rounded-full bg-white shadow-sm mx-0.5" />
-                </div>
+                <Badge variant={enabled ? "default" : "outline"}>
+                  {enabled ? "Actif" : "Désactivé"}
+                </Badge>
               </div>
             );
           })}

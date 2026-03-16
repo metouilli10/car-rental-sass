@@ -5,12 +5,7 @@ import { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normalizeClientIp, normalizeEmail } from "@/lib/auth-utils";
 import { logSecurityAudit } from "@/lib/security/audit-log";
-
-type AuthLimiterState = {
-  failedAttempts: number;
-  windowStartMs: number;
-  lockedUntilMs: number;
-};
+import { consumeRateLimit, resetRateLimit } from "@/lib/security/rate-limit-store";
 
 const DEFAULT_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 const DEFAULT_RATE_LIMIT_MAX_ATTEMPTS = 5;
@@ -39,72 +34,29 @@ const AUTH_RATE_LIMIT_MAX_ATTEMPTS = envNumber(
 );
 const AUTH_LOCKOUT_MS = envNumber("AUTH_LOCKOUT_MS", DEFAULT_LOCKOUT_MS);
 
-const globalForAuthLimiter = globalThis as typeof globalThis & {
-  authLimiterByKey?: Map<string, AuthLimiterState>;
-};
-
-const authLimiterByKey = globalForAuthLimiter.authLimiterByKey ?? new Map<string, AuthLimiterState>();
-if (process.env.NODE_ENV !== "production") {
-  globalForAuthLimiter.authLimiterByKey = authLimiterByKey;
-}
-
 function getAuthLimiterKey(email: string, ip: string): string {
   return `${email.toLowerCase()}::${ip}`;
 }
 
-function getOrCreateState(key: string, nowMs: number): AuthLimiterState {
-  const existing = authLimiterByKey.get(key);
-  if (existing) {
-    if (nowMs - existing.windowStartMs > AUTH_RATE_LIMIT_WINDOW_MS) {
-      const reset: AuthLimiterState = {
-        failedAttempts: 0,
-        windowStartMs: nowMs,
-        lockedUntilMs: 0,
-      };
-      authLimiterByKey.set(key, reset);
-      return reset;
-    }
-    return existing;
-  }
-
-  const created: AuthLimiterState = {
-    failedAttempts: 0,
-    windowStartMs: nowMs,
-    lockedUntilMs: 0,
-  };
-  authLimiterByKey.set(key, created);
-  return created;
-}
-
-function assertNotBlocked(key: string, nowMs: number): void {
+async function assertNotBlocked(key: string): Promise<void> {
   if (!AUTH_RATE_LIMIT_ENABLED && !AUTH_LOCKOUT_ENABLED) return;
-  const state = getOrCreateState(key, nowMs);
-  if (AUTH_LOCKOUT_ENABLED && state.lockedUntilMs > nowMs) {
-    throw new Error("Trop de tentatives. Réessayez plus tard.");
-  }
-  if (AUTH_RATE_LIMIT_ENABLED && state.failedAttempts >= AUTH_RATE_LIMIT_MAX_ATTEMPTS) {
-    if (AUTH_LOCKOUT_ENABLED) {
-      state.lockedUntilMs = nowMs + AUTH_LOCKOUT_MS;
-      authLimiterByKey.set(key, state);
-      throw new Error("Trop de tentatives. Réessayez plus tard.");
-    }
+
+  const result = await consumeRateLimit({
+    scope: "auth-login",
+    key,
+    windowMs: AUTH_RATE_LIMIT_WINDOW_MS,
+    maxRequests: AUTH_RATE_LIMIT_MAX_ATTEMPTS,
+    lockoutMs: AUTH_LOCKOUT_ENABLED ? AUTH_LOCKOUT_MS : undefined,
+  });
+
+  if (!result.allowed) {
     throw new Error("Trop de tentatives. Réessayez plus tard.");
   }
 }
 
-function recordFailedAttempt(key: string, nowMs: number): void {
+async function recordSuccessfulAttempt(key: string): Promise<void> {
   if (!AUTH_RATE_LIMIT_ENABLED && !AUTH_LOCKOUT_ENABLED) return;
-  const state = getOrCreateState(key, nowMs);
-  state.failedAttempts += 1;
-  if (AUTH_LOCKOUT_ENABLED && state.failedAttempts >= AUTH_RATE_LIMIT_MAX_ATTEMPTS) {
-    state.lockedUntilMs = nowMs + AUTH_LOCKOUT_MS;
-  }
-  authLimiterByKey.set(key, state);
-}
-
-function recordSuccessfulAttempt(key: string): void {
-  if (!AUTH_RATE_LIMIT_ENABLED && !AUTH_LOCKOUT_ENABLED) return;
-  authLimiterByKey.delete(key);
+  await resetRateLimit("auth-login", key);
 }
 
 export const authOptions: NextAuthOptions = {
@@ -126,11 +78,10 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
         const email = normalizeEmail(credentials.email);
-        const nowMs = Date.now();
         const clientIp = normalizeClientIp(req?.headers);
         const limiterKey = getAuthLimiterKey(email, clientIp);
 
-        assertNotBlocked(limiterKey, nowMs);
+        await assertNotBlocked(limiterKey);
 
         const user = await prisma.user.findUnique({
           where: {
@@ -142,7 +93,6 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          recordFailedAttempt(limiterKey, nowMs);
           return null;
         }
 
@@ -228,11 +178,10 @@ export const authOptions: NextAuthOptions = {
         const isPasswordValid = await compare(credentials.password, user.password);
 
         if (!isPasswordValid) {
-          recordFailedAttempt(limiterKey, nowMs);
           return null;
         }
 
-        recordSuccessfulAttempt(limiterKey);
+        await recordSuccessfulAttempt(limiterKey);
 
         await prisma.user.updateMany({
           where: {

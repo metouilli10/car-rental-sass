@@ -82,9 +82,9 @@ Quand demandé pour un nom de migration, tapez: `init`
 npm run db:seed
 ```
 
-Cela créera:
+Cela créera en local uniquement:
 - 1 agence: Auto Maroc Location
-- 1 utilisateur owner: `owner@automaroc.ma` / `password123`
+- 1 utilisateur owner de démonstration: `owner@automaroc.ma` / `password123`
 - 5 véhicules (Dacia Logan, Renault Clio, Peugeot 208, Hyundai i10, Toyota Corolla)
 - 3 clients
 - 4 réservations (1 active, 1 retour aujourd'hui, 1 départ aujourd'hui, 1 terminée)
@@ -99,12 +99,12 @@ L'application sera accessible sur: **http://localhost:3000**
 
 ## Test de la Foundation
 
-### 1. Tester la page de connexion
+### 1. Tester la page de connexion en local
 
 1. Ouvrez http://localhost:3000
 2. Vous devriez voir une page d'accueil basique
 3. Allez sur http://localhost:3000/login
-4. Connectez-vous avec:
+4. Connectez-vous avec le compte de démonstration local:
    - **Email:** `owner@automaroc.ma`
    - **Mot de passe:** `password123`
 
@@ -112,7 +112,7 @@ L'application sera accessible sur: **http://localhost:3000**
 
 Après connexion, vous devriez être redirigé vers `/dashboard`.
 
-**Note:** Pour l'instant, le dashboard n'est pas encore construit, donc vous verrez probablement une page 404. C'est normal - la prochaine étape sera de construire le dashboard et les autres pages.
+**Note:** En production, les nouveaux propriétaires passent par le flux `signup -> vérification email -> approbation interne -> première connexion`.
 
 ### 3. Vérifier la base de données
 

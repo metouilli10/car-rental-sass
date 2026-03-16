@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { isInternalReviewAuthenticated } from "@/lib/internal-review-auth";
 import { getOwnerSignupQueue } from "@/lib/owner-verification";
 import {
@@ -5,6 +6,15 @@ import {
   logoutInternalReview,
   updateOwnerApproval,
 } from "@/app/internal/owner-signups/actions";
+
+export const metadata: Metadata = {
+  title: "Owner signup review",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
+};
 
 export default async function OwnerSignupsReviewPage() {
   const isAuthenticated = await isInternalReviewAuthenticated();
@@ -82,7 +92,7 @@ export default async function OwnerSignupsReviewPage() {
                 <th className="px-5 py-4 font-semibold">Owner</th>
                 <th className="px-5 py-4 font-semibold">Agency</th>
                 <th className="px-5 py-4 font-semibold">Created</th>
-                <th className="px-5 py-4 font-semibold">Email</th>
+                <th className="px-5 py-4 font-semibold">Vérification</th>
                 <th className="px-5 py-4 font-semibold">Approval</th>
                 <th className="px-5 py-4 font-semibold">Actions</th>
               </tr>

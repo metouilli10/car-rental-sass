@@ -51,10 +51,7 @@ export function FAQAccordionBlock() {
     >
       <div className="mx-auto max-w-4xl">
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6 }}
+          initial={false}
           className="mb-12 text-center md:mb-16"
         >
           <Badge className="mb-4" variant="secondary">
@@ -77,10 +74,7 @@ export function FAQAccordionBlock() {
             return (
               <motion.div
                 key={faq.question}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ delay: index * 0.06, duration: 0.4 }}
+                initial={false}
               >
                 <Card className="overflow-hidden border-border/50 bg-card transition-all hover:border-primary/40 hover:shadow-md">
                   <motion.button
@@ -129,10 +123,7 @@ export function FAQAccordionBlock() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
+          initial={false}
           className="mt-12 text-center md:mt-16"
         >
           <Card className="border-border/50 bg-gradient-to-br from-card to-muted/30 p-6 md:p-8">

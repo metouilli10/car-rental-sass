@@ -3,6 +3,7 @@
 import { ApprovalStatus } from "@prisma/client";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { safeEqual } from "@/lib/auth-utils";
 import { INTERNAL_REVIEW_COOKIE, getInternalReviewToken, isInternalReviewAuthenticated } from "@/lib/internal-review-auth";
 import {
   logOwnerApprovalAudit,
@@ -11,16 +12,20 @@ import {
 
 export async function loginInternalReview(formData: FormData) {
   const token = formData.get("token");
-  if (typeof token !== "string" || token.trim() !== getInternalReviewToken()) {
+  if (
+    typeof token !== "string" ||
+    !safeEqual(token.trim(), getInternalReviewToken())
+  ) {
     throw new Error("Token interne invalide");
   }
 
   const cookieStore = await cookies();
   cookieStore.set(INTERNAL_REVIEW_COOKIE, getInternalReviewToken(), {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
-    path: "/",
+    path: "/internal",
+    maxAge: 8 * 60 * 60,
   });
 
   revalidatePath("/internal/owner-signups");

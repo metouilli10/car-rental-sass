@@ -1,21 +1,9 @@
-type RateLimitState = {
-  count: number;
-  windowStartMs: number;
-};
+import { consumeRateLimit } from "@/lib/security/rate-limit-store";
 
 type ActionName = "signup" | "resend";
 
 const DEFAULT_WINDOW_MS = 60 * 60 * 1000;
 const DEFAULT_MAX_REQUESTS = 5;
-
-const globalRateLimiter = globalThis as typeof globalThis & {
-  publicAuthRateLimiter?: Map<string, RateLimitState>;
-};
-
-const rateLimiter = globalRateLimiter.publicAuthRateLimiter ?? new Map<string, RateLimitState>();
-if (process.env.NODE_ENV !== "production") {
-  globalRateLimiter.publicAuthRateLimiter = rateLimiter;
-}
 
 function envNumber(name: string, fallback: number): number {
   const raw = process.env[name];
@@ -43,21 +31,20 @@ function getKey(action: ActionName, email: string, ip: string): string {
   return `${action}:${email}:${ip}`;
 }
 
-export function assertPublicAuthRateLimit(action: ActionName, email: string, ip: string): void {
+export async function assertPublicAuthRateLimit(
+  action: ActionName,
+  email: string,
+  ip: string,
+): Promise<void> {
   const { maxRequests, windowMs } = getConfig(action);
-  const now = Date.now();
-  const key = getKey(action, email, ip);
-  const current = rateLimiter.get(key);
+  const result = await consumeRateLimit({
+    scope: `public-auth:${action}`,
+    key: getKey(action, email, ip),
+    windowMs,
+    maxRequests,
+  });
 
-  if (!current || now - current.windowStartMs > windowMs) {
-    rateLimiter.set(key, { count: 1, windowStartMs: now });
-    return;
-  }
-
-  if (current.count >= maxRequests) {
+  if (!result.allowed) {
     throw new Error("Trop de tentatives. Réessayez plus tard.");
   }
-
-  current.count += 1;
-  rateLimiter.set(key, current);
 }

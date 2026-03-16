@@ -42,6 +42,7 @@ export function TimelineContent<T extends ElementType = 'div'>({
     once: true,
     margin: '-10% 0px',
   })
+  const shouldShow = timelineRef?.current == null ? true : isInView
 
   const Component = motion.create(as ?? 'div')
 
@@ -50,7 +51,7 @@ export function TimelineContent<T extends ElementType = 'div'>({
       className={cn(className)}
       custom={animationNum}
       initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
+      animate={shouldShow ? 'visible' : 'hidden'}
       variants={customVariants ?? defaultVariants}
     >
       {children}

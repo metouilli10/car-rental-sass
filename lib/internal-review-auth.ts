@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { safeEqual } from "@/lib/auth-utils";
 
 export const INTERNAL_REVIEW_COOKIE = "internal-review-session";
 
@@ -13,5 +14,10 @@ export function getInternalReviewToken(): string {
 
 export async function isInternalReviewAuthenticated(): Promise<boolean> {
   const cookieStore = await cookies();
-  return cookieStore.get(INTERNAL_REVIEW_COOKIE)?.value === getInternalReviewToken();
+  const cookieValue = cookieStore.get(INTERNAL_REVIEW_COOKIE)?.value;
+  if (!cookieValue) {
+    return false;
+  }
+
+  return safeEqual(cookieValue, getInternalReviewToken());
 }

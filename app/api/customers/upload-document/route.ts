@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabaseAdmin, getPublicUrl } from "@/lib/supabase";
 import { enforceUploadRateLimit } from "@/lib/security/upload-rate-limit";
+import { matchesFileSignature } from "@/lib/security/request-signatures";
 import { randomUUID } from "crypto";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
@@ -66,6 +67,13 @@ export async function POST(request: NextRequest) {
     const filePath = `${session.user.agencyId}/doc-${randomUUID()}.${safeExt}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    if (!matchesFileSignature(buffer, file.type)) {
+      return NextResponse.json(
+        { error: "Le contenu du fichier ne correspond pas au format déclaré." },
+        { status: 400 }
+      );
+    }
 
     const { error } = await supabaseAdmin.storage
       .from("customers")

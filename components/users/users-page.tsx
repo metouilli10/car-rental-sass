@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { UserRole } from "@prisma/client";
 import { formatDateTime } from "@/lib/utils";
 import {
@@ -219,14 +219,6 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
     selectedUser,
   ]);
 
-  useEffect(() => {
-    if (activeTab !== "activity") {
-      return;
-    }
-
-    void loadActivityPage(true);
-  }, [activeTab, activityActionFilter, activityReloadToken, activityUserFilter]);
-
   const markActivityStale = () => {
     setActivityReloadToken((prev) => prev + 1);
   };
@@ -246,7 +238,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
     markActivityStale();
   };
 
-  async function loadActivityPage(reset = false) {
+  const loadActivityPage = useCallback(async (reset = false) => {
     setIsActivityLoading(true);
     setActivityError(null);
 
@@ -283,7 +275,15 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
     } finally {
       setIsActivityLoading(false);
     }
-  }
+  }, [activityActionFilter, activityCursor, activityUserFilter]);
+
+  useEffect(() => {
+    if (activeTab !== "activity") {
+      return;
+    }
+
+    void loadActivityPage(true);
+  }, [activeTab, activityActionFilter, activityReloadToken, activityUserFilter, loadActivityPage]);
 
   const handleToggleStatus = async () => {
     if (!statusDialogUser) return;

@@ -2,6 +2,29 @@ import React, { useRef, useEffect, useState } from "react";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+const ROUTES: { start: RoutePoint; end: RoutePoint; color: string }[] = [
+  {
+    start: { x: 100, y: 150, delay: 0 },
+    end: { x: 200, y: 80, delay: 2 },
+    color: "#2563eb",
+  },
+  {
+    start: { x: 200, y: 80, delay: 2 },
+    end: { x: 260, y: 120, delay: 4 },
+    color: "#2563eb",
+  },
+  {
+    start: { x: 50, y: 50, delay: 1 },
+    end: { x: 150, y: 180, delay: 3 },
+    color: "#2563eb",
+  },
+  {
+    start: { x: 280, y: 60, delay: 0.5 },
+    end: { x: 180, y: 180, delay: 2.5 },
+    color: "#2563eb",
+  },
+];
+
 // Helper function to merge class names
 const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
@@ -60,30 +83,6 @@ type RoutePoint = {
 const DotMap = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-
-  // Set up routes that will animate across the map
-  const routes: { start: RoutePoint; end: RoutePoint; color: string }[] = [
-    {
-      start: { x: 100, y: 150, delay: 0 },
-      end: { x: 200, y: 80, delay: 2 },
-      color: "#2563eb", // Slightly darker blue for better visibility on light bg
-    },
-    {
-      start: { x: 200, y: 80, delay: 2 },
-      end: { x: 260, y: 120, delay: 4 },
-      color: "#2563eb",
-    },
-    {
-      start: { x: 50, y: 50, delay: 1 },
-      end: { x: 150, y: 180, delay: 3 },
-      color: "#2563eb",
-    },
-    {
-      start: { x: 280, y: 60, delay: 0.5 },
-      end: { x: 180, y: 180, delay: 2.5 },
-      color: "#2563eb",
-    },
-  ];
 
   // Create dots for the world map
   const generateDots = (width: number, height: number) => {
@@ -168,7 +167,7 @@ const DotMap = () => {
     function drawRoutes() {
       const currentTime = (Date.now() - startTime) / 1000; // Time in seconds
       
-      routes.forEach(route => {
+      ROUTES.forEach(route => {
         const elapsed = currentTime - route.start.delay;
         if (elapsed <= 0) return;
         
