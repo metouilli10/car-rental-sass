@@ -22,7 +22,7 @@ export async function sendOwnerVerificationEmail(params: {
 
   const { name, to, verificationUrl } = params;
 
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from: getSenderEmail(),
     to,
     subject: "Confirmez votre email pour activer votre demande Locaryx",
@@ -40,6 +40,11 @@ export async function sendOwnerVerificationEmail(params: {
       </div>
     `,
   });
+
+  if (result.error) {
+    console.error("sendOwnerVerificationEmail resend error:", result.error);
+    throw new Error(`RESEND_SEND_FAILED: ${result.error.message}`);
+  }
 }
 
 function escapeHtml(value: string): string {

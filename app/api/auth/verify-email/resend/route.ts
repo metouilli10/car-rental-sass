@@ -46,6 +46,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (error instanceof Error && error.message.startsWith("RESEND_SEND_FAILED:")) {
+      return NextResponse.json(
+        { error: "L'email de verification n'a pas pu etre envoye. Verifiez la configuration Resend." },
+        { status: 503 },
+      );
+    }
+
     return NextResponse.json(
       { error: "Impossible de renvoyer l'email de vérification." },
       { status: 500 },

@@ -127,6 +127,16 @@ export async function registerOwnerAccount(data: RegisterOwnerFormData) {
     }
 
     if (
+      error instanceof Error &&
+      error.message.startsWith("RESEND_SEND_FAILED:")
+    ) {
+      return {
+        status: "mail_unavailable" as const,
+        error: "L'email de verification n'a pas pu etre envoye. Verifiez la configuration Resend.",
+      };
+    }
+
+    if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       ["P2002"].includes(error.code)
     ) {
