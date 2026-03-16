@@ -4,12 +4,18 @@ import { TopNavBar } from "@/components/shared/top-nav-bar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
 import { Toaster } from "sonner";
-import { getNotificationsSummary } from "@/lib/notifications/queries";
+import {
+  getNotificationsSummary,
+  type NotificationSummaryItem,
+} from "@/lib/notifications/queries";
 import { prisma } from "@/lib/prisma";
 import { getEffectivePermissions } from "@/lib/permissions";
+import {
+  isAgencyEligibleForGuidedOnboarding,
+  syncAgencyOnboardingState,
+} from "@/lib/onboarding/agency-onboarding";
 
 export const runtime = "nodejs";
-export const preferredRegion = ["fra1"];
 
 export default async function DashboardLayout({
   children,
@@ -27,38 +33,81 @@ export default async function DashboardLayout({
     redirect("/setup");
   }
   let displayAgencyName = session.user.agencyName || "Agence";
-  const dashboardChrome =
-    agencyId
-      ? await Promise.all([
-          prisma.agency.findUnique({
-            where: { id: agencyId },
-            select: { setupCompletedAt: true, name: true, logoUrl: true },
-          }),
-          getNotificationsSummary(agencyId).catch(() => ({ count: 0, items: [] })),
-        ])
-      : null;
-  const agency = dashboardChrome?.[0] ?? null;
-  const notifSummary = dashboardChrome?.[1] ?? { count: 0, items: [] };
+  let agency: {
+    setupCompletedAt: Date | null;
+    name: string;
+    logoUrl: string | null;
+    createdAt: Date;
+  } | null = null;
+  let notifSummary: { count: number; items: NotificationSummaryItem[] } = {
+    count: 0,
+    items: [],
+  };
+  let currentUser: { permissionOverrides: unknown } | null = null;
+  let onboardingNav: {
+    eligible: boolean;
+    completed: boolean;
+    completedCount: number;
+    totalCount: number;
+  } | undefined;
 
-  if (agencyId) {
-    if (!agency?.setupCompletedAt) {
+  try {
+    const [agencyResult, notifResult] = await Promise.all([
+      prisma.agency.findUnique({
+        where: { id: agencyId },
+        select: { setupCompletedAt: true, name: true, logoUrl: true, createdAt: true },
+      }),
+      getNotificationsSummary(agencyId).catch(
+        (): { count: number; items: NotificationSummaryItem[] } => ({
+          count: 0,
+          items: [],
+        })
+      ),
+    ]);
+    agency = agencyResult;
+    notifSummary = notifResult;
+
+    if (agency?.setupCompletedAt == null) {
       redirect("/setup");
     }
+    displayAgencyName = agency.name ?? displayAgencyName;
 
-    displayAgencyName = agency.name;
+    currentUser = await prisma.user.findFirst({
+      where: {
+        id: session.user.id,
+        agencyId,
+      },
+      select: {
+        permissionOverrides: true,
+      },
+    });
+
+    if (agency && isAgencyEligibleForGuidedOnboarding(agency.createdAt)) {
+      const onboardingState = await syncAgencyOnboardingState(agencyId);
+      const completedCount = [
+        onboardingState.vehicleAdded,
+        onboardingState.reservationCreated,
+        onboardingState.paymentRecorded,
+        onboardingState.dashboardExplored,
+      ].filter(Boolean).length;
+
+      onboardingNav = {
+        eligible: true,
+        completed: onboardingState.completed,
+        completedCount,
+        totalCount: 4,
+      };
+    }
+  } catch (err) {
+    console.error("Dashboard layout error:", err);
+    if (agencyId && agency == null) {
+      redirect("/setup");
+    }
   }
 
-  const currentUser = agencyId
-    ? await prisma.user.findFirst({
-        where: {
-          id: session.user.id,
-          agencyId,
-        },
-        select: {
-          permissionOverrides: true,
-        },
-      })
-    : null;
+  if (agencyId && agency != null && !agency.setupCompletedAt) {
+    redirect("/setup");
+  }
   const permissions = getEffectivePermissions(
     session.user.role,
     currentUser?.permissionOverrides ?? null,
@@ -67,7 +116,12 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-[hsl(var(--background))]" suppressHydrationWarning>
       {/* Collapsible Sidebar */}
-      <Sidebar agencyName={displayAgencyName} role={session.user.role} permissions={permissions} />
+      <Sidebar
+        agencyName={displayAgencyName}
+        role={session.user.role}
+        permissions={permissions}
+        onboarding={onboardingNav}
+      />
 
       <Toaster richColors position="top-right" />
 

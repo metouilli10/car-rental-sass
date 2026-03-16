@@ -21,6 +21,14 @@ import {
   Building2,
 } from "lucide-react";
 import type { ReminderType, NotificationSeverity } from "@prisma/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const SearchOverlay = dynamic(
   () => import("@/components/shared/search-overlay").then((mod) => mod.SearchOverlay),
@@ -70,11 +78,9 @@ export function TopNavBar({
   topNotifs = [],
 }: TopNavBarProps) {
   const router = useRouter();
-  const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
   const initials = userName
@@ -87,9 +93,6 @@ export function TopNavBar({
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setProfileOpen(false);
-      }
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
       }
@@ -148,7 +151,6 @@ export function TopNavBar({
             <button
               onClick={() => {
                 setNotifOpen(!notifOpen);
-                setProfileOpen(false);
               }}
               aria-label={`Notifications${notifCount > 0 ? ` (${notifCount} actives)` : ""}`}
               className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-subtle bg-slate-50 text-slate-500 transition-colors duration-200 hover:bg-white hover:text-slate-900"
@@ -244,103 +246,96 @@ export function TopNavBar({
           <div className="mx-0.5 h-5 w-px bg-slate-200" />
 
           {/* Profile Section */}
-          <div ref={profileRef} className="relative">
-            <button
-              onClick={() => {
-                setProfileOpen(!profileOpen);
+          <DropdownMenu
+            onOpenChange={(open) => {
+              if (open) {
                 setNotifOpen(false);
-              }}
-              aria-label="Menu profil"
-              aria-expanded={profileOpen}
-              className="flex min-h-[36px] items-center gap-2 rounded-xl border border-transparent px-2 py-1 transition-colors duration-200 hover:bg-slate-50 sm:gap-2.5 sm:px-2.5"
-            >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-950 text-xs font-semibold text-white">
-                {agencyLogoUrl ? (
-                  <Image
-                    src={agencyLogoUrl}
-                    alt={agencyName}
-                    width={32}
-                    height={32}
-                    className="h-full w-full object-cover object-center"
-                  />
-                ) : (
-                  initials
-                )}
-              </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium leading-tight text-slate-950">
-                  {userName}
-                </p>
-                <p className="text-[11px] leading-tight text-slate-500">
-                  {agencyName}
-                </p>
-              </div>
-              <ChevronDown
-                className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${
-                  profileOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {/* Profile Dropdown */}
-            {profileOpen && (
-              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border bg-popover shadow-card-lg animate-scale-in origin-top-right">
-                <div className="border-b border-border px-4 py-3.5">
-                  <p className="text-sm font-semibold text-foreground truncate">
+              }
+            }}
+          >
+            <DropdownMenuTrigger asChild>
+              <button
+                aria-label="Menu profil"
+                className="flex min-h-[36px] items-center gap-2 rounded-xl border border-transparent px-2 py-1 transition-colors duration-200 hover:bg-slate-50 sm:gap-2.5 sm:px-2.5"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-950 text-xs font-semibold text-white">
+                  {agencyLogoUrl ? (
+                    <Image
+                      src={agencyLogoUrl}
+                      alt={agencyName}
+                      width={32}
+                      height={32}
+                      className="h-full w-full object-cover object-center"
+                    />
+                  ) : (
+                    initials
+                  )}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-sm font-medium leading-tight text-slate-950">
                     {userName}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    {userEmail}
+                  <p className="text-[11px] leading-tight text-slate-500">
+                    {agencyName}
                   </p>
                 </div>
-                <div className="py-1.5">
-                  <button className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 transition-colors duration-150 hover:bg-muted/40 hover:text-foreground">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    Profil
-                  </button>
-                  <button
-                    onClick={() => {
-                      setProfileOpen(false);
-                      router.push("/dashboard?getting-started=1");
-                    }}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 transition-colors duration-150 hover:bg-muted/40 hover:text-foreground"
-                  >
-                    <Rocket className="h-4 w-4 text-muted-foreground" />
-                    Getting Started
-                  </button>
-                  <button
-                    onClick={() => {
-                      setProfileOpen(false);
-                      router.push("/settings/agency");
-                    }}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 transition-colors duration-150 hover:bg-muted/40 hover:text-foreground"
-                  >
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    Agence
-                  </button>
-                  <button
-                    onClick={() => {
-                      setProfileOpen(false);
-                      router.push("/settings/notifications");
-                    }}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 transition-colors duration-150 hover:bg-muted/40 hover:text-foreground"
-                  >
-                    <Settings className="h-4 w-4 text-muted-foreground" />
-                    Paramètres
-                  </button>
-                </div>
-                <div className="border-t border-border py-1.5">
-                  <button
-                    onClick={() => signOut({ callbackUrl: "/login" })}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-500/80 transition-colors duration-150 hover:bg-red-50/70 hover:text-red-600 dark:hover:bg-red-500/10"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Déconnexion
-                  </button>
-                </div>
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-60 overflow-hidden rounded-2xl border border-border bg-popover p-0 shadow-card-lg"
+            >
+              <DropdownMenuLabel className="border-b border-border px-4 py-3.5">
+                <p className="text-sm font-semibold text-foreground truncate">{userName}</p>
+                <p className="mt-0.5 text-xs font-normal text-muted-foreground truncate">
+                  {userEmail}
+                </p>
+              </DropdownMenuLabel>
+              <div className="p-1.5">
+                <DropdownMenuItem
+                  onSelect={() => router.push("/settings/agency")}
+                  className="gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground/80"
+                >
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  Profil
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => router.push("/getting-started")}
+                  className="gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground/80"
+                >
+                  <Rocket className="h-4 w-4 text-muted-foreground" />
+                  Démarrage guidé
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => router.push("/settings/agency")}
+                  className="gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground/80"
+                >
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  Agence
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => router.push("/settings/notifications")}
+                  className="gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground/80"
+                >
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  Paramètres
+                </DropdownMenuItem>
               </div>
-            )}
-          </div>
+              <DropdownMenuSeparator />
+              <div className="p-1.5 pt-0">
+                <DropdownMenuItem
+                  onSelect={() => {
+                    void signOut({ callbackUrl: "/login" });
+                  }}
+                  className="gap-3 rounded-xl px-3 py-2.5 text-sm text-red-500 focus:bg-red-50 focus:text-red-600"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Déconnexion
+                </DropdownMenuItem>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 

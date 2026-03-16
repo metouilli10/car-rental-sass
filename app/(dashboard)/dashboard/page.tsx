@@ -5,7 +5,6 @@ import { getDashboardDataV3 } from "@/lib/dashboard/v3-queries";
 import { DashboardHeaderV3 } from "@/components/dashboard/DashboardHeaderV3";
 import { ActionCenterCard } from "@/components/dashboard/ActionCenterCard";
 import { FleetSnapshotBar } from "@/components/dashboard/FleetSnapshotBar";
-import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardActiveBookingsSection } from "./DashboardActiveBookingsSection";
 import { DashboardPeriodShell } from "./DashboardPeriodShell";
@@ -93,9 +92,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             initialPulse={dashboard.pulse}
             operations={dashboard.todayOperations}
             agencyName={session.user.agencyName || "Agence"}
-            totalVehicles={dashboard.fleetSnapshot.totalActive + dashboard.fleetSnapshot.inactive}
-            activeReservationsCount={dashboard.context.activeReservationsCount}
-            updatedAt={dashboard.context.updatedAt}
+            totalVehicles={(dashboard.fleetSnapshot?.totalActive ?? 0) + (dashboard.fleetSnapshot?.inactive ?? 0)}
+            activeReservationsCount={dashboard.context?.activeReservationsCount ?? 0}
+            updatedAt={dashboard.context?.updatedAt ?? new Date().toISOString()}
           />
           <div className="grid grid-cols-1 gap-4 xl:items-start xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
             <div className="space-y-4">
@@ -113,13 +112,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               >
                 <DashboardActiveBookingsSection agencyId={agencyId} periodInput={periodInput} />
               </Suspense>
-              <FleetSnapshotBar snapshot={dashboard.fleetSnapshot} />
+              <FleetSnapshotBar
+                snapshot={{
+                  rented: dashboard.fleetSnapshot?.rented ?? 0,
+                  available: dashboard.fleetSnapshot?.available ?? 0,
+                  maintenance: dashboard.fleetSnapshot?.maintenance ?? 0,
+                  inactive: dashboard.fleetSnapshot?.inactive ?? 0,
+                  totalActive: dashboard.fleetSnapshot?.totalActive ?? 0,
+                }}
+              />
             </div>
             <div className="space-y-4">
-              <ActionCenterCard actionCenter={dashboard.actionCenter} period={dashboard.period} />
-              <OnboardingChecklist
-                onboarding={dashboard.onboarding}
-                forceVisible={params["getting-started"] === "1" && !dashboard.onboarding.completed}
+              <ActionCenterCard
+                actionCenter={dashboard.actionCenter ?? { groups: [], isAllClear: true }}
+                period={dashboard.period}
               />
             </div>
           </div>

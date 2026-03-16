@@ -23,6 +23,7 @@ export async function dismissOnboardingChecklist() {
   const agencyId = await getAgencyIdOrThrow();
   await dismissAgencyOnboarding(agencyId);
   revalidatePath("/dashboard");
+  revalidatePath("/getting-started");
   return { success: true };
 }
 
@@ -30,6 +31,7 @@ export async function markOnboardingDashboardExplored() {
   const agencyId = await getAgencyIdOrThrow();
   await markAgencyDashboardExplored(agencyId);
   revalidatePath("/dashboard");
+  revalidatePath("/getting-started");
   return { success: true };
 }
 
@@ -37,5 +39,6 @@ export async function resumeOnboardingChecklist() {
   const agencyId = await getAgencyIdOrThrow();
   await resetAgencyOnboardingDismissal(agencyId);
   revalidatePath("/dashboard");
+  revalidatePath("/getting-started");
   return { success: true };
 }

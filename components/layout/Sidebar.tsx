@@ -18,9 +18,15 @@ export interface SidebarProps {
   agencyName: string;
   role: UserRole;
   permissions: EffectivePermissions;
+  onboarding?: {
+    eligible: boolean;
+    completed: boolean;
+    completedCount: number;
+    totalCount: number;
+  };
 }
 
-export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
+export function Sidebar({ agencyName, role, permissions, onboarding }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -130,6 +136,16 @@ export function Sidebar({ agencyName, role, permissions }: SidebarProps) {
               label="Tableau de bord"
               collapsed={isCollapsed}
             />
+            {onboarding?.eligible ? (
+              <SidebarItem
+                href="/getting-started"
+                iconName="Rocket"
+                label="Démarrage guidé"
+                collapsed={isCollapsed}
+                emphasized={!onboarding.completed}
+                badge={!onboarding.completed ? `${onboarding.completedCount}/${onboarding.totalCount}` : undefined}
+              />
+            ) : null}
           </SidebarSection>
 
           {/* OPÉRATIONS */}

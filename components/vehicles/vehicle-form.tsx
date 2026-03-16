@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import Image from "next/image";
+import { useState, useRef, useCallback, useId } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -155,6 +154,7 @@ function PhotoDropzone({
   onRemove: () => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputId = useId();
   const [isDragActive, setIsDragActive] = useState(false);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -197,23 +197,23 @@ function PhotoDropzone({
     return (
       <div className="space-y-2">
         <Label>Photo du véhicule</Label>
+        <input
+          id={inputId}
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={handleInputChange}
+        />
         <div className="relative w-full h-48 rounded-xl overflow-hidden bg-slate-100 group">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={photoUrl}
             alt="Aperçu du véhicule"
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 50vw"
+            className="h-full w-full object-cover"
           />
           {/* Overlay actions */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={handleInputChange}
-            />
             <Button
               type="button"
               variant="secondary"
@@ -253,16 +253,16 @@ function PhotoDropzone({
   return (
     <div className="space-y-2">
       <Label>Photo du véhicule</Label>
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => !disabled && fileInputRef.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            fileInputRef.current?.click();
-          }
-        }}
+      <input
+        id={inputId}
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={handleInputChange}
+      />
+      <label
+        htmlFor={disabled ? undefined : inputId}
         onDragEnter={handleDragIn}
         onDragLeave={handleDragOut}
         onDragOver={handleDrag}
@@ -277,14 +277,6 @@ function PhotoDropzone({
         )}
         aria-label="Zone de dépôt de photo"
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="hidden"
-          onChange={handleInputChange}
-        />
-
         {isUploading ? (
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -317,7 +309,7 @@ function PhotoDropzone({
             </div>
           </>
         )}
-      </div>
+      </label>
     </div>
   );
 }
