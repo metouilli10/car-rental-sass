@@ -17,6 +17,12 @@ enum UserRole {
   EMPLOYEE
 }
 
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum VehicleStatus {
   AVAILABLE
   RENTED
@@ -203,26 +209,44 @@ model Agency {
 }
 
 model User {
-  id       String   @id @default(cuid())
-  email    String   @unique
-  password String
-  name     String
-  role     UserRole @default(EMPLOYEE)
-  isActive Boolean  @default(true)
-  invitedAt DateTime?
-  invitedById String?
-  lastLoginAt DateTime?
+  id                 String         @id @default(cuid())
+  email              String         @unique
+  password           String
+  name               String
+  role               UserRole       @default(EMPLOYEE)
+  isActive           Boolean        @default(true)
+  invitedAt          DateTime?
+  invitedById        String?
+  lastLoginAt        DateTime?
+  emailVerifiedAt    DateTime?
+  approvalStatus     ApprovalStatus @default(APPROVED)
   permissionOverrides Json?
-  agencyId String
+  agencyId           String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  agency              Agency                  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  emailVerificationTokens EmailVerificationToken[]
 
   @@index([agencyId])
   @@index([agencyId, role])
   @@map("users")
+}
+
+model EmailVerificationToken {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
 }
 
 enum Gearbox {

@@ -39,13 +39,21 @@ async function handleReset() {
 
     const user = await prisma.user.upsert({
       where: { email: "owner@automaroc.ma" },
-      update: { password: hashedPassword, isActive: true, agencyId: agency.id },
+      update: {
+        password: hashedPassword,
+        isActive: true,
+        agencyId: agency.id,
+        approvalStatus: "APPROVED",
+        emailVerifiedAt: new Date(),
+      },
       create: {
         email: "owner@automaroc.ma",
         password: hashedPassword,
         name: "Hassan Alami",
         role: "OWNER",
         agencyId: agency.id,
+        approvalStatus: "APPROVED",
+        emailVerifiedAt: new Date(),
       },
     });
 

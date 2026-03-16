@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const isVerificationError = error === "Email non verifie";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +34,13 @@ export default function LoginPage() {
         setError(
           result.error === "Compte désactivé"
             ? "Compte désactivé"
-            : "Email ou mot de passe incorrect",
+            : result.error === "Email non verifie"
+              ? "Email non verifie"
+              : result.error === "En attente d'approbation"
+                ? "Votre email est vérifié, mais votre agence attend encore notre approbation."
+                : result.error === "Compte refuse"
+                  ? "Cette demande a été refusée. Contactez le support."
+                  : "Email ou mot de passe incorrect",
         );
       } else {
         router.push("/post-login");
@@ -217,6 +224,16 @@ export default function LoginPage() {
                     <p className="text-sm text-red-600 text-center font-medium">
                       {error}
                     </p>
+                    {isVerificationError ? (
+                      <p className="mt-2 text-center text-sm">
+                        <Link
+                          href={`/verify-email/resend?email=${encodeURIComponent(email.trim())}`}
+                          className="font-medium text-[#2c2cf2] hover:text-[#2c2cf2]/80"
+                        >
+                          Renvoyer l&apos;email de vérification
+                        </Link>
+                      </p>
+                    ) : null}
                   </div>
                 )}
 

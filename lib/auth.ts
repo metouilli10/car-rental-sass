@@ -3,6 +3,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { normalizeClientIp, normalizeEmail } from "@/lib/auth-utils";
+import { logSecurityAudit } from "@/lib/security/audit-log";
 
 type AuthLimiterState = {
   failedAttempts: number;
@@ -44,23 +46,6 @@ const globalForAuthLimiter = globalThis as typeof globalThis & {
 const authLimiterByKey = globalForAuthLimiter.authLimiterByKey ?? new Map<string, AuthLimiterState>();
 if (process.env.NODE_ENV !== "production") {
   globalForAuthLimiter.authLimiterByKey = authLimiterByKey;
-}
-
-function normalizeClientIp(req: { headers?: Record<string, unknown> } | undefined): string {
-  const headers = req?.headers;
-  if (!headers) return "unknown";
-
-  const xForwardedFor = headers["x-forwarded-for"];
-  if (typeof xForwardedFor === "string" && xForwardedFor.trim().length > 0) {
-    return xForwardedFor.split(",")[0]?.trim() || "unknown";
-  }
-
-  const realIp = headers["x-real-ip"];
-  if (typeof realIp === "string" && realIp.trim().length > 0) {
-    return realIp.trim();
-  }
-
-  return "unknown";
 }
 
 function getAuthLimiterKey(email: string, ip: string): string {
@@ -140,9 +125,9 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
-        const email = credentials.email.trim().toLowerCase();
+        const email = normalizeEmail(credentials.email);
         const nowMs = Date.now();
-        const clientIp = normalizeClientIp(req);
+        const clientIp = normalizeClientIp(req?.headers);
         const limiterKey = getAuthLimiterKey(email, clientIp);
 
         assertNotBlocked(limiterKey, nowMs);
@@ -159,6 +144,81 @@ export const authOptions: NextAuthOptions = {
         if (!user) {
           recordFailedAttempt(limiterKey, nowMs);
           return null;
+        }
+
+        if (user.role === "OWNER" && !user.emailVerifiedAt) {
+          await logSecurityAudit({
+            actor: {
+              userId: user.id,
+              role: user.role,
+              email: user.email,
+            },
+            context: {
+              agencyId: user.agencyId,
+              ip: clientIp,
+              userAgent:
+                typeof req?.headers?.["user-agent"] === "string"
+                  ? req.headers["user-agent"]
+                  : null,
+            },
+            event: {
+              action: "OWNER_LOGIN_BLOCKED_UNVERIFIED",
+              entityType: "USER",
+              entityId: user.id,
+              outcome: "DENIED",
+            },
+          });
+          throw new Error("Email non verifie");
+        }
+
+        if (user.role === "OWNER" && user.approvalStatus === "PENDING") {
+          await logSecurityAudit({
+            actor: {
+              userId: user.id,
+              role: user.role,
+              email: user.email,
+            },
+            context: {
+              agencyId: user.agencyId,
+              ip: clientIp,
+              userAgent:
+                typeof req?.headers?.["user-agent"] === "string"
+                  ? req.headers["user-agent"]
+                  : null,
+            },
+            event: {
+              action: "OWNER_LOGIN_BLOCKED_PENDING_APPROVAL",
+              entityType: "USER",
+              entityId: user.id,
+              outcome: "DENIED",
+            },
+          });
+          throw new Error("En attente d'approbation");
+        }
+
+        if (user.role === "OWNER" && user.approvalStatus === "REJECTED") {
+          await logSecurityAudit({
+            actor: {
+              userId: user.id,
+              role: user.role,
+              email: user.email,
+            },
+            context: {
+              agencyId: user.agencyId,
+              ip: clientIp,
+              userAgent:
+                typeof req?.headers?.["user-agent"] === "string"
+                  ? req.headers["user-agent"]
+                  : null,
+            },
+            event: {
+              action: "OWNER_LOGIN_BLOCKED_REJECTED",
+              entityType: "USER",
+              entityId: user.id,
+              outcome: "DENIED",
+            },
+          });
+          throw new Error("Compte refuse");
         }
 
         if (!user.isActive) {
