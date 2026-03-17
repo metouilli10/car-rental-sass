@@ -1,11 +1,25 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { navLinks } from "../data";
-import { ChevronDown, Menu } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
 export function Navbar() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   return (
     <nav className="clone2-navbar absolute top-0 left-0 right-0 z-50">
       <div className="mx-auto flex h-[68px] max-w-[1240px] items-center justify-between px-6 lg:px-8">
@@ -48,11 +62,59 @@ export function Navbar() {
         </div>
 
         <div className="lg:hidden">
-          <Button variant="ghost" size="icon" className="clone2-mobile-menu">
-            <Menu className="h-6 w-6" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="clone2-mobile-menu"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="landing-mobile-menu"
+            aria-label={isMobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+          >
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </Button>
         </div>
       </div>
+
+      {isMobileMenuOpen ? (
+        <>
+          <button
+            type="button"
+            className="clone2-mobile-backdrop lg:hidden"
+            aria-label="Fermer le menu"
+            onClick={closeMobileMenu}
+          />
+
+          <div id="landing-mobile-menu" className="clone2-mobile-panel lg:hidden">
+            <div className="clone2-mobile-links">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="clone2-mobile-link"
+                  onClick={closeMobileMenu}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="clone2-mobile-actions">
+              <Link href="/login" className="clone2-mobile-login" onClick={closeMobileMenu}>
+                Connexion
+              </Link>
+              <Button variant="outline" className="clone2-mobile-secondary" onClick={closeMobileMenu}>
+                Voir la démo
+              </Button>
+              <Button asChild className="clone2-mobile-primary">
+                <Link href="/signup" onClick={closeMobileMenu}>
+                  Commencer gratuitement
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </>
+      ) : null}
     </nav>
   );
 }
