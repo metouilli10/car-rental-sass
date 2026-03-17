@@ -12,7 +12,7 @@ import { Footer } from "@/components/cometly-clone-2/sections/Footer";
 import { WhatsAppWidget } from "@/components/cometly-clone-2/sections/WhatsAppWidget";
 import { FAQAccordionBlock } from "@/components/ui/faq-accordion-block-shadcnui";
 
-export default function CometlyClonePage() {
+export function LandingPage() {
   return (
     <CloneLayout>
       <Navbar />
@@ -30,4 +30,8 @@ export default function CometlyClonePage() {
       <WhatsAppWidget />
     </CloneLayout>
   );
+}
+
+export default function CometlyClonePage() {
+  return <LandingPage />;
 }
