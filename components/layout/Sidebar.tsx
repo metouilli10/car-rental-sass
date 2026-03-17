@@ -136,7 +136,7 @@ export function Sidebar({ agencyName, role, permissions, onboarding }: SidebarPr
               label="Tableau de bord"
               collapsed={isCollapsed}
             />
-            {onboarding?.eligible ? (
+            {onboarding?.eligible && !onboarding.completed ? (
               <SidebarItem
                 href="/getting-started"
                 iconName="Rocket"
