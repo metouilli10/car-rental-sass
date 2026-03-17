@@ -621,6 +621,14 @@
     background: rgba(15, 23, 42, 0.06);
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
+  .landing-anchor-section {
+    scroll-margin-top: 92px;
+  }
+
   @keyframes logo-marquee {
     from {
       transform: translateX(0);
@@ -704,6 +712,10 @@
     text-wrap: balance;
   }
 
+  .hero-title-line {
+    display: block;
+  }
+
   .hero-subtitle {
     margin-top: 22px;
     font-size: clamp(16px, 1.02vw, 18px);
@@ -777,6 +789,10 @@
     color: #6b7280;
     font-size: 14px;
     line-height: 1.5;
+  }
+
+  .hero-proof-line-mobile {
+    display: none;
   }
 
   .hero-review-icons {
@@ -990,10 +1006,22 @@
       height: 180px;
     }
 
+    .hero-title {
+      font-size: 20px;
+      line-height: 1.12;
+      max-width: none;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-title-line {
+      white-space: nowrap;
+    }
+
     .hero-subtitle {
       margin-top: 16px;
-      font-size: 17px;
-      line-height: 1.5;
+      font-size: 16px;
+      line-height: 1.55;
+      max-width: 340px;
     }
 
     .hero-cta-row {
@@ -1017,34 +1045,30 @@
 
     .hero-proof-row {
       margin-top: 14px;
-      flex-direction: column;
       gap: 8px;
       font-size: 13px;
     }
 
+    .hero-proof-line-mobile {
+      display: block;
+      margin-top: 14px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #6b7280;
+      white-space: nowrap;
+    }
+
     .hero-dashboard-wrap {
-      margin-top: 48px;
-      padding-bottom: 32px;
+      margin-top: 40px;
+      padding-bottom: 0;
     }
 
     .hero-dashboard-image {
-      border-radius: 18px;
-    }
-
-    .hero-floating-card {
-      position: static;
-      width: 100%;
-      max-width: 420px;
-      margin: 14px auto 0;
-      text-align: center;
-    }
-
-    .hero-floating-card-top {
-      transform: none;
-    }
-
-    .hero-floating-card-detail {
-      justify-content: center;
+      width: calc(100% + 24px);
+      max-width: none;
+      margin-left: -12px;
+      margin-right: -12px;
+      border-radius: 0;
     }
 
     .logo-marquee-section {

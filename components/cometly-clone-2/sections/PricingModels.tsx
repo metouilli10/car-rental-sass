@@ -43,13 +43,15 @@ const pricingTiers: RuixenPricingPlan[] = [
 
 export function PricingModels() {
   return (
-    <RuixenPricing04
-      plans={pricingTiers}
-      title="Tarifs simples et transparents"
-      subtitle="Choisissez l'offre adaptée à la taille de votre flotte. Commencez gratuitement, sans engagement."
-      yearlySaveBadge="Économisez 15%"
-      trustLine="Le prix dépend du nombre de véhicules dans votre flotte. Vous pouvez changer d'offre à tout moment, sans engagement."
-      ctaHelperLines={["Essai gratuit — aucune carte bancaire requise", "Aucun engagement"]}
-    />
+    <section id="tarifs" className="landing-anchor-section">
+      <RuixenPricing04
+        plans={pricingTiers}
+        title="Tarifs simples et transparents"
+        subtitle="Choisissez l'offre adaptée à la taille de votre flotte. Commencez gratuitement, sans engagement."
+        yearlySaveBadge="Économisez 15%"
+        trustLine="Le prix dépend du nombre de véhicules dans votre flotte. Vous pouvez changer d'offre à tout moment, sans engagement."
+        ctaHelperLines={["Essai gratuit — aucune carte bancaire requise", "Aucun engagement"]}
+      />
+    </section>
   )
 }

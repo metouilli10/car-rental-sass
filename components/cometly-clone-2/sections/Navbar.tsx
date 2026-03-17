@@ -22,15 +22,16 @@ export function Navbar() {
 
         <div className="hidden lg:flex items-center gap-8">
           {navLinks.map((link) => (
-            <div
+            <Link
               key={link.label}
+              href={link.href}
               className="group relative flex items-center gap-1.5 cursor-pointer"
             >
               <span className="clone2-nav-link">{link.label}</span>
               {link.hasDropdown && (
                 <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-hover:rotate-180" />
               )}
-            </div>
+            </Link>
           ))}
         </div>
 

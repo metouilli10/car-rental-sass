@@ -15,6 +15,9 @@ import { ReservationContractPanel } from "@/components/reservations/ReservationC
 import { getDepositStatus, getPaymentStatus, getReservationTone } from "@/lib/reservations/presentation";
 import { canDelete } from "@/lib/authz";
 
+export const runtime = "nodejs";
+export const preferredRegion = "fra1";
+
 export default async function BookingDetailsPage({
   params,
 }: {

@@ -99,6 +99,15 @@ export async function createInfraction(data: InfractionFormData) {
     ) {
       return { error: "Réservation ou client invalide pour cette infraction." };
     }
+    if (
+      error instanceof Error &&
+      error.message.includes("permission denied for table infractions")
+    ) {
+      return {
+        error:
+          "Configuration base de données invalide: accès refusé à la table infractions.",
+      };
+    }
     return { error: "Erreur lors de la création de l'infraction" };
   }
 }

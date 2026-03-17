@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 
 export function FeaturesGrid() {
   return (
-    <section className="bg-white py-20 lg:py-24">
+    <section id="fonctionnalites" className="landing-anchor-section bg-white py-20 lg:py-24">
       <div className="container mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-16 xl:gap-20">
           <div>

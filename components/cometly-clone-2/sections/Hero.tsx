@@ -15,6 +15,10 @@ const CARD_POSITIONS = [
 ];
 
 export function Hero() {
+  const headingLines = heroData.heading.split("\n");
+  const proofPoints = heroData.ctaMicroText.split("·").map((item) => item.trim());
+  const proofLine = proofPoints.join(" · ");
+
   return (
     <section className="hero-section relative overflow-hidden pt-28 pb-14 md:pt-32 md:pb-16">
       <Particles
@@ -34,30 +38,36 @@ export function Hero() {
           <p className="hero-eyebrow">{heroData.eyebrow}</p>
 
           <h1 className="hero-title mt-6">
-            <span className="block md:whitespace-nowrap">Gérez toute votre agence de location</span>
-            <span className="block md:whitespace-nowrap">depuis un seul tableau de bord.</span>
+            {headingLines.map((line) => (
+              <span key={line} className="hero-title-line">
+                {line}
+              </span>
+            ))}
           </h1>
 
           <p className="hero-subtitle">{heroData.subheading}</p>
 
           <div className="hero-cta-stack">
-            <div className="hero-cta-row">
+            <div className="hero-cta-row justify-center">
               <Button asChild className="hero-cta-primary">
                 <Link href="/signup">{heroData.ctaPrimary}</Link>
               </Button>
-              <div className="hero-cta-subrow">
-                <span>ou</span>
-                <Link href="#" className="hero-cta-secondary">
-                  {heroData.ctaSecondary}
-                </Link>
-              </div>
+              <Link href="#" className="hero-cta-secondary">
+                {heroData.ctaSecondary}
+              </Link>
             </div>
           </div>
 
-          <div className="hero-proof-row items-center justify-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-hidden />
-            <p>{heroData.reviewText}</p>
+          <div className="hero-proof-row hidden items-center justify-center gap-3 md:inline-flex">
+            {proofPoints.map((point) => (
+              <div key={point} className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-hidden />
+                <p>{point}</p>
+              </div>
+            ))}
           </div>
+
+          <p className="hero-proof-line-mobile md:hidden">{proofLine}</p>
         </div>
 
         <div className="hero-dashboard-wrap">
@@ -74,7 +84,7 @@ export function Hero() {
             {heroData.stats.map((stat, index) => (
               <article
                 key={stat.title}
-                className={`${CARD_POSITIONS[index]} hero-floating-card-${stat.tone}`}
+                className={`${CARD_POSITIONS[index]} hero-floating-card-${stat.tone} hidden md:block`}
               >
                 <div className="hero-floating-card-label">{stat.title}</div>
                 <div className="hero-floating-card-value">{stat.value}</div>

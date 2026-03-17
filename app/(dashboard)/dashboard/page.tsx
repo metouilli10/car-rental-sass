@@ -8,13 +8,19 @@ import { FleetSnapshotBar } from "@/components/dashboard/FleetSnapshotBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardActiveBookingsSection } from "./DashboardActiveBookingsSection";
 import { DashboardPeriodShell } from "./DashboardPeriodShell";
+import { createPerfLogger } from "@/lib/perf";
+
+export const runtime = "nodejs";
+export const preferredRegion = "fra1";
 
 interface DashboardPageProps {
   searchParams: Promise<Record<string, string | undefined>>;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const perf = createPerfLogger("dashboard-page");
   const session = await getSession();
+  perf.step("session-loaded", { hasSession: Boolean(session?.user) });
 
   if (!session?.user) redirect("/login");
   if (!session.user.agencyId) redirect("/setup");
@@ -33,6 +39,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       agencyId,
       periodInput,
     });
+    perf.end({ hasDashboard: Boolean(dashboard) });
   } catch (error) {
     console.error("DashboardPage getDashboardDataV3 failed", { agencyId, error });
     const e = error as { code?: string; message?: string; name?: string };
@@ -40,6 +47,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     const name = e.name ? `name=${e.name}` : null;
     const message = e.message ? `message=${e.message}` : null;
     dashboardErrorDetails = [code, name, message].filter(Boolean).join(" | ");
+    perf.end({ failed: true });
   }
 
   if (!dashboard) {

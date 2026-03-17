@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { bookingSchema, BookingFormData } from "@/lib/validations/booking";
 import { canDelete } from "@/lib/authz";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
+import { createPerfLogger } from "@/lib/perf";
 
 async function validateBookingRelationsForAgency(params: {
   agencyId: string;
@@ -39,7 +40,9 @@ async function validateBookingRelationsForAgency(params: {
 }
 
 export async function createBooking(data: BookingFormData) {
+  const perf = createPerfLogger("action-create-booking");
   const session = await getServerSession(authOptions);
+  perf.step("session-loaded", { hasSession: Boolean(session?.user) });
 
   if (!session) {
     throw new Error("Non autorisé");
@@ -87,6 +90,7 @@ export async function createBooking(data: BookingFormData) {
     });
 
     if (overlappingCount > 0) {
+      perf.end({ overlappingCount });
       return {
         error:
           "Ce véhicule n'est pas disponible pour ces dates. Il existe déjà une réservation.",
@@ -171,24 +175,25 @@ export async function createBooking(data: BookingFormData) {
       },
       select: { id: true },
     });
+    perf.step("booking-created", { bookingId: createdBooking.id });
 
     revalidatePath("/bookings");
-    revalidatePath("/dashboard");
-    revalidatePath("/bookings/create");
-    try {
-      await syncAgencyOnboardingState(session.user.agencyId);
-    } catch (syncError) {
+    void syncAgencyOnboardingState(session.user.agencyId).catch((syncError) => {
       console.error("syncAgencyOnboardingState error:", syncError);
-    }
+    });
+    perf.end({ success: true, bookingId: createdBooking.id });
     return { success: true, bookingId: createdBooking.id };
   } catch (error) {
     console.error("createBooking error:", error);
+    perf.end({ failed: true });
     return { error: "Erreur lors de la création de la réservation" };
   }
 }
 
 export async function attachBookingContract(bookingId: string, contractImageUrl: string) {
+  const perf = createPerfLogger("action-attach-booking-contract", { bookingId });
   const session = await getServerSession(authOptions);
+  perf.step("session-loaded", { hasSession: Boolean(session?.user) });
 
   if (!session) {
     throw new Error("Non autorisé");
@@ -223,10 +228,12 @@ export async function attachBookingContract(bookingId: string, contractImageUrl:
 
     revalidatePath(`/bookings/${bookingId}`);
     revalidatePath("/bookings");
+    perf.end({ success: true });
 
     return { success: true };
   } catch (error) {
     console.error("attachBookingContract error:", error);
+    perf.end({ failed: true });
     return { error: "Erreur lors de l'enregistrement du contrat" };
   }
 }
@@ -242,7 +249,9 @@ export async function saveBookingDraftPlaceholder(data: {
 }
 
 export async function updateBooking(bookingId: string, data: BookingFormData) {
+  const perf = createPerfLogger("action-update-booking", { bookingId });
   const session = await getServerSession(authOptions);
+  perf.step("session-loaded", { hasSession: Boolean(session?.user) });
 
   if (!session) {
     throw new Error("Non autorisé");
@@ -309,6 +318,7 @@ export async function updateBooking(bookingId: string, data: BookingFormData) {
     });
 
     if (overlappingCount > 0) {
+      perf.end({ overlappingCount });
       return {
         error:
           "Ce véhicule n'est pas disponible pour ces dates. Il existe déjà une réservation.",
@@ -372,12 +382,13 @@ export async function updateBooking(bookingId: string, data: BookingFormData) {
     });
 
     revalidatePath("/bookings");
-    revalidatePath("/dashboard");
     revalidatePath(`/bookings/${bookingId}`);
     revalidatePath(`/bookings/${bookingId}/edit`);
+    perf.end({ success: true });
     return { success: true, bookingId };
   } catch (error) {
     console.error("updateBooking error:", error);
+    perf.end({ failed: true });
     return { error: "Erreur lors de la mise à jour de la réservation" };
   }
 }
@@ -386,7 +397,9 @@ export async function updateBookingStatus(
   bookingId: string,
   status: "ACTIVE" | "COMPLETED" | "CANCELED"
 ) {
+  const perf = createPerfLogger("action-update-booking-status", { bookingId, status });
   const session = await getServerSession(authOptions);
+  perf.step("session-loaded", { hasSession: Boolean(session?.user) });
 
   if (!session) {
     throw new Error("Non autorisé");
@@ -427,12 +440,13 @@ export async function updateBookingStatus(
     });
 
     revalidatePath("/bookings");
-    revalidatePath("/dashboard");
     revalidatePath(`/bookings/${bookingId}`);
     revalidatePath("/vehicles");
     revalidatePath("/catalogue");
+    perf.end({ success: true });
   } catch (error) {
     console.error("updateBookingStatus error:", error);
+    perf.end({ failed: true });
     throw new Error("Erreur lors de la mise à jour du statut de la réservation");
   }
 }

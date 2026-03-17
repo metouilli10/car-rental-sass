@@ -2,11 +2,10 @@ import Image from "next/image";
 import { Mail } from "lucide-react";
 
 import { Footer as AnimatedFooter } from "@/components/ui/modem-animated-footer";
+import { navLinks as landingNavLinks } from "../data";
 
 const navLinks = [
-  { label: "Fonctionnalités", href: "#" },
-  { label: "Témoignages", href: "#" },
-  { label: "Tarifs", href: "#" },
+  ...landingNavLinks.map(({ label, href }) => ({ label, href })),
   { label: "Contact", href: "mailto:contact@locaryx.ma" },
 ];
 

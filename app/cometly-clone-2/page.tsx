@@ -9,6 +9,7 @@ import { FeaturesGrid } from "@/components/cometly-clone-2/sections/FeaturesGrid
 import { Testimonials } from "@/components/cometly-clone-2/sections/Testimonials";
 import { PricingModels } from "@/components/cometly-clone-2/sections/PricingModels";
 import { Footer } from "@/components/cometly-clone-2/sections/Footer";
+import { WhatsAppWidget } from "@/components/cometly-clone-2/sections/WhatsAppWidget";
 import { FAQAccordionBlock } from "@/components/ui/faq-accordion-block-shadcnui";
 
 export default function CometlyClonePage() {
@@ -26,6 +27,7 @@ export default function CometlyClonePage() {
         <FAQAccordionBlock />
       </main>
       <Footer />
+      <WhatsAppWidget />
     </CloneLayout>
   );
 }

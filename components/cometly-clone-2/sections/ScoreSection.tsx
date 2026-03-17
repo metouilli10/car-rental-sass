@@ -9,7 +9,7 @@ const ACCORDION_ITEMS = [
     id: "touchpoints",
     title: "Sans conflits de réservation",
     description:
-      "Locaryx affiche la disponibilité de votre flotte en temps réel pour éviter les doubles réservations et garder un planning fiable.",
+      "Chaque réservation est synchronisée pour éviter les doubles locations et les erreurs.",
     image: "/assets/conflits de reservation.png",
   },
   {

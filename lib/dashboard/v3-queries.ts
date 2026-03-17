@@ -144,6 +144,62 @@ interface DashboardPeriodData {
   }>;
 }
 
+function asDate(value: Date | string): Date {
+  return value instanceof Date ? value : new Date(value);
+}
+
+function deserializeDashboardLiveData(data: DashboardLiveData): DashboardLiveData {
+  return {
+    ...data,
+    liveBookings: data.liveBookings.map((booking) => ({
+      ...booking,
+      startDate: asDate(booking.startDate),
+      endDate: asDate(booking.endDate),
+      actualReturnDate: booking.actualReturnDate ? asDate(booking.actualReturnDate) : null,
+    })),
+    deposits: data.deposits.map((deposit) => ({
+      ...deposit,
+      heldAt: asDate(deposit.heldAt),
+      returnedAt: deposit.returnedAt ? asDate(deposit.returnedAt) : null,
+      booking: {
+        ...deposit.booking,
+        endDate: asDate(deposit.booking.endDate),
+        actualReturnDate: deposit.booking.actualReturnDate
+          ? asDate(deposit.booking.actualReturnDate)
+          : null,
+      },
+    })),
+    notifications: data.notifications.map((notification) => ({
+      ...notification,
+      dueAt: notification.dueAt ? asDate(notification.dueAt) : null,
+    })),
+    agency: data.agency
+      ? {
+          ...data.agency,
+          createdAt: asDate(data.agency.createdAt),
+        }
+      : null,
+  };
+}
+
+function deserializeDashboardPeriodData(data: DashboardPeriodData): DashboardPeriodData {
+  return {
+    ...data,
+    resolvedPeriod: {
+      ...data.resolvedPeriod,
+      range: {
+        start: asDate(data.resolvedPeriod.range.start),
+        end: asDate(data.resolvedPeriod.range.end),
+      },
+    },
+    periodBookings: data.periodBookings.map((booking) => ({
+      ...booking,
+      startDate: asDate(booking.startDate),
+      endDate: asDate(booking.endDate),
+    })),
+  };
+}
+
 async function getDashboardLiveDataUncached(agencyId: string): Promise<DashboardLiveData> {
   const startedAt = Date.now();
   const now = new Date();
@@ -1002,10 +1058,13 @@ export async function getDashboardDataV3(input: {
       input.periodInput.end ?? ""
     );
   } catch (error) {
-    if (isIncrementalCacheMissing(error)) {
+    // Fall back to uncached on any cache error (incrementalCache missing, fs issues, etc.)
+    if (isIncrementalCacheMissing(error) || (error instanceof Error && error.message?.includes("cache"))) {
       return getDashboardDataV3Uncached(input);
     }
-    throw error;
+    // Log and fall back to uncached for robustness in production
+    console.error("[dashboard:v3] Cache error, falling back to uncached:", error);
+    return getDashboardDataV3Uncached(input);
   }
 }
 
@@ -1201,7 +1260,8 @@ async function getDashboardLiveData(agencyId: string): Promise<DashboardLiveData
   const dayStart = new Date(now);
   dayStart.setHours(0, 0, 0, 0);
   try {
-    return await getDashboardLiveDataCached(agencyId, dayStart.toISOString());
+    const cached = await getDashboardLiveDataCached(agencyId, dayStart.toISOString());
+    return deserializeDashboardLiveData(cached);
   } catch (error) {
     if (isIncrementalCacheMissing(error)) {
       return getDashboardLiveDataUncached(agencyId);
@@ -1216,12 +1276,13 @@ async function getDashboardPeriodData(input: {
 }): Promise<DashboardPeriodData> {
   const resolvedPeriod = resolveDashboardV3Period(input.periodInput);
   try {
-    return await getDashboardPeriodDataCached(
+    const cached = await getDashboardPeriodDataCached(
       input.agencyId,
       resolvedPeriod.key,
       resolvedPeriod.range.start.toISOString(),
       resolvedPeriod.range.end.toISOString()
     );
+    return deserializeDashboardPeriodData(cached);
   } catch (error) {
     if (isIncrementalCacheMissing(error)) {
       return getDashboardPeriodDataUncached(input);

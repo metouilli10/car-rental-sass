@@ -63,7 +63,7 @@ export default function ClientFeedback({
   const groups = splitTestimonials(paddedItems.slice(0, 7))
 
   return (
-    <section id="testimonials" className="w-full bg-[#f8fafc]">
+    <section id="temoignages" className="landing-anchor-section w-full bg-[#f8fafc]">
       <div className="relative mx-auto max-w-7xl rounded-lg bg-[#f8fafc] py-20 text-black md:py-24">
         <article className="mx-auto max-w-screen-md space-y-2 px-4 text-center">
           <h2 className="text-3xl font-medium xl:text-4xl">{title}</h2>

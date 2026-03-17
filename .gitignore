@@ -14,7 +14,7 @@
 /coverage
 
 # next.js
-/.next/
+/.next
 /.next.broken-*/
 /out/
 
@@ -26,6 +26,7 @@
 *.pem
 
 # debug
+.dev-server.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -33,9 +34,11 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+OWNER_SIGNUPS_ACCESS.md
 
 # MCP config (contains API keys)
 .cursor/mcp.json
+/.firecrawl
 
 # vercel
 .vercel
@@ -53,3 +56,11 @@ next-env.d.ts
 *.db-journal
 prisma/**/*.db
 prisma/**/*.db-journal
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { getSession } from "@/lib/auth-cache";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
@@ -8,122 +9,38 @@ import { BookingsControlCenter, type BookingListItem } from "@/components/bookin
 import { buildBookingRiskSummary, summarizeCustomerRiskHistory } from "@/lib/bookings/risk";
 import type { Prisma } from "@prisma/client";
 import Link from "next/link";
+import { createPerfLogger } from "@/lib/perf";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const runtime = "nodejs";
+export const preferredRegion = "fra1";
 
 const PAGE_SIZE = 25;
+const BOOKINGS_RISK_CACHE_SECONDS = 30;
 
-interface BookingsPageProps {
-  searchParams: Promise<{
-    page?: string;
-    clientId?: string;
-    customerId?: string;
-    filter?: string;
-  }>;
-}
-
-export default async function BookingsPage({ searchParams }: BookingsPageProps) {
-  try {
-    const session = await getSession();
-
-    if (!session?.user) {
-      redirect("/login");
-    }
-
-    const agencyId = session.user.agencyId;
-    if (!agencyId) {
-      redirect("/setup");
-    }
-
-    const params = await searchParams;
-    const page = Math.max(1, Number(params.page) || 1);
-    const selectedClientId = params.clientId || params.customerId;
-    const filter = params.filter;
-    const now = new Date();
-    const today = new Date();
-
-    const where: Prisma.BookingWhereInput = {
-      agencyId,
-      ...(selectedClientId ? { customerId: selectedClientId } : {}),
-      ...(filter === "unpaid"
-        ? {
-            paymentStatus: { in: ["PENDING", "PARTIAL"] },
-            status: { not: "CANCELED" },
-          }
-        : {}),
-      ...(filter === "late"
-        ? {
-            status: { notIn: ["COMPLETED", "CANCELED"] },
-            endDate: { lt: now },
-          }
-        : {}),
-    };
-
-    const [bookings, total, selectedCustomer] = await Promise.all([
-    prisma.booking.findMany({
-      where,
-      select: {
-        id: true,
-        vehicleId: true,
-        customerId: true,
-        paymentStatus: true,
-        paidNow: true,
-        remainingAmount: true,
-        startDate: true,
-        endDate: true,
-        actualReturnDate: true,
-        totalPrice: true,
-        depositAmount: true,
-        depositStatus: true,
-        status: true,
-        customer: { select: { id: true, name: true, phone: true } },
-        vehicle: { select: { id: true, make: true, model: true, plate: true } },
-        deposit: { select: { status: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: PAGE_SIZE,
-      skip: (page - 1) * PAGE_SIZE,
-    }),
-    prisma.booking.count({ where }),
-    selectedClientId
-      ? prisma.customer.findFirst({
-          where: { id: selectedClientId, agencyId },
-          select: { name: true },
-        })
-      : null,
-  ]);
-
-    const totalPages = Math.ceil(total / PAGE_SIZE);
-    const bookingIds = bookings.map((booking) => booking.id);
-    const vehicleIds = Array.from(new Set(bookings.map((booking) => booking.vehicleId)));
-    const customerIds = Array.from(new Set(bookings.map((booking) => booking.customerId)));
-
-    const minStartDate =
-      bookings.length > 0
-        ? bookings.reduce(
-            (minDate, booking) =>
-              booking.startDate < minDate ? booking.startDate : minDate,
-            bookings[0].startDate
-          )
-        : null;
-    const maxEndDate =
-      bookings.length > 0
-        ? bookings.reduce(
-            (maxDate, booking) => (booking.endDate > maxDate ? booking.endDate : maxDate),
-            bookings[0].endDate
-          )
-        : null;
+const getBookingsRiskContext = unstable_cache(
+  async (
+    agencyId: string,
+    bookingIdsKey: string,
+    vehicleIdsKey: string,
+    customerIdsKey: string,
+    minStartIso: string,
+    maxEndIso: string
+  ) => {
+    const bookingIds = bookingIdsKey ? bookingIdsKey.split(",") : [];
+    const vehicleIds = vehicleIdsKey ? vehicleIdsKey.split(",") : [];
+    const customerIds = customerIdsKey ? customerIdsKey.split(",") : [];
 
     const [overlapCandidates, customerHistoryRows] = await Promise.all([
-      vehicleIds.length > 0 && minStartDate && maxEndDate
+      vehicleIds.length > 0
         ? prisma.booking.findMany({
             where: {
               agencyId,
               vehicleId: { in: vehicleIds },
               status: { notIn: ["CANCELED", "COMPLETED"] },
-              startDate: { lte: maxEndDate },
-              endDate: { gte: minStartDate },
+              startDate: { lte: new Date(maxEndIso) },
+              endDate: { gte: new Date(minStartIso) },
             },
             select: {
               id: true,
@@ -169,6 +86,132 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
         : Promise.resolve([]),
     ]);
 
+    return { overlapCandidates, customerHistoryRows };
+  },
+  ["bookings-risk-context"],
+  { revalidate: BOOKINGS_RISK_CACHE_SECONDS }
+);
+
+interface BookingsPageProps {
+  searchParams: Promise<{
+    page?: string;
+    clientId?: string;
+    customerId?: string;
+    filter?: string;
+  }>;
+}
+
+export default async function BookingsPage({ searchParams }: BookingsPageProps) {
+  const perf = createPerfLogger("bookings-page");
+  try {
+    const session = await getSession();
+    perf.step("session-loaded", { hasSession: Boolean(session?.user) });
+
+    if (!session?.user) {
+      redirect("/login");
+    }
+
+    const agencyId = session.user.agencyId;
+    if (!agencyId) {
+      redirect("/setup");
+    }
+
+    const params = await searchParams;
+    const page = Math.max(1, Number(params.page) || 1);
+    const selectedClientId = params.clientId || params.customerId;
+    const filter = params.filter;
+    const now = new Date();
+    const today = new Date();
+
+    const where: Prisma.BookingWhereInput = {
+      agencyId,
+      ...(selectedClientId ? { customerId: selectedClientId } : {}),
+      ...(filter === "unpaid"
+        ? {
+            paymentStatus: { in: ["PENDING", "PARTIAL"] },
+            status: { not: "CANCELED" },
+          }
+        : {}),
+      ...(filter === "late"
+        ? {
+            status: { notIn: ["COMPLETED", "CANCELED"] },
+            endDate: { lt: now },
+          }
+        : {}),
+    };
+
+    const [bookings, total, selectedCustomer] = await Promise.all([
+      prisma.booking.findMany({
+        where,
+        select: {
+          id: true,
+          vehicleId: true,
+          customerId: true,
+          paymentStatus: true,
+          paidNow: true,
+          remainingAmount: true,
+          startDate: true,
+          endDate: true,
+          actualReturnDate: true,
+          totalPrice: true,
+          depositAmount: true,
+          depositStatus: true,
+          status: true,
+          customer: { select: { id: true, name: true, phone: true } },
+          vehicle: { select: { id: true, make: true, model: true, plate: true } },
+          deposit: { select: { status: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: PAGE_SIZE,
+        skip: (page - 1) * PAGE_SIZE,
+      }),
+      prisma.booking.count({ where }),
+      selectedClientId
+        ? prisma.customer.findFirst({
+            where: { id: selectedClientId, agencyId },
+            select: { name: true },
+          })
+        : null,
+    ]);
+    perf.step("base-queries-loaded", { bookings: bookings.length, total });
+
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    const bookingIds = bookings.map((booking) => booking.id);
+    const vehicleIds = Array.from(new Set(bookings.map((booking) => booking.vehicleId)));
+    const customerIds = Array.from(new Set(bookings.map((booking) => booking.customerId)));
+
+    const minStartDate =
+      bookings.length > 0
+        ? bookings.reduce(
+            (minDate, booking) =>
+              booking.startDate < minDate ? booking.startDate : minDate,
+            bookings[0].startDate
+          )
+        : null;
+    const maxEndDate =
+      bookings.length > 0
+        ? bookings.reduce(
+            (maxDate, booking) => (booking.endDate > maxDate ? booking.endDate : maxDate),
+            bookings[0].endDate
+          )
+        : null;
+
+    const { overlapCandidates, customerHistoryRows } =
+      vehicleIds.length > 0 && minStartDate && maxEndDate
+        ? await getBookingsRiskContext(
+            agencyId,
+            bookingIds.join(","),
+            vehicleIds.join(","),
+            customerIds.join(","),
+            minStartDate.toISOString(),
+            maxEndDate.toISOString()
+          )
+        : { overlapCandidates: [], customerHistoryRows: [] };
+    perf.step("risk-context-loaded", {
+      overlapCandidates: overlapCandidates.length,
+      customerHistoryRows: customerHistoryRows.length,
+    });
+
     const historyByCustomerId = new Map<string, (typeof customerHistoryRows)[number][]>();
 
     for (const historyRow of customerHistoryRows) {
@@ -212,6 +255,8 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
         today,
       }),
     }));
+
+    perf.end({ rendered: bookingsData.length });
 
     return (
     <div className="space-y-8">
@@ -268,6 +313,7 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
     </div>
     );
   } catch (err) {
+    perf.end({ failed: true });
     console.error("BookingsPage error:", err);
     throw err;
   }

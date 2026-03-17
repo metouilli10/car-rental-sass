@@ -13,21 +13,21 @@ import {
 } from "lucide-react";
 
 export const navLinks = [
-  { label: "Fonctionnalités", hasDropdown: false },
-  { label: "Témoignages", hasDropdown: false },
-  { label: "Tarifs", hasDropdown: false },
+  { label: "Fonctionnalités", href: "#fonctionnalites", hasDropdown: false },
+  { label: "Témoignages", href: "#temoignages", hasDropdown: false },
+  { label: "Tarifs", href: "#tarifs", hasDropdown: false },
 ];
 
 export const heroData = {
-  eyebrow: "LE LOGICIEL DE GESTION POUR AGENCES DE LOCATION AU MAROC",
-  heading: "Gérez toute votre agence de location depuis un seul tableau de bord.",
+  eyebrow: "Nouveau · Locaryx pour agences marocaines",
+  heading: "Votre agence, sous contrôle.\nVos locations, en pilote automatique.",
   subheading:
-    "Réservations, véhicules, cautions et paiements — tout est centralisé pour éviter les erreurs et gagner du temps chaque jour.",
-  ctaPrimary: "Commencer gratuitement",
-  ctaSecondary: "Voir la démo",
-  ctaMicroText: "Essai gratuit — aucune carte bancaire requise.",
+    "Locaryx centralise vos réservations, contrats et paiements en un seul endroit — pour que vous passiez plus de temps à louer, et moins à chercher des fichiers.",
+  ctaPrimary: "Essayer gratuitement",
+  ctaSecondary: "Voir une démo →",
+  ctaMicroText: "Sans carte bancaire  ·  Prêt en 5 minutes  ·  Support en français",
   trustText: "Ils font confiance à Locaryx pour gérer leur agence",
-  reviewText: "Déjà adopté par des agences de location modernes au Maroc.",
+  reviewText: "Sans carte bancaire  ·  Prêt en 5 minutes  ·  Support en français",
   localPositioningText: "Conçu pour les agences de location modernes au Maroc.",
   stats: [
     {
@@ -140,44 +140,44 @@ export const howItWorksSteps = [
 export const testimonials = [
   {
     quote:
-      "Avant Locaryx, nous avions souvent des conflits de réservation. Maintenant tout est clair sur le tableau de bord.",
-    name: "Youssef B.",
-    role: "Gérant - Agadir Rent Cars",
-    company: "Agadir Rent Cars",
+      "Avant, on confirmait encore des locations sur WhatsApp et on recopiait tout à la main. Depuis qu'on est passés sur Locaryx, le planning est plus propre et on a presque supprimé les erreurs de disponibilité.",
+    name: "Youssef A.",
+    role: "Gérant",
+    company: "Agadir Drive",
   },
   {
     quote:
-      "Le calendrier nous fait gagner du temps chaque jour. Toute l'équipe voit les réservations en temps réel.",
-    name: "Sarah L.",
-    role: "Responsable flotte - Atlas Car Rental",
-    company: "Atlas Car Rental",
+      "Le calendrier change vraiment le quotidien de l'équipe. Quand un véhicule part, revient ou change de statut, tout le monde voit la même information tout de suite.",
+    name: "Sara E.",
+    role: "Responsable flotte",
+    company: "Atlas Mobility",
   },
   {
     quote:
-      "Les cautions et les paiements sont beaucoup plus simples à suivre. On retrouve les informations sans chercher partout.",
-    name: "Karim M.",
-    role: "Fondateur - Marrakech Drive",
-    company: "Marrakech Drive",
+      "Le suivi des cautions nous prenait un temps fou. Maintenant on sait ce qui a été encaissé, restitué ou oublié sans devoir ouvrir plusieurs fichiers.",
+    name: "Karim T.",
+    role: "Fondateur",
+    company: "Marrakech Car Hire",
   },
   {
     quote:
-      "Créer une réservation prend quelques secondes et toutes les informations client sont déjà centralisées.",
-    name: "Nadia T.",
-    role: "Manager - Sahara Mobility",
-    company: "Sahara Mobility",
+      "Quand un client appelle, on retrouve son dossier en quelques secondes. Réservations passées, contrat, paiement, permis: tout est au même endroit.",
+    name: "Nadia R.",
+    role: "Office manager",
+    company: "Sahara Cars",
   },
   {
     quote:
-      "Les inspections avec photos nous évitent beaucoup de discussions au retour du véhicule. Tout est documenté.",
-    name: "Rachid A.",
-    role: "Responsable opérations - Ocean Cars",
-    company: "Ocean Cars",
+      "Les états de départ et de retour avec photos nous ont évité plusieurs discussions inutiles avec des clients. C'est simple, mais ça change beaucoup.",
+    name: "Rachid B.",
+    role: "Responsable opérations",
+    company: "Ocean Ride",
   },
   {
     quote:
-      "On a enfin une vue claire sur les réservations, les revenus et la disponibilité de la flotte au même endroit.",
-    name: "Imane K.",
-    role: "Directrice - City Rent Agadir",
+      "Ce que j'apprécie surtout, c'est la vue d'ensemble. Je peux vérifier les réservations, les paiements et les voitures disponibles sans passer d'un outil à l'autre.",
+    name: "Imane L.",
+    role: "Directrice",
     company: "City Rent Agadir",
   },
 ];
