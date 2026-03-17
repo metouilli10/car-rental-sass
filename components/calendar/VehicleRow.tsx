@@ -22,12 +22,12 @@ export function VehicleRow({ vehicle }: VehicleRowProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 p-3 border-b border-r border-border min-h-[80px]",
-        statusBackgroundClass
+        "sticky left-0 z-10 flex min-h-[80px] items-center gap-2 border-b border-r border-border p-3 sm:gap-3",
+        statusBackgroundClass,
       )}
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-        <div className="relative h-6 w-6">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted sm:h-9 sm:w-9">
+        <div className="relative h-5 w-5 sm:h-6 sm:w-6">
           <Image
             src={logoSrc}
             alt={`${vehicle.make} logo`}
@@ -38,10 +38,10 @@ export function VehicleRow({ vehicle }: VehicleRowProps) {
         </div>
       </div>
       <div className="min-w-0 flex-1">
-        <div className="font-semibold text-sm truncate">
+        <div className="truncate text-sm font-semibold">
           {vehicle.make} {vehicle.model}
         </div>
-        <div className="text-xs text-muted-foreground truncate">
+        <div className="truncate text-[11px] text-muted-foreground sm:text-xs">
           {vehicle.plate}
         </div>
         <div className="mt-1">

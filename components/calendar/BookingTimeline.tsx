@@ -144,7 +144,7 @@ export function BookingTimeline({
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <TimelineHeader
         weekStart={weekStart}
         weekEnd={weekEnd}
@@ -156,26 +156,27 @@ export function BookingTimeline({
       />
 
       {/* Quick stats bar */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-card rounded-lg border border-border p-3 text-center">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <div className="bg-card rounded-lg border border-border p-3 text-center sm:p-4">
           <div className="text-lg font-bold text-foreground">
             {stats.active + stats.confirmed}
           </div>
           <div className="text-xs text-muted-foreground">Réservations</div>
         </div>
-        <div className="bg-card rounded-lg border border-border p-3 text-center">
+        <div className="bg-card rounded-lg border border-border p-3 text-center sm:p-4">
           <div className="text-lg font-bold text-foreground">
             {stats.occupationRate}%
           </div>
           <div className="text-xs text-muted-foreground">Taux d&apos;occupation</div>
         </div>
-        <div className="bg-card rounded-lg border border-border p-3 text-center">
+        <div className="bg-card rounded-lg border border-border p-3 text-center sm:p-4">
           <div className="text-lg font-bold text-emerald-600">{stats.active}</div>
           <div className="text-xs text-muted-foreground">En location</div>
         </div>
-        <div className="bg-card rounded-lg border border-border p-3 text-center">
-          <div className="text-lg font-bold text-foreground">
-            {formattedRevenue} MAD
+        <div className="bg-card rounded-lg border border-border p-3 text-center sm:p-4">
+          <div className="text-lg font-bold text-foreground sm:text-xl">
+            <span className="block leading-none">{formattedRevenue}</span>
+            <span className="mt-1 block text-base sm:text-lg">MAD</span>
           </div>
           <div className="text-xs text-muted-foreground">Revenu semaine</div>
         </div>

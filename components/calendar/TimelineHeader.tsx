@@ -34,17 +34,17 @@ export function TimelineHeader({
   return (
     <div className="space-y-4">
       {/* Title Row */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <CalendarDays className="h-6 w-6 text-primary" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="flex items-start gap-2 text-2xl font-bold tracking-tight sm:items-center">
+            <CalendarDays className="mt-1 h-5 w-5 shrink-0 text-primary sm:mt-0 sm:h-6 sm:w-6" />
             Calendrier des Réservations
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Vue chronologique de toutes les réservations par véhicule
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="w-full sm:w-auto">
           <Link href="/bookings/create">
             <Plus className="h-4 w-4 mr-2" />
             Nouvelle Réservation
@@ -53,12 +53,12 @@ export function TimelineHeader({
       </div>
 
       {/* Navigation Row */}
-      <div className="flex items-center justify-between bg-card rounded-lg border border-border p-3">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3">
+        <div className="grid w-full grid-cols-[auto,1fr,auto] items-center gap-2 sm:flex sm:w-auto sm:justify-start">
           <Button variant="outline" size="icon" onClick={onPreviousWeek}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm font-medium min-w-[220px] text-center capitalize">
+          <span className="min-w-0 px-2 text-center text-sm font-medium capitalize sm:min-w-[220px]">
             {dateRangeLabel}
           </span>
           <Button variant="outline" size="icon" onClick={onNextWeek}>
@@ -66,8 +66,8 @@ export function TimelineHeader({
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onToday}>
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <Button variant="outline" size="sm" onClick={onToday} className="w-full sm:w-auto">
             Aujourd&apos;hui
           </Button>
 
@@ -75,7 +75,7 @@ export function TimelineHeader({
           <select
             value={statusFilter}
             onChange={(e) => onStatusFilterChange(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 sm:w-[200px]"
           >
             <option value="all">Tous les statuts</option>
             <option value="CONFIRMED">Confirmées</option>
@@ -87,7 +87,7 @@ export function TimelineHeader({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-blue-100 border-l-2 border-blue-500" />
           <span>Confirmé</span>

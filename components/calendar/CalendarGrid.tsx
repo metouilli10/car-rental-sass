@@ -94,10 +94,16 @@ export function CalendarGrid({
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <div ref={scrollContainerRef} className="overflow-x-auto">
-        <div className="min-w-[900px]">
-          <div className="grid border-b border-border" style={{ gridTemplateColumns: "200px repeat(7, 1fr)" }}>
-            <div className="border-r border-border bg-muted/50 p-3">
+      <div className="border-b border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground sm:hidden">
+        Faites glisser horizontalement pour voir toute la semaine.
+      </div>
+      <div ref={scrollContainerRef} className="overflow-x-auto pb-2">
+        <div className="min-w-[720px] sm:min-w-[900px]">
+          <div
+            className="grid border-b border-border"
+            style={{ gridTemplateColumns: "160px repeat(7, minmax(80px, 1fr))" }}
+          >
+            <div className="sticky left-0 z-20 border-r border-border bg-muted/50 p-3">
               <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Véhicules
               </span>
@@ -106,7 +112,7 @@ export function CalendarGrid({
               <div
                 key={day.toISOString()}
                 className={cn(
-                  "border-r border-border p-3 text-center last:border-r-0",
+                  "border-r border-border px-2 py-3 text-center last:border-r-0 sm:p-3",
                   isToday(day) ? "bg-primary/10 font-semibold" : "bg-muted/30",
                 )}
               >
@@ -132,7 +138,7 @@ export function CalendarGrid({
               <div
                 key={vehicle.id}
                 className="grid border-b border-border last:border-b-0"
-                style={{ gridTemplateColumns: "200px repeat(7, 1fr)", minHeight: "86px" }}
+                style={{ gridTemplateColumns: "160px repeat(7, minmax(80px, 1fr))", minHeight: "86px" }}
               >
                 <VehicleRow vehicle={vehicle} />
 
