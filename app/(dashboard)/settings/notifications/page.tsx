@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { ReminderType } from "@prisma/client";
+import { TestNotificationEmailButton } from "./test-notification-email-button";
 
 const REMINDER_TYPES: { type: ReminderType; label: string; Icon: React.ElementType }[] = [
   { type: "OIL_CHANGE", label: "Vidange", Icon: Wrench },
@@ -39,11 +40,13 @@ function ChannelCard({
   title,
   description,
   comingSoon = false,
+  active = false,
 }: {
   icon: React.ElementType;
   title: string;
   description: string;
   comingSoon?: boolean;
+  active?: boolean;
 }) {
   return (
     <div className="flex items-start gap-4 p-4 rounded-xl border border-border/40 bg-muted/10">
@@ -59,9 +62,13 @@ function ChannelCard({
       </div>
       <Badge
         variant="outline"
-        className="shrink-0 border-amber-300 bg-amber-50 text-amber-800"
+        className={
+          active
+            ? "shrink-0 border-emerald-300 bg-emerald-50 text-emerald-800"
+            : "shrink-0 border-amber-300 bg-amber-50 text-amber-800"
+        }
       >
-        Inactif
+        {active ? "Actif" : "Inactif"}
       </Badge>
     </div>
   );
@@ -74,12 +81,24 @@ export default async function NotificationSettingsPage() {
   const agencyId = session.user.agencyId;
 
   // Load existing reminder rules for this agency
-  const rules = await prisma.reminderRule.findMany({
-    where: { agencyId },
-  });
+  const [rules, agency] = await Promise.all([
+    prisma.reminderRule.findMany({
+      where: { agencyId },
+    }),
+    prisma.agency.findUnique({
+      where: { id: agencyId },
+      select: { email: true },
+    }),
+  ]);
 
   const getRuleForType = (type: ReminderType) =>
     rules.find((r) => r.type === type);
+  const emailReady = Boolean(
+    process.env.RESEND_API_KEY?.trim() &&
+      process.env.RESEND_FROM_EMAIL?.trim() &&
+      agency?.email?.trim()
+  );
+  const agencyEmail = agency?.email?.trim() || null;
 
   return (
     <div className="space-y-8 max-w-2xl">
@@ -140,13 +159,12 @@ export default async function NotificationSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Email — coming soon */}
+      {/* Email */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Mail className="h-5 w-5 text-primary" />
             Rappels par email
-            <ComingSoonBadge />
           </CardTitle>
           <p className="text-xs text-muted-foreground">
             Recevez des rappels par email avant les échéances de vos véhicules.
@@ -156,14 +174,38 @@ export default async function NotificationSettingsPage() {
           <ChannelCard
             icon={Mail}
             title="Activer les rappels email"
-            description="Envoie un email à l'adresse de l'agence 30, 15 et 7 jours avant chaque échéance."
-            comingSoon
+            description={
+              emailReady
+                ? "Les rappels email sont envoyés à l'adresse email de l'agence lors de la création d'une alerte ou quand elle devient urgente."
+                : "Configurez Resend et une adresse expéditrice pour activer l'envoi d'emails."
+            }
+            active={emailReady}
           />
           <div className="p-3 rounded-xl border border-border/30 bg-muted/10">
             <p className="text-xs text-muted-foreground">
               <strong>Email expéditeur :</strong>{" "}
-              <span className="font-mono text-muted-foreground/70">— (non configuré)</span>
+              <span className="font-mono text-muted-foreground/70">
+                {process.env.RESEND_FROM_EMAIL?.trim() || "— (non configuré)"}
+              </span>
             </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              <strong>Email destinataire :</strong>{" "}
+              <span className="font-mono text-muted-foreground/70">
+                {agencyEmail || "— (non configuré)"}
+              </span>
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 rounded-xl border border-border/30 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">
+                Vérification manuelle
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Envoie un email de test vers l'adresse de l'agence et enregistre un
+                `NotificationEvent`.
+              </p>
+            </div>
+            <TestNotificationEmailButton disabled={!emailReady} />
           </div>
         </CardContent>
       </Card>
