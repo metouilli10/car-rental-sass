@@ -28,7 +28,6 @@ import {
 } from "./v3-rules";
 import {
   isAgencyEligibleForGuidedOnboarding,
-  syncAgencyOnboardingState,
 } from "@/lib/onboarding/agency-onboarding";
 import {
   calculateFinanceTotals,
@@ -232,6 +231,11 @@ function computeBookingRemainingAmountFromPayments(booking: DashboardLiveBooking
   );
 }
 
+function isWithinDayRange(value: Date, start: Date, endExclusive: Date): boolean {
+  const time = value.getTime();
+  return time >= start.getTime() && time < endExclusive.getTime();
+}
+
 export function buildActiveBookingsDTOFromLiveData(input: {
   liveBookings: DashboardLiveData["liveBookings"];
   now: Date;
@@ -418,17 +422,15 @@ async function getDashboardLiveDataUncached(agencyId: string): Promise<Dashboard
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
+  const liveQueriesStartedAt = Date.now();
   const [
     liveBookings,
     deposits,
     vehicles,
     notifications,
     agency,
-    departuresToday,
-    returnsToday,
-    overdueReturnsToday,
-    historicalReservationCount,
-    historicalPaidPaymentCount,
+    historicalReservation,
+    historicalPaidPayment,
   ] = await Promise.all([
     prisma.booking.findMany({
       where: {
@@ -536,48 +538,41 @@ async function getDashboardLiveDataUncached(agencyId: string): Promise<Dashboard
         onboardingDismissed: true,
       },
     }),
-    prisma.booking.count({
-      where: {
-        agencyId,
-        status: { not: "CANCELED" },
-        startDate: {
-          gte: todayStart,
-          lt: tomorrowStart,
-        },
-      },
-    }),
-    prisma.booking.count({
-      where: {
-        agencyId,
-        status: { not: "CANCELED" },
-        endDate: {
-          gte: todayStart,
-          lt: tomorrowStart,
-        },
-      },
-    }),
-    prisma.booking.count({
-      where: {
-        agencyId,
-        status: { in: ["CONFIRMED", "ACTIVE"] },
-        endDate: {
-          lt: now,
-        },
-      },
-    }),
-    prisma.booking.count({
+    prisma.booking.findFirst({
       where: {
         agencyId,
         status: { not: "CANCELED" },
       },
+      select: { id: true },
     }),
-    prisma.payment.count({
+    prisma.payment.findFirst({
       where: {
         booking: { agencyId },
         status: "PAID",
       },
+      select: { id: true },
     }),
   ]);
+  logPerf("live-query-batch", liveQueriesStartedAt, { agencyId });
+
+  const liveDerivationsStartedAt = Date.now();
+  const departuresToday = liveBookings.filter((booking) =>
+    isWithinDayRange(booking.startDate, todayStart, tomorrowStart)
+  ).length;
+  const returnsToday = liveBookings.filter((booking) =>
+    isWithinDayRange(booking.endDate, todayStart, tomorrowStart)
+  ).length;
+  const overdueReturnsToday = liveBookings.filter(
+    (booking) => booking.endDate.getTime() < now.getTime()
+  ).length;
+  const historicalReservationCount = historicalReservation ? 1 : 0;
+  const historicalPaidPaymentCount = historicalPaidPayment ? 1 : 0;
+  logPerf("live-derivations", liveDerivationsStartedAt, {
+    agencyId,
+    departuresToday,
+    returnsToday,
+    overdueReturnsToday,
+  });
 
   logPerf("live-queries", startedAt, {
     agencyId,
@@ -610,8 +605,10 @@ async function getDashboardPeriodDataUncached(input: {
 }): Promise<DashboardPeriodData> {
   const startedAt = Date.now();
   const resolvedPeriod = resolveDashboardV3Period(input.periodInput);
-  const [payments, periodBookings, cashExpenseAgg] = await Promise.all([
-    prisma.payment.findMany({
+  const periodQueriesStartedAt = Date.now();
+  const [paymentGroups, periodBookings, cashExpenseAgg] = await Promise.all([
+    prisma.payment.groupBy({
+      by: ["status", "category"],
       where: {
         booking: { agencyId: input.agencyId },
         OR: [
@@ -642,10 +639,8 @@ async function getDashboardPeriodDataUncached(input: {
           },
         ],
       },
-      select: {
+      _sum: {
         amount: true,
-        category: true,
-        status: true,
       },
     }),
     prisma.booking.findMany({
@@ -673,21 +668,34 @@ async function getDashboardPeriodDataUncached(input: {
       },
     }),
   ]);
+  logPerf("period-query-batch", periodQueriesStartedAt, {
+    agencyId: input.agencyId,
+    period: resolvedPeriod.key,
+  });
 
+  const periodDerivationsStartedAt = Date.now();
   let paidInflows = 0;
   let refundedOutflows = 0;
-  for (const payment of payments) {
-    if (payment.status === "PAID" && payment.category === "RENTAL") {
-      paidInflows += payment.amount;
-    } else if (payment.status === "REFUNDED") {
-      refundedOutflows += payment.amount;
+  for (const group of paymentGroups) {
+    const amount = Number(group._sum.amount ?? 0);
+    if (group.status === "PAID" && group.category === "RENTAL") {
+      paidInflows += amount;
+    } else if (group.status === "REFUNDED") {
+      refundedOutflows += amount;
     }
   }
+  logPerf("period-derivations", periodDerivationsStartedAt, {
+    agencyId: input.agencyId,
+    period: resolvedPeriod.key,
+    paymentGroups: paymentGroups.length,
+    paidInflows,
+    refundedOutflows,
+  });
 
   logPerf("period-queries", startedAt, {
     agencyId: input.agencyId,
     period: resolvedPeriod.key,
-    payments: payments.length,
+    paymentGroups: paymentGroups.length,
     periodBookings: periodBookings.length,
   });
 
@@ -1100,13 +1108,6 @@ async function getDashboardDataV3Uncached(input: {
       dismissed: !onboardingEligible || Boolean(agency?.onboardingDismissed),
     },
   };
-
-  void syncAgencyOnboardingState(input.agencyId).catch((error) => {
-    console.error("syncAgencyOnboardingState failed", {
-      agencyId: input.agencyId,
-      error,
-    });
-  });
 
   logPerf("core-total", startedAt, {
     agencyId: input.agencyId,

@@ -13,12 +13,14 @@ import {
   CheckCircle2,
   Clock,
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { NotificationActions } from "./notification-actions-client";
-import type { ReminderType, NotificationSeverity, NotificationStatus } from "@prisma/client";
-
-// ─── Helpers ───────────────────────────────────────────────────────────────
+import { NotificationFiltersClient } from "./notification-filters-client";
+import type {
+  NotificationSeverity,
+  NotificationStatus,
+  ReminderType,
+} from "@prisma/client";
 
 const TYPE_LABELS: Record<ReminderType, string> = {
   OIL_CHANGE: "Vidange",
@@ -57,6 +59,36 @@ const STATUS_LABELS: Record<NotificationStatus, string> = {
   DISMISSED: "Ignorée",
 };
 
+type PageSearchParams = Promise<{
+  status?: string;
+  severity?: string;
+  type?: string;
+  q?: string;
+}>;
+
+type PageStatusFilter = "ALL" | NotificationStatus;
+type PageSeverityFilter = "ALL" | NotificationSeverity;
+type PageTypeFilter = "ALL" | ReminderType;
+
+function parseStatus(value?: string): PageStatusFilter {
+  return value === "OPEN" || value === "SNOOZED" || value === "DONE" || value === "DISMISSED"
+    ? value
+    : "ALL";
+}
+
+function parseSeverity(value?: string): PageSeverityFilter {
+  return value === "INFO" || value === "WARNING" || value === "DUE" ? value : "ALL";
+}
+
+function parseType(value?: string): PageTypeFilter {
+  return value === "OIL_CHANGE" ||
+    value === "INSURANCE_EXPIRY" ||
+    value === "TECH_INSPECTION" ||
+    value === "VIGNETTE"
+    ? value
+    : "ALL";
+}
+
 function SeverityBadge({ severity }: { severity: NotificationSeverity }) {
   const cfg = SEVERITY_CONFIG[severity];
   return (
@@ -68,12 +100,98 @@ function SeverityBadge({ severity }: { severity: NotificationSeverity }) {
   );
 }
 
-// ─── Notification card ─────────────────────────────────────────────────────
+function StatusBadge({ status }: { status: NotificationStatus }) {
+  const tone =
+    status === "OPEN"
+      ? "bg-slate-900 text-white"
+      : status === "SNOOZED"
+      ? "bg-amber-50 text-amber-700 border border-amber-200"
+      : status === "DONE"
+      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+      : "bg-slate-100 text-slate-600 border border-slate-200";
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone}`}>
+      {STATUS_LABELS[status]}
+    </span>
+  );
+}
+
+async function fetchNotifications(input: {
+  agencyId: string;
+  status: PageStatusFilter;
+  severity: PageSeverityFilter;
+  type: PageTypeFilter;
+  query: string;
+}) {
+  const normalizedQuery = input.query.trim();
+
+  return prisma.notification.findMany({
+    where: {
+      agencyId: input.agencyId,
+      ...(input.status !== "ALL" ? { status: input.status } : {}),
+      ...(input.severity !== "ALL" ? { severity: input.severity } : {}),
+      ...(input.type !== "ALL" ? { type: input.type } : {}),
+      ...(normalizedQuery
+        ? {
+            OR: [
+              { title: { contains: normalizedQuery, mode: "insensitive" } },
+              { body: { contains: normalizedQuery, mode: "insensitive" } },
+              { vehicle: { make: { contains: normalizedQuery, mode: "insensitive" } } },
+              { vehicle: { model: { contains: normalizedQuery, mode: "insensitive" } } },
+              { vehicle: { plate: { contains: normalizedQuery, mode: "insensitive" } } },
+            ],
+          }
+        : {}),
+    },
+    include: {
+      vehicle: { select: { id: true, make: true, model: true, plate: true } },
+    },
+    orderBy: [{ severity: "desc" }, { updatedAt: "desc" }],
+  });
+}
+
+async function fetchStatusCounts(agencyId: string) {
+  const grouped = await prisma.notification.groupBy({
+    by: ["status"],
+    where: { agencyId },
+    _count: { status: true },
+  });
+
+  const counts: Record<PageStatusFilter, number> = {
+    ALL: 0,
+    OPEN: 0,
+    SNOOZED: 0,
+    DONE: 0,
+    DISMISSED: 0,
+  };
+
+  for (const row of grouped) {
+    counts[row.status] = row._count.status;
+    counts.ALL += row._count.status;
+  }
+
+  return counts;
+}
+
+function EmptyState({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted/40">
+        <Bell className="h-6 w-6 text-muted-foreground/50" />
+      </div>
+      <p className="text-sm font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xs text-muted-foreground/60">
+        Ajustez les filtres ou revenez à une vue plus large.
+      </p>
+    </div>
+  );
+}
 
 function NotificationCard({
   notif,
 }: {
-  notif: Awaited<ReturnType<typeof fetchNotifications>>[0];
+  notif: Awaited<ReturnType<typeof fetchNotifications>>[number];
 }) {
   const Icon = TYPE_ICONS[notif.type];
   const colorCls = TYPE_COLORS[notif.type];
@@ -91,22 +209,18 @@ function NotificationCard({
 
   return (
     <div
-      className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${
+      className={`flex items-start gap-4 rounded-xl border p-4 transition-colors ${
         notif.status === "OPEN"
-          ? "bg-white border-border/40 hover:bg-muted/10"
-          : "bg-muted/20 border-border/20"
+          ? "border-border/40 bg-white hover:bg-muted/10"
+          : "border-border/20 bg-muted/20"
       }`}
     >
-      {/* Icon */}
-      <div
-        className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${colorCls}`}
-      >
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${colorCls}`}>
         <Icon className="h-5 w-5" />
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
           <p
             className={`text-sm font-semibold ${
               notif.status !== "OPEN" ? "text-muted-foreground" : "text-foreground"
@@ -115,20 +229,19 @@ function NotificationCard({
             {notif.title}
           </p>
           <SeverityBadge severity={notif.severity} />
-          <span className="text-[10px] text-muted-foreground bg-muted/60 border border-border/30 px-1.5 py-0.5 rounded-full">
+          <StatusBadge status={notif.status} />
+          <span className="rounded-full border border-border/30 bg-muted/60 px-1.5 py-0.5 text-[10px] text-muted-foreground">
             {TYPE_LABELS[notif.type]}
           </span>
         </div>
 
-        <p className="text-xs text-muted-foreground mt-0.5">{notif.body}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{notif.body}</p>
 
-        <div className="flex items-center gap-3 mt-1 flex-wrap">
-          <span className="text-xs text-muted-foreground/70 font-medium">
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <span className="text-xs font-medium text-muted-foreground/70">
             {notif.vehicle.make} {notif.vehicle.model} · {notif.vehicle.plate}
           </span>
-          {dueLine && (
-            <span className="text-xs text-muted-foreground">{dueLine}</span>
-          )}
+          {dueLine && <span className="text-xs text-muted-foreground">{dueLine}</span>}
           {snoozeLine && (
             <span className="flex items-center gap-1 text-xs text-amber-600">
               <Clock className="h-3 w-3" />
@@ -144,146 +257,75 @@ function NotificationCard({
         </div>
       </div>
 
-      {/* Actions */}
-      <NotificationActions
-        id={notif.id}
-        vehicleId={notif.vehicle.id}
-        status={notif.status}
-      />
+      <NotificationActions id={notif.id} vehicleId={notif.vehicle.id} status={notif.status} />
     </div>
   );
 }
 
-// ─── Data fetching ─────────────────────────────────────────────────────────
-
-async function fetchNotifications(
-  agencyId: string,
-  statusFilter?: NotificationStatus | "ALL"
-) {
-  return prisma.notification.findMany({
-    where: {
-      agencyId,
-      ...(statusFilter && statusFilter !== "ALL" ? { status: statusFilter } : {}),
-    },
-    include: {
-      vehicle: { select: { id: true, make: true, model: true, plate: true } },
-    },
-    orderBy: [
-      { severity: "desc" },
-      { updatedAt: "desc" },
-    ],
-  });
-}
-
-// ─── Empty state ───────────────────────────────────────────────────────────
-
-function EmptyState({ label }: { label: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="h-12 w-12 rounded-full bg-muted/40 flex items-center justify-center mb-4">
-        <Bell className="h-6 w-6 text-muted-foreground/50" />
-      </div>
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="text-xs text-muted-foreground/60 mt-1">
-        Les rappels s&apos;activent lors de l&apos;enregistrement des véhicules.
-      </p>
-    </div>
-  );
-}
-
-// ─── Page ──────────────────────────────────────────────────────────────────
-
-export default async function NotificationsPage() {
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: PageSearchParams;
+}) {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
 
-  const agencyId = session.user.agencyId;
+  if (!session.user.agencyId) redirect("/setup");
 
-  const [all, open, snoozed, done] = await Promise.all([
-    fetchNotifications(agencyId, "ALL"),
-    fetchNotifications(agencyId, "OPEN"),
-    fetchNotifications(agencyId, "SNOOZED"),
-    fetchNotifications(agencyId, "DONE"),
+  const params = await searchParams;
+  const status = parseStatus(params.status);
+  const severity = parseSeverity(params.severity);
+  const type = parseType(params.type);
+  const query = params.q?.trim() ?? "";
+
+  const [notifications, counts] = await Promise.all([
+    fetchNotifications({
+      agencyId: session.user.agencyId,
+      status,
+      severity,
+      type,
+      query,
+    }),
+    fetchStatusCounts(session.user.agencyId),
   ]);
 
-  const openCount = open.length;
-  const snoozedCount = snoozed.length;
-  const doneCount = done.length;
-
-  const TabBadge = ({ count }: { count: number }) =>
-    count > 0 ? (
-      <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-primary text-white text-[10px] font-bold">
-        {count}
-      </span>
-    ) : null;
+  const emptyLabel =
+    status === "OPEN"
+      ? "Aucune action requise"
+      : status === "SNOOZED"
+      ? "Aucune notification snoozée"
+      : status === "DONE"
+      ? "Aucune notification terminée"
+      : status === "DISMISSED"
+      ? "Aucune notification ignorée"
+      : "Aucune notification";
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Rappels d&apos;entretien et de conformité pour votre parc véhicules.
         </p>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="open">
-        <TabsList className="bg-muted/40 border border-border/30">
-          <TabsTrigger value="all">
-            Tous
-            <TabBadge count={all.length} />
-          </TabsTrigger>
-          <TabsTrigger value="open">
-            À faire
-            <TabBadge count={openCount} />
-          </TabsTrigger>
-          <TabsTrigger value="snoozed">
-            Snoozées
-            <TabBadge count={snoozedCount} />
-          </TabsTrigger>
-          <TabsTrigger value="done">
-            Terminées
-            <TabBadge count={doneCount} />
-          </TabsTrigger>
-        </TabsList>
+      <NotificationFiltersClient
+        activeStatus={status}
+        search={query}
+        severity={severity}
+        type={type}
+        counts={counts}
+      />
 
-        {/* All */}
-        <TabsContent value="all" className="mt-4 space-y-2">
-          {all.length === 0 ? (
-            <EmptyState label="Aucune notification" />
-          ) : (
-            all.map((n) => <NotificationCard key={n.id} notif={n} />)
-          )}
-        </TabsContent>
-
-        {/* Open */}
-        <TabsContent value="open" className="mt-4 space-y-2">
-          {open.length === 0 ? (
-            <EmptyState label="Aucune action requise — tout est à jour !" />
-          ) : (
-            open.map((n) => <NotificationCard key={n.id} notif={n} />)
-          )}
-        </TabsContent>
-
-        {/* Snoozed */}
-        <TabsContent value="snoozed" className="mt-4 space-y-2">
-          {snoozed.length === 0 ? (
-            <EmptyState label="Aucune notification snoozée" />
-          ) : (
-            snoozed.map((n) => <NotificationCard key={n.id} notif={n} />)
-          )}
-        </TabsContent>
-
-        {/* Done */}
-        <TabsContent value="done" className="mt-4 space-y-2">
-          {done.length === 0 ? (
-            <EmptyState label="Aucune notification terminée" />
-          ) : (
-            done.map((n) => <NotificationCard key={n.id} notif={n} />)
-          )}
-        </TabsContent>
-      </Tabs>
+      {notifications.length === 0 ? (
+        <EmptyState label={emptyLabel} />
+      ) : (
+        <div className="space-y-2">
+          {notifications.map((notif) => (
+            <NotificationCard key={notif.id} notif={notif} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

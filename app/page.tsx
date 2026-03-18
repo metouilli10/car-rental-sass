@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-cache";
-import { LandingPage } from "@/app/cometly-clone-2/page";
+import CometlyClonePage from "@/app/cometly-clone-2/page";
 
 export default async function HomePage() {
   const session = await getSession();
@@ -9,5 +9,5 @@ export default async function HomePage() {
     redirect("/post-login");
   }
 
-  return <LandingPage />;
+  return <CometlyClonePage />;
 }

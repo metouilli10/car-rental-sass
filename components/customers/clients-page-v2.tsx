@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Calendar,
   FileText,
@@ -41,6 +42,7 @@ interface ClientsPageV2Props {
   customers: ClientListItem[];
   canManageCustomers: boolean;
   canDeleteCustomers: boolean;
+  defaultSearch: string;
   stats: {
     totalClients: number;
     clientsWithReservations: number;
@@ -73,12 +75,16 @@ export function ClientsPageV2({
   customers,
   canManageCustomers,
   canDeleteCustomers,
+  defaultSearch,
   stats,
   pagination,
 }: ClientsPageV2Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showDeleted, setShowDeleted] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
+  const [searchInput, setSearchInput] = useState(defaultSearch);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filters, setFilters] = useState<ToolbarFilters>(DEFAULT_FILTERS);
 
@@ -86,6 +92,28 @@ export function ClientsPageV2({
     const timer = setTimeout(() => setDebouncedSearch(searchInput.trim().toLowerCase()), 300);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  useEffect(() => {
+    setSearchInput(defaultSearch);
+  }, [defaultSearch]);
+
+  useEffect(() => {
+    const currentQuery = searchParams.get("q") ?? "";
+    if (debouncedSearch === currentQuery) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (debouncedSearch) {
+      params.set("q", debouncedSearch);
+    } else {
+      params.delete("q");
+    }
+    params.delete("page");
+
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [debouncedSearch, pathname, router, searchParams]);
 
   const filteredCustomers = useMemo(() => {
     return customers.filter((customer) => {
@@ -96,20 +124,6 @@ export function ClientsPageV2({
       const createdToMs = filters.createdTo
         ? new Date(`${filters.createdTo}T23:59:59`).getTime()
         : null;
-
-      if (debouncedSearch) {
-        const haystack = [
-          customer.name,
-          customer.email ?? "",
-          customer.phone,
-          customer.passportOrCIN ?? "",
-        ]
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(debouncedSearch)) {
-          return false;
-        }
-      }
 
       if (
         filters.language !== "all" &&
@@ -142,7 +156,7 @@ export function ClientsPageV2({
 
       return true;
     });
-  }, [customers, debouncedSearch, filters]);
+  }, [customers, filters]);
 
   const activeFilterChips = useMemo(() => {
     const chips: Array<{ id: string; label: string; onRemove: () => void }> = [];
@@ -364,7 +378,11 @@ export function ClientsPageV2({
               </div>
             </>
           )}
-          <PaginationRow currentPage={pagination.currentPage} totalPages={pagination.totalPages} />
+          <PaginationRow
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            searchQuery={defaultSearch}
+          />
         </div>
       </div>
     </TooltipProvider>
@@ -720,12 +738,26 @@ function ClientsToolbar({
 function PaginationRow({
   currentPage,
   totalPages,
+  searchQuery,
 }: {
   currentPage: number;
   totalPages: number;
+  searchQuery: string;
 }) {
   if (totalPages <= 1) {
     return null;
+  }
+
+  const prevParams = new URLSearchParams();
+  prevParams.set("page", String(Math.max(1, currentPage - 1)));
+  if (searchQuery) {
+    prevParams.set("q", searchQuery);
+  }
+
+  const nextParams = new URLSearchParams();
+  nextParams.set("page", String(Math.min(totalPages, currentPage + 1)));
+  if (searchQuery) {
+    nextParams.set("q", searchQuery);
   }
 
   return (
@@ -741,7 +773,7 @@ function PaginationRow({
           aria-label="Page precedente"
           disabled={currentPage <= 1}
         >
-          <Link href={`/customers?page=${Math.max(1, currentPage - 1)}`}>Precedent</Link>
+          <Link href={`/customers?${prevParams.toString()}`}>Precedent</Link>
         </Button>
         <Button
           asChild
@@ -750,7 +782,7 @@ function PaginationRow({
           aria-label="Page suivante"
           disabled={currentPage >= totalPages}
         >
-          <Link href={`/customers?page=${Math.min(totalPages, currentPage + 1)}`}>Suivant</Link>
+          <Link href={`/customers?${nextParams.toString()}`}>Suivant</Link>
         </Button>
       </div>
     </div>

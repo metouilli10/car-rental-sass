@@ -12,7 +12,7 @@ import { Footer } from "@/components/cometly-clone-2/sections/Footer";
 import { WhatsAppWidget } from "@/components/cometly-clone-2/sections/WhatsAppWidget";
 import { FAQAccordionBlock } from "@/components/ui/faq-accordion-block-shadcnui";
 
-export function LandingPage() {
+function LandingPage() {
   return (
     <CloneLayout>
       <Navbar />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Vehicle, PaymentType } from "@prisma/client";
+import { PaymentType } from "@prisma/client";
 import {
   Sheet,
   SheetContent,
@@ -33,7 +33,14 @@ import { buildConfirmationWhatsAppLink } from "@/lib/whatsapp";
 interface BookingDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  vehicle: Vehicle;
+  vehicle: {
+    id: string;
+    make: string;
+    model: string;
+    plate: string;
+    pricePerDay: number;
+    depositAmount: number;
+  };
   startDate: Date;
   endDate: Date;
 }

@@ -8,7 +8,7 @@ import { ClientsPageV2 } from "@/components/customers/clients-page-v2";
 const PAGE_SIZE = 25;
 
 interface CustomersPageProps {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string }>;
 }
 
 export default async function CustomersPage({ searchParams }: CustomersPageProps) {
@@ -19,7 +19,20 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
 
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
-  const where = { agencyId: session.user.agencyId };
+  const searchQuery = params.q?.trim() || "";
+  const where = {
+    agencyId: session.user.agencyId,
+    ...(searchQuery
+      ? {
+          OR: [
+            { name: { contains: searchQuery, mode: "insensitive" as const } },
+            { email: { contains: searchQuery, mode: "insensitive" as const } },
+            { phone: { contains: searchQuery } },
+            { passportOrCIN: { contains: searchQuery, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
   const monthStart = startOfMonth(new Date());
   const currentUser = await prisma.user.findFirst({
     where: { id: session.user.id, agencyId: session.user.agencyId },
@@ -34,7 +47,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     currentUser?.permissionOverrides ?? null,
   );
 
-  const [customers, total, withReservations, withoutDocuments, createdThisMonth, financialByCustomer] =
+  const [customers, total, withReservations, withoutDocuments, createdThisMonth] =
     await Promise.all([
     prisma.customer.findMany({
       where,
@@ -77,18 +90,23 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         },
       },
     }),
-    prisma.booking.groupBy({
-      by: ["customerId"],
-      where: {
-        agencyId: session.user.agencyId,
-        status: { not: "CANCELED" },
-      },
-      _sum: {
-        totalPrice: true,
-        remainingAmount: true,
-      },
-    }),
     ]);
+
+  const financialByCustomer =
+    customers.length > 0
+      ? await prisma.booking.groupBy({
+          by: ["customerId"],
+          where: {
+            agencyId: session.user.agencyId,
+            status: { not: "CANCELED" },
+            customerId: { in: customers.map((customer) => customer.id) },
+          },
+          _sum: {
+            totalPrice: true,
+            remainingAmount: true,
+          },
+        })
+      : [];
 
   const financialMap = new Map(
     financialByCustomer.map((entry) => [
@@ -131,6 +149,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         currentPage: page,
         totalPages,
       }}
+      defaultSearch={searchQuery}
     />
   );
 }

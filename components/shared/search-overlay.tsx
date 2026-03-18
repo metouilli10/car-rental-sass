@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, User, Calendar, Car, ArrowRight, Loader2 } from "lucide-react";
+import { Search, User, Calendar, Car, ArrowRight, Loader2, ShieldAlert } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { searchGlobal, type SearchResult } from "@/lib/actions/search";
 import { STATUS_LABELS } from "@/lib/search-constants";
+import { formatCurrency } from "@/lib/utils";
 
 interface SearchOverlayProps {
   open: boolean;
@@ -19,12 +20,13 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     clients: [],
     reservations: [],
     vehicles: [],
+    infractions: [],
   });
   const router = useRouter();
 
   const fetchResults = useCallback(async (q: string) => {
     if (!q || q.trim().length < 2) {
-      setResults({ clients: [], reservations: [], vehicles: [] });
+      setResults({ clients: [], reservations: [], vehicles: [], infractions: [] });
       return;
     }
     setLoading(true);
@@ -32,7 +34,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
       const data = await searchGlobal(q);
       setResults(data);
     } catch {
-      setResults({ clients: [], reservations: [], vehicles: [] });
+      setResults({ clients: [], reservations: [], vehicles: [], infractions: [] });
     } finally {
       setLoading(false);
     }
@@ -52,7 +54,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     if (!open) {
       const t = setTimeout(() => {
         setQuery("");
-        setResults({ clients: [], reservations: [], vehicles: [] });
+        setResults({ clients: [], reservations: [], vehicles: [], infractions: [] });
       }, 200);
       return () => clearTimeout(t);
     }
@@ -61,10 +63,17 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const hasResults =
     results.clients.length > 0 ||
     results.reservations.length > 0 ||
-    results.vehicles.length > 0;
+    results.vehicles.length > 0 ||
+    results.infractions.length > 0;
   const q = query.trim().toLowerCase();
   const showEmptyState = !loading && q.length >= 2 && !hasResults;
   const showPrompt = !q;
+  const firstResultHref =
+    (results.clients[0] && `/customers/${results.clients[0].id}`) ||
+    (results.reservations[0] && `/bookings/${results.reservations[0].id}`) ||
+    (results.vehicles[0] && `/vehicles/${results.vehicles[0].id}`) ||
+    (results.infractions[0] && `/infractions/${results.infractions[0].id}`) ||
+    null;
 
   function navigate(href: string) {
     onClose();
@@ -87,6 +96,12 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
             autoComplete="off"
             autoCorrect="off"
             spellCheck={false}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && firstResultHref) {
+                e.preventDefault();
+                navigate(firstResultHref);
+              }
+            }}
           />
           {loading && (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
@@ -244,6 +259,58 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                   })}
                 </section>
               )}
+
+              {results.infractions.length > 0 && (
+                <section
+                  className={
+                    results.clients.length > 0 ||
+                    results.reservations.length > 0 ||
+                    results.vehicles.length > 0
+                      ? "mt-1 border-t border-border/30 pt-1"
+                      : ""
+                  }
+                >
+                  <div className="px-4 py-2 flex items-center gap-2">
+                    <ShieldAlert className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Infractions
+                    </span>
+                  </div>
+                  {results.infractions.map((infraction) => {
+                    const st = STATUS_LABELS[infraction.status];
+                    return (
+                      <button
+                        key={infraction.id}
+                        onClick={() => navigate(`/infractions/${infraction.id}`)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left group"
+                      >
+                        <div className="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                          <ShieldAlert className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {infraction.vehicle}
+                            </p>
+                            {st && (
+                              <span
+                                className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${st.color}`}
+                              >
+                                {st.label}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {infraction.client || "Client non assigné"} · {infraction.date}
+                            {infraction.amount != null ? ` · ${formatCurrency(infraction.amount)}` : ""}
+                          </p>
+                        </div>
+                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    );
+                  })}
+                </section>
+              )}
             </div>
           )}
 
@@ -252,7 +319,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
             <div className="px-4 py-6 text-center">
               <p className="text-xs text-muted-foreground">
                 Tapez au moins 2 caractères pour rechercher des clients,
-                réservations ou véhicules.
+                réservations, véhicules ou infractions.
               </p>
             </div>
           )}

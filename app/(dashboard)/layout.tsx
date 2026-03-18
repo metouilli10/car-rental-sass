@@ -12,7 +12,6 @@ import { prisma } from "@/lib/prisma";
 import { getEffectivePermissions } from "@/lib/permissions";
 import {
   isAgencyEligibleForGuidedOnboarding,
-  syncAgencyOnboardingState,
 } from "@/lib/onboarding/agency-onboarding";
 
 export const runtime = "nodejs";
@@ -38,6 +37,11 @@ export default async function DashboardLayout({
     name: string;
     logoUrl: string | null;
     createdAt: Date;
+    onboardingVehicleAdded: boolean;
+    onboardingReservationCreated: boolean;
+    onboardingPaymentRecorded: boolean;
+    onboardingDashboardExplored: boolean;
+    onboardingCompleted: boolean;
   } | null = null;
   let notifSummary: { count: number; items: NotificationSummaryItem[] } = {
     count: 0,
@@ -55,7 +59,17 @@ export default async function DashboardLayout({
     const [agencyResult, notifResult] = await Promise.all([
       prisma.agency.findUnique({
         where: { id: agencyId },
-        select: { setupCompletedAt: true, name: true, logoUrl: true, createdAt: true },
+        select: {
+          setupCompletedAt: true,
+          name: true,
+          logoUrl: true,
+          createdAt: true,
+          onboardingVehicleAdded: true,
+          onboardingReservationCreated: true,
+          onboardingPaymentRecorded: true,
+          onboardingDashboardExplored: true,
+          onboardingCompleted: true,
+        },
       }),
       getNotificationsSummary(agencyId).catch(
         (): { count: number; items: NotificationSummaryItem[] } => ({
@@ -83,17 +97,16 @@ export default async function DashboardLayout({
     });
 
     if (agency && isAgencyEligibleForGuidedOnboarding(agency.createdAt)) {
-      const onboardingState = await syncAgencyOnboardingState(agencyId);
       const completedCount = [
-        onboardingState.vehicleAdded,
-        onboardingState.reservationCreated,
-        onboardingState.paymentRecorded,
-        onboardingState.dashboardExplored,
+        agency.onboardingVehicleAdded,
+        agency.onboardingReservationCreated,
+        agency.onboardingPaymentRecorded,
+        agency.onboardingDashboardExplored,
       ].filter(Boolean).length;
 
       onboardingNav = {
         eligible: true,
-        completed: onboardingState.completed,
+        completed: agency.onboardingCompleted,
         completedCount,
         totalCount: 4,
       };

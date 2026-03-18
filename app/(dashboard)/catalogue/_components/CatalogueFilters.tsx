@@ -81,6 +81,7 @@ export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
       if (value) params.set(key, value);
       else params.delete(key);
     });
+    params.delete("page");
 
     const nextQuery = params.toString();
     const currentQuery = searchParams.toString();
@@ -121,6 +122,7 @@ export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
 
     if (endDate) params.set("end", startOfDayLocal(endDate).toISOString());
     else params.delete("end");
+    params.delete("page");
 
     const nextQuery = params.toString();
     const currentQuery = searchParams.toString();

@@ -6,6 +6,9 @@ import type {
   ReminderType,
 } from "@prisma/client";
 import { DEFAULT_LEAD_DAYS, DEFAULT_LEAD_KM } from "./types";
+import { sendEmailNotification } from "@/lib/notifications/channels";
+
+type ReminderEmailEventType = "CREATED" | "ESCALATED_DUE";
 
 // ─── Severity helpers ────────────────────────────────────────────────────────
 
@@ -45,11 +48,11 @@ async function upsertNotification(params: {
     // Don't recreate if the user already marked it DONE or DISMISSED
     if (existing.status === "DONE" || existing.status === "DISMISSED") {
       // Update severity/body in case data changed significantly
-      await prisma.notification.update({
+      const updated = await prisma.notification.update({
         where: { id: existing.id },
         data: { title, body, severity, dueAt, dueMileageKm, updatedAt: new Date() },
       });
-      return;
+      return { notificationId: updated.id, emailEventType: null };
     }
 
     // If snoozed and still within snooze period, preserve SNOOZED status
@@ -61,12 +64,18 @@ async function upsertNotification(params: {
         ? "SNOOZED"
         : "OPEN";
 
-    await prisma.notification.update({
+    const updated = await prisma.notification.update({
       where: { id: existing.id },
       data: { title, body, severity, dueAt, dueMileageKm, status, updatedAt: new Date() },
     });
+    const severityEscalatedToDue =
+      existing.severity !== "DUE" && severity === "DUE" && status === "OPEN";
+    return {
+      notificationId: updated.id,
+      emailEventType: severityEscalatedToDue ? ("ESCALATED_DUE" as ReminderEmailEventType) : null,
+    };
   } else {
-    await prisma.notification.create({
+    const created = await prisma.notification.create({
       data: {
         agencyId,
         vehicleId,
@@ -79,6 +88,7 @@ async function upsertNotification(params: {
         status: "OPEN",
       },
     });
+    return { notificationId: created.id, emailEventType: "CREATED" as ReminderEmailEventType };
   }
 }
 
@@ -143,7 +153,7 @@ async function checkOilChange(
           ? `Vidange dépassée de ${Math.abs(remaining).toLocaleString("fr-FR")} km`
           : `${remaining.toLocaleString("fr-FR")} km restants`;
 
-      await upsertNotification({
+      const result = await upsertNotification({
         agencyId,
         vehicleId: vehicle.id,
         type: "OIL_CHANGE",
@@ -152,6 +162,7 @@ async function checkOilChange(
         severity,
         dueMileageKm: nextKm,
       });
+      await maybeSendReminderEmail(result);
       return; // mileage takes priority
     }
   }
@@ -179,7 +190,7 @@ async function checkOilChange(
           ? `Vidange dépassée de ${Math.abs(daysLeft)} jour${Math.abs(daysLeft) > 1 ? "s" : ""}`
           : `Dans ${daysLeft} jour${daysLeft > 1 ? "s" : ""}`;
 
-      await upsertNotification({
+      const result = await upsertNotification({
         agencyId,
         vehicleId: vehicle.id,
         type: "OIL_CHANGE",
@@ -188,6 +199,7 @@ async function checkOilChange(
         severity,
         dueAt: nextDate,
       });
+      await maybeSendReminderEmail(result);
       return;
     }
   }
@@ -225,7 +237,7 @@ async function checkDateBasedReminder(
       ? `${labels.overdueSuffix} de ${Math.abs(daysLeft)} jour${Math.abs(daysLeft) > 1 ? "s" : ""}`
       : `${labels.dueSuffix} dans ${daysLeft} jour${daysLeft > 1 ? "s" : ""}`;
 
-  await upsertNotification({
+  const result = await upsertNotification({
     agencyId,
     vehicleId: vehicle.id,
     type,
@@ -234,6 +246,7 @@ async function checkDateBasedReminder(
     severity,
     dueAt: expiryDate,
   });
+  await maybeSendReminderEmail(result);
 }
 
 // ─── Main compute function ────────────────────────────────────────────────────
@@ -331,5 +344,26 @@ export async function computeVehicleReminders(
         overdueSuffix: "Vignette expirée",
       }
     );
+  }
+}
+
+async function maybeSendReminderEmail(
+  result:
+    | {
+        notificationId: string;
+        emailEventType: ReminderEmailEventType | null;
+      }
+    | undefined
+) {
+  if (!result?.emailEventType) {
+    return;
+  }
+
+  const delivery = await sendEmailNotification(result.notificationId, result.emailEventType);
+  if (!delivery.success) {
+    console.error("sendEmailNotification failed", {
+      notificationId: result.notificationId,
+      error: delivery.error,
+    });
   }
 }

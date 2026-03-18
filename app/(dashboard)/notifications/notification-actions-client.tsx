@@ -17,6 +17,7 @@ import {
   dismissNotification,
   snoozeNotification,
   snoozeNotificationUntil,
+  reopenNotification,
 } from "@/lib/actions/notifications";
 
 interface NotificationActionsProps {
@@ -78,6 +79,14 @@ export function NotificationActions({
     startTransition(async () => {
       await dismissNotification(id);
       toast("Notification ignorée");
+      router.refresh();
+    });
+  };
+
+  const handleReopen = () => {
+    startTransition(async () => {
+      await reopenNotification(id);
+      toast.success("Notification rouverte");
       router.refresh();
     });
   };
@@ -181,6 +190,19 @@ export function NotificationActions({
           title="Ignorer"
         >
           <X className="h-3.5 w-3.5" />
+        </Button>
+      )}
+
+      {!isActive && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          onClick={handleReopen}
+          disabled={isPending}
+        >
+          <Check className="h-3.5 w-3.5 mr-1" />
+          Rouvrir
         </Button>
       )}
     </div>

@@ -1,11 +1,12 @@
 "use server";
 
 import { getServerSession } from "next-auth";
+import type { BookingStatus, InfractionStatus, InfractionType, VehicleStatus } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import type { VehicleStatus, BookingStatus } from "@prisma/client";
+import { compactSearchToken, getBookingReference, normalizeSearchQuery } from "@/lib/search-utils";
 
 const SEARCH_LIMIT = 5;
 
@@ -33,32 +34,45 @@ export type SearchVehicle = {
   status: VehicleStatus;
 };
 
+export type SearchInfraction = {
+  id: string;
+  type: InfractionType;
+  status: InfractionStatus;
+  vehicle: string;
+  client: string | null;
+  amount: number | null;
+  date: string;
+};
+
 export type SearchResult = {
   clients: SearchClient[];
   reservations: SearchReservation[];
   vehicles: SearchVehicle[];
+  infractions: SearchInfraction[];
 };
 
 export async function searchGlobal(query: string): Promise<SearchResult> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.agencyId) {
-    return { clients: [], reservations: [], vehicles: [] };
+    return { clients: [], reservations: [], vehicles: [], infractions: [] };
   }
   const agencyId = session.user.agencyId;
-  const q = query.trim().toLowerCase();
+  const q = normalizeSearchQuery(query);
+  const compactQuery = compactSearchToken(query);
   if (!q || q.length < 2) {
-    return { clients: [], reservations: [], vehicles: [] };
+    return { clients: [], reservations: [], vehicles: [], infractions: [] };
   }
 
-  const searchPattern = `%${q}%`;
-
-  const [clients, reservations, vehicles] = await Promise.all([
+  const [clients, reservations, vehicles, infractions] = await Promise.all([
     prisma.customer.findMany({
       where: {
         agencyId,
         OR: [
           { name: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
           { phone: { contains: q } },
+          { passportOrCIN: { contains: q, mode: "insensitive" } },
+          { licenseNumber: { contains: q, mode: "insensitive" } },
         ],
       },
       select: {
@@ -75,9 +89,15 @@ export async function searchGlobal(query: string): Promise<SearchResult> {
         agencyId,
         OR: [
           { customer: { name: { contains: q, mode: "insensitive" } } },
+          { customer: { phone: { contains: q } } },
+          { customer: { email: { contains: q, mode: "insensitive" } } },
+          { customer: { passportOrCIN: { contains: q, mode: "insensitive" } } },
           { vehicle: { make: { contains: q, mode: "insensitive" } } },
           { vehicle: { model: { contains: q, mode: "insensitive" } } },
           { vehicle: { plate: { contains: q, mode: "insensitive" } } },
+          ...(compactQuery.length >= 4
+            ? [{ id: { endsWith: compactQuery, mode: "insensitive" as const } }]
+            : []),
         ],
       },
       select: {
@@ -98,6 +118,8 @@ export async function searchGlobal(query: string): Promise<SearchResult> {
           { make: { contains: q, mode: "insensitive" } },
           { model: { contains: q, mode: "insensitive" } },
           { plate: { contains: q, mode: "insensitive" } },
+          { color: { contains: q, mode: "insensitive" } },
+          { category: { contains: q, mode: "insensitive" } },
         ],
       },
       select: {
@@ -110,6 +132,37 @@ export async function searchGlobal(query: string): Promise<SearchResult> {
       take: SEARCH_LIMIT,
       orderBy: { plate: "asc" },
     }),
+    prisma.infraction.findMany({
+      where: {
+        agencyId,
+        OR: [
+          { vehicle: { plate: { contains: q, mode: "insensitive" } } },
+          { vehicle: { make: { contains: q, mode: "insensitive" } } },
+          { vehicle: { model: { contains: q, mode: "insensitive" } } },
+          { clientName: { contains: q, mode: "insensitive" } },
+          { clientCin: { contains: q, mode: "insensitive" } },
+          { clientPhone: { contains: q } },
+          { notes: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        id: true,
+        type: true,
+        status: true,
+        amount: true,
+        date: true,
+        clientName: true,
+        vehicle: {
+          select: {
+            make: true,
+            model: true,
+            plate: true,
+          },
+        },
+      },
+      take: SEARCH_LIMIT,
+      orderBy: { date: "desc" },
+    }),
   ]);
 
   return {
@@ -121,7 +174,7 @@ export async function searchGlobal(query: string): Promise<SearchResult> {
     })),
     reservations: reservations.map((r) => ({
       id: r.id,
-      ref: `#${r.id.slice(-6).toUpperCase()}`,
+      ref: getBookingReference(r.id),
       client: r.customer.name,
       vehicle: `${r.vehicle.make} ${r.vehicle.model}`,
       status: r.status,
@@ -133,6 +186,15 @@ export async function searchGlobal(query: string): Promise<SearchResult> {
       make: v.make,
       model: v.model,
       status: v.status,
+    })),
+    infractions: infractions.map((infraction) => ({
+      id: infraction.id,
+      type: infraction.type,
+      status: infraction.status,
+      vehicle: `${infraction.vehicle.make} ${infraction.vehicle.model} · ${infraction.vehicle.plate}`,
+      client: infraction.clientName,
+      amount: infraction.amount,
+      date: format(infraction.date, "d MMM yyyy", { locale: fr }),
     })),
   };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Vehicle, Gearbox } from "@prisma/client";
+import { Gearbox } from "@prisma/client";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +47,19 @@ function VehicleImage({
 }
 
 interface VehicleCardProps {
-  vehicle: Vehicle & {
+  vehicle: {
+    id: string;
+    make: string;
+    model: string;
+    plate: string;
+    category: string;
+    year: number;
+    pricePerDay: number;
+    depositAmount: number;
+    gearbox: Gearbox;
+    seats: number;
+    hasAC: boolean;
+    photoUrl: string | null;
     availability: {
       status: "AVAILABLE" | "UNAVAILABLE" | "RETURNING_TODAY";
       time?: Date;

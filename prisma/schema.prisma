@@ -165,6 +165,11 @@ enum NotificationEventStatus {
   FAILED
 }
 
+enum NotificationEventType {
+  CREATED
+  ESCALATED_DUE
+}
+
 enum VehicleDocumentType {
   INSURANCE
   TECHNICAL_INSPECTION
@@ -629,6 +634,7 @@ model NotificationEvent {
   id                String                  @id @default(cuid())
   notificationId    String
   channel           NotificationChannel
+  eventType         NotificationEventType   @default(CREATED)
   status            NotificationEventStatus @default(PENDING)
   providerMessageId String?
   lastError         String?
@@ -637,6 +643,7 @@ model NotificationEvent {
   notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   @@index([notificationId])
+  @@index([notificationId, channel, eventType, status])
   @@map("notification_events")
 }
 

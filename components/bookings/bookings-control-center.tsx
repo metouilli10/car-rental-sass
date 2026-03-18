@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BookingDepositStatus, BookingPaymentStatus, BookingStatus, UserRole } from "@prisma/client";
 import { Search, X } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -69,15 +70,27 @@ export interface BookingListItem {
 interface BookingsControlCenterProps {
   bookings: BookingListItem[];
   role: UserRole;
+  defaultSearch?: string;
+  defaultStatusFilter?: StatusFilter;
+  defaultVehicleFilter?: string;
 }
 
-export function BookingsControlCenter({ bookings, role }: BookingsControlCenterProps) {
-  const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+export function BookingsControlCenter({
+  bookings,
+  role,
+  defaultSearch = "",
+  defaultStatusFilter = "ALL",
+  defaultVehicleFilter = "ALL",
+}: BookingsControlCenterProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [searchInput, setSearchInput] = useState(defaultSearch);
+  const [searchQuery, setSearchQuery] = useState(defaultSearch.trim().toLowerCase());
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(defaultStatusFilter);
   const [datePreset, setDatePreset] = useState<DatePreset>("ALL");
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("none");
-  const [vehicleFilter, setVehicleFilter] = useState<string>("ALL");
+  const [vehicleFilter, setVehicleFilter] = useState<string>(defaultVehicleFilter);
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
 
@@ -89,6 +102,57 @@ export function BookingsControlCenter({ bookings, role }: BookingsControlCenterP
     }, 250);
     return () => window.clearTimeout(timer);
   }, [searchInput]);
+
+  useEffect(() => {
+    setSearchInput(defaultSearch);
+    setSearchQuery(defaultSearch.trim().toLowerCase());
+  }, [defaultSearch]);
+
+  useEffect(() => {
+    setStatusFilter(defaultStatusFilter);
+  }, [defaultStatusFilter]);
+
+  useEffect(() => {
+    setVehicleFilter(defaultVehicleFilter);
+  }, [defaultVehicleFilter]);
+
+  useEffect(() => {
+    const currentQuery = searchParams.get("q") ?? "";
+    const currentStatus = (searchParams.get("status") as StatusFilter | null) ?? "ALL";
+    const currentVehicleId = searchParams.get("vehicleId") ?? "ALL";
+
+    if (
+      searchQuery === currentQuery &&
+      statusFilter === currentStatus &&
+      vehicleFilter === currentVehicleId
+    ) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (searchQuery) {
+      params.set("q", searchQuery);
+    } else {
+      params.delete("q");
+    }
+
+    if (statusFilter !== "ALL") {
+      params.set("status", statusFilter);
+    } else {
+      params.delete("status");
+    }
+
+    if (vehicleFilter !== "ALL") {
+      params.set("vehicleId", vehicleFilter);
+    } else {
+      params.delete("vehicleId");
+    }
+
+    params.delete("page");
+
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams, searchQuery, statusFilter, vehicleFilter]);
 
   const vehicleOptions = useMemo(() => {
     const byId = new Map<string, { id: string; label: string }>();

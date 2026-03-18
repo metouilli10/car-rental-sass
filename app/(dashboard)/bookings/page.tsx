@@ -98,6 +98,9 @@ interface BookingsPageProps {
     clientId?: string;
     customerId?: string;
     filter?: string;
+    q?: string;
+    status?: string;
+    vehicleId?: string;
   }>;
 }
 
@@ -120,12 +123,36 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
     const page = Math.max(1, Number(params.page) || 1);
     const selectedClientId = params.clientId || params.customerId;
     const filter = params.filter;
+    const searchQuery = params.q?.trim() || "";
+    const vehicleId = params.vehicleId?.trim() || "";
+    const statusFilter = params.status?.trim() || "";
     const now = new Date();
     const today = new Date();
 
     const where: Prisma.BookingWhereInput = {
       agencyId,
       ...(selectedClientId ? { customerId: selectedClientId } : {}),
+      ...(vehicleId ? { vehicleId } : {}),
+      ...(searchQuery
+        ? {
+            OR: [
+              { customer: { name: { contains: searchQuery, mode: "insensitive" } } },
+              { customer: { phone: { contains: searchQuery } } },
+              { vehicle: { make: { contains: searchQuery, mode: "insensitive" } } },
+              { vehicle: { model: { contains: searchQuery, mode: "insensitive" } } },
+              { vehicle: { plate: { contains: searchQuery, mode: "insensitive" } } },
+            ],
+          }
+        : {}),
+      ...(statusFilter && statusFilter !== "OVERDUE"
+        ? { status: statusFilter as Prisma.EnumBookingStatusFilter }
+        : {}),
+      ...(statusFilter === "OVERDUE"
+        ? {
+            status: { notIn: ["COMPLETED", "CANCELED"] },
+            endDate: { lt: now },
+          }
+        : {}),
       ...(filter === "unpaid"
         ? {
             paymentStatus: { in: ["PENDING", "PARTIAL"] },
@@ -298,12 +325,29 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
         </div>
       ) : (
         <div className="space-y-4">
-          <BookingsControlCenter bookings={bookingsData} role={session.user.role} />
+          <BookingsControlCenter
+            bookings={bookingsData}
+            role={session.user.role}
+            defaultSearch={searchQuery}
+            defaultStatusFilter={
+              statusFilter === "CONFIRMED" ||
+              statusFilter === "ACTIVE" ||
+              statusFilter === "COMPLETED" ||
+              statusFilter === "CANCELED" ||
+              statusFilter === "OVERDUE"
+                ? statusFilter
+                : "ALL"
+            }
+            defaultVehicleFilter={vehicleId || "ALL"}
+          />
           <Pagination
             currentPage={page}
             totalPages={totalPages}
             baseUrl="/bookings"
             searchParams={{
+              ...(searchQuery ? { q: searchQuery } : {}),
+              ...(statusFilter ? { status: statusFilter } : {}),
+              ...(vehicleId ? { vehicleId } : {}),
               ...(selectedClientId ? { clientId: selectedClientId } : {}),
               ...(filter ? { filter } : {}),
             }}
