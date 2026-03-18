@@ -6,7 +6,10 @@ import { computeBookingDue, computeOutstanding } from "./rules";
 import { resolveDashboardV3Period, type DashboardV3PeriodInput } from "./ranges";
 import type {
   DashboardV3ActiveBookingsDTO,
+  DashboardV3CollectionsSheetDTO,
   DashboardV3DTO,
+  DashboardV3DueDepositsSheetDTO,
+  DashboardV3LateReturnsSheetDTO,
   DashboardV3Period,
 } from "./types";
 import {
@@ -33,7 +36,6 @@ import {
 } from "./finance";
 
 const DASHBOARD_V3_CORE_CACHE_SECONDS = 60;
-const DASHBOARD_V3_INSIGHTS_CACHE_SECONDS = 120;
 const DASHBOARD_V3_PERF = process.env.DASHBOARD_PERF === "1";
 
 function logPerf(step: string, startedAt: number, metadata?: Record<string, unknown>) {
@@ -62,7 +64,7 @@ function buildPeriodQuery(input: {
   return params.toString();
 }
 
-interface DashboardLiveBookingRow {
+export interface DashboardLiveBookingRow {
   id: string;
   vehicleId: string;
   startDate: Date;
@@ -81,7 +83,7 @@ interface DashboardLiveBookingRow {
   payments: Array<{ amount: number }>;
 }
 
-interface DashboardLiveData {
+export interface DashboardLiveData {
   liveBookings: DashboardLiveBookingRow[];
   deposits: Array<{
     id: string;
@@ -197,6 +199,214 @@ function deserializeDashboardPeriodData(data: DashboardPeriodData): DashboardPer
       startDate: asDate(booking.startDate),
       endDate: asDate(booking.endDate),
     })),
+  };
+}
+
+function computeBookingDueAmount(booking: DashboardLiveBookingRow): number {
+  return computeBookingDue({
+    totalTtc: booking.totalTtc,
+    taxEnabled: booking.taxEnabled,
+    totalPrice: booking.totalPrice,
+    discountAmount: booking.discountAmount ?? 0,
+    addonsTotal: booking.addonsTotal ?? 0,
+  });
+}
+
+function computeBookingRemainingAmountFromPaidNow(booking: DashboardLiveBookingRow): number {
+  return (
+    booking.remainingAmount ??
+    computeOutstanding(
+      computeBookingDueAmount(booking),
+      booking.paidNow ?? 0
+    )
+  );
+}
+
+function computeBookingRemainingAmountFromPayments(booking: DashboardLiveBookingRow): number {
+  return (
+    booking.remainingAmount ??
+    computeOutstanding(
+      computeBookingDueAmount(booking),
+      booking.payments.reduce((sum, payment) => sum + payment.amount, 0)
+    )
+  );
+}
+
+export function buildActiveBookingsDTOFromLiveData(input: {
+  liveBookings: DashboardLiveData["liveBookings"];
+  now: Date;
+}): DashboardV3ActiveBookingsDTO {
+  const todayStart = new Date(input.now);
+  todayStart.setHours(0, 0, 0, 0);
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+  return buildActiveBookingTabs({
+    bookings: input.liveBookings
+      .filter((booking) => {
+        const bookingStartsToday =
+          booking.startDate.getTime() >= todayStart.getTime() &&
+          booking.startDate.getTime() < tomorrowStart.getTime();
+        const bookingEndsToday =
+          booking.endDate.getTime() >= todayStart.getTime() &&
+          booking.endDate.getTime() < tomorrowStart.getTime();
+
+        return booking.status === "ACTIVE" || bookingStartsToday || bookingEndsToday;
+      })
+      .map((booking) => ({
+        id: booking.id,
+        bookingId: booking.id,
+        customerName: booking.customer.name,
+        vehicleLabel: `${booking.vehicle.make} ${booking.vehicle.model}`,
+        plate: booking.vehicle.plate,
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+        status: booking.status,
+        remainingAmount: computeBookingRemainingAmountFromPaidNow(booking),
+      })),
+    now: input.now,
+  });
+}
+
+export function buildCollectionsSheetDTO(input: {
+  liveBookings: DashboardLiveData["liveBookings"];
+  now: Date;
+}): DashboardV3CollectionsSheetDTO {
+  const items = sortCollectionItems(
+    input.liveBookings
+      .map((booking) => {
+        const outstanding = computeBookingRemainingAmountFromPayments(booking);
+        if (outstanding <= 0) return null;
+
+        const dueDate = getCollectionDueDate(booking);
+        const isOverdue = isCollectionOverdue(booking, outstanding, input.now);
+        const customerName = booking.customer.name;
+        const vehicleLabel = `${booking.vehicle.make} ${booking.vehicle.model}`;
+
+        return {
+          id: booking.id,
+          bookingId: booking.id,
+          customerName,
+          vehicleLabel,
+          plate: booking.vehicle.plate,
+          amount: outstanding,
+          dueLabel: isOverdue
+            ? `En retard depuis ${formatDateTime(dueDate)}`
+            : `A encaisser avant ${formatDateTime(dueDate)}`,
+          isOverdue,
+          primaryHref: `/bookings/${booking.id}`,
+          label: `${customerName} - ${vehicleLabel}`,
+          sublabel: booking.vehicle.plate,
+          primaryAction: "Encaisser",
+          actionType: "collection" as const,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+  ).map((item) => ({
+    id: item.id,
+    bookingId: item.bookingId!,
+    customerName: item.customerName!,
+    vehicleLabel: item.vehicleLabel!,
+    plate: item.plate!,
+    amount: item.amount ?? 0,
+    dueLabel: item.dueLabel ?? "",
+    isOverdue: Boolean(item.isOverdue),
+    primaryHref: item.primaryHref,
+  }));
+
+  return {
+    count: items.length,
+    overdueCount: items.filter((item) => item.isOverdue).length,
+    totalAmount: items.reduce((sum, item) => sum + item.amount, 0),
+    items,
+  };
+}
+
+export function buildDueDepositsSheetDTO(input: {
+  deposits: DashboardLiveData["deposits"];
+  now: Date;
+}): DashboardV3DueDepositsSheetDTO {
+  const items = sortDepositItems(
+    input.deposits
+      .filter((deposit) => isDepositReleaseDue(deposit, deposit.booking, input.now))
+      .map((deposit) => {
+        const dueDate = deposit.booking.actualReturnDate ?? deposit.booking.endDate;
+        const isOverdue = dueDate.getTime() < input.now.getTime();
+        const customerName = deposit.booking.customer.name;
+        const vehicleLabel = `${deposit.booking.vehicle.make} ${deposit.booking.vehicle.model}`;
+
+        return {
+          id: deposit.id,
+          depositId: deposit.id,
+          bookingId: deposit.bookingId,
+          customerName,
+          vehicleLabel,
+          plate: deposit.booking.vehicle.plate,
+          amount: deposit.amount,
+          dueLabel: isOverdue
+            ? `En retard depuis ${formatDateTime(dueDate)}`
+            : `A liberer le ${formatDateTime(dueDate)}`,
+          isOverdue,
+          primaryHref: `/bookings/${deposit.bookingId}`,
+          label: `${customerName} - ${vehicleLabel}`,
+          sublabel: `${deposit.booking.vehicle.plate} - caution en attente`,
+          primaryAction: "Liberer",
+          actionType: "deposit_release" as const,
+        };
+      })
+  ).map((item) => ({
+    id: item.id,
+    depositId: item.depositId!,
+    bookingId: item.bookingId!,
+    customerName: item.customerName!,
+    vehicleLabel: item.vehicleLabel!,
+    plate: item.plate!,
+    amount: item.amount ?? 0,
+    dueLabel: item.dueLabel ?? "",
+    isOverdue: Boolean(item.isOverdue),
+    primaryHref: item.primaryHref,
+  }));
+
+  return {
+    count: items.length,
+    totalAmount: items.reduce((sum, item) => sum + item.amount, 0),
+    items,
+  };
+}
+
+export function buildLateReturnsSheetDTO(input: {
+  liveBookings: DashboardLiveData["liveBookings"];
+  now: Date;
+}): DashboardV3LateReturnsSheetDTO {
+  const items = input.liveBookings
+    .filter((booking) => booking.endDate.getTime() < input.now.getTime())
+    .map((booking) => {
+      const customerName = booking.customer.name;
+      const vehicleLabel = `${booking.vehicle.make} ${booking.vehicle.model}`;
+      const outstanding = computeBookingRemainingAmountFromPayments(booking);
+
+      return {
+        id: booking.id,
+        bookingId: booking.id,
+        customerName,
+        vehicleLabel,
+        plate: booking.vehicle.plate,
+        dueLabel: `Retour en retard depuis ${formatDateTime(booking.endDate)}`,
+        isOverdue: true,
+        amount: outstanding > 0 ? outstanding : undefined,
+        primaryHref: `/bookings/${booking.id}`,
+      };
+    })
+    .sort((a, b) => {
+      if ((a.amount ?? 0) !== (b.amount ?? 0)) return (b.amount ?? 0) - (a.amount ?? 0);
+      return a.customerName.localeCompare(b.customerName);
+    });
+
+  return {
+    count: items.length,
+    exposedCount: items.filter((item) => (item.amount ?? 0) > 0).length,
+    totalAmount: items.reduce((sum, item) => sum + (item.amount ?? 0), 0),
+    items,
   };
 }
 
@@ -911,89 +1121,18 @@ async function getDashboardActiveBookingsV3Uncached(input: {
   periodInput: DashboardV3PeriodInput;
 }): Promise<DashboardV3ActiveBookingsDTO> {
   const startedAt = Date.now();
-  void input.periodInput;
   const now = new Date();
-  const todayStart = new Date(now);
-  todayStart.setHours(0, 0, 0, 0);
-  const tomorrowStart = new Date(todayStart);
-  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  void input.periodInput;
 
-  const bookings = await prisma.booking.findMany({
-    where: {
-      agencyId: input.agencyId,
-      status: { in: ["CONFIRMED", "ACTIVE"] },
-      OR: [
-        { status: "ACTIVE" },
-        {
-          startDate: {
-            gte: todayStart,
-            lt: tomorrowStart,
-          },
-        },
-        {
-          endDate: {
-            gte: todayStart,
-            lt: tomorrowStart,
-          },
-        },
-      ],
-    },
-    select: {
-      id: true,
-      startDate: true,
-      endDate: true,
-      status: true,
-      paidNow: true,
-      remainingAmount: true,
-      totalPrice: true,
-      totalTtc: true,
-      taxEnabled: true,
-      discountAmount: true,
-      addonsTotal: true,
-      customer: {
-        select: {
-          name: true,
-        },
-      },
-      vehicle: {
-        select: {
-          make: true,
-          model: true,
-          plate: true,
-        },
-      },
-    },
-  });
-
-  const dto = buildActiveBookingTabs({
-    bookings: bookings.map((booking) => ({
-      id: booking.id,
-      bookingId: booking.id,
-      customerName: booking.customer.name,
-      vehicleLabel: `${booking.vehicle.make} ${booking.vehicle.model}`,
-      plate: booking.vehicle.plate,
-      startDate: booking.startDate,
-      endDate: booking.endDate,
-      status: booking.status,
-      remainingAmount:
-        booking.remainingAmount ??
-        computeOutstanding(
-          computeBookingDue({
-            totalTtc: booking.totalTtc,
-            taxEnabled: booking.taxEnabled,
-            totalPrice: booking.totalPrice,
-            discountAmount: booking.discountAmount ?? 0,
-            addonsTotal: booking.addonsTotal ?? 0,
-          }),
-          booking.paidNow ?? 0
-        ),
-    })),
+  const liveData = await getDashboardLiveData(input.agencyId);
+  const dto = buildActiveBookingsDTOFromLiveData({
+    liveBookings: liveData.liveBookings,
     now,
   });
 
   logPerf("active-bookings-total", startedAt, {
     agencyId: input.agencyId,
-    bookings: bookings.length,
+    bookings: liveData.liveBookings.length,
     activeCount: dto.tabs.find((tab) => tab.key === "active")?.count ?? 0,
     overdueCount: dto.tabs.find((tab) => tab.key === "overdue")?.count ?? 0,
   });
@@ -1030,20 +1169,6 @@ const getDashboardPeriodDataCached = unstable_cache(
     }),
   ["dashboard-v3-period"],
   { revalidate: DASHBOARD_V3_CORE_CACHE_SECONDS }
-);
-
-const getDashboardActiveBookingsV3Cached = unstable_cache(
-  async (agencyId: string, dayStart: string) =>
-    getDashboardActiveBookingsV3Uncached({
-      agencyId,
-      periodInput: {
-        period: "today",
-        start: dayStart,
-        end: dayStart,
-      },
-    }),
-  ["dashboard-v3-active-bookings"],
-  { revalidate: DASHBOARD_V3_INSIGHTS_CACHE_SECONDS }
 );
 
 export async function getDashboardDataV3(input: {
@@ -1239,20 +1364,50 @@ export async function getDashboardActiveBookingsV3(input: {
   agencyId: string;
   periodInput: DashboardV3PeriodInput;
 }): Promise<DashboardV3ActiveBookingsDTO> {
-  const now = new Date();
-  const dayStart = new Date(now);
-  dayStart.setHours(0, 0, 0, 0);
   try {
-    return await getDashboardActiveBookingsV3Cached(
-      input.agencyId,
-      dayStart.toISOString()
-    );
+    return await getDashboardActiveBookingsV3Uncached(input);
   } catch (error) {
     if (isIncrementalCacheMissing(error)) {
       return getDashboardActiveBookingsV3Uncached(input);
     }
     throw error;
   }
+}
+
+export async function getDashboardCollectionsSheetData(input: {
+  agencyId: string;
+  periodInput: DashboardV3PeriodInput;
+}): Promise<DashboardV3CollectionsSheetDTO> {
+  void input.periodInput;
+  const liveData = await getDashboardLiveData(input.agencyId);
+  return buildCollectionsSheetDTO({
+    liveBookings: liveData.liveBookings,
+    now: new Date(),
+  });
+}
+
+export async function getDashboardDueDepositsSheetData(input: {
+  agencyId: string;
+  periodInput: DashboardV3PeriodInput;
+}): Promise<DashboardV3DueDepositsSheetDTO> {
+  void input.periodInput;
+  const liveData = await getDashboardLiveData(input.agencyId);
+  return buildDueDepositsSheetDTO({
+    deposits: liveData.deposits,
+    now: new Date(),
+  });
+}
+
+export async function getDashboardLateReturnsSheetData(input: {
+  agencyId: string;
+  periodInput: DashboardV3PeriodInput;
+}): Promise<DashboardV3LateReturnsSheetDTO> {
+  void input.periodInput;
+  const liveData = await getDashboardLiveData(input.agencyId);
+  return buildLateReturnsSheetDTO({
+    liveBookings: liveData.liveBookings,
+    now: new Date(),
+  });
 }
 
 async function getDashboardLiveData(agencyId: string): Promise<DashboardLiveData> {
