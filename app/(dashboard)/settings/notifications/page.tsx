@@ -201,7 +201,7 @@ export default async function NotificationSettingsPage() {
                 Vérification manuelle
               </p>
               <p className="text-xs text-muted-foreground">
-                Envoie un email de test vers l'adresse de l'agence et enregistre un
+                Envoie un email de test vers l&apos;adresse de l&apos;agence et enregistre un
                 `NotificationEvent`.
               </p>
             </div>

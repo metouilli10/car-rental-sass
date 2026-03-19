@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -46,18 +46,23 @@ export function NotificationFiltersClient({
     setSearchInput(search);
   }, [search]);
 
-  const updateQueryParams = (updates: Record<string, string | undefined>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(updates)) {
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
+  const updateQueryParams = useCallback(
+    (updates: Record<string, string | undefined>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [key, value] of Object.entries(updates)) {
+        if (value) {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
       }
-    }
-    const nextQuery = params.toString();
-    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
-  };
+      const nextQuery = params.toString();
+      router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams],
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -67,7 +72,7 @@ export function NotificationFiltersClient({
     }, 300);
 
     return () => window.clearTimeout(timer);
-  }, [pathname, router, search, searchInput, searchParams]);
+  }, [search, searchInput, updateQueryParams]);
 
   const statusItems: Array<{ value: NotificationStatusFilter; label: string }> = [
     { value: "ALL", label: "Tous" },
