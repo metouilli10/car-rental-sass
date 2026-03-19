@@ -263,8 +263,67 @@ export async function getOwnerSignupQueue() {
       emailVerifiedAt: true,
       agency: {
         select: {
+          id: true,
           name: true,
+          subscriptionPaid: true,
+          subscriptionEndsAt: true,
         },
+      },
+    },
+  });
+}
+
+export async function logAgencySubscriptionAudit(params: {
+  agencyId: string;
+  agencyName: string;
+  subscriptionPaid: boolean;
+  subscriptionEndsAt: Date | null;
+  reviewerLabel: string;
+}) {
+  await logSecurityAudit({
+    actor: {
+      userId: params.reviewerLabel,
+      role: "INTERNAL_REVIEW",
+    },
+    context: {
+      agencyId: params.agencyId,
+    },
+    event: {
+      action: "AGENCY_SUBSCRIPTION_UPDATED",
+      entityType: "AGENCY",
+      entityId: params.agencyId,
+      outcome: "SUCCESS",
+      details: {
+        agencyName: params.agencyName,
+        subscriptionPaid: params.subscriptionPaid,
+        subscriptionEndsAt: params.subscriptionEndsAt?.toISOString() ?? null,
+        reviewer: params.reviewerLabel,
+      },
+    },
+  });
+}
+
+export async function logAgencyDeletionAudit(params: {
+  agencyId: string;
+  agencyName: string;
+  reviewerLabel: string;
+}) {
+  await logSecurityAudit({
+    actor: {
+      userId: params.reviewerLabel,
+      role: "INTERNAL_REVIEW",
+    },
+    context: {
+      agencyId: params.agencyId,
+    },
+    event: {
+      action: "AGENCY_DELETED",
+      entityType: "AGENCY",
+      entityId: params.agencyId,
+      outcome: "SUCCESS",
+      details: {
+        agencyName: params.agencyName,
+        reviewer: params.reviewerLabel,
       },
     },
   });

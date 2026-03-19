@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --hostname localhost",
+    "dev": "next dev --hostname localhost",
+    "dev:turbopack": "next dev --turbopack --hostname localhost",
     "dev:safe": "next dev --hostname localhost",
     "build": "prisma generate && next build",
     "build:db": "prisma db push && prisma generate && next build",

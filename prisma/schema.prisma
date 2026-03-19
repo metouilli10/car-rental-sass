@@ -188,6 +188,8 @@ model Agency {
   logoUrl  String?
   country  String @default("Morocco")
   currency String @default("MAD")
+  subscriptionPaid   Boolean   @default(false)
+  subscriptionEndsAt DateTime?
   setupCompletedAt DateTime?
 
   onboardingVehicleAdded        Boolean @default(false)
