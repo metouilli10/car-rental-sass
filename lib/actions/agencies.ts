@@ -37,6 +37,8 @@ export async function saveAgencyProfile(
     revalidatePath("/dashboard");
     revalidatePath("/setup");
     revalidatePath("/settings/agency");
+    revalidatePath("/bookings");
+    revalidatePath("/reservations");
     return { success: true };
   } catch (error) {
     console.error("saveAgencyProfile error:", error);

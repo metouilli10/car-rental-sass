@@ -185,9 +185,9 @@ export function ReservationDetailsHeader({
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem asChild>
-                <Link href="#" aria-label="Télécharger contrat">
+                <Link href={`/bookings/${bookingId}/invoice`} aria-label="Générer facture">
                   <FileText className="mr-2 h-4 w-4" />
-                  Télécharger contrat
+                  Générer facture
                 </Link>
               </DropdownMenuItem>
               {canCancel && !isCanceled && status !== "COMPLETED" && (
