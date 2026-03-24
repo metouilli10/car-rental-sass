@@ -1,1 +1,8 @@
-export { default, dynamic, preferredRegion, revalidate, runtime } from "../../../bookings/[id]/invoice/page";
+import BookingInvoicePage from "../../../bookings/[id]/invoice/page";
+
+export const runtime = "nodejs";
+export const preferredRegion = "fra1";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default BookingInvoicePage;

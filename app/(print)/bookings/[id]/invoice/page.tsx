@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getCurrentUserForPage } from "@/lib/authz";
+import { AuthzError, getCurrentUserOrThrow } from "@/lib/authz";
 import { getBookingInvoiceData } from "@/lib/bookings/invoice";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { InvoicePrintButton } from "@/components/bookings/InvoicePrintButton";
@@ -36,7 +36,17 @@ export default async function BookingInvoicePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const currentUser = await getCurrentUserForPage();
+  let currentUser;
+
+  try {
+    currentUser = await getCurrentUserOrThrow();
+  } catch (error) {
+    if (error instanceof AuthzError && error.status === 401) {
+      redirect("/login");
+    }
+    throw error;
+  }
+
   const { id } = await params;
   const invoice = await getBookingInvoiceData(id, currentUser.agencyId);
 
