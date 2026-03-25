@@ -474,7 +474,7 @@ export function ReservationWizardPage({
                 {draft.step === 4 && "Confirmez le paiement et créez la réservation."}
               </p>
             </CardHeader>
-            <CardContent className="space-y-5 pb-28 md:pb-6">
+            <CardContent className="space-y-5 pb-44 md:pb-6">
               {draft.step === 1 ? (
                 <StepLocation
                   draft={draft}
@@ -550,7 +550,7 @@ export function ReservationWizardPage({
                 )}
               </div>
 
-              <div className="sticky bottom-0 z-[60] -mx-6 border-t border-border/70 bg-card px-6 py-3 md:hidden">
+              <div className="fixed inset-x-4 bottom-24 z-[60] rounded-2xl border border-border/70 bg-card/95 px-4 py-3 shadow-lg backdrop-blur md:hidden">
                 <div className="flex items-center justify-between gap-2">
                   <Button type="button" variant="outline" onClick={onBack} disabled={draft.step === 1} className="min-h-11 flex-1">
                     Retour

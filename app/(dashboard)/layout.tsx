@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-cache";
 import { TopNavBar } from "@/components/shared/top-nav-bar";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
 import { Toaster } from "sonner";
 import {
   getNotificationsSummary,
@@ -10,6 +8,7 @@ import {
 } from "@/lib/notifications/queries";
 import { prisma } from "@/lib/prisma";
 import { getEffectivePermissions } from "@/lib/permissions";
+import { getCurrentUserAccessForPage } from "@/lib/authz";
 import {
   isAgencyEligibleForGuidedOnboarding,
 } from "@/lib/onboarding/agency-onboarding";
@@ -21,17 +20,9 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  const agencyId = session.user.agencyId ?? "";
-  if (!agencyId) {
-    redirect("/setup");
-  }
-  let displayAgencyName = session.user.agencyName || "Agence";
+  const currentUser = await getCurrentUserAccessForPage();
+  const agencyId = currentUser.agencyId;
+  let displayAgencyName = currentUser.agencyName || "Agence";
   let agency: {
     setupCompletedAt: Date | null;
     name: string;
@@ -47,7 +38,6 @@ export default async function DashboardLayout({
     count: 0,
     items: [],
   };
-  let currentUser: { permissionOverrides: unknown } | null = null;
   let onboardingNav: {
     eligible: boolean;
     completed: boolean;
@@ -86,16 +76,6 @@ export default async function DashboardLayout({
     }
     displayAgencyName = agency.name ?? displayAgencyName;
 
-    currentUser = await prisma.user.findFirst({
-      where: {
-        id: session.user.id,
-        agencyId,
-      },
-      select: {
-        permissionOverrides: true,
-      },
-    });
-
     if (agency && isAgencyEligibleForGuidedOnboarding(agency.createdAt)) {
       const completedCount = [
         agency.onboardingVehicleAdded,
@@ -122,8 +102,8 @@ export default async function DashboardLayout({
     redirect("/setup");
   }
   const permissions = getEffectivePermissions(
-    session.user.role,
-    currentUser?.permissionOverrides ?? null,
+    currentUser.role,
+    currentUser.permissionOverrides,
   );
 
   return (
@@ -131,7 +111,7 @@ export default async function DashboardLayout({
       {/* Collapsible Sidebar */}
       <Sidebar
         agencyName={displayAgencyName}
-        role={session.user.role}
+        role={currentUser.role}
         permissions={permissions}
         onboarding={onboardingNav}
       />
@@ -141,9 +121,11 @@ export default async function DashboardLayout({
       {/* Right side — TopNav + Content */}
       <div className="flex min-w-0 flex-1 flex-col bg-transparent" suppressHydrationWarning>
         <TopNavBar
-          userName={session.user.name || "Utilisateur"}
-          userEmail={session.user.email || ""}
+          userName={currentUser.name || "Utilisateur"}
+          userEmail={currentUser.email}
           agencyName={displayAgencyName}
+          role={currentUser.role}
+          permissions={permissions}
           agencyLogoUrl={agency?.logoUrl ?? undefined}
           notifCount={notifSummary.count}
           topNotifs={notifSummary.items}
@@ -152,15 +134,12 @@ export default async function DashboardLayout({
         {/* Main Content */}
         <main className="flex-1 overflow-auto bg-transparent" suppressHydrationWarning>
           <div className="min-h-full" suppressHydrationWarning>
-            <div className="mx-auto w-full max-w-[1440px] px-4 pb-24 pt-4 sm:px-6 sm:py-5 lg:px-8" suppressHydrationWarning>
+            <div className="mx-auto w-full max-w-[1440px] px-4 pb-8 pt-4 sm:px-6 sm:py-5 lg:px-8" suppressHydrationWarning>
               {children}
             </div>
           </div>
         </main>
       </div>
-
-      {/* Mobile bottom navigation */}
-      <MobileBottomNav permissions={permissions} />
     </div>
   );
 }

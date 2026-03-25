@@ -18,7 +18,7 @@ const PERIOD_ITEMS = [
 ] as const;
 
 const BASE_SEGMENT_CLASS =
-  "inline-flex min-w-[88px] items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium transition-colors";
+  "inline-flex min-w-[72px] whitespace-nowrap items-center justify-center rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:min-w-[88px] sm:px-3";
 const ACTIVE_SEGMENT_CLASS =
   "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200";
 const INACTIVE_SEGMENT_CLASS =
@@ -136,7 +136,7 @@ export function PeriodTabs({ period, onPeriodChange, pending = false }: PeriodTa
   }
 
   return (
-    <div className="inline-flex flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+    <div className="flex flex-nowrap items-center gap-1 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:inline-flex sm:flex-wrap sm:overflow-visible">
       {PERIOD_ITEMS.map((item) => (
         onPeriodChange ? (
           <button

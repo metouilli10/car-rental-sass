@@ -20,6 +20,8 @@ import {
   Rocket,
   Building2,
 } from "lucide-react";
+import type { UserRole } from "@prisma/client";
+import type { EffectivePermissions } from "@/lib/permissions";
 import type { ReminderType, NotificationSeverity } from "@prisma/client";
 import {
   DropdownMenu,
@@ -29,6 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MobileNavDrawer } from "@/components/shared/mobile-nav-drawer";
 
 const SearchOverlay = dynamic(
   () => import("@/components/shared/search-overlay").then((mod) => mod.SearchOverlay),
@@ -48,6 +51,8 @@ interface TopNavBarProps {
   userName: string;
   userEmail: string;
   agencyName: string;
+  role: UserRole;
+  permissions: EffectivePermissions;
   agencyLogoUrl?: string | null;
   notifCount?: number;
   topNotifs?: NotifItem[];
@@ -73,6 +78,8 @@ export function TopNavBar({
   userName,
   userEmail,
   agencyName,
+  role,
+  permissions,
   agencyLogoUrl,
   notifCount = 0,
   topNotifs = [],
@@ -117,20 +124,28 @@ export function TopNavBar({
     <>
       <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between border-b border-subtle bg-white/90 px-4 backdrop-blur-sm sm:px-6">
         <div className="min-w-0 flex-1">
-          <Link
-            href="/dashboard"
-            aria-label="Aller au tableau de bord"
-            className="inline-flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-muted/50 md:hidden"
-          >
-            <Image
-              src="/assets/locaryx-logo-dark.png"
-              alt="Locaryx"
-              width={120}
-              height={28}
-              className="h-6 w-auto object-contain"
-              priority
+          <div className="flex items-center gap-2 md:hidden">
+            <MobileNavDrawer
+              agencyName={agencyName}
+              role={role}
+              permissions={permissions}
+              userName={userName}
             />
-          </Link>
+            <Link
+              href="/dashboard"
+              aria-label="Aller au tableau de bord"
+              className="inline-flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-muted/50"
+            >
+              <Image
+                src="/assets/locaryx-logo-dark.png"
+                alt="Locaryx"
+                width={120}
+                height={28}
+                className="h-6 w-auto object-contain"
+                priority
+              />
+            </Link>
+          </div>
         </div>
 
         {/* ── Zone C: Right — Search + Bell + Profile ───────────── */}
