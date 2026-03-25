@@ -2,16 +2,18 @@ import { redirect } from "next/navigation";
 import { TopNavBar } from "@/components/shared/top-nav-bar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Toaster } from "sonner";
+import { getServerSession } from "next-auth";
 import {
   getNotificationsSummary,
   type NotificationSummaryItem,
 } from "@/lib/notifications/queries";
 import { prisma } from "@/lib/prisma";
 import { getEffectivePermissions } from "@/lib/permissions";
-import { getCurrentUserAccessForPage } from "@/lib/authz";
+import { AuthzError, getCurrentUserOrThrow } from "@/lib/authz";
 import {
   isAgencyEligibleForGuidedOnboarding,
 } from "@/lib/onboarding/agency-onboarding";
+import { authOptions } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -20,9 +22,36 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const currentUser = await getCurrentUserAccessForPage();
+  let currentUser;
+
+  try {
+    currentUser = await getCurrentUserOrThrow();
+  } catch (error) {
+    if (error instanceof AuthzError && error.status === 401) {
+      redirect("/login");
+    }
+    throw error;
+  }
+
+  const session = await getServerSession(authOptions);
+  const membership = await prisma.user.findFirst({
+    where: {
+      id: currentUser.id,
+      agencyId: currentUser.agencyId,
+    },
+    select: {
+      name: true,
+      permissionOverrides: true,
+    },
+  });
+
+  if (!membership) {
+    redirect("/login");
+  }
+
   const agencyId = currentUser.agencyId;
-  let displayAgencyName = currentUser.agencyName || "Agence";
+  let displayAgencyName =
+    (typeof session?.user?.agencyName === "string" && session.user.agencyName) || "Agence";
   let agency: {
     setupCompletedAt: Date | null;
     name: string;
@@ -103,7 +132,7 @@ export default async function DashboardLayout({
   }
   const permissions = getEffectivePermissions(
     currentUser.role,
-    currentUser.permissionOverrides,
+    membership.permissionOverrides,
   );
 
   return (
@@ -121,7 +150,7 @@ export default async function DashboardLayout({
       {/* Right side — TopNav + Content */}
       <div className="flex min-w-0 flex-1 flex-col bg-transparent" suppressHydrationWarning>
         <TopNavBar
-          userName={currentUser.name || "Utilisateur"}
+          userName={membership.name || session?.user?.name || "Utilisateur"}
           userEmail={currentUser.email}
           agencyName={displayAgencyName}
           role={currentUser.role}
