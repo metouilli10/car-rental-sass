@@ -14,6 +14,7 @@ const KNOWN_BRAND_KEYS = new Set([
   "nissan",
   "opel",
   "peugeot",
+  "porsche",
   "renault",
   "seat",
   "skoda",
@@ -28,6 +29,7 @@ const BRAND_ALIASES: Record<string, string> = {
   "mercedes benz": "mercedes",
   mercedesbenz: "mercedes",
   "land rover": "landrover",
+  porshe: "porsche",
 };
 
 export function normalizeMake(make: string): string {
