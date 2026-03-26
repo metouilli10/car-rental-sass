@@ -220,6 +220,12 @@ export interface DashboardV3Pulse {
     total: number;
     subtitle: string;
   };
+  deposits: {
+    amount: number;
+    count: number;
+    overdueCount: number;
+    subtitle: string;
+  };
   risks: {
     count: number;
     exposureAmount: number;

@@ -87,6 +87,7 @@ export function LateReturnsSheet({
       onOpenChange={onOpenChange}
       title="Retours en retard"
       description={`${summary.count} retours a traiter, ${summary.exposedCount} avec exposition`}
+      tone="red"
       summaryRows={[
         { label: "Retours", value: summary.count },
         { label: "Avec exposition", value: summary.exposedCount },
@@ -106,7 +107,7 @@ export function LateReturnsSheet({
         data?.items.map((item) => (
           <div
             key={item.bookingId}
-            className="rounded-xl border border-border bg-background px-4 py-3 transition-colors hover:bg-slate-50"
+            className="rounded-xl border border-red-200/80 bg-white px-4 py-3 transition-colors hover:bg-red-50/40"
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 space-y-1">
@@ -121,7 +122,7 @@ export function LateReturnsSheet({
               </div>
               <div className="flex flex-col items-stretch gap-2 sm:items-end">
                 {item.amount != null ? (
-                  <Badge variant="destructive" className="rounded-full">
+                  <Badge variant="destructive" className="rounded-full border-red-200 bg-red-50 text-red-700">
                     {formatCurrency(item.amount)}
                   </Badge>
                 ) : null}

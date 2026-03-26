@@ -1076,6 +1076,12 @@ async function getDashboardDataV3Uncached(input: {
         total: fleetSnapshot.totalActive,
         subtitle: `${fleetSnapshot.rented}/${fleetSnapshot.totalActive} vehicules loues`,
       },
+      deposits: {
+        amount: Math.round(depositDueAmountTotal * 100) / 100,
+        count: depositDueItems.length,
+        overdueCount: depositDueItems.filter((item) => item.isOverdue).length,
+        subtitle: `${depositDueItems.length} cautions, ${depositDueItems.filter((item) => item.isOverdue).length} en retard`,
+      },
       risks: {
         count: toCollectCount + depositDueItems.length + lateReturnCount,
         exposureAmount: Math.round(riskExposure * 100) / 100,
@@ -1346,6 +1352,12 @@ export async function getDashboardPeriodSummary(input: {
         rented: fleetSnapshot.rented,
         total: fleetSnapshot.totalActive,
         subtitle: `${fleetSnapshot.rented}/${fleetSnapshot.totalActive} vehicules loues`,
+      },
+      deposits: {
+        amount: Math.round(depositDueAmountTotal * 100) / 100,
+        count: depositDueCount,
+        overdueCount: deposits.filter((deposit) => isDepositReleaseDue(deposit, deposit.booking, now) && (deposit.booking.actualReturnDate ?? deposit.booking.endDate).getTime() < now.getTime()).length,
+        subtitle: `${depositDueCount} cautions, ${deposits.filter((deposit) => isDepositReleaseDue(deposit, deposit.booking, now) && (deposit.booking.actualReturnDate ?? deposit.booking.endDate).getTime() < now.getTime()).length} en retard`,
       },
       risks: {
         count: toCollectCount + depositDueCount + lateReturnCount,

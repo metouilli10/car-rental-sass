@@ -101,7 +101,7 @@ export function DashboardPeriodShell({
         onPeriodChange={handlePeriodChange}
         periodPending={isLoading || isPending}
       />
-      <PulseCards pulse={pulse} operations={operations} />
+      <PulseCards pulse={pulse} operations={operations} period={period} />
     </>
   );
 }

@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Clock3, ShieldCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CollectionsSheet } from "@/components/dashboard/CollectionsSheet";
 import { EncaisserDialog } from "@/components/dashboard/EncaisserDialog";
 import { LateReturnsSheet } from "@/components/dashboard/LateReturnsSheet";
-import { DepositsDueSheet } from "@/components/dashboard/DepositsDueSheet";
 import { LibererCautionDialog } from "@/components/dashboard/LibererCautionDialog";
 import { cn, formatCurrency } from "@/lib/utils";
 import type {
@@ -31,15 +30,6 @@ const secondaryActionClassName =
 const tertiaryActionClassName =
   "h-8 justify-center rounded-md px-2.5 text-sm font-medium text-slate-600 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900";
 
-type PriorityBucket = "critical" | "important" | "upcoming";
-
-interface QueueItem extends DashboardV3ActionItem {
-  bucket: PriorityBucket;
-  groupId: DashboardV3ActionGroup["id"];
-  groupTitle: string;
-  groupCtaHref: string;
-}
-
 interface ResolvedRowAction {
   primary: {
     label: string;
@@ -54,91 +44,69 @@ interface ResolvedRowAction {
   };
 }
 
-interface BucketSubgroup {
-  id: DashboardV3ActionGroup["id"];
-  title: string;
-  ctaHref: string;
-  items: QueueItem[];
-}
-
 interface ResolvedGroupAction {
   label: string;
   href?: string;
   onClick?: () => void;
 }
 
-const BUCKET_META: Record<
-  PriorityBucket,
-  { label: string; toneClassName: string; icon: typeof AlertTriangle }
+const GROUP_TONES: Record<
+  DashboardV3ActionGroup["id"],
+  {
+    cardBorder: string;
+    headerBg: string;
+    countText: string;
+    titleAccent: string;
+    emptyBorder: string;
+    emptyBg: string;
+    emptyText: string;
+  }
 > = {
-  critical: {
-    label: "Critique",
-    toneClassName: "text-red-600",
-    icon: AlertTriangle,
+  collections: {
+    cardBorder: "border-orange-200/80",
+    headerBg: "bg-orange-50/70",
+    countText: "text-orange-700",
+    titleAccent: "text-orange-700",
+    emptyBorder: "border-orange-200/70",
+    emptyBg: "bg-orange-50/40",
+    emptyText: "text-orange-700/80",
   },
-  important: {
-    label: "Important",
-    toneClassName: "text-amber-600",
-    icon: Clock3,
+  deposits: {
+    cardBorder: "border-sky-200/80",
+    headerBg: "bg-sky-50/70",
+    countText: "text-sky-700",
+    titleAccent: "text-sky-700",
+    emptyBorder: "border-sky-200/70",
+    emptyBg: "bg-sky-50/40",
+    emptyText: "text-sky-700/80",
   },
-  upcoming: {
-    label: "À venir",
-    toneClassName: "text-slate-500",
-    icon: ShieldCheck,
+  late_returns: {
+    cardBorder: "border-red-200/80",
+    headerBg: "bg-red-50/70",
+    countText: "text-red-700",
+    titleAccent: "text-red-700",
+    emptyBorder: "border-red-200/70",
+    emptyBg: "bg-red-50/40",
+    emptyText: "text-red-700/80",
+  },
+  notifications: {
+    cardBorder: "border-blue-200/80",
+    headerBg: "bg-blue-50/70",
+    countText: "text-blue-700",
+    titleAccent: "text-blue-700",
+    emptyBorder: "border-blue-200/70",
+    emptyBg: "bg-blue-50/40",
+    emptyText: "text-blue-700/80",
   },
 };
 
-function resolveBucket(group: DashboardV3ActionGroup, item: DashboardV3ActionItem): PriorityBucket {
-  if (item.isOverdue || group.id === "late_returns") return "critical";
-  if (group.id === "collections" || group.id === "deposits") return "important";
-  return "upcoming";
-}
-
-function buildPriorityBuckets(groups: DashboardV3ActionGroup[]) {
-  const items: QueueItem[] = groups.flatMap((group) =>
-    group.items.map((item) => ({
-      ...item,
-      bucket: resolveBucket(group, item),
-      groupId: group.id,
-      groupTitle: group.title,
-      groupCtaHref: group.ctaHref,
-    }))
-  );
-
-  return {
-    critical: items.filter((item) => item.bucket === "critical"),
-    important: items.filter((item) => item.bucket === "important"),
-    upcoming: items.filter((item) => item.bucket === "upcoming"),
-  };
-}
-
-function groupBucketItems(items: QueueItem[]): BucketSubgroup[] {
-  const grouped = new Map<DashboardV3ActionGroup["id"], BucketSubgroup>();
-
-  for (const item of items) {
-    const current = grouped.get(item.groupId);
-    if (current) {
-      current.items.push(item);
-      continue;
-    }
-
-    grouped.set(item.groupId, {
-      id: item.groupId,
-      title: item.groupTitle,
-      ctaHref: item.groupCtaHref,
-      items: [item],
-    });
-  }
-
-  return Array.from(grouped.values());
-}
-
 function getRowActions(args: {
-  item: QueueItem;
+  item: DashboardV3ActionItem;
+  groupId: DashboardV3ActionGroup["id"];
   onCollection: (item: DashboardV3ActionItem) => void;
   onDeposit: (item: DashboardV3ActionItem) => void;
 }): ResolvedRowAction {
-  const { item, onCollection, onDeposit } = args;
+  const { item, groupId, onCollection, onDeposit } = args;
 
   if (item.actionType === "collection" && item.bookingId) {
     return {
@@ -168,13 +136,22 @@ function getRowActions(args: {
     };
   }
 
-  if (item.groupId === "late_returns") {
+  if (groupId === "late_returns") {
     return {
       primary: {
         label: "Voir dossier",
         href: item.primaryHref,
-        variant: "outline",
-        className: secondaryActionClassName,
+        className: primaryActionClassName,
+      },
+    };
+  }
+
+  if (groupId === "notifications") {
+    return {
+      primary: {
+        label: item.primaryAction,
+        href: item.primaryHref,
+        className: primaryActionClassName,
       },
     };
   }
@@ -190,7 +167,7 @@ function getRowActions(args: {
 }
 
 function getGroupAction(args: {
-  group: BucketSubgroup;
+  group: DashboardV3ActionGroup;
   onCollections: () => void;
   onDeposits: () => void;
   onLateReturns: () => void;
@@ -216,9 +193,166 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
   const [selectedCollectionItem, setSelectedCollectionItem] = useState<DashboardV3ActionItem | null>(null);
   const [selectedDepositItem, setSelectedDepositItem] = useState<DashboardV3ActionItem | null>(null);
   const [collectionsSheetOpen, setCollectionsSheetOpen] = useState(false);
-  const [depositsSheetOpen, setDepositsSheetOpen] = useState(false);
   const [lateReturnsSheetOpen, setLateReturnsSheetOpen] = useState(false);
-  const priorityBuckets = buildPriorityBuckets(actionCenter.groups);
+  const visibleGroups = actionCenter.groups.filter((group) => group.id !== "deposits");
+  const isVisibleAllClear = visibleGroups.every((group) => group.count === 0);
+
+  function renderSection(group: DashboardV3ActionGroup) {
+    const tone = GROUP_TONES[group.id];
+    const groupAction = getGroupAction({
+      group,
+      onCollections: () => setCollectionsSheetOpen(true),
+      onDeposits: () => undefined,
+      onLateReturns: () => setLateReturnsSheetOpen(true),
+    });
+
+    return (
+      <section
+        key={group.id}
+        className={cn(
+          "rounded-xl border bg-[hsl(var(--surface))] p-4 shadow-sm",
+          tone.cardBorder
+        )}
+      >
+        <div className={cn("flex items-start justify-between gap-3 rounded-lg px-3 py-3", tone.headerBg)}>
+          <div className="min-w-0">
+            <h3 className={cn("text-sm font-semibold", tone.titleAccent)}>{group.title}</h3>
+            <p className={cn("mt-1 text-[12px]", tone.countText)}>
+              {group.count} element{group.count > 1 ? "s" : ""}
+            </p>
+          </div>
+          {groupAction.onClick ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={groupAction.onClick}
+              className={tertiaryActionClassName}
+            >
+              {groupAction.label}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          ) : (
+            <Button asChild variant="ghost" size="sm" className={tertiaryActionClassName}>
+              <Link href={groupAction.href!}>
+                {groupAction.label}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        {group.items.length === 0 ? (
+          <div
+            className={cn(
+              "mt-4 rounded-lg border border-dashed px-3 py-4 text-[12px]",
+              tone.emptyBorder,
+              tone.emptyBg,
+              tone.emptyText
+            )}
+          >
+            Rien à signaler
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {group.items.slice(0, 1).map((item) => {
+              const actions = getRowActions({
+                item,
+                groupId: group.id,
+                onCollection: setSelectedCollectionItem,
+                onDeposit: setSelectedDepositItem,
+              });
+              const title = item.customerName ?? item.label;
+              const vehicleLine =
+                item.vehicleLabel && item.plate
+                  ? `${item.vehicleLabel} • ${item.plate}`
+                  : item.vehicleLabel ?? item.plate ?? item.sublabel;
+              const secondaryLine =
+                item.customerName && item.sublabel !== item.vehicleLabel ? item.sublabel : undefined;
+
+              return (
+                <article
+                  key={item.id}
+                  className="rounded-xl border border-subtle bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-slate-950">{title}</p>
+                        {item.isOverdue ? (
+                          <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-red-600">
+                            En retard
+                          </span>
+                        ) : null}
+                      </div>
+                      {vehicleLine ? (
+                        <p className="mt-1 truncate text-[12px] text-slate-500">{vehicleLine}</p>
+                      ) : null}
+                      {secondaryLine ? (
+                        <p className="mt-1 truncate text-[12px] text-slate-500">{secondaryLine}</p>
+                      ) : null}
+                    </div>
+                    {item.amount != null ? (
+                      <span
+                        className={cn(
+                          "shrink-0 text-right text-sm font-semibold tabular-nums",
+                          item.isOverdue ? "text-red-600" : "text-slate-700"
+                        )}
+                      >
+                        {formatCurrency(item.amount)}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {item.dueLabel ? (
+                    <p
+                      className={cn(
+                        "mt-3 text-[12px]",
+                        item.isOverdue ? "text-red-600" : "text-slate-500"
+                      )}
+                    >
+                      {item.dueLabel}
+                    </p>
+                  ) : null}
+
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    {actions.primary.onClick ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={actions.primary.onClick}
+                        className={actions.primary.className}
+                      >
+                        {actions.primary.label}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                    ) : (
+                      <Button
+                        asChild
+                        size="sm"
+                        variant={actions.primary.variant}
+                        className={actions.primary.className}
+                      >
+                        <Link href={actions.primary.href!}>
+                          {actions.primary.label}
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    )}
+                    {actions.secondary ? (
+                      <Button asChild size="sm" variant="ghost" className={tertiaryActionClassName}>
+                        <Link href={actions.secondary.href}>{actions.secondary.label}</Link>
+                      </Button>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <>
@@ -229,169 +363,17 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
               <CardTitle className="section-title">Priorités opérationnelles</CardTitle>
               <p className="meta-text mt-1">Les priorités à traiter maintenant</p>
             </div>
-            {actionCenter.isAllClear ? (
+            {isVisibleAllClear ? (
               <Badge variant="success" className="rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">
                 Tout est sous contrôle
               </Badge>
             ) : null}
           </div>
         </CardHeader>
-        <CardContent className="space-y-4 p-4 pt-0">
-          {(Object.entries(priorityBuckets) as Array<[PriorityBucket, QueueItem[]]>).map(
-            ([bucketKey, items]) => {
-              const meta = BUCKET_META[bucketKey];
-              const Icon = meta.icon;
-              const groupedItems = groupBucketItems(items);
-
-              return (
-                <section key={bucketKey} className="rounded-xl border border-subtle bg-[hsl(var(--surface))] p-3">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Icon className={cn("h-3.5 w-3.5", meta.toneClassName)} />
-                      <h3 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-slate-700">
-                        {meta.label}
-                      </h3>
-                    </div>
-                    <span className="text-[11px] tabular-nums text-slate-400">{items.length}</span>
-                  </div>
-
-                  {items.length === 0 ? (
-                    <div className="rounded-lg border border-dashed border-subtle bg-slate-50 px-3 py-4 text-[12px] text-slate-500">
-                      Rien à signaler
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {groupedItems.map((group) => {
-                        const groupAction = getGroupAction({
-                          group,
-                          onCollections: () => setCollectionsSheetOpen(true),
-                          onDeposits: () => setDepositsSheetOpen(true),
-                          onLateReturns: () => setLateReturnsSheetOpen(true),
-                        });
-
-                        return (
-                          <div key={`${bucketKey}-${group.id}`} className="space-y-2">
-                            <div className="flex items-center justify-between gap-3 px-2">
-                              <div className="min-w-0">
-                                <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                  {group.title}
-                                </p>
-                                <p className="text-[11px] text-slate-400">{group.items.length} element{group.items.length > 1 ? "s" : ""}</p>
-                              </div>
-                              {groupAction.onClick ? (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={groupAction.onClick}
-                                  className={tertiaryActionClassName}
-                                >
-                                  {groupAction.label}
-                                  <ArrowRight className="h-3.5 w-3.5" />
-                                </Button>
-                              ) : (
-                                <Button asChild variant="ghost" size="sm" className={tertiaryActionClassName}>
-                                  <Link href={groupAction.href!}>
-                                    {groupAction.label}
-                                    <ArrowRight className="h-3.5 w-3.5" />
-                                  </Link>
-                                </Button>
-                              )}
-                            </div>
-
-                            <div className="space-y-2">
-                              {group.items.slice(0, 3).map((item) => {
-                                const actions = getRowActions({
-                                  item,
-                                  onCollection: setSelectedCollectionItem,
-                                  onDeposit: setSelectedDepositItem,
-                                });
-
-                                return (
-                                  <div
-                                    key={`${bucketKey}-${group.id}-${item.id}`}
-                                    className="rounded-lg border border-transparent px-2 py-2 transition-colors duration-150 hover:bg-slate-50"
-                                  >
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                      <div className="min-w-0 flex-1 space-y-1.5">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                          <p className="truncate text-sm font-medium text-slate-950">{item.label}</p>
-                                          {item.isOverdue ? (
-                                            <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-red-600">
-                                              En retard
-                                            </span>
-                                          ) : null}
-                                        </div>
-                                        <p className="truncate text-[12px] leading-none text-slate-500">
-                                          {item.sublabel}
-                                        </p>
-                                        {item.dueLabel ? (
-                                          <p
-                                            className={cn(
-                                              "text-[11px] leading-none",
-                                              item.isOverdue ? "text-red-600" : "text-slate-400"
-                                            )}
-                                          >
-                                            {item.dueLabel}
-                                          </p>
-                                        ) : null}
-                                      </div>
-                                      <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                                        {item.amount != null ? (
-                                          <span
-                                            className={cn(
-                                              "shrink-0 text-right text-[11px] font-medium tabular-nums",
-                                              item.isOverdue ? "text-red-600" : "text-slate-500"
-                                            )}
-                                          >
-                                            {formatCurrency(item.amount)}
-                                          </span>
-                                        ) : null}
-                                        <div className="flex flex-col gap-2 sm:items-end">
-                                          {actions.primary.onClick ? (
-                                            <Button
-                                              type="button"
-                                              size="sm"
-                                              onClick={actions.primary.onClick}
-                                              className={actions.primary.className}
-                                            >
-                                              {actions.primary.label}
-                                              <ArrowRight className="h-3.5 w-3.5" />
-                                            </Button>
-                                          ) : (
-                                            <Button
-                                              asChild
-                                              size="sm"
-                                              variant={actions.primary.variant}
-                                              className={actions.primary.className}
-                                            >
-                                              <Link href={actions.primary.href!}>
-                                                {actions.primary.label}
-                                                <ArrowRight className="h-3.5 w-3.5" />
-                                              </Link>
-                                            </Button>
-                                          )}
-                                          {actions.secondary ? (
-                                            <Button asChild size="sm" variant="ghost" className={tertiaryActionClassName}>
-                                              <Link href={actions.secondary.href}>{actions.secondary.label}</Link>
-                                            </Button>
-                                          ) : null}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </section>
-              );
-            }
-          )}
+        <CardContent className="p-4 pt-0">
+          <div className="space-y-4">
+            {visibleGroups.map(renderSection)}
+          </div>
         </CardContent>
       </Card>
 
@@ -454,21 +436,6 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
             initialTotalAmount={
               lateReturnsGroup.items.reduce((sum, item) => sum + (item.amount ?? 0), 0)
             }
-          />
-        );
-      })()}
-
-      {(() => {
-        const depositsGroup = actionCenter.groups.find((group) => group.id === "deposits");
-        if (!depositsGroup) return null;
-
-        return (
-          <DepositsDueSheet
-            open={depositsSheetOpen}
-            onOpenChange={setDepositsSheetOpen}
-            period={period}
-            initialCount={depositsGroup.count}
-            initialTotalAmount={depositsGroup.totalAmount ?? 0}
           />
         );
       })()}

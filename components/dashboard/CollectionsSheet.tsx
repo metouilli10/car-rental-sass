@@ -106,6 +106,7 @@ export function CollectionsSheet({
         onOpenChange={onOpenChange}
         title="A encaisser"
         description={`${summary.count} dossiers pour ${formatCurrency(summary.totalAmount)}`}
+        tone="green"
         summaryRows={[
           { label: "Dossiers", value: summary.count },
           { label: "En retard", value: summary.overdueCount },
@@ -125,7 +126,7 @@ export function CollectionsSheet({
           data?.items.map((item) => (
             <div
               key={item.bookingId}
-              className="rounded-xl border border-border bg-background px-4 py-3 transition-colors hover:bg-slate-50"
+              className="rounded-xl border border-orange-200/80 bg-white px-4 py-3 transition-colors hover:bg-orange-50/40"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 space-y-1">
@@ -141,7 +142,10 @@ export function CollectionsSheet({
                   </p>
                 </div>
                 <div className="flex flex-col items-stretch gap-2 sm:items-end">
-                  <Badge variant={item.isOverdue ? "destructive" : "outline"} className="rounded-full">
+                  <Badge
+                    variant={item.isOverdue ? "destructive" : "outline"}
+                    className="rounded-full border-orange-200 bg-orange-50 text-orange-700"
+                  >
                     {formatCurrency(item.amount)}
                   </Badge>
                   <div className="flex flex-col gap-2 sm:flex-row">

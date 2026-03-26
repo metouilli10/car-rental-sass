@@ -99,6 +99,7 @@ export function DepositsDueSheet({
         onOpenChange={onOpenChange}
         title="Cautions a rendre"
         description={`${summary.count} cautions en attente pour ${formatCurrency(summary.totalAmount)}`}
+        tone="amber"
         summaryRows={[
           { label: "Nombre", value: summary.count },
           { label: "Montant total", value: formatCurrency(summary.totalAmount) },
@@ -117,7 +118,7 @@ export function DepositsDueSheet({
           data?.items.map((item) => (
             <div
               key={item.depositId}
-              className="rounded-xl border border-border bg-background px-4 py-3 transition-colors hover:bg-slate-50"
+              className="rounded-xl border border-sky-200/80 bg-white px-4 py-3 transition-colors hover:bg-sky-50/40"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 space-y-1">
@@ -133,7 +134,10 @@ export function DepositsDueSheet({
                   </p>
                 </div>
                 <div className="flex flex-col items-stretch gap-2 sm:items-end">
-                  <Badge variant={item.isOverdue ? "destructive" : "outline"} className="rounded-full">
+                  <Badge
+                    variant={item.isOverdue ? "destructive" : "outline"}
+                    className="rounded-full border-sky-200 bg-sky-50 text-sky-700"
+                  >
                     {formatCurrency(item.amount)}
                   </Badge>
                   <div className="flex flex-col gap-2 sm:flex-row">

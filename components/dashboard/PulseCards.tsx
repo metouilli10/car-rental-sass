@@ -1,10 +1,17 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { CollectionsSheet } from "@/components/dashboard/CollectionsSheet";
+import { DepositsDueSheet } from "@/components/dashboard/DepositsDueSheet";
 import { cn, formatCurrency } from "@/lib/utils";
-import type { DashboardV3Pulse, DashboardV3TodayOperations } from "@/lib/dashboard/types";
+import type { DashboardV3Pulse, DashboardV3ResolvedPeriod, DashboardV3TodayOperations } from "@/lib/dashboard/types";
 
 interface PulseCardsProps {
   pulse: DashboardV3Pulse;
   operations: DashboardV3TodayOperations;
+  period: DashboardV3ResolvedPeriod;
 }
 
 const CARD_META = [
@@ -25,10 +32,9 @@ const CARD_META = [
       `${pulse.occupancy.rented}/${pulse.occupancy.total} loues • ${operations.availableVehicles} dispo`,
   },
   {
-    key: "risks",
-    title: "Risques",
-    getMeta: (pulse: DashboardV3Pulse) =>
-      `${pulse.risks.breakdown.unpaidCount} impayes • ${pulse.risks.breakdown.depositDueCount} cautions • ${pulse.risks.breakdown.lateReturnCount} retours`,
+    key: "deposits",
+    title: "Cautions a rendre",
+    getMeta: (pulse: DashboardV3Pulse) => pulse.deposits.subtitle,
   },
 ] as const;
 
@@ -54,10 +60,15 @@ function renderNetMeta(pulse: DashboardV3Pulse) {
   );
 }
 
-export function PulseCards({ pulse, operations }: PulseCardsProps) {
+export function PulseCards({ pulse, operations, period }: PulseCardsProps) {
+  const router = useRouter();
+  const [collectionsSheetOpen, setCollectionsSheetOpen] = useState(false);
+  const [depositsSheetOpen, setDepositsSheetOpen] = useState(false);
+
   return (
-    <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-      {CARD_META.map((card) => {
+    <>
+      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {CARD_META.map((card) => {
         const value =
           card.key === "net"
             ? formatCurrency(pulse.net.amount)
@@ -65,12 +76,32 @@ export function PulseCards({ pulse, operations }: PulseCardsProps) {
               ? formatCurrency(pulse.toCollect.amount)
               : card.key === "occupancy"
                 ? `${pulse.occupancy.rate}%`
-                : String(pulse.risks.count);
+              : card.key === "deposits"
+                ? formatCurrency(pulse.deposits.amount)
+                : "";
 
         return (
           <article
             key={card.key}
-            className="dashboard-tile flex min-h-[116px] flex-col justify-between p-3 sm:p-4"
+            className={cn(
+              "dashboard-tile flex min-h-[116px] flex-col justify-between p-3 sm:p-4",
+              card.key === "toCollect"
+                ? "cursor-pointer transition-colors hover:bg-orange-50/40"
+                : card.key === "occupancy"
+                  ? "cursor-pointer transition-colors hover:bg-slate-50"
+                  : card.key === "deposits"
+                    ? "cursor-pointer transition-colors hover:bg-sky-50/40"
+                    : ""
+            )}
+            onClick={
+              card.key === "toCollect"
+                ? () => setCollectionsSheetOpen(true)
+                : card.key === "occupancy"
+                  ? () => router.push("/vehicles?status=AVAILABLE")
+                  : card.key === "deposits"
+                    ? () => setDepositsSheetOpen(true)
+                    : undefined
+            }
           >
             <div className="space-y-1.5">
               <p className="text-[12px] font-medium leading-none text-slate-500">{card.title}</p>
@@ -79,17 +110,33 @@ export function PulseCards({ pulse, operations }: PulseCardsProps) {
             <div className="flex min-h-[20px] items-center">
               {card.key === "net" ? (
                 renderNetMeta(pulse)
-              ) : card.key === "risks" ? (
-                <span className="text-[11px] leading-none text-red-600">
-                  {formatCurrency(pulse.risks.exposureAmount)} exposes
-                </span>
+              ) : card.key === "deposits" ? (
+                <span className="text-[11px] leading-none text-sky-700">{card.getMeta(pulse, operations)}</span>
               ) : (
                 <span className="meta-text">{card.getMeta(pulse, operations)}</span>
               )}
             </div>
           </article>
         );
-      })}
-    </section>
+        })}
+      </section>
+
+      <CollectionsSheet
+        open={collectionsSheetOpen}
+        onOpenChange={setCollectionsSheetOpen}
+        period={period}
+        initialCount={pulse.toCollect.bookingCount}
+        initialOverdueCount={pulse.toCollect.overdueCount}
+        initialTotalAmount={pulse.toCollect.amount}
+      />
+
+      <DepositsDueSheet
+        open={depositsSheetOpen}
+        onOpenChange={setDepositsSheetOpen}
+        period={period}
+        initialCount={pulse.deposits.count}
+        initialTotalAmount={pulse.deposits.amount}
+      />
+    </>
   );
 }

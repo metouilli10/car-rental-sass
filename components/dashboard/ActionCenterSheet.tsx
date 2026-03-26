@@ -10,6 +10,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
+type ActionCenterSheetTone = "neutral" | "green" | "amber" | "red";
 
 interface ActionCenterSheetProps {
   open: boolean;
@@ -18,7 +21,53 @@ interface ActionCenterSheetProps {
   description: string;
   summaryRows: Array<{ label: string; value: string | number }>;
   children: ReactNode;
+  tone?: ActionCenterSheetTone;
 }
+
+const TONE_STYLES: Record<
+  ActionCenterSheetTone,
+  {
+    header: string;
+    title: string;
+    description: string;
+    summary: string;
+    summaryLabel: string;
+    summaryValue: string;
+  }
+> = {
+  neutral: {
+    header: "border-border",
+    title: "text-foreground",
+    description: "text-muted-foreground",
+    summary: "border-border bg-muted/20",
+    summaryLabel: "text-muted-foreground",
+    summaryValue: "text-foreground",
+  },
+  green: {
+    header: "border-orange-200/80",
+    title: "text-orange-700",
+    description: "text-orange-700/80",
+    summary: "border-orange-200/80 bg-orange-50/70",
+    summaryLabel: "text-orange-700/80",
+    summaryValue: "text-orange-800",
+  },
+  amber: {
+    header: "border-sky-200/80",
+    title: "text-foreground",
+    description: "text-foreground",
+    summary: "border-sky-200/80 bg-sky-50/70",
+    summaryLabel: "text-foreground",
+    summaryValue: "text-foreground",
+  },
+  red: {
+    header: "border-red-200/80",
+    title: "text-red-700",
+    description: "text-red-700/80",
+    summary: "border-red-200/80 bg-red-50/70",
+    summaryLabel: "text-red-700/80",
+    summaryValue: "text-red-800",
+  },
+};
 
 export function useDashboardSheetSide() {
   const [isDesktop, setIsDesktop] = useState(false);
@@ -49,8 +98,10 @@ export function ActionCenterSheet({
   description,
   summaryRows,
   children,
+  tone = "neutral",
 }: ActionCenterSheetProps) {
   const side = useDashboardSheetSide();
+  const toneStyles = TONE_STYLES[tone];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -62,19 +113,19 @@ export function ActionCenterSheet({
             : "max-h-[88vh] rounded-t-3xl px-4 pb-6 pt-8"
         }
       >
-        <SheetHeader className="space-y-1 border-b border-border pb-4 text-left">
-          <SheetTitle>{title}</SheetTitle>
-          <SheetDescription>{description}</SheetDescription>
+        <SheetHeader className={cn("space-y-1 border-b pb-4 text-left", toneStyles.header)}>
+          <SheetTitle className={toneStyles.title}>{title}</SheetTitle>
+          <SheetDescription className={toneStyles.description}>{description}</SheetDescription>
         </SheetHeader>
 
-        <div className="mt-4 rounded-lg border border-border bg-muted/20 px-3 py-3">
+        <div className={cn("mt-4 rounded-lg border px-3 py-3", toneStyles.summary)}>
           {summaryRows.map((row, index) => (
             <div
               key={row.label}
               className={index === 0 ? "flex items-center justify-between gap-3 text-sm" : "mt-2 flex items-center justify-between gap-3 text-sm"}
             >
-              <span className="text-muted-foreground">{row.label}</span>
-              <span className="font-medium text-foreground">{row.value}</span>
+              <span className={toneStyles.summaryLabel}>{row.label}</span>
+              <span className={cn("font-medium", toneStyles.summaryValue)}>{row.value}</span>
             </div>
           ))}
         </div>
