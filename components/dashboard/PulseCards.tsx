@@ -69,55 +69,56 @@ export function PulseCards({ pulse, operations, period }: PulseCardsProps) {
     <>
       <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {CARD_META.map((card) => {
-        const value =
-          card.key === "net"
-            ? formatCurrency(pulse.net.amount)
-            : card.key === "toCollect"
-              ? formatCurrency(pulse.toCollect.amount)
-              : card.key === "occupancy"
-                ? `${pulse.occupancy.rate}%`
-              : card.key === "deposits"
-                ? formatCurrency(pulse.deposits.amount)
-                : "";
+          const value =
+            card.key === "net"
+              ? formatCurrency(pulse.net.amount)
+              : card.key === "toCollect"
+                ? formatCurrency(pulse.toCollect.amount)
+                : card.key === "occupancy"
+                  ? `${pulse.occupancy.rate}%`
+                  : formatCurrency(pulse.deposits.amount);
 
-        return (
-          <article
-            key={card.key}
-            className={cn(
-              "dashboard-tile flex min-h-[116px] flex-col justify-between p-3 sm:p-4",
-              card.key === "toCollect"
-                ? "cursor-pointer transition-colors hover:bg-orange-50/40"
-                : card.key === "occupancy"
-                  ? "cursor-pointer transition-colors hover:bg-slate-50"
-                  : card.key === "deposits"
-                    ? "cursor-pointer transition-colors hover:bg-sky-50/40"
-                    : ""
-            )}
-            onClick={
-              card.key === "toCollect"
-                ? () => setCollectionsSheetOpen(true)
-                : card.key === "occupancy"
-                  ? () => router.push("/vehicles?status=AVAILABLE")
-                  : card.key === "deposits"
-                    ? () => setDepositsSheetOpen(true)
-                    : undefined
-            }
-          >
-            <div className="space-y-1.5">
-              <p className="text-[12px] font-medium leading-none text-slate-500">{card.title}</p>
-              <p className="metric-value">{value}</p>
-            </div>
-            <div className="flex min-h-[20px] items-center">
-              {card.key === "net" ? (
-                renderNetMeta(pulse)
-              ) : card.key === "deposits" ? (
-                <span className="text-[11px] leading-none text-sky-700">{card.getMeta(pulse, operations)}</span>
-              ) : (
-                <span className="meta-text">{card.getMeta(pulse, operations)}</span>
+          const meta =
+            card.key === "occupancy" ? card.getMeta(pulse, operations) : card.getMeta(pulse);
+
+          return (
+            <article
+              key={card.key}
+              className={cn(
+                "dashboard-tile flex min-h-[116px] flex-col justify-between p-3 sm:p-4",
+                card.key === "toCollect"
+                  ? "cursor-pointer transition-colors hover:bg-orange-50/40"
+                  : card.key === "occupancy"
+                    ? "cursor-pointer transition-colors hover:bg-slate-50"
+                    : card.key === "deposits"
+                      ? "cursor-pointer transition-colors hover:bg-sky-50/40"
+                      : ""
               )}
-            </div>
-          </article>
-        );
+              onClick={
+                card.key === "toCollect"
+                  ? () => setCollectionsSheetOpen(true)
+                  : card.key === "occupancy"
+                    ? () => router.push("/vehicles?status=AVAILABLE")
+                    : card.key === "deposits"
+                      ? () => setDepositsSheetOpen(true)
+                      : undefined
+              }
+            >
+              <div className="space-y-1.5">
+                <p className="text-[12px] font-medium leading-none text-slate-500">{card.title}</p>
+                <p className="metric-value">{value}</p>
+              </div>
+              <div className="flex min-h-[20px] items-center">
+                {card.key === "net" ? (
+                  renderNetMeta(pulse)
+                ) : card.key === "deposits" ? (
+                  <span className="text-[11px] leading-none text-sky-700">{meta}</span>
+                ) : (
+                  <span className="meta-text">{meta}</span>
+                )}
+              </div>
+            </article>
+          );
         })}
       </section>
 
