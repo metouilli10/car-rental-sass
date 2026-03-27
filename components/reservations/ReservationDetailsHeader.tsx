@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,28 +22,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  MoreHorizontal,
+  ChevronDown,
   Pencil,
-  CreditCard,
-  Banknote,
   FileText,
   XCircle,
+  CalendarClock,
+  CarFront,
+  User2,
 } from "lucide-react";
 import { BookingStatusActions } from "@/components/bookings/booking-status-actions";
-import { BookingLifecycleStepper } from "@/components/reservations/BookingLifecycleStepper";
-import { LibererCautionDialog } from "@/components/dashboard/LibererCautionDialog";
-import { EncaisserDialog } from "@/components/dashboard/EncaisserDialog";
 import {
   formatDateFR,
   getReservationTone,
   type ReservationToneVariant,
 } from "@/lib/reservations/presentation";
-import { cancelBooking } from "@/lib/actions/bookings";
+import { cancelBooking, extendActiveBooking } from "@/lib/actions/bookings";
 import { toast } from "sonner";
 import type { BookingStatus } from "@prisma/client";
+import { Card, CardContent } from "@/components/ui/card";
 
-type Vehicle = { make: string; model: string; plate?: string };
-type Customer = { name: string };
+type Vehicle = { id: string; make: string; model: string; plate?: string };
+type Customer = { id: string; name: string };
 
 export interface ReservationDetailsHeaderProps {
   bookingId: string;
@@ -56,10 +56,6 @@ export interface ReservationDetailsHeaderProps {
   canCancel: boolean;
   endDateForExtend?: Date;
   pricePerDay?: number;
-  /** When present and status is HELD, "Restituer caution" opens in-place release dialog. */
-  deposit?: { id: string; amount: number; status: string } | null;
-  /** Outstanding amount for "Ajouter paiement" dialog default. */
-  remainingAmount?: number;
 }
 
 const badgeVariantMap: Record<
@@ -86,20 +82,15 @@ export function ReservationDetailsHeader({
   canCancel,
   endDateForExtend,
   pricePerDay,
-  deposit,
-  remainingAmount = 0,
 }: ReservationDetailsHeaderProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
-  const [libererCautionOpen, setLibererCautionOpen] = useState(false);
-  const [encaisserOpen, setEncaisserOpen] = useState(false);
 
   const { label: statusLabel, variant: statusVariant } = getReservationTone(status);
   const startStr = formatDateFR(startDate);
   const endStr = formatDateFR(endDate);
   const vehicleName = `${vehicle.make} ${vehicle.model}`;
-  const subline = `${startStr} → ${endStr} • ${durationDays} jour(s) • ${vehicleName} • ${customer.name}`;
-  const canReleaseInPlace = deposit?.status === "HELD" && deposit?.id;
+  const subline = `${startStr} → ${endStr} • ${durationDays} jour(s)`;
 
   const handleCancel = async () => {
     setIsCanceling(true);
@@ -118,96 +109,86 @@ export function ReservationDetailsHeader({
   const isCanceled = status === "CANCELED";
 
   return (
-    <header className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={badgeVariantMap[statusVariant] ?? "secondary"}>
-              {statusLabel}
-            </Badge>
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Réservation #{code}
-          </h1>
-          <p className="text-sm text-muted-foreground">{subline}</p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {!isCanceled && status !== "COMPLETED" && (
-            <div className="flex items-center gap-2">
-              <BookingStatusActions
-                bookingId={bookingId}
-                currentStatus={status}
-                canCancel={false}
-                endDate={endDateForExtend}
-                pricePerDay={pricePerDay}
-              />
+    <header>
+      <Card className="shadow-card">
+        <CardContent className="px-card-padding pb-card-padding pt-[1.15rem]">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0 flex-1 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={badgeVariantMap[statusVariant] ?? "secondary"}>
+                  {statusLabel}
+                </Badge>
+              </div>
+              <div className="space-y-1.5">
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                  Réservation #{code}
+                </h1>
+                <p className="text-sm text-muted-foreground">{subline}</p>
+              </div>
+              <div className="flex flex-wrap gap-2 pt-0.5 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/25 px-3 py-1.5">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  {startStr} → {endStr}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/25 px-3 py-1.5">
+                  <CarFront className="h-3.5 w-3.5" />
+                  {vehicleName}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/25 px-3 py-1.5">
+                  <User2 className="h-3.5 w-3.5" />
+                  {customer.name}
+                </span>
+              </div>
             </div>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" aria-label="Actions réservation">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/bookings/${bookingId}/edit`}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Modifier
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault();
-                  setEncaisserOpen(true);
-                }}
-              >
-                <CreditCard className="mr-2 h-4 w-4" />
-                Ajouter paiement
-              </DropdownMenuItem>
-              {canReleaseInPlace ? (
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setLibererCautionOpen(true);
-                  }}
-                >
-                  <Banknote className="mr-2 h-4 w-4" />
-                  Restituer caution
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem asChild>
-                  <Link href="/finance?tab=cautions">
-                    <Banknote className="mr-2 h-4 w-4" />
-                    Restituer caution
-                  </Link>
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem asChild>
-                <Link href={`/bookings/${bookingId}/invoice`} aria-label="Générer facture">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Générer facture
-                </Link>
-              </DropdownMenuItem>
-              {canCancel && !isCanceled && status !== "COMPLETED" && (
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setCancelDialogOpen(true);
-                  }}
-                >
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Annuler
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
 
-      <BookingLifecycleStepper status={status} />
+            <div className="flex flex-wrap items-center justify-start gap-2 xl:max-w-[48%] xl:self-center xl:justify-end">
+              {!isCanceled && status !== "COMPLETED" ? (
+                <BookingStatusActions
+                  bookingId={bookingId}
+                  currentStatus={status}
+                  canCancel={false}
+                  endDate={endDateForExtend}
+                  pricePerDay={pricePerDay}
+                />
+              ) : null}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 gap-2" aria-label="Plus d'actions">
+                    Plus d&apos;actions
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/bookings/${bookingId}/edit`}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Modifier
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/bookings/${bookingId}/invoice`} aria-label="Générer facture">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Générer facture
+                    </Link>
+                  </DropdownMenuItem>
+                  {canCancel && !isCanceled && status !== "COMPLETED" && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setCancelDialogOpen(true);
+                      }}
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Annuler
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>
@@ -229,27 +210,6 @@ export function ReservationDetailsHeader({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <EncaisserDialog
-        open={encaisserOpen}
-        onOpenChange={setEncaisserOpen}
-        bookingId={bookingId}
-        defaultAmount={remainingAmount}
-        customerName={customer.name}
-        vehicleLabel={vehicleName}
-      />
-
-      {canReleaseInPlace && deposit && (
-        <LibererCautionDialog
-          open={libererCautionOpen}
-          onOpenChange={setLibererCautionOpen}
-          depositId={deposit.id}
-          customerName={customer.name}
-          vehicleLabel={vehicleName}
-          plate={vehicle.plate ?? ""}
-          amount={deposit.amount}
-        />
-      )}
     </header>
   );
 }

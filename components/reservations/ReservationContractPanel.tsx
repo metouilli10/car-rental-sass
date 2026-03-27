@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRef, useState, useTransition, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Loader2, Upload, ExternalLink } from "lucide-react";
+import { FileText, Loader2, Upload, ExternalLink, PenSquare } from "lucide-react";
 import { toast } from "sonner";
 import { attachBookingContract } from "@/lib/actions/bookings";
 import { Button } from "@/components/ui/button";
@@ -78,15 +78,18 @@ export function ReservationContractPanel({
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="shadow-card">
+      <CardHeader className="pb-4">
         <CardTitle className="text-base">Contrat signé</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Le contrat est remis et signé manuellement avec le client, puis téléversé ici pour archivage.
+        </p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-0">
         {contractImageUrl ? (
           <div className="space-y-3">
             {isImage ? (
-              <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border/70 bg-muted/30">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border/70 bg-muted/30">
                 <Image
                   src={contractImageUrl}
                   alt="Contrat signé"
@@ -96,7 +99,7 @@ export function ReservationContractPanel({
                 />
               </div>
             ) : (
-              <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-4">
+              <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 p-4">
                 <FileText className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm font-medium">Document PDF joint</span>
               </div>
@@ -136,10 +139,18 @@ export function ReservationContractPanel({
             ) : null}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4">
-            <p className="text-sm text-muted-foreground">
-              Ajoutez la photo ou le PDF du contrat signé pour le garder avec cette réservation.
-            </p>
+          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <PenSquare className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-foreground">Aucun contrat téléversé</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Ajoutez la photo ou le PDF signé après remise au client pour conserver une copie dans le dossier.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 

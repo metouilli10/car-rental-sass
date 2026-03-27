@@ -72,12 +72,12 @@ export function BookingStatusActions({
   }
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap gap-2">
       {currentStatus === "CONFIRMED" && (
         <>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button disabled={isLoading}>
+              <Button size="sm" className="h-9" disabled={isLoading}>
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
@@ -109,7 +109,7 @@ export function BookingStatusActions({
           {canCancel ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={isLoading}>
+                <Button variant="destructive" size="sm" className="h-9" disabled={isLoading}>
                   <XCircle className="h-4 w-4 mr-2" />
                   Annuler la réservation
                 </Button>
@@ -141,7 +141,7 @@ export function BookingStatusActions({
         <>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" disabled={isLoading}>
+              <Button variant="outline" size="sm" className="h-9" disabled={isLoading}>
                 Prolonger la réservation
               </Button>
             </AlertDialogTrigger>
@@ -213,7 +213,7 @@ export function BookingStatusActions({
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button disabled={isLoading}>
+              <Button size="sm" className="h-9" disabled={isLoading}>
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (

@@ -620,3 +620,89 @@ export async function extendActiveBooking(
     throw new Error("Erreur lors de la prolongation de la réservation");
   }
 }
+
+export async function addBookingComment(bookingId: string, body: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return { error: "Non autorisé" };
+  }
+
+  const normalizedBody = body.trim();
+
+  if (!normalizedBody) {
+    return { error: "Le commentaire ne peut pas être vide" };
+  }
+
+  if (normalizedBody.length > 2000) {
+    return { error: "Le commentaire est trop long" };
+  }
+
+  try {
+    const booking = await prisma.booking.findFirst({
+      where: {
+        id: bookingId,
+        agencyId: session.user.agencyId,
+      },
+      select: { id: true },
+    });
+
+    if (!booking) {
+      return { error: "Réservation non trouvée" };
+    }
+
+    await prisma.bookingComment.create({
+      data: {
+        bookingId,
+        agencyId: session.user.agencyId,
+        authorUserId: session.user.id,
+        body: normalizedBody,
+      },
+    });
+
+    revalidatePath(`/bookings/${bookingId}`);
+    revalidatePath(`/reservations/${bookingId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("addBookingComment error:", error);
+    return { error: "Erreur lors de l'enregistrement du commentaire" };
+  }
+}
+
+export async function updateBookingOpsMemo(bookingId: string, notes: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return { error: "Non autorisé" };
+  }
+
+  const normalizedNotes = notes.trim();
+
+  try {
+    const booking = await prisma.booking.findFirst({
+      where: {
+        id: bookingId,
+        agencyId: session.user.agencyId,
+      },
+      select: { id: true },
+    });
+
+    if (!booking) {
+      return { error: "Réservation non trouvée" };
+    }
+
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        notes: normalizedNotes.length > 0 ? normalizedNotes : null,
+      },
+    });
+
+    revalidatePath(`/bookings/${bookingId}`);
+    revalidatePath(`/reservations/${bookingId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("updateBookingOpsMemo error:", error);
+    return { error: "Erreur lors de l'enregistrement des notes internes" };
+  }
+}
