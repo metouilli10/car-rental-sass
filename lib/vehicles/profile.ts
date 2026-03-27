@@ -10,6 +10,7 @@ import type {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { VehicleDocumentTypeValue } from "@/lib/validations/vehicle-document";
+import { getVehicleFuelType } from "@/lib/vehicle-fuel-type";
 
 export const VEHICLE_PROFILE_TABS = [
   "overview",
@@ -233,10 +234,43 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
     };
   }).vehicleDocument;
 
-  const [vehicle, reservationsRaw, inspectionsRaw, notificationsRaw, infractionsRaw, documentsRaw] =
+  const [vehicle, reservationsRaw, inspectionsRaw, notificationsRaw, infractionsRaw, documentsRaw, fuelType] =
     await Promise.all([
       prisma.vehicle.findFirst({
         where: { id: vehicleId, agencyId },
+        select: {
+          id: true,
+          make: true,
+          model: true,
+          brandKey: true,
+          year: true,
+          plate: true,
+          color: true,
+          status: true,
+          pricePerDay: true,
+          depositAmount: true,
+          gearbox: true,
+          seats: true,
+          hasAC: true,
+          category: true,
+          photoUrl: true,
+          mileage: true,
+          currentKm: true,
+          maintenanceNotes: true,
+          insuranceProvider: true,
+          insurancePolicyNumber: true,
+          insuranceStartDate: true,
+          insuranceExpiryDate: true,
+          lastTechnicalInspectionDate: true,
+          nextTechnicalInspectionDate: true,
+          vignetteExpiryDate: true,
+          lastOilChangeMileageKm: true,
+          lastOilChangeDate: true,
+          nextOilChangeMileageKm: true,
+          nextOilChangeDate: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       }),
       prisma.booking.findMany({
         where: {
@@ -306,6 +340,7 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
             },
           })
         : Promise.resolve([]),
+      getVehicleFuelType(vehicleId),
     ]);
 
   if (!vehicle) {
@@ -534,7 +569,7 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
       pricePerDay: vehicle.pricePerDay,
       depositAmount: vehicle.depositAmount,
       gearbox: vehicle.gearbox,
-      fuelType: vehicle.fuelType,
+      fuelType,
       seats: vehicle.seats,
       hasAC: vehicle.hasAC,
       category: vehicle.category,

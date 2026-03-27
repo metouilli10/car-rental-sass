@@ -37,7 +37,12 @@ export async function VehicleStatusGrid({
   // Fetch all vehicles with active bookings for rented ones
   const vehicles = await prisma.vehicle.findMany({
     where: { agencyId },
-    include: {
+    select: {
+      id: true,
+      make: true,
+      model: true,
+      plate: true,
+      status: true,
       bookings: {
         where: {
           status: "ACTIVE",

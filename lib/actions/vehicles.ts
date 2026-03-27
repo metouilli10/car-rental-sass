@@ -14,6 +14,7 @@ import { vehicleReminderSchema, type VehicleReminderFormData } from "@/lib/valid
 import { computeVehicleReminders } from "@/lib/reminders/engine";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
 import { brandKeyFromMake } from "@/lib/brands";
+import { persistVehicleFuelType } from "@/lib/vehicle-fuel-type";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -35,7 +36,6 @@ function buildVehiclePayload(validatedData: VehicleFormData) {
     pricePerDay: validatedData.pricePerDay,
     depositAmount: validatedData.depositAmount,
     gearbox: validatedData.gearbox,
-    fuelType: validatedData.fuelType,
     mileage: validatedData.mileage ?? null,
     photoUrl: validatedData.photoUrl || null,
     // Mileage / oil change
@@ -95,6 +95,7 @@ export async function createVehicle(data: VehicleFormData) {
     });
 
     vehicleId = vehicle.id;
+    await persistVehicleFuelType(vehicle.id, validatedData.fuelType);
 
     revalidatePath("/vehicles");
     revalidatePath("/catalogue");
@@ -161,6 +162,7 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
         mileage: validatedData.mileage ?? vehicle.mileage,
       },
     });
+    await persistVehicleFuelType(id, validatedData.fuelType);
 
     revalidatePath("/vehicles");
     revalidatePath("/catalogue");
