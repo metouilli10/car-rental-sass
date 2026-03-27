@@ -651,7 +651,24 @@ export async function addBookingComment(bookingId: string, body: string) {
       return { error: "Réservation non trouvée" };
     }
 
-    await prisma.bookingComment.create({
+    const bookingCommentDelegate = (prisma as unknown as {
+      bookingComment?: {
+        create: (args: {
+          data: {
+            bookingId: string;
+            agencyId: string;
+            authorUserId: string;
+            body: string;
+          };
+        }) => Promise<unknown>;
+      };
+    }).bookingComment;
+
+    if (!bookingCommentDelegate) {
+      return { error: "Les commentaires de réservation ne sont pas encore disponibles." };
+    }
+
+    await bookingCommentDelegate.create({
       data: {
         bookingId,
         agencyId: session.user.agencyId,
