@@ -18,6 +18,7 @@ import {
   getDurationDays,
   getBookingUrgency,
   getDayProgress,
+  getActiveStatusHint,
 } from "@/lib/bookings/list-utils";
 
 interface ReservationCardProps {
@@ -33,6 +34,7 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
   const durationDays = getDurationDays(startDate, endDate);
   const urgency = getBookingUrgency(booking, today);
   const dayProgress = getDayProgress(booking, today);
+  const activeStatusHint = getActiveStatusHint(booking, today);
 
   const paidNowValue = typeof booking.paidNow === "number" ? booking.paidNow : null;
   const remainingValue =
@@ -76,7 +78,14 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
             >
               {booking.customer.name}
             </Link>
-            <StatusBadge status={booking.status} />
+            <div className="flex flex-col items-end gap-1">
+              <StatusBadge status={booking.status} />
+              {activeStatusHint ? (
+                <span className="text-xs font-medium text-muted-foreground">
+                  {activeStatusHint}
+                </span>
+              ) : null}
+            </div>
           </div>
 
           {/* Second line: vehicle name + plate */}

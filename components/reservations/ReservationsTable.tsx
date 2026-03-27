@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { KeyboardEvent, SyntheticEvent } from "react";
 import { UserRole } from "@prisma/client";
 import { Eye } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -15,6 +17,7 @@ import {
   getDurationDays,
   getBookingUrgency,
   getDayProgress,
+  getActiveStatusHint,
 } from "@/lib/bookings/list-utils";
 
 interface ReservationsTableProps {
@@ -24,6 +27,17 @@ interface ReservationsTableProps {
 }
 
 export function ReservationsTable({ bookings, role, today }: ReservationsTableProps) {
+  const router = useRouter();
+  const stopPropagation = (event: SyntheticEvent) => {
+    event.stopPropagation();
+  };
+  const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, bookingId: string) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      router.push(`/bookings/${bookingId}`);
+    }
+  };
+
   return (
     <div className="rounded-2xl bg-white shadow-card overflow-hidden">
       <div className="max-h-[72vh] overflow-y-auto overflow-x-hidden">
@@ -65,6 +79,7 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
               const durationDays = getDurationDays(startDate, endDate);
               const urgency = getBookingUrgency(booking, today);
               const dayProgress = getDayProgress(booking, today);
+              const activeStatusHint = getActiveStatusHint(booking, today);
 
               const paidNowValue =
                 typeof booking.paidNow === "number" ? booking.paidNow : null;
@@ -76,7 +91,11 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
               return (
                 <tr
                   key={booking.id}
-                  className="transition-colors duration-200 hover:bg-slate-50"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => router.push(`/bookings/${booking.id}`)}
+                  onKeyDown={(event) => handleRowKeyDown(event, booking.id)}
+                  className="cursor-pointer transition-colors duration-200 hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none"
                 >
                   {/* Réservation: client + vehicle merged */}
                   <td
@@ -88,6 +107,7 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
                     <div className="min-w-0 break-words">
                       <Link
                         href={`/customers/${booking.customer.id}`}
+                        onClick={stopPropagation}
                         className="font-semibold text-foreground underline-offset-4 hover:underline block truncate"
                       >
                         {booking.customer.name}
@@ -98,6 +118,7 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
                       <div className="font-medium text-foreground mt-0.5 truncate">
                         <Link
                           href={`/vehicles/${booking.vehicle.id}/edit`}
+                          onClick={stopPropagation}
                           className="underline-offset-4 hover:underline"
                         >
                           {booking.vehicle.make} {booking.vehicle.model}
@@ -167,7 +188,14 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
 
                   {/* Statut */}
                   <td className="px-4 py-3 align-top">
-                    <StatusBadge status={booking.status} />
+                    <div className="flex flex-col items-start gap-1">
+                      <StatusBadge status={booking.status} />
+                      {activeStatusHint ? (
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {activeStatusHint}
+                        </span>
+                      ) : null}
+                    </div>
                   </td>
 
                   {/* Actions */}
@@ -179,7 +207,7 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
                         variant="ghost"
                         aria-label="Voir la réservation"
                       >
-                        <Link href={`/bookings/${booking.id}`}>
+                        <Link href={`/bookings/${booking.id}`} onClick={stopPropagation}>
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>

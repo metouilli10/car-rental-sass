@@ -93,3 +93,27 @@ export function getDayProgress(
   );
   return dayProgress;
 }
+
+export function getActiveStatusHint(
+  booking: BookingForListHelpers,
+  today: Date
+): string | null {
+  if (booking.status !== "ACTIVE") {
+    return null;
+  }
+
+  const endDate = toDate(booking.endDate);
+  const diffDays = Math.ceil(
+    (startOfDay(endDate).getTime() - startOfDay(today).getTime()) / MS_PER_DAY
+  );
+
+  if (diffDays < 0) {
+    return `En retard de ${Math.abs(diffDays)} j`;
+  }
+
+  if (diffDays === 0) {
+    return "Arrive aujourd'hui";
+  }
+
+  return `Arrive en ${diffDays} j`;
+}
