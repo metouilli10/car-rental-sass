@@ -257,6 +257,25 @@ export async function computeVehicleReminders(
 ): Promise<void> {
   const vehicle = await prisma.vehicle.findFirst({
     where: { id: vehicleId, agencyId },
+    select: {
+      id: true,
+      make: true,
+      model: true,
+      plate: true,
+      currentKm: true,
+      lastOilChangeMileageKm: true,
+      lastOilChangeDate: true,
+      oilChangeIntervalKm: true,
+      oilChangeIntervalMonths: true,
+      nextOilChangeMileageKm: true,
+      nextOilChangeDate: true,
+      insuranceReminderDays: true,
+      insuranceExpiryDate: true,
+      technicalInspectionReminderDays: true,
+      nextTechnicalInspectionDate: true,
+      vignetteReminderDays: true,
+      vignetteExpiryDate: true,
+    },
   });
   if (!vehicle) return;
 

@@ -102,7 +102,17 @@ export default async function VehiclesPage({
       orderBy: { createdAt: "desc" },
       take: PAGE_SIZE,
       skip: (page - 1) * PAGE_SIZE,
-      include: {
+      select: {
+        id: true,
+        make: true,
+        brandKey: true,
+        model: true,
+        plate: true,
+        year: true,
+        color: true,
+        gearbox: true,
+        pricePerDay: true,
+        status: true,
         bookings: {
           where:
             isRentedView || isAvailableView

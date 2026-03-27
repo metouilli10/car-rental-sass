@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { VehicleForm } from "@/components/vehicles/vehicle-form";
 import { updateVehicle } from "@/lib/actions/vehicles";
 import { VehicleFormData } from "@/lib/validations/vehicle";
+import { getVehicleFuelType } from "@/lib/vehicle-fuel-type";
 
 export default async function EditVehiclePage({
   params,
@@ -20,9 +21,27 @@ export default async function EditVehiclePage({
 
   const { id } = await params;
 
-  const vehicle = await prisma.vehicle.findFirst({
-    where: { id, agencyId: currentUser.agencyId },
-  });
+  const [vehicle, fuelType] = await Promise.all([
+    prisma.vehicle.findFirst({
+      where: { id, agencyId: currentUser.agencyId },
+      select: {
+        id: true,
+        make: true,
+        model: true,
+        year: true,
+        plate: true,
+        color: true,
+        pricePerDay: true,
+        depositAmount: true,
+        gearbox: true,
+        mileage: true,
+        currentKm: true,
+        status: true,
+        photoUrl: true,
+      },
+    }),
+    getVehicleFuelType(id),
+  ]);
 
   if (!vehicle) {
     notFound();
@@ -50,7 +69,7 @@ export default async function EditVehiclePage({
           pricePerDay: vehicle.pricePerDay,
           depositAmount: vehicle.depositAmount,
           gearbox: vehicle.gearbox,
-          fuelType: vehicle.fuelType,
+          fuelType,
           mileage: vehicle.mileage ?? undefined,
           currentKm: vehicle.currentKm ?? undefined,
           status: vehicle.status,
