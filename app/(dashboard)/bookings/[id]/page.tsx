@@ -26,6 +26,8 @@ import { canDelete } from "@/lib/authz";
 export const runtime = "nodejs";
 export const preferredRegion = "fra1";
 
+type BookingDetailData = Awaited<ReturnType<typeof getBookingDetailData>>;
+
 export default async function BookingDetailsPage({
   params,
 }: {
@@ -39,61 +41,7 @@ export default async function BookingDetailsPage({
 
   const { id } = await params;
 
-  const booking = await prisma.booking.findUnique({
-    where: { id },
-    include: {
-      customer: {
-        include: {
-          bookings: {
-            where: {
-              agencyId: session.user.agencyId,
-            },
-            orderBy: { createdAt: "desc" },
-            select: {
-              id: true,
-              createdAt: true,
-              startDate: true,
-              endDate: true,
-              totalPrice: true,
-              status: true,
-              vehicle: {
-                select: {
-                  make: true,
-                  model: true,
-                  plate: true,
-                },
-              },
-              infractions: {
-                select: { id: true },
-              },
-              damageReports: {
-                where: { inspectionType: "RETOUR" },
-                select: {
-                  inspectionType: true,
-                  depositAction: true,
-                },
-              },
-            },
-          },
-        },
-      },
-      vehicle: true,
-      payments: {
-        orderBy: [{ paidAt: "desc" }, { createdAt: "desc" }],
-      },
-      deposit: true,
-      addons: {
-        orderBy: { createdAt: "asc" },
-      },
-      damageReports: {
-        include: {
-          damagePhotos: true,
-          sections: true,
-        },
-        orderBy: { reportedAt: "desc" },
-      },
-    },
-  });
+  const booking = await getBookingDetailData(id, session.user.agencyId);
 
   if (!booking || booking.agencyId !== session.user.agencyId) {
     notFound();
@@ -144,10 +92,10 @@ export default async function BookingDetailsPage({
   });
   const financeRows = buildReservationFinanceRows({
     totalPrice: booking.totalPrice,
-    totalHt: booking.totalHt,
-    totalTva: booking.totalTva,
-    taxEnabled: booking.taxEnabled,
-    discountAmount: booking.discountAmount,
+    totalHt: booking.totalHt ?? 0,
+    totalTva: booking.totalTva ?? 0,
+    taxEnabled: booking.taxEnabled ?? false,
+    discountAmount: booking.discountAmount ?? 0,
     addons: booking.addons,
   });
   const paymentMethods = booking.payments
@@ -320,4 +268,216 @@ export default async function BookingDetailsPage({
       </div>
     </div>
   );
+}
+
+async function getBookingDetailData(id: string, agencyId: string) {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        agencyId: true,
+        startDate: true,
+        endDate: true,
+        pricePerDay: true,
+        totalPrice: true,
+        depositAmount: true,
+        status: true,
+        paymentStatus: true,
+        depositStatus: true,
+        notes: true,
+        pickupLocation: true,
+        returnLocation: true,
+        totalHt: true,
+        totalTva: true,
+        taxEnabled: true,
+        discountAmount: true,
+        paidNow: true,
+        remainingAmount: true,
+        contractImageUrl: true,
+        contractSignedAt: true,
+        createdAt: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            bookings: {
+              where: { agencyId },
+              orderBy: { createdAt: "desc" },
+              select: {
+                id: true,
+                createdAt: true,
+                startDate: true,
+                endDate: true,
+                totalPrice: true,
+                status: true,
+                vehicle: {
+                  select: {
+                    make: true,
+                    model: true,
+                    plate: true,
+                  },
+                },
+                infractions: {
+                  select: { id: true },
+                },
+                damageReports: {
+                  where: { inspectionType: "RETOUR" },
+                  select: {
+                    inspectionType: true,
+                    depositAction: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        vehicle: {
+          select: {
+            id: true,
+            make: true,
+            model: true,
+            plate: true,
+            color: true,
+            status: true,
+            gearbox: true,
+          },
+        },
+        payments: {
+          orderBy: [{ paidAt: "desc" }, { createdAt: "desc" }],
+          select: {
+            id: true,
+            amount: true,
+            type: true,
+            category: true,
+            status: true,
+            paidAt: true,
+            createdAt: true,
+          },
+        },
+        deposit: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+          },
+        },
+        addons: {
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            label: true,
+            unitAmount: true,
+            quantity: true,
+            totalAmount: true,
+            isDefault: true,
+            createdAt: true,
+            updatedAt: true,
+            bookingId: true,
+          },
+        },
+        damageReports: {
+          orderBy: { reportedAt: "desc" },
+          select: {
+            id: true,
+            inspectionType: true,
+            reportedAt: true,
+          },
+        },
+      },
+    });
+
+    if (booking) {
+      return booking;
+    }
+  } catch (error) {
+    console.error("booking-details rich query failed, falling back to lean query", error);
+  }
+
+  const fallback = await prisma.booking.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      agencyId: true,
+      startDate: true,
+      endDate: true,
+      pricePerDay: true,
+      totalPrice: true,
+      depositAmount: true,
+      status: true,
+      paymentStatus: true,
+      depositStatus: true,
+      notes: true,
+      pickupLocation: true,
+      returnLocation: true,
+      paidNow: true,
+      remainingAmount: true,
+      contractImageUrl: true,
+      contractSignedAt: true,
+      createdAt: true,
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+        },
+      },
+      vehicle: {
+        select: {
+          id: true,
+          make: true,
+          model: true,
+          plate: true,
+          color: true,
+          status: true,
+          gearbox: true,
+        },
+      },
+      payments: {
+        orderBy: [{ paidAt: "desc" }, { createdAt: "desc" }],
+        select: {
+          id: true,
+          amount: true,
+          type: true,
+          category: true,
+          status: true,
+          paidAt: true,
+          createdAt: true,
+        },
+      },
+      deposit: {
+        select: {
+          id: true,
+          amount: true,
+          status: true,
+        },
+      },
+      damageReports: {
+        orderBy: { reportedAt: "desc" },
+        select: {
+          id: true,
+          inspectionType: true,
+          reportedAt: true,
+        },
+      },
+    },
+  });
+
+  if (!fallback) {
+    return null;
+  }
+
+  return {
+    ...fallback,
+    totalHt: 0,
+    totalTva: 0,
+    taxEnabled: false,
+    discountAmount: 0,
+    addons: [],
+    customer: {
+      ...fallback.customer,
+      bookings: [],
+    },
+  };
 }
