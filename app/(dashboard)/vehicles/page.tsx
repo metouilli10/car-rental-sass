@@ -4,7 +4,7 @@ import { getCurrentUserAccessForPage } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { Pagination } from "@/components/shared/pagination";
 import Link from "next/link";
-import { Plus, Car } from "lucide-react";
+import { Plus, FileSpreadsheet, Car } from "lucide-react";
 import { VehiclesSearchBar } from "@/components/vehicles/vehicles-search-bar";
 import { VehiclesList } from "@/components/vehicles/vehicles-list";
 import type { BookingStatus, VehicleStatus } from "@prisma/client";
@@ -178,13 +178,22 @@ export default async function VehiclesPage({
           </p>
         </div>
         {canManage ? (
-          <Link
-            href="/vehicles/add"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors duration-200 shadow-sm shrink-0"
-          >
-            <Plus className="h-4 w-4" />
-            Ajouter un véhicule
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/vehicles/import"
+              className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition-colors duration-200 hover:bg-blue-100"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Importer Excel
+            </Link>
+            <Link
+              href="/vehicles/add"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors duration-200 shadow-sm shrink-0"
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter un véhicule
+            </Link>
+          </div>
         ) : null}
       </div>
 

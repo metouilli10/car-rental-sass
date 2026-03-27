@@ -25,6 +25,11 @@ export const vehicleSchema = z.object({
   mileage: z.coerce.number().min(0, "Le kilométrage doit être positif").optional(),
   status: z.enum(["AVAILABLE", "RENTED", "MAINTENANCE", "UNAVAILABLE"]),
   photoUrl: z.string().optional(),
+  depositAmount: z.coerce.number().min(0, "La caution doit être positive").optional(),
+  gearbox: z.enum(["MANUAL", "AUTO"]).optional(),
+  seats: z.coerce.number().int().min(1, "Le nombre de places est invalide").optional(),
+  hasAC: z.coerce.boolean().optional(),
+  category: z.string().optional(),
 
   // ── Maintenance: oil change ───────────────────────────────────────────────
   currentKm: z.coerce.number().int().min(0).optional().or(z.literal("").transform(() => undefined)),

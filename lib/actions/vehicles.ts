@@ -13,7 +13,7 @@ import {
 import { vehicleReminderSchema, type VehicleReminderFormData } from "@/lib/validations/vehicle-reminder";
 import { computeVehicleReminders } from "@/lib/reminders/engine";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
-import { brandKeyFromMake } from "@/lib/brands";
+import { buildVehiclePayload } from "@/lib/vehicles/payload";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -21,44 +21,6 @@ function toDateOrNull(value: string | undefined | null): Date | null {
   if (!value) return null;
   const d = new Date(value);
   return isNaN(d.getTime()) ? null : d;
-}
-
-function buildVehiclePayload(validatedData: VehicleFormData) {
-  return {
-    make: validatedData.make,
-    brandKey: brandKeyFromMake(validatedData.make),
-    model: validatedData.model,
-    year: validatedData.year,
-    plate: validatedData.plate,
-    color: validatedData.color,
-    status: validatedData.status,
-    pricePerDay: validatedData.pricePerDay,
-    mileage: validatedData.mileage ?? null,
-    photoUrl: validatedData.photoUrl || null,
-    // Mileage / oil change
-    currentKm: validatedData.currentKm ?? null,
-    lastOilChangeMileageKm: validatedData.lastOilChangeMileageKm ?? null,
-    lastOilChangeDate: toDateOrNull(validatedData.lastOilChangeDate),
-    oilChangeIntervalKm: validatedData.oilChangeIntervalKm ?? null,
-    oilChangeIntervalMonths: validatedData.oilChangeIntervalMonths ?? null,
-    nextOilChangeMileageKm: validatedData.nextOilChangeMileageKm ?? null,
-    nextOilChangeDate: toDateOrNull(validatedData.nextOilChangeDate),
-    // Insurance
-    insuranceProvider: validatedData.insuranceProvider || null,
-    insurancePolicyNumber: validatedData.insurancePolicyNumber || null,
-    insuranceStartDate: toDateOrNull(validatedData.insuranceStartDate),
-    insuranceExpiryDate: toDateOrNull(validatedData.insuranceExpiryDate),
-    insuranceReminderDays: validatedData.insuranceReminderDays ?? [],
-    // Visite technique
-    lastTechnicalInspectionDate: toDateOrNull(validatedData.lastTechnicalInspectionDate),
-    nextTechnicalInspectionDate: toDateOrNull(validatedData.nextTechnicalInspectionDate),
-    technicalInspectionReminderDays: validatedData.technicalInspectionReminderDays ?? [],
-    // Vignette
-    vignetteExpiryDate: toDateOrNull(validatedData.vignetteExpiryDate),
-    vignetteReminderDays: validatedData.vignetteReminderDays ?? [],
-    // General
-    maintenanceNotes: validatedData.maintenanceNotes || null,
-  };
 }
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
@@ -86,7 +48,34 @@ export async function createVehicle(data: VehicleFormData) {
 
     const vehicle = await prisma.vehicle.create({
       data: {
-        ...buildVehiclePayload(validatedData),
+        ...buildVehiclePayload({
+          ...validatedData,
+          depositAmount: validatedData.depositAmount ?? null,
+          gearbox: validatedData.gearbox,
+          seats: validatedData.seats ?? null,
+          hasAC: validatedData.hasAC,
+          category: validatedData.category ?? null,
+          mileage: validatedData.mileage ?? null,
+          photoUrl: validatedData.photoUrl || null,
+          currentKm: validatedData.currentKm ?? null,
+          lastOilChangeMileageKm: validatedData.lastOilChangeMileageKm ?? null,
+          lastOilChangeDate: toDateOrNull(validatedData.lastOilChangeDate),
+          oilChangeIntervalKm: validatedData.oilChangeIntervalKm ?? null,
+          oilChangeIntervalMonths: validatedData.oilChangeIntervalMonths ?? null,
+          nextOilChangeMileageKm: validatedData.nextOilChangeMileageKm ?? null,
+          nextOilChangeDate: toDateOrNull(validatedData.nextOilChangeDate),
+          insuranceProvider: validatedData.insuranceProvider || null,
+          insurancePolicyNumber: validatedData.insurancePolicyNumber || null,
+          insuranceStartDate: toDateOrNull(validatedData.insuranceStartDate),
+          insuranceExpiryDate: toDateOrNull(validatedData.insuranceExpiryDate),
+          insuranceReminderDays: validatedData.insuranceReminderDays ?? [],
+          lastTechnicalInspectionDate: toDateOrNull(validatedData.lastTechnicalInspectionDate),
+          nextTechnicalInspectionDate: toDateOrNull(validatedData.nextTechnicalInspectionDate),
+          technicalInspectionReminderDays: validatedData.technicalInspectionReminderDays ?? [],
+          vignetteExpiryDate: toDateOrNull(validatedData.vignetteExpiryDate),
+          vignetteReminderDays: validatedData.vignetteReminderDays ?? [],
+          maintenanceNotes: validatedData.maintenanceNotes || null,
+        }),
         agencyId: currentUser.agencyId,
       },
     });
@@ -153,7 +142,34 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
 
     await prisma.vehicle.update({
       where: { id },
-      data: buildVehiclePayload(validatedData),
+      data: buildVehiclePayload({
+        ...validatedData,
+        depositAmount: validatedData.depositAmount ?? null,
+        gearbox: validatedData.gearbox,
+        seats: validatedData.seats ?? null,
+        hasAC: validatedData.hasAC,
+        category: validatedData.category ?? null,
+        mileage: validatedData.mileage ?? null,
+        photoUrl: validatedData.photoUrl || null,
+        currentKm: validatedData.currentKm ?? null,
+        lastOilChangeMileageKm: validatedData.lastOilChangeMileageKm ?? null,
+        lastOilChangeDate: toDateOrNull(validatedData.lastOilChangeDate),
+        oilChangeIntervalKm: validatedData.oilChangeIntervalKm ?? null,
+        oilChangeIntervalMonths: validatedData.oilChangeIntervalMonths ?? null,
+        nextOilChangeMileageKm: validatedData.nextOilChangeMileageKm ?? null,
+        nextOilChangeDate: toDateOrNull(validatedData.nextOilChangeDate),
+        insuranceProvider: validatedData.insuranceProvider || null,
+        insurancePolicyNumber: validatedData.insurancePolicyNumber || null,
+        insuranceStartDate: toDateOrNull(validatedData.insuranceStartDate),
+        insuranceExpiryDate: toDateOrNull(validatedData.insuranceExpiryDate),
+        insuranceReminderDays: validatedData.insuranceReminderDays ?? [],
+        lastTechnicalInspectionDate: toDateOrNull(validatedData.lastTechnicalInspectionDate),
+        nextTechnicalInspectionDate: toDateOrNull(validatedData.nextTechnicalInspectionDate),
+        technicalInspectionReminderDays: validatedData.technicalInspectionReminderDays ?? [],
+        vignetteExpiryDate: toDateOrNull(validatedData.vignetteExpiryDate),
+        vignetteReminderDays: validatedData.vignetteReminderDays ?? [],
+        maintenanceNotes: validatedData.maintenanceNotes || null,
+      }),
     });
 
     revalidatePath("/vehicles");
