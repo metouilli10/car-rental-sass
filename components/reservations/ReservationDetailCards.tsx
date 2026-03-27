@@ -83,7 +83,7 @@ export function ReservationProgressCard({
   if (status === "CANCELED") {
     return (
       <Card className="shadow-card">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <CardHeader className="flex flex-col gap-2 pb-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
             <CardTitle className="text-base">Statut & progression</CardTitle>
           </div>
@@ -109,7 +109,7 @@ export function ReservationProgressCard({
 
   return (
     <Card className="shadow-card">
-      <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 pb-3">
+      <CardHeader className="flex flex-col gap-2 pb-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
           <CardTitle className="text-base">Statut & progression</CardTitle>
         </div>
@@ -117,7 +117,7 @@ export function ReservationProgressCard({
       </CardHeader>
       <CardContent className="pt-0">
         <ol
-          className="flex min-h-12 items-center gap-2 overflow-x-auto whitespace-nowrap"
+          className="flex min-h-12 items-center gap-2 overflow-x-auto pb-1 whitespace-nowrap"
           role="list"
         >
           {steps.map((step, index) => {
@@ -213,7 +213,7 @@ export function ReservationAlertCard({
             <p className="text-sm text-muted-foreground">{alert.message}</p>
           </div>
         </div>
-        <Button asChild size="sm" className="shrink-0">
+        <Button asChild size="sm" className="w-full shrink-0 sm:w-auto">
           <Link href={`/damage-reports/new?bookingId=${bookingId}`}>Faire l&apos;inspection</Link>
         </Button>
       </CardContent>
@@ -226,16 +226,12 @@ export function ReservationClientCard({
   name,
   phone,
   whatsappLink,
-  pickupLocation,
-  returnLocation,
   history,
 }: {
   customerId: string;
   name: string;
   phone: string | null;
   whatsappLink: string | null;
-  pickupLocation: string | null;
-  returnLocation: string | null;
   history: ReservationCustomerHistorySummary;
 }) {
   const callablePhone = formatPhoneForCall(phone);
@@ -243,16 +239,16 @@ export function ReservationClientCard({
   return (
     <Card className="shadow-card">
       <CardHeader className="pb-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <Link
             href={`/customers/${customerId}`}
-            className="flex items-center gap-3 rounded-2xl transition-colors hover:bg-muted/20 -m-2 p-2"
+            className="-m-2 flex min-w-0 items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-muted/20"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
               {getInitials(name)}
             </div>
-            <div>
-              <CardTitle className="text-base transition-colors hover:text-primary">{name}</CardTitle>
+            <div className="min-w-0">
+              <CardTitle className="truncate text-base transition-colors hover:text-primary">{name}</CardTitle>
               <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5">
                   <Phone className="h-3.5 w-3.5" />
@@ -261,14 +257,14 @@ export function ReservationClientCard({
               </p>
             </div>
           </Link>
-          <div className="flex flex-wrap gap-2 lg:justify-end">
+          <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:justify-end">
             {callablePhone ? (
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="w-full">
                 <a href={`tel:${callablePhone}`}>Appeler</a>
               </Button>
             ) : null}
             {whatsappLink ? (
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="w-full">
                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="mr-2 h-4 w-4" />
                   WhatsApp
@@ -279,9 +275,10 @@ export function ReservationClientCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pt-0">
-        <div className="grid gap-3 md:grid-cols-2">
-          <InfoPair label="Départ" value={pickupLocation || "Agence"} icon={MapPin} />
-          <InfoPair label="Retour" value={returnLocation || "Agence"} icon={MapPin} />
+        <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-3">
+          <p className="text-sm text-muted-foreground">
+            Accès rapide au dossier client pour appeler, envoyer un WhatsApp ou consulter son profil.
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -319,7 +316,7 @@ export function ReservationVehicleCard({
           <StatusBadge status={status} />
         </div>
       </CardHeader>
-      <CardContent className="grid gap-3 pt-0 md:grid-cols-2">
+      <CardContent className="grid grid-cols-2 gap-3 pt-0">
         <InfoPair label="Modèle" value={`${make} ${model}`} icon={CarFront} href={`/vehicles/${vehicleId}`} />
         <InfoPair label="Plaque" value={plate} />
         <InfoPair label="Couleur" value={color || "—"} />
@@ -372,7 +369,7 @@ export function ReservationDetailsCard({
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3">
           <InfoPair label="Date de départ" value={formatDateFR(startDate)} icon={Calendar} />
           <InfoPair label="Date de retour" value={formatDateFR(endDate)} icon={Clock3} />
           <InfoPair label="Lieu de départ" value={pickupLocation || "Agence"} icon={MapPin} />
@@ -411,13 +408,13 @@ export function ReservationInspectionsCard({
 
   return (
     <Card className="shadow-card">
-      <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-4">
+      <CardHeader className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
         <div>
           <CardTitle className="text-base">Inspections</CardTitle>
           <CardDescription>Suivi des contrôles liés à la réservation</CardDescription>
         </div>
         {showCreateAction ? (
-          <Button asChild size="sm" variant="outline">
+          <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
             <Link href={`/damage-reports/new?bookingId=${bookingId}`}>Nouvelle inspection</Link>
           </Button>
         ) : null}

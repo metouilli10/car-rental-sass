@@ -81,7 +81,7 @@ export function ReservationFinancialSummaryCard({
     <>
       <Card className="overflow-hidden shadow-card">
         <CardHeader className="pb-4">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <CardTitle className="text-base">Résumé financier</CardTitle>
               <CardDescription>Lecture rapide des montants, paiements et caution</CardDescription>
@@ -119,9 +119,9 @@ export function ReservationFinancialSummaryCard({
               <span className="text-sm text-muted-foreground">État du paiement</span>
               <Badge variant={badgeVariantMap[paymentStatusVariant]}>{paymentStatusLabel}</Badge>
             </div>
-            <div className="flex items-start justify-between gap-3 text-sm">
+            <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-start sm:justify-between sm:gap-3">
               <span className="pt-0.5 text-muted-foreground">Mode de règlement</span>
-              <div className="flex flex-wrap justify-end gap-1.5">
+              <div className="flex flex-wrap gap-1.5 sm:justify-end">
                 {paymentMethodLabels.length > 0 ? (
                   paymentMethodLabels.map((label) => (
                     <Badge key={label} variant="outline">
@@ -154,6 +154,7 @@ export function ReservationFinancialSummaryCard({
             <Button
               size="sm"
               variant={paymentStatus === "PAID" ? "outline" : "default"}
+              className="w-full"
               onClick={() => setEncaisserOpen(true)}
             >
               <CreditCard className="mr-2 h-4 w-4" />
@@ -162,12 +163,12 @@ export function ReservationFinancialSummaryCard({
 
             {showReleaseAction ? (
               canReleaseInPlace && deposit ? (
-                <Button size="sm" variant="outline" onClick={() => setLibererCautionOpen(true)}>
+                <Button size="sm" variant="outline" className="w-full" onClick={() => setLibererCautionOpen(true)}>
                   <Banknote className="mr-2 h-4 w-4" />
                   Restituer caution
                 </Button>
               ) : (
-                <Button asChild size="sm" variant="outline">
+                <Button asChild size="sm" variant="outline" className="w-full">
                   <Link href="/finance?tab=cautions">
                     <Banknote className="mr-2 h-4 w-4" />
                     Restituer caution

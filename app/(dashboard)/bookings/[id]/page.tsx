@@ -217,8 +217,6 @@ export default async function BookingDetailsPage({
             name={booking.customer.name}
             phone={customerPhone || null}
             whatsappLink={whatsappLink}
-            pickupLocation={booking.pickupLocation}
-            returnLocation={booking.returnLocation}
             history={{
               totalRentals: booking.customer.bookings.filter((item) => item.status !== "CANCELED").length,
               averageDurationDays:

@@ -126,22 +126,22 @@ export function ReservationDetailsHeader({
                 <p className="text-sm text-muted-foreground">{subline}</p>
               </div>
               <div className="flex flex-wrap gap-2 pt-0.5 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/25 px-3 py-1.5">
+                <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/60 bg-muted/25 px-3 py-1.5">
                   <CalendarClock className="h-3.5 w-3.5" />
-                  {startStr} → {endStr}
+                  <span className="truncate">{startStr} → {endStr}</span>
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/25 px-3 py-1.5">
+                <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/60 bg-muted/25 px-3 py-1.5">
                   <CarFront className="h-3.5 w-3.5" />
-                  {vehicleName}
+                  <span className="truncate">{vehicleName}</span>
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/25 px-3 py-1.5">
+                <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/60 bg-muted/25 px-3 py-1.5">
                   <User2 className="h-3.5 w-3.5" />
-                  {customer.name}
+                  <span className="truncate">{customer.name}</span>
                 </span>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-start gap-2 xl:max-w-[48%] xl:self-center xl:justify-end">
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center xl:w-auto xl:max-w-[48%] xl:self-center xl:justify-end">
               {!isCanceled && status !== "COMPLETED" ? (
                 <BookingStatusActions
                   bookingId={bookingId}
@@ -153,7 +153,12 @@ export function ReservationDetailsHeader({
               ) : null}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9 gap-2" aria-label="Plus d'actions">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-full justify-center gap-2 sm:w-auto"
+                    aria-label="Plus d'actions"
+                  >
                     Plus d&apos;actions
                     <ChevronDown className="h-4 w-4" />
                   </Button>
