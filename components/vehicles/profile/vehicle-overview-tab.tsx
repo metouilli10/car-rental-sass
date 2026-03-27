@@ -28,6 +28,7 @@ export function VehicleOverviewTab({ data }: { data: VehicleProfileData }) {
             <InfoRow label="Année" value={`${data.vehicle.year}`} />
             <InfoRow label="Couleur" value={data.vehicle.color} />
             <InfoRow label="Transmission" value={data.vehicle.gearbox === "AUTO" ? "Automatique" : "Manuelle"} />
+            <InfoRow label="Carburant" value={formatFuelType(data.vehicle.fuelType)} />
             <InfoRow label="Kilométrage" value={data.vehicle.currentKm != null ? `${data.vehicle.currentKm.toLocaleString("fr-FR")} km` : "—"} />
             <InfoRow label="Prix / jour" value={formatCurrency(data.vehicle.pricePerDay)} />
             <InfoRow label="Caution" value={formatCurrency(data.vehicle.depositAmount)} />
@@ -131,6 +132,19 @@ export function VehicleOverviewTab({ data }: { data: VehicleProfileData }) {
       </div>
     </div>
   );
+}
+
+function formatFuelType(fuelType: VehicleProfileData["vehicle"]["fuelType"]) {
+  switch (fuelType) {
+    case "DIESEL":
+      return "Diesel";
+    case "HYBRID":
+      return "Hybride";
+    case "ELECTRIC":
+      return "Électrique";
+    default:
+      return "Essence";
+  }
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {

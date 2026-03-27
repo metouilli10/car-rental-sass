@@ -13,6 +13,7 @@ import {
 import { vehicleReminderSchema, type VehicleReminderFormData } from "@/lib/validations/vehicle-reminder";
 import { computeVehicleReminders } from "@/lib/reminders/engine";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
+import { persistVehicleFuelType } from "@/lib/vehicle-fuel-type";
 import { buildVehiclePayload } from "@/lib/vehicles/payload";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -81,6 +82,7 @@ export async function createVehicle(data: VehicleFormData) {
     });
 
     vehicleId = vehicle.id;
+    await persistVehicleFuelType(vehicle.id, validatedData.fuelType);
 
     revalidatePath("/vehicles");
     revalidatePath("/catalogue");
@@ -122,7 +124,7 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
     // Check if vehicle exists and belongs to user's agency
     const vehicle = await prisma.vehicle.findFirst({
       where: { id, agencyId: currentUser.agencyId },
-      select: { id: true, plate: true },
+      select: { id: true, plate: true, mileage: true },
     });
 
     if (!vehicle) {
@@ -142,35 +144,39 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
 
     await prisma.vehicle.update({
       where: { id },
-      data: buildVehiclePayload({
-        ...validatedData,
-        depositAmount: validatedData.depositAmount ?? null,
-        gearbox: validatedData.gearbox,
-        seats: validatedData.seats ?? null,
-        hasAC: validatedData.hasAC,
-        category: validatedData.category ?? null,
-        mileage: validatedData.mileage ?? null,
-        photoUrl: validatedData.photoUrl || null,
-        currentKm: validatedData.currentKm ?? null,
-        lastOilChangeMileageKm: validatedData.lastOilChangeMileageKm ?? null,
-        lastOilChangeDate: toDateOrNull(validatedData.lastOilChangeDate),
-        oilChangeIntervalKm: validatedData.oilChangeIntervalKm ?? null,
-        oilChangeIntervalMonths: validatedData.oilChangeIntervalMonths ?? null,
-        nextOilChangeMileageKm: validatedData.nextOilChangeMileageKm ?? null,
-        nextOilChangeDate: toDateOrNull(validatedData.nextOilChangeDate),
-        insuranceProvider: validatedData.insuranceProvider || null,
-        insurancePolicyNumber: validatedData.insurancePolicyNumber || null,
-        insuranceStartDate: toDateOrNull(validatedData.insuranceStartDate),
-        insuranceExpiryDate: toDateOrNull(validatedData.insuranceExpiryDate),
-        insuranceReminderDays: validatedData.insuranceReminderDays ?? [],
-        lastTechnicalInspectionDate: toDateOrNull(validatedData.lastTechnicalInspectionDate),
-        nextTechnicalInspectionDate: toDateOrNull(validatedData.nextTechnicalInspectionDate),
-        technicalInspectionReminderDays: validatedData.technicalInspectionReminderDays ?? [],
-        vignetteExpiryDate: toDateOrNull(validatedData.vignetteExpiryDate),
-        vignetteReminderDays: validatedData.vignetteReminderDays ?? [],
-        maintenanceNotes: validatedData.maintenanceNotes || null,
-      }),
+      data: {
+        ...buildVehiclePayload({
+          ...validatedData,
+          depositAmount: validatedData.depositAmount ?? null,
+          gearbox: validatedData.gearbox,
+          seats: validatedData.seats ?? null,
+          hasAC: validatedData.hasAC,
+          category: validatedData.category ?? null,
+          mileage: validatedData.mileage ?? null,
+          photoUrl: validatedData.photoUrl || null,
+          currentKm: validatedData.currentKm ?? null,
+          lastOilChangeMileageKm: validatedData.lastOilChangeMileageKm ?? null,
+          lastOilChangeDate: toDateOrNull(validatedData.lastOilChangeDate),
+          oilChangeIntervalKm: validatedData.oilChangeIntervalKm ?? null,
+          oilChangeIntervalMonths: validatedData.oilChangeIntervalMonths ?? null,
+          nextOilChangeMileageKm: validatedData.nextOilChangeMileageKm ?? null,
+          nextOilChangeDate: toDateOrNull(validatedData.nextOilChangeDate),
+          insuranceProvider: validatedData.insuranceProvider || null,
+          insurancePolicyNumber: validatedData.insurancePolicyNumber || null,
+          insuranceStartDate: toDateOrNull(validatedData.insuranceStartDate),
+          insuranceExpiryDate: toDateOrNull(validatedData.insuranceExpiryDate),
+          insuranceReminderDays: validatedData.insuranceReminderDays ?? [],
+          lastTechnicalInspectionDate: toDateOrNull(validatedData.lastTechnicalInspectionDate),
+          nextTechnicalInspectionDate: toDateOrNull(validatedData.nextTechnicalInspectionDate),
+          technicalInspectionReminderDays: validatedData.technicalInspectionReminderDays ?? [],
+          vignetteExpiryDate: toDateOrNull(validatedData.vignetteExpiryDate),
+          vignetteReminderDays: validatedData.vignetteReminderDays ?? [],
+          maintenanceNotes: validatedData.maintenanceNotes || null,
+        }),
+        mileage: validatedData.mileage ?? vehicle.mileage,
+      },
     });
+    await persistVehicleFuelType(id, validatedData.fuelType);
 
     revalidatePath("/vehicles");
     revalidatePath("/catalogue");

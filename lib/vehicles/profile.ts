@@ -120,6 +120,7 @@ export interface VehicleProfileData {
     pricePerDay: number;
     depositAmount: number;
     gearbox: "AUTO" | "MANUAL";
+    fuelType: "DIESEL" | "ESSENCE" | "HYBRID" | "ELECTRIC";
     seats: number;
     hasAC: boolean;
     category: string;
@@ -533,6 +534,7 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
       pricePerDay: vehicle.pricePerDay,
       depositAmount: vehicle.depositAmount,
       gearbox: vehicle.gearbox,
+      fuelType: vehicle.fuelType,
       seats: vehicle.seats,
       hasAC: vehicle.hasAC,
       category: vehicle.category,
