@@ -277,6 +277,13 @@ enum Gearbox {
   AUTO
 }
 
+enum FuelType {
+  DIESEL
+  ESSENCE
+  HYBRID
+  ELECTRIC
+}
+
 model Vehicle {
   id                String        @id @default(cuid())
   agencyId          String
@@ -290,6 +297,7 @@ model Vehicle {
   pricePerDay       Float
   depositAmount     Float         @default(2000)
   gearbox           Gearbox       @default(MANUAL)
+  fuelType          FuelType      @default(ESSENCE)
   seats             Int           @default(5)
   hasAC             Boolean       @default(true)
   category          String        @default("Citadine")

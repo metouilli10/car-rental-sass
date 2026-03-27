@@ -48,7 +48,11 @@ export default async function EditVehiclePage({
           plate: vehicle.plate,
           color: vehicle.color,
           pricePerDay: vehicle.pricePerDay,
-          mileage: vehicle.mileage || undefined,
+          depositAmount: vehicle.depositAmount,
+          gearbox: vehicle.gearbox,
+          fuelType: vehicle.fuelType,
+          mileage: vehicle.mileage ?? undefined,
+          currentKm: vehicle.currentKm ?? undefined,
           status: vehicle.status,
           photoUrl: vehicle.photoUrl ?? undefined,
         }}

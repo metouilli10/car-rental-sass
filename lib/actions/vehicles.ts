@@ -33,6 +33,9 @@ function buildVehiclePayload(validatedData: VehicleFormData) {
     color: validatedData.color,
     status: validatedData.status,
     pricePerDay: validatedData.pricePerDay,
+    depositAmount: validatedData.depositAmount,
+    gearbox: validatedData.gearbox,
+    fuelType: validatedData.fuelType,
     mileage: validatedData.mileage ?? null,
     photoUrl: validatedData.photoUrl || null,
     // Mileage / oil change
@@ -133,7 +136,7 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
     // Check if vehicle exists and belongs to user's agency
     const vehicle = await prisma.vehicle.findFirst({
       where: { id, agencyId: currentUser.agencyId },
-      select: { id: true, plate: true },
+      select: { id: true, plate: true, mileage: true },
     });
 
     if (!vehicle) {
@@ -153,7 +156,10 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
 
     await prisma.vehicle.update({
       where: { id },
-      data: buildVehiclePayload(validatedData),
+      data: {
+        ...buildVehiclePayload(validatedData),
+        mileage: validatedData.mileage ?? vehicle.mileage,
+      },
     });
 
     revalidatePath("/vehicles");

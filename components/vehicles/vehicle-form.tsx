@@ -48,7 +48,7 @@ const STATUS_DESCRIPTIONS: Record<string, string> = {
   MAINTENANCE: "Indisponible temporairement",
 };
 
-const STEP1_FIELDS = ["make", "model", "year", "plate", "color"] as const;
+const STEP1_FIELDS = ["make", "model", "year", "plate", "color", "gearbox", "fuelType"] as const;
 
 /* ─── Step Indicator ─────────────────────────────────────────────────── */
 
@@ -364,6 +364,9 @@ export function VehicleForm({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
       status: "AVAILABLE",
+      gearbox: "MANUAL",
+      fuelType: "ESSENCE",
+      depositAmount: 2000,
       photoUrl: defaultValues?.photoUrl ?? "",
       insuranceReminderDays: [30, 15, 7],
       technicalInspectionReminderDays: [30, 15, 7],
@@ -383,6 +386,8 @@ export function VehicleForm({
 
   const status = watch("status");
   const photoUrl = watch("photoUrl");
+  const gearbox = watch("gearbox");
+  const fuelType = watch("fuelType");
 
   /* ── Photo handlers ──────────────────────────────────────────────── */
 
@@ -566,18 +571,51 @@ export function VehicleForm({
               </FormField>
 
               <FormField
-                label="Kilométrage"
-                htmlFor="mileage"
-                error={errors.mileage?.message}
-                hint="Optionnel — pour le suivi d'entretien"
+                label="Boîte"
+                htmlFor="gearbox"
+                required
+                error={errors.gearbox?.message}
               >
-                <Input
-                  id="mileage"
-                  type="number"
-                  {...register("mileage")}
-                  placeholder="15 000"
+                <Select
+                  value={gearbox}
+                  onValueChange={(value) =>
+                    setValue("gearbox", value as VehicleFormData["gearbox"], { shouldValidate: true })
+                  }
                   disabled={isLoading}
-                />
+                >
+                  <SelectTrigger id="gearbox">
+                    <SelectValue placeholder="Choisir la boîte" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MANUAL">Manuelle</SelectItem>
+                    <SelectItem value="AUTO">Automatique</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormField>
+
+              <FormField
+                label="Carburant"
+                htmlFor="fuelType"
+                required
+                error={errors.fuelType?.message}
+              >
+                <Select
+                  value={fuelType}
+                  onValueChange={(value) =>
+                    setValue("fuelType", value as VehicleFormData["fuelType"], { shouldValidate: true })
+                  }
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="fuelType">
+                    <SelectValue placeholder="Choisir l'énergie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DIESEL">Diesel</SelectItem>
+                    <SelectItem value="ESSENCE">Essence</SelectItem>
+                    <SelectItem value="HYBRID">Hybride</SelectItem>
+                    <SelectItem value="ELECTRIC">Électrique</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormField>
             </div>
           </div>
@@ -659,6 +697,36 @@ export function VehicleForm({
                       tard.
                     </p>
                   </div>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="depositAmount">
+                  Caution
+                  <span className="text-red-400 ml-0.5">*</span>
+                </Label>
+                <div className="flex items-stretch">
+                  <span className="inline-flex items-center px-3.5 rounded-l-xl border border-r-0 border-border/60 bg-slate-50 text-sm font-medium text-slate-500 select-none">
+                    MAD
+                  </span>
+                  <Input
+                    id="depositAmount"
+                    type="number"
+                    step="0.01"
+                    {...register("depositAmount")}
+                    placeholder="2000"
+                    disabled={isLoading}
+                    className="rounded-none border-x-0 focus-visible:z-10 relative"
+                  />
+                </div>
+                {errors.depositAmount ? (
+                  <p className="text-xs text-red-500 mt-0.5">
+                    {errors.depositAmount.message}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-400">
+                    Montant demandé comme garantie à la réservation.
+                  </p>
                 )}
               </div>
 

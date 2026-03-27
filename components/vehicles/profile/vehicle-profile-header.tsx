@@ -26,6 +26,7 @@ interface VehicleProfileHeaderProps {
     plate: string;
     color: string;
     gearbox: "AUTO" | "MANUAL";
+    fuelType: "DIESEL" | "ESSENCE" | "HYBRID" | "ELECTRIC";
     status: "AVAILABLE" | "RENTED" | "MAINTENANCE" | "UNAVAILABLE";
     pricePerDay: number;
     currentKm: number | null;
@@ -82,6 +83,8 @@ export function VehicleProfileHeader({
               <span>{vehicle.color}</span>
               <span className="text-slate-300">•</span>
               <span>{vehicle.gearbox === "AUTO" ? "Automatique" : "Manuelle"}</span>
+              <span className="text-slate-300">•</span>
+              <span>{formatFuelType(vehicle.fuelType)}</span>
             </div>
             <div className="flex flex-wrap items-end gap-4">
               <div>
@@ -166,4 +169,17 @@ export function VehicleProfileHeader({
       ) : null}
     </div>
   );
+}
+
+function formatFuelType(fuelType: VehicleProfileHeaderProps["vehicle"]["fuelType"]) {
+  switch (fuelType) {
+    case "DIESEL":
+      return "Diesel";
+    case "HYBRID":
+      return "Hybride";
+    case "ELECTRIC":
+      return "Électrique";
+    default:
+      return "Essence";
+  }
 }
