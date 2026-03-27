@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { cn, formatCurrency, formatDateTime, formatPhoneForCall } from "@/lib/utils";
+import { cn, formatCurrency, formatDateTime } from "@/lib/utils";
 import { formatDateFR } from "@/lib/reservations/presentation";
 import type { BookingStatus, Gearbox, VehicleStatus } from "@prisma/client";
 import type {
@@ -43,6 +43,15 @@ function getStepIndex(status: BookingStatus) {
   if (status === "ACTIVE") return 1;
   if (status === "COMPLETED") return 2;
   return -1;
+}
+
+function getCallablePhone(phone?: string | null): string | null {
+  const cleanPhone = phone?.replace(/\D/g, "") ?? "";
+  if (!cleanPhone) return null;
+
+  return cleanPhone.startsWith("212")
+    ? `+${cleanPhone}`
+    : `+212${cleanPhone.startsWith("0") ? cleanPhone.slice(1) : cleanPhone}`;
 }
 
 function InfoPair({
@@ -234,7 +243,7 @@ export function ReservationClientCard({
   whatsappLink: string | null;
   history: ReservationCustomerHistorySummary;
 }) {
-  const callablePhone = formatPhoneForCall(phone);
+  const callablePhone = getCallablePhone(phone);
 
   return (
     <Card className="shadow-card">
