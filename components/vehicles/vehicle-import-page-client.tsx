@@ -234,7 +234,7 @@ export function VehicleImportPageClient() {
                   Importez votre fichier `.xlsx` ou `.csv`
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  LocaPro lira les colonnes puis vous laissera les mapper avant d'importer.
+                  LocaPro lira les colonnes puis vous laissera les mapper avant d&apos;importer.
                 </p>
               </div>
               <Label
@@ -355,7 +355,7 @@ export function VehicleImportPageClient() {
                 ) : (
                   <>
                     <RefreshCcw className="h-4 w-4" />
-                    Preparer l'import
+                    Preparer l&apos;import
                   </>
                 )}
               </Button>
@@ -444,7 +444,7 @@ export function VehicleImportPageClient() {
                 onClick={handlePreview}
                 disabled={isPreviewing || isImporting}
               >
-                Recalculer l'aperçu
+                Recalculer l&apos;aperçu
               </Button>
             </div>
           </CardContent>
