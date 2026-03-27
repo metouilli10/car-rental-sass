@@ -1,24 +1,14 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-cache";
+import { getCurrentUserAccessForPage } from "@/lib/authz";
 import { PageHeader } from "@/components/shared/page-header";
 import { VehicleForm } from "@/components/vehicles/vehicle-form";
 import { createVehicle } from "@/lib/actions/vehicles";
-import { prisma } from "@/lib/prisma";
 import { canManageVehicles } from "@/lib/permissions";
 
 export default async function AddVehiclePage() {
-  const session = await getSession();
+  const currentUser = await getCurrentUserAccessForPage();
 
-  if (!session) {
-    redirect("/login");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canManageVehicles(currentUser.role, currentUser.permissions)) {
     redirect("/vehicles");
   }
 

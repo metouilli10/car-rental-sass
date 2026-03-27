@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { startOfMonth } from "date-fns";
-import { getSession } from "@/lib/auth-cache";
 import { canDeleteCustomer, canManageCustomers } from "@/lib/permissions";
+import { getCurrentUserAccessForPage } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { ClientsPageV2 } from "@/components/customers/clients-page-v2";
 
@@ -12,16 +12,13 @@ interface CustomersPageProps {
 }
 
 export default async function CustomersPage({ searchParams }: CustomersPageProps) {
-  const session = await getSession();
-
-  if (!session) redirect("/login");
-  if (!session.user.agencyId) redirect("/setup");
+  const currentUser = await getCurrentUserAccessForPage();
 
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
   const searchQuery = params.q?.trim() || "";
   const where = {
-    agencyId: session.user.agencyId,
+    agencyId: currentUser.agencyId,
     ...(searchQuery
       ? {
           OR: [
@@ -34,17 +31,13 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       : {}),
   };
   const monthStart = startOfMonth(new Date());
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
   const canManage = canManageCustomers(
-    session.user.role,
-    currentUser?.permissionOverrides ?? null,
+    currentUser.role,
+    currentUser.permissions,
   );
   const canDelete = canDeleteCustomer(
-    session.user.role,
-    currentUser?.permissionOverrides ?? null,
+    currentUser.role,
+    currentUser.permissions,
   );
 
   const [customers, total, withReservations, withoutDocuments, createdThisMonth] =
@@ -97,7 +90,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       ? await prisma.booking.groupBy({
           by: ["customerId"],
           where: {
-            agencyId: session.user.agencyId,
+            agencyId: currentUser.agencyId,
             status: { not: "CANCELED" },
             customerId: { in: customers.map((customer) => customer.id) },
           },

@@ -3,8 +3,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logSecurityAudit } from "@/lib/security/audit-log";
 import {
-  normalizePermissionOverrides,
-  sanitizePermissionOverridePatch,
+  normalizeUserPermissions,
+  sanitizePermissionPatch,
   type PermissionKey,
 } from "@/lib/permissions";
 import { toManagedUser } from "@/lib/users/serializers";
@@ -16,7 +16,7 @@ import {
 } from "@/lib/authz";
 
 type UpdateUserPermissionsPayload = {
-  overrides?: Record<string, boolean | null>;
+  permissions?: Record<string, boolean | null>;
 };
 
 export async function PATCH(
@@ -33,13 +33,13 @@ export async function PATCH(
 
     const { id } = await params;
     const body = (await request.json().catch(() => ({}))) as UpdateUserPermissionsPayload;
-    const rawOverrides = body.overrides;
+    const rawPermissions = body.permissions;
 
-    if (!rawOverrides || typeof rawOverrides !== "object" || Array.isArray(rawOverrides)) {
+    if (!rawPermissions || typeof rawPermissions !== "object" || Array.isArray(rawPermissions)) {
       return NextResponse.json({ error: "Payload invalide" }, { status: 400 });
     }
 
-    const { normalized, changedKeys, invalidKeys } = sanitizePermissionOverridePatch(rawOverrides);
+    const { normalized, changedKeys, invalidKeys } = sanitizePermissionPatch(rawPermissions);
 
     if (invalidKeys.length > 0) {
       return NextResponse.json(
@@ -113,12 +113,12 @@ export async function PATCH(
       );
     }
 
-    const previousOverrides = normalizePermissionOverrides(target.permissionOverrides ?? null);
+    const previousPermissions = normalizeUserPermissions(target.permissionOverrides ?? null);
     const appliedChangedKeys = changedKeys.filter((key) => {
       const permissionKey = key as PermissionKey;
       const previousValue =
-        previousOverrides && Object.prototype.hasOwnProperty.call(previousOverrides, key)
-          ? previousOverrides[permissionKey]
+        previousPermissions && Object.prototype.hasOwnProperty.call(previousPermissions, key)
+          ? previousPermissions[permissionKey]
           : null;
       const nextValue =
         normalized && Object.prototype.hasOwnProperty.call(normalized, key)
@@ -172,7 +172,7 @@ export async function PATCH(
         outcome: "SUCCESS",
         details: {
           changedKeys: appliedChangedKeys,
-          overrideCount: normalized ? Object.keys(normalized).length : 0,
+          grantedCount: normalized ? Object.values(normalized).filter(Boolean).length : 0,
         },
       },
     });

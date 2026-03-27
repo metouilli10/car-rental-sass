@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ClipboardCheck, Info, Wrench } from "lucide-react";
 import Link from "next/link";
-import { getSession } from "@/lib/auth-cache";
+import { getCurrentUserAccessForPage } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { canManageVehicles } from "@/lib/permissions";
 import {
@@ -32,38 +32,26 @@ export default async function VehicleProfilePage({
   params: Promise<{ id: string }>;
   searchParams: Promise<VehiclePageSearchParams>;
 }) {
-  const session = await getSession();
+  const currentUser = await getCurrentUserAccessForPage();
 
-  if (!session) {
-    redirect("/login");
-  }
-
-  if (!session.user.agencyId) {
-    redirect("/setup");
-  }
-
-  const [{ id }, resolvedSearchParams, currentUser] = await Promise.all([
+  const [{ id }, resolvedSearchParams] = await Promise.all([
     params,
     searchParams,
-    prisma.user.findFirst({
-      where: { id: session.user.id, agencyId: session.user.agencyId },
-      select: { permissionOverrides: true },
-    }),
   ]);
 
   const currentTab: VehicleProfileTab = isVehicleProfileTab(resolvedSearchParams.tab)
     ? resolvedSearchParams.tab
     : "overview";
 
-  const profile = await getVehicleProfile(session.user.agencyId, id);
+  const profile = await getVehicleProfile(currentUser.agencyId, id);
 
   if (!profile) {
     notFound();
   }
 
   const canManageVehicle = canManageVehicles(
-    session.user.role,
-    currentUser?.permissionOverrides ?? null,
+    currentUser.role,
+    currentUser.permissions,
   );
 
   const currentOrNextBookingId = profile.currentReservation?.id ?? profile.nextReservation?.id ?? null;

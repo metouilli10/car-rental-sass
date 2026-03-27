@@ -3,6 +3,7 @@ import type { UserRole } from "@prisma/client";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { logSecurityAudit } from "@/lib/security/audit-log";
+import { getRoleDefaultPermissions } from "@/lib/permissions";
 import {
   AuthzError,
   canManageUsers,
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
         isActive: true,
         invitedAt: new Date(),
         invitedById: currentUser.id,
+        permissionOverrides: getRoleDefaultPermissions(role),
       },
       select: {
         id: true,

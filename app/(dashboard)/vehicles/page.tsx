@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-cache";
 import { canManageVehicles } from "@/lib/permissions";
+import { getCurrentUserAccessForPage } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { Pagination } from "@/components/shared/pagination";
 import Link from "next/link";
@@ -28,20 +28,14 @@ export default async function VehiclesPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  if (!session.user.agencyId) redirect("/setup");
+  const currentUser = await getCurrentUserAccessForPage();
 
   const { status, page: pageParam, q } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
   const now = new Date();
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
   const canManage = canManageVehicles(
-    session.user.role,
-    currentUser?.permissionOverrides ?? null,
+    currentUser.role,
+    currentUser.permissions,
   );
 
   const statusFilter =
@@ -51,7 +45,7 @@ export default async function VehiclesPage({
 
   const searchQuery = q?.trim() || undefined;
 
-  const baseWhere = { agencyId: session.user.agencyId };
+  const baseWhere = { agencyId: currentUser.agencyId };
   const currentRentalStatuses: BookingStatus[] = ["ACTIVE", "CONFIRMED"];
   const currentRentalWhere = {
     OR: [

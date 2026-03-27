@@ -2,7 +2,7 @@ import type { Prisma, UserRole } from "@prisma/client";
 import type { ManagedUser, UserActivityItem } from "@/components/users/types";
 import {
   getEffectivePermissions,
-  normalizePermissionOverrides,
+  normalizeUserPermissions,
 } from "@/lib/permissions";
 
 type UserLike = {
@@ -31,7 +31,8 @@ type AuditLike = {
 };
 
 export function toManagedUser(user: UserLike): ManagedUser {
-  const permissionOverrides = normalizePermissionOverrides(user.permissionOverrides ?? null);
+  const storedPermissions = normalizeUserPermissions(user.permissionOverrides ?? null);
+  const effectivePermissions = getEffectivePermissions(user.role, storedPermissions);
 
   return {
     id: user.id,
@@ -42,8 +43,8 @@ export function toManagedUser(user: UserLike): ManagedUser {
     invitedAt: user.invitedAt?.toISOString() ?? null,
     lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
     createdAt: user.createdAt.toISOString(),
-    permissionOverrides,
-    effectivePermissions: getEffectivePermissions(user.role, permissionOverrides),
+    permissions: storedPermissions ?? effectivePermissions,
+    effectivePermissions,
   };
 }
 

@@ -1,9 +1,8 @@
 "use server";
 
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
+import { getCurrentUserAccessOrThrow } from "@/lib/authz";
 import { canManageVehicles } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { vehicleSchema, VehicleFormData } from "@/lib/validations/vehicle";
@@ -65,18 +64,9 @@ function buildVehiclePayload(validatedData: VehicleFormData) {
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
 export async function createVehicle(data: VehicleFormData) {
-  const session = await getServerSession(authOptions);
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!session) {
-    throw new Error("Non autorisé");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canManageVehicles(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
   }
 
@@ -97,7 +87,7 @@ export async function createVehicle(data: VehicleFormData) {
     const vehicle = await prisma.vehicle.create({
       data: {
         ...buildVehiclePayload(validatedData),
-        agencyId: session.user.agencyId,
+        agencyId: currentUser.agencyId,
       },
     });
 
@@ -114,14 +104,14 @@ export async function createVehicle(data: VehicleFormData) {
   // Trigger reminder engine after successful save (outside try so redirect works)
   if (vehicleId) {
     try {
-      await computeVehicleReminders(vehicleId, session.user.agencyId);
+      await computeVehicleReminders(vehicleId, currentUser.agencyId);
       revalidatePath("/notifications");
     } catch (err) {
       console.error("computeVehicleReminders error:", err);
     }
 
     try {
-      await syncAgencyOnboardingState(session.user.agencyId);
+      await syncAgencyOnboardingState(currentUser.agencyId);
     } catch (err) {
       console.error("syncAgencyOnboardingState error:", err);
     }
@@ -131,18 +121,9 @@ export async function createVehicle(data: VehicleFormData) {
 }
 
 export async function updateVehicle(id: string, data: VehicleFormData) {
-  const session = await getServerSession(authOptions);
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!session) {
-    throw new Error("Non autorisé");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canManageVehicles(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
   }
 
@@ -150,11 +131,12 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
     const validatedData = vehicleSchema.parse(data);
 
     // Check if vehicle exists and belongs to user's agency
-    const vehicle = await prisma.vehicle.findUnique({
-      where: { id },
+    const vehicle = await prisma.vehicle.findFirst({
+      where: { id, agencyId: currentUser.agencyId },
+      select: { id: true, plate: true },
     });
 
-    if (!vehicle || vehicle.agencyId !== session.user.agencyId) {
+    if (!vehicle) {
       return { error: "Véhicule non trouvé" };
     }
 
@@ -183,7 +165,7 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
 
   // Trigger reminder engine after successful save
   try {
-    await computeVehicleReminders(id, session.user.agencyId);
+    await computeVehicleReminders(id, currentUser.agencyId);
     revalidatePath("/notifications");
   } catch (err) {
     console.error("computeVehicleReminders error:", err);
@@ -193,24 +175,15 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
 }
 
 export async function deactivateVehicle(id: string) {
-  const session = await getServerSession(authOptions);
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!session) {
-    throw new Error("Non autorisé");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canManageVehicles(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
   }
 
   try {
     const vehicle = await prisma.vehicle.findFirst({
-      where: { id, agencyId: session.user.agencyId },
+      where: { id, agencyId: currentUser.agencyId },
       select: { id: true, status: true },
     });
 
@@ -235,24 +208,15 @@ export async function deactivateVehicle(id: string) {
 }
 
 export async function setVehicleMaintenance(id: string) {
-  const session = await getServerSession(authOptions);
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!session) {
-    throw new Error("Non autorisé");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canManageVehicles(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
   }
 
   try {
     const vehicle = await prisma.vehicle.findFirst({
-      where: { id, agencyId: session.user.agencyId },
+      where: { id, agencyId: currentUser.agencyId },
       select: { id: true, status: true },
     });
 
@@ -279,18 +243,9 @@ export async function setVehicleMaintenance(id: string) {
 }
 
 export async function deleteVehicle(id: string) {
-  const session = await getServerSession(authOptions);
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!session) {
-    throw new Error("Non autorisé");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canManageVehicles(currentUser.role, currentUser.permissions)) {
     return {
       error: "Vous n'avez pas l'autorisation de supprimer un véhicule",
     };
@@ -299,7 +254,7 @@ export async function deleteVehicle(id: string) {
   try {
     // Verify ownership: ensure vehicle belongs to user's agency
     const vehicle = await prisma.vehicle.findFirst({
-      where: { id, agencyId: session.user.agencyId },
+      where: { id, agencyId: currentUser.agencyId },
       select: { id: true },
     });
 
@@ -311,7 +266,7 @@ export async function deleteVehicle(id: string) {
     const activeBookings = await prisma.booking.count({
       where: {
         vehicleId: id,
-        agencyId: session.user.agencyId,
+        agencyId: currentUser.agencyId,
         status: { in: ["CONFIRMED", "ACTIVE"] },
       },
     });
@@ -335,25 +290,16 @@ export async function updateVehicleReminderFields(
   id: string,
   data: VehicleReminderFormData,
 ) {
-  const session = await getServerSession(authOptions);
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!session) {
-    throw new Error("Non autorisé");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canManageVehicles(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
   }
 
   try {
     const validated = vehicleReminderSchema.parse(data);
     const vehicle = await prisma.vehicle.findFirst({
-      where: { id, agencyId: session.user.agencyId },
+      where: { id, agencyId: currentUser.agencyId },
       select: { id: true },
     });
 
@@ -374,7 +320,7 @@ export async function updateVehicleReminderFields(
     });
 
     try {
-      await computeVehicleReminders(id, session.user.agencyId);
+      await computeVehicleReminders(id, currentUser.agencyId);
     } catch (error) {
       console.error("updateVehicleReminderFields computeVehicleReminders error:", error);
     }
@@ -394,18 +340,9 @@ export async function upsertVehicleDocument(
   id: string,
   data: VehicleDocumentFormData,
 ) {
-  const session = await getServerSession(authOptions);
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!session) {
-    throw new Error("Non autorisé");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canManageVehicles(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canManageVehicles(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
   }
 
@@ -425,7 +362,7 @@ export async function upsertVehicleDocument(
   try {
     const validated = vehicleDocumentSchema.parse(data);
     const vehicle = await prisma.vehicle.findFirst({
-      where: { id, agencyId: session.user.agencyId },
+      where: { id, agencyId: currentUser.agencyId },
       select: { id: true },
     });
 
@@ -446,7 +383,7 @@ export async function upsertVehicleDocument(
     await vehicleDocumentDelegate.upsert({
       where: {
         agencyId_vehicleId_type: {
-          agencyId: session.user.agencyId,
+          agencyId: currentUser.agencyId,
           vehicleId: id,
           type: validated.type,
         },
@@ -458,7 +395,7 @@ export async function upsertVehicleDocument(
         fileUrl,
       },
       create: {
-        agencyId: session.user.agencyId,
+        agencyId: currentUser.agencyId,
         vehicleId: id,
         type: validated.type,
         reference,
@@ -490,7 +427,7 @@ export async function upsertVehicleDocument(
     }
 
     try {
-      await computeVehicleReminders(id, session.user.agencyId);
+      await computeVehicleReminders(id, currentUser.agencyId);
     } catch (error) {
       console.error("upsertVehicleDocument computeVehicleReminders error:", error);
     }

@@ -10,7 +10,7 @@ import {
 import { unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ExpenseCategory } from "@prisma/client";
-import { getSession } from "@/lib/auth-cache";
+import { getCurrentUserAccessForPage } from "@/lib/authz";
 import { getEffectivePermissions } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { FinanceCenterView } from "@/components/finance/FinanceCenterView";
@@ -368,19 +368,13 @@ const getFinanceVehiclesCached = unstable_cache(
 /* ── Page ─────────────────────────────────────────────────── */
 
 export default async function FinancePage({ searchParams }: FinancePageProps) {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const currentUser = await getCurrentUserAccessForPage();
 
   const params = await searchParams;
-  const agencyId = session.user.agencyId;
-  if (!agencyId) redirect("/dashboard");
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId },
-    select: { permissionOverrides: true },
-  });
+  const agencyId = currentUser.agencyId;
   const permissions = getEffectivePermissions(
-    session.user.role,
-    currentUser?.permissionOverrides ?? null,
+    currentUser.role,
+    currentUser.permissions,
   );
 
   if (!permissions["finance.view"]) {

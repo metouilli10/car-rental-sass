@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import {
   getEffectivePermissions,
   getRoleDefaultPermissions,
-  normalizePermissionOverrides,
-  sanitizePermissionOverridePatch,
+  normalizeUserPermissions,
+  sanitizePermissionPatch,
 } from "@/lib/permissions";
 
 test("owner resolves every permission to true", () => {
@@ -59,20 +59,22 @@ test("missing overrides fall back to role default", () => {
 });
 
 test("unknown override keys are ignored by normalization", () => {
-  const normalized = normalizePermissionOverrides({
+  const normalized = normalizeUserPermissions({
     "finance.view": true,
     "unknown.permission": true,
   });
 
-  assert.deepEqual(normalized, { "finance.view": true });
+  assert.equal(normalized?.["finance.view"], true);
+  assert.equal(normalized?.["dashboard.view"], false);
 });
 
 test("invalid keys are rejected by patch sanitization", () => {
-  const result = sanitizePermissionOverridePatch({
+  const result = sanitizePermissionPatch({
     "finance.view": true,
     "invalid.key": false,
   });
 
-  assert.deepEqual(result.normalized, { "finance.view": true });
+  assert.equal(result.normalized?.["finance.view"], true);
+  assert.equal(result.normalized?.["dashboard.view"], false);
   assert.deepEqual(result.invalidKeys, ["invalid.key"]);
 });

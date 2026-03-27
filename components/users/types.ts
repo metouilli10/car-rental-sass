@@ -1,5 +1,5 @@
 import type { UserRole } from "@prisma/client";
-import type { EffectivePermissions, PermissionOverrides } from "@/lib/permissions";
+import type { EffectivePermissions, UserPermissions } from "@/lib/permissions";
 
 export type ManagedUser = {
   id: string;
@@ -10,7 +10,7 @@ export type ManagedUser = {
   invitedAt: string | null;
   lastLoginAt: string | null;
   createdAt: string;
-  permissionOverrides: PermissionOverrides | null;
+  permissions: UserPermissions | null;
   effectivePermissions: EffectivePermissions;
 };
 

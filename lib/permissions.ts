@@ -109,15 +109,14 @@ export const PERMISSION_CATALOG = [
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSION_CATALOG)[number]["key"];
-export type PermissionOverrides = Partial<Record<PermissionKey, boolean>>;
-export type EffectivePermissions = Record<PermissionKey, boolean>;
-export type PermissionMatrixState = "inherit" | "allow" | "deny";
+export type UserPermissions = Record<PermissionKey, boolean>;
+export type EffectivePermissions = UserPermissions;
 export type PermissionGroupKey = (typeof PERMISSION_CATALOG)[number]["group"];
 
 const PERMISSION_KEYS = PERMISSION_CATALOG.map((item) => item.key);
 const PERMISSION_KEY_SET = new Set<string>(PERMISSION_KEYS);
 
-function buildPermissionRecord(value: boolean): EffectivePermissions {
+export function buildPermissionRecord(value: boolean): EffectivePermissions {
   return Object.fromEntries(
     PERMISSION_KEYS.map((key) => [key, value]),
   ) as EffectivePermissions;
@@ -194,36 +193,39 @@ export function getRoleDefaultPermissions(role: UserRole): EffectivePermissions 
   return base;
 }
 
-export function normalizePermissionOverrides(value: Prisma.JsonValue | unknown): PermissionOverrides | null {
+export function normalizeUserPermissions(value: Prisma.JsonValue | unknown): UserPermissions | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
   }
 
   const entries = Object.entries(value as Record<string, unknown>);
-  const normalized: PermissionOverrides = {};
+  const normalized = buildPermissionRecord(false);
+  let hasValue = false;
 
   for (const [key, rawValue] of entries) {
     if (!isPermissionKey(key) || typeof rawValue !== "boolean") {
       continue;
     }
     normalized[key] = rawValue;
+    hasValue = true;
   }
 
-  return Object.keys(normalized).length > 0 ? normalized : null;
+  return hasValue ? normalized : null;
 }
 
-export function sanitizePermissionOverridePatch(
-  overrides: Record<string, boolean | null | undefined>,
+export function sanitizePermissionPatch(
+  permissions: Record<string, boolean | null | undefined>,
 ): {
-  normalized: PermissionOverrides | null;
+  normalized: UserPermissions | null;
   changedKeys: string[];
   invalidKeys: string[];
 } {
-  const next: PermissionOverrides = {};
+  const next = buildPermissionRecord(false);
   const changedKeys: string[] = [];
   const invalidKeys: string[] = [];
+  let hasValue = false;
 
-  for (const [key, value] of Object.entries(overrides)) {
+  for (const [key, value] of Object.entries(permissions)) {
     if (!isPermissionKey(key)) {
       invalidKeys.push(key);
       continue;
@@ -231,13 +233,12 @@ export function sanitizePermissionOverridePatch(
 
     changedKeys.push(key);
 
-    if (typeof value === "boolean") {
-      next[key] = value;
-    }
+    next[key] = value === true;
+    hasValue = true;
   }
 
   return {
-    normalized: Object.keys(next).length > 0 ? next : null,
+    normalized: hasValue ? next : null,
     changedKeys,
     invalidKeys,
   };
@@ -245,72 +246,57 @@ export function sanitizePermissionOverridePatch(
 
 export function getEffectivePermissions(
   role: UserRole,
-  overrides?: PermissionOverrides | Prisma.JsonValue | null,
+  permissions?: UserPermissions | Prisma.JsonValue | null,
 ): EffectivePermissions {
   if (role === "OWNER") {
     return buildPermissionRecord(true);
   }
 
-  const effective = { ...getRoleDefaultPermissions(role) };
-  const normalizedOverrides = normalizePermissionOverrides(overrides);
-
-  if (!normalizedOverrides) {
-    return effective;
-  }
-
-  for (const key of PERMISSION_KEYS) {
-    if (typeof normalizedOverrides[key] === "boolean") {
-      effective[key] = normalizedOverrides[key] as boolean;
-    }
-  }
-
-  return effective;
+  return normalizeUserPermissions(permissions) ?? getRoleDefaultPermissions(role);
 }
 
-export function getPermissionState(
-  overrides: PermissionOverrides | null | undefined,
-  key: PermissionKey,
-): PermissionMatrixState {
-  if (!overrides || typeof overrides[key] !== "boolean") {
-    return "inherit";
+export function countPermissionOverrides(
+  permissions: UserPermissions | Prisma.JsonValue | null | undefined,
+  role?: UserRole,
+): number {
+  const normalizedPermissions = normalizeUserPermissions(permissions ?? null);
+
+  if (!normalizedPermissions) {
+    return 0;
   }
 
-  return overrides[key] ? "allow" : "deny";
-}
+  if (!role || role === "OWNER") {
+    return Object.values(normalizedPermissions).filter(Boolean).length;
+  }
 
-export function mapPermissionStateToOverride(state: PermissionMatrixState): boolean | null {
-  if (state === "inherit") return null;
-  return state === "allow";
-}
-
-export function countPermissionOverrides(overrides: PermissionOverrides | null | undefined): number {
-  return overrides ? Object.keys(overrides).length : 0;
+  const template = getRoleDefaultPermissions(role);
+  return PERMISSION_KEYS.filter((key) => normalizedPermissions[key] !== template[key]).length;
 }
 
 export function hasPermission(
-  user: { role: UserRole; permissionOverrides?: PermissionOverrides | Prisma.JsonValue | null },
+  user: { role: UserRole; permissions?: UserPermissions | Prisma.JsonValue | null },
   permissionKey: PermissionKey,
 ): boolean {
-  return getEffectivePermissions(user.role, user.permissionOverrides ?? null)[permissionKey];
+  return getEffectivePermissions(user.role, user.permissions ?? null)[permissionKey];
 }
 
 export function canDeleteCustomer(
   role: UserRole,
-  overrides?: PermissionOverrides | Prisma.JsonValue | null,
+  permissions?: UserPermissions | Prisma.JsonValue | null,
 ): boolean {
-  return getEffectivePermissions(role, overrides)["customers.delete"];
+  return getEffectivePermissions(role, permissions)["customers.delete"];
 }
 
 export function canManageCustomers(
   role: UserRole,
-  overrides?: PermissionOverrides | Prisma.JsonValue | null,
+  permissions?: UserPermissions | Prisma.JsonValue | null,
 ): boolean {
-  return getEffectivePermissions(role, overrides)["customers.manage"];
+  return getEffectivePermissions(role, permissions)["customers.manage"];
 }
 
 export function canManageVehicles(
   role: UserRole,
-  overrides?: PermissionOverrides | Prisma.JsonValue | null,
+  permissions?: UserPermissions | Prisma.JsonValue | null,
 ): boolean {
-  return getEffectivePermissions(role, overrides)["vehicles.manage"];
+  return getEffectivePermissions(role, permissions)["vehicles.manage"];
 }

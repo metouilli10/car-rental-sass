@@ -1,23 +1,19 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-cache";
+import { getCurrentUserForPage } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { UsersPage } from "@/components/users/users-page";
 import { toManagedUser } from "@/lib/users/serializers";
 
 export default async function UsersManagementPage() {
-  const session = await getSession();
+  const currentUser = await getCurrentUserForPage();
 
-  if (!session) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "OWNER") {
+  if (currentUser.role !== "OWNER") {
     redirect("/dashboard");
   }
 
   const users = await prisma.user.findMany({
     where: {
-      agencyId: session.user.agencyId,
+      agencyId: currentUser.agencyId,
     },
     select: {
       id: true,
@@ -38,7 +34,7 @@ export default async function UsersManagementPage() {
   return (
     <UsersPage
       initialUsers={users.map((user) => toManagedUser(user))}
-      currentUserId={session.user.id}
+      currentUserId={currentUser.id}
     />
   );
 }

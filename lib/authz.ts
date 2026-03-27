@@ -1,6 +1,8 @@
 import { getServerSession } from "next-auth";
-import type { UserRole } from "@prisma/client";
+import { redirect } from "next/navigation";
+import type { Prisma, UserRole } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export class AuthzError extends Error {
   status: number;
@@ -14,9 +16,15 @@ export class AuthzError extends Error {
 
 export type CurrentUser = {
   id: string;
+  name: string;
   agencyId: string;
+  agencyName: string;
   role: UserRole;
   email: string;
+};
+
+export type CurrentUserAccess = CurrentUser & {
+  permissions: Prisma.JsonValue | null;
 };
 
 export async function getCurrentUserOrThrow(): Promise<CurrentUser> {
@@ -33,10 +41,57 @@ export async function getCurrentUserOrThrow(): Promise<CurrentUser> {
 
   return {
     id: session.user.id,
+    name: session.user.name ?? "",
     agencyId,
+    agencyName: session.user.agencyName ?? "",
     role: session.user.role,
     email: session.user.email ?? "",
   };
+}
+
+export async function getCurrentUserAccessOrThrow(): Promise<CurrentUserAccess> {
+  const currentUser = await getCurrentUserOrThrow();
+
+  const membership = await prisma.user.findFirst({
+    where: {
+      id: currentUser.id,
+      agencyId: currentUser.agencyId,
+    },
+    select: {
+      permissionOverrides: true,
+    },
+  });
+
+  if (!membership) {
+    throw new AuthzError("Accès interdit", 403);
+  }
+
+  return {
+    ...currentUser,
+    permissions: membership.permissionOverrides ?? null,
+  };
+}
+
+export async function getCurrentUserForPage() {
+  try {
+    return await getCurrentUserOrThrow();
+  } catch (error) {
+    if (error instanceof AuthzError && error.status === 401) {
+      redirect("/login");
+    }
+    throw error;
+  }
+}
+
+export async function getCurrentUserAccessForPage() {
+  try {
+    return await getCurrentUserAccessOrThrow();
+  } catch (error) {
+    if (error instanceof AuthzError && error.status === 401) {
+      redirect("/login");
+    }
+    throw error;
+  }
 }
 
 export function requireRole(currentRole: UserRole, allowed: readonly UserRole[]): void {

@@ -1,26 +1,16 @@
 "use server";
 
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
+import { getCurrentUserAccessOrThrow } from "@/lib/authz";
 import { canDeleteCustomer, canManageCustomers } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { customerSchema, CustomerFormData } from "@/lib/validations/customer";
 
 export async function createCustomer(data: CustomerFormData) {
-  const session = await getServerSession(authOptions);
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!session) {
-    throw new Error("Non autorisé");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canManageCustomers(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canManageCustomers(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de creer un client" };
   }
 
@@ -41,7 +31,7 @@ export async function createCustomer(data: CustomerFormData) {
         rc: validatedData.rc || null,
         representativeName: validatedData.representativeName || null,
         address: validatedData.address || null,
-        agencyId: session.user.agencyId,
+        agencyId: currentUser.agencyId,
       },
     });
 
@@ -56,18 +46,9 @@ export async function createCustomer(data: CustomerFormData) {
 
 /** Creates a customer and returns { id, name, phone } for use in booking form (no redirect). */
 export async function createCustomerForBooking(data: CustomerFormData) {
-  const session = await getServerSession(authOptions);
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!session) {
-    throw new Error("Non autorisé");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canManageCustomers(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canManageCustomers(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de creer un client" };
   }
 
@@ -88,7 +69,7 @@ export async function createCustomerForBooking(data: CustomerFormData) {
         rc: validatedData.rc || null,
         representativeName: validatedData.representativeName || null,
         address: validatedData.address || null,
-        agencyId: session.user.agencyId,
+        agencyId: currentUser.agencyId,
       },
       select: { id: true, name: true, phone: true },
     });
@@ -103,18 +84,9 @@ export async function createCustomerForBooking(data: CustomerFormData) {
 }
 
 export async function updateCustomer(id: string, data: CustomerFormData) {
-  const session = await getServerSession(authOptions);
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!session) {
-    throw new Error("Non autorisé");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canManageCustomers(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canManageCustomers(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de modifier un client" };
   }
 
@@ -122,11 +94,12 @@ export async function updateCustomer(id: string, data: CustomerFormData) {
     const validatedData = customerSchema.parse(data);
 
     // Check if customer exists and belongs to user's agency
-    const customer = await prisma.customer.findUnique({
-      where: { id },
+    const customer = await prisma.customer.findFirst({
+      where: { id, agencyId: currentUser.agencyId },
+      select: { id: true },
     });
 
-    if (!customer || customer.agencyId !== session.user.agencyId) {
+    if (!customer) {
       return { error: "Client non trouvé" };
     }
 
@@ -158,18 +131,9 @@ export async function updateCustomer(id: string, data: CustomerFormData) {
 }
 
 export async function deleteCustomer(id: string) {
-  const session = await getServerSession(authOptions);
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!session) {
-    throw new Error("Non autorisé");
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: { id: session.user.id, agencyId: session.user.agencyId },
-    select: { permissionOverrides: true },
-  });
-
-  if (!canDeleteCustomer(session.user.role, currentUser?.permissionOverrides ?? null)) {
+  if (!canDeleteCustomer(currentUser.role, currentUser.permissions)) {
     return {
       error: "Vous n'avez pas l'autorisation de supprimer un client",
     };
@@ -178,7 +142,7 @@ export async function deleteCustomer(id: string) {
   try {
     // Verify ownership: ensure customer belongs to user's agency
     const customer = await prisma.customer.findFirst({
-      where: { id, agencyId: session.user.agencyId },
+      where: { id, agencyId: currentUser.agencyId },
       select: { id: true },
     });
 
@@ -188,7 +152,7 @@ export async function deleteCustomer(id: string) {
 
     // Check if customer has bookings (scoped to agency)
     const bookingsCount = await prisma.booking.count({
-      where: { customerId: id, agencyId: session.user.agencyId },
+      where: { customerId: id, agencyId: currentUser.agencyId },
     });
 
     if (bookingsCount > 0) {

@@ -6,11 +6,8 @@ import { formatDateTime } from "@/lib/utils";
 import {
   countPermissionOverrides,
   getPermissionGroups,
-  getPermissionState,
-  getRoleDefaultPermissions,
-  mapPermissionStateToOverride,
   type PermissionKey,
-  type PermissionMatrixState,
+  type UserPermissions,
 } from "@/lib/permissions";
 import type {
   ManagedUser,
@@ -23,6 +20,7 @@ import { AddUserDialog } from "@/components/users/add-user-dialog";
 import { UpdateRoleDialog } from "@/components/users/update-role-dialog";
 import { ResetPasswordDialog } from "@/components/users/reset-password-dialog";
 import { UserActionsMenu } from "@/components/users/user-actions-menu";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -124,12 +122,33 @@ function detailsSummary(item: UserActivityItem): string {
     .join(" | ");
 }
 
-function toOverrideSignature(user: ManagedUser | null): string {
-  return JSON.stringify(user?.permissionOverrides ?? {});
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+
+  if (parts.length === 0) {
+    return "?";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
-function cloneOverrides(user: ManagedUser | null) {
-  return user?.permissionOverrides ? { ...user.permissionOverrides } : {};
+function toPermissionsSignature(user: ManagedUser | null): string {
+  return JSON.stringify(user?.permissions ?? user?.effectivePermissions ?? {});
+}
+
+function clonePermissions(user: ManagedUser | null): UserPermissions | Record<string, boolean> {
+  if (user?.permissions) {
+    return { ...user.permissions };
+  }
+
+  if (user?.effectivePermissions) {
+    return { ...user.effectivePermissions };
+  }
+
+  return {};
 }
 
 export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
@@ -143,8 +162,8 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
   const [isStatusLoading, setIsStatusLoading] = useState(false);
 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [draftOverrides, setDraftOverrides] = useState<Record<string, boolean>>({});
-  const [baselineOverridesSignature, setBaselineOverridesSignature] = useState("{}");
+  const [draftPermissions, setDraftPermissions] = useState<Record<string, boolean>>({});
+  const [baselinePermissionsSignature, setBaselinePermissionsSignature] = useState("{}");
   const [isPermissionSaving, setIsPermissionSaving] = useState(false);
 
   const [activityItems, setActivityItems] = useState<UserActivityItem[]>([]);
@@ -179,19 +198,8 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
     null;
 
   const isPermissionsDirty = useMemo(
-    () => JSON.stringify(draftOverrides) !== baselineOverridesSignature,
-    [baselineOverridesSignature, draftOverrides],
-  );
-
-  const effectivePreview = useMemo(
-    () =>
-      selectedUser
-        ? {
-            ...getRoleDefaultPermissions(selectedUser.role),
-            ...draftOverrides,
-          }
-        : null,
-    [draftOverrides, selectedUser],
+    () => JSON.stringify(draftPermissions) !== baselinePermissionsSignature,
+    [baselinePermissionsSignature, draftPermissions],
   );
 
   useEffect(() => {
@@ -202,18 +210,18 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
 
   useEffect(() => {
     if (!selectedUser) {
-      setDraftOverrides({});
-      setBaselineOverridesSignature("{}");
+      setDraftPermissions({});
+      setBaselinePermissionsSignature("{}");
       return;
     }
 
-    const nextSignature = toOverrideSignature(selectedUser);
-    if (!isPermissionSaving && !isPermissionsDirty && nextSignature !== baselineOverridesSignature) {
-      setDraftOverrides(cloneOverrides(selectedUser));
-      setBaselineOverridesSignature(nextSignature);
+    const nextSignature = toPermissionsSignature(selectedUser);
+    if (!isPermissionSaving && !isPermissionsDirty && nextSignature !== baselinePermissionsSignature) {
+      setDraftPermissions(clonePermissions(selectedUser));
+      setBaselinePermissionsSignature(nextSignature);
     }
   }, [
-    baselineOverridesSignature,
+    baselinePermissionsSignature,
     isPermissionSaving,
     isPermissionsDirty,
     selectedUser,
@@ -332,28 +340,20 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
 
     const nextUser = sortedUsers.find((user) => user.id === nextUserId) ?? null;
     setSelectedUserId(nextUserId);
-    setDraftOverrides(cloneOverrides(nextUser));
-    setBaselineOverridesSignature(toOverrideSignature(nextUser));
+    setDraftPermissions(clonePermissions(nextUser));
+    setBaselinePermissionsSignature(toPermissionsSignature(nextUser));
   };
 
-  const handlePermissionStateChange = (key: PermissionKey, state: PermissionMatrixState) => {
-    setDraftOverrides((prev) => {
-      const next = { ...prev };
-      const overrideValue = mapPermissionStateToOverride(state);
-
-      if (overrideValue === null) {
-        delete next[key];
-      } else {
-        next[key] = overrideValue;
-      }
-
-      return next;
-    });
+  const handlePermissionToggle = (key: PermissionKey, checked: boolean) => {
+    setDraftPermissions((prev) => ({
+      ...prev,
+      [key]: checked,
+    }));
   };
 
   const handleResetPermissionDraft = () => {
-    setDraftOverrides(cloneOverrides(selectedUser));
-    setBaselineOverridesSignature(toOverrideSignature(selectedUser));
+    setDraftPermissions(clonePermissions(selectedUser));
+    setBaselinePermissionsSignature(toPermissionsSignature(selectedUser));
   };
 
   const handleSavePermissions = async () => {
@@ -363,22 +363,18 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
 
     setIsPermissionSaving(true);
     try {
-      const patch: Record<string, boolean | null> = {};
+      const permissions = { ...draftPermissions };
 
       for (const group of getPermissionGroups()) {
         for (const item of group.items) {
-          const currentValue =
-            Object.prototype.hasOwnProperty.call(draftOverrides, item.key)
-              ? draftOverrides[item.key]
-              : null;
-          patch[item.key] = typeof currentValue === "boolean" ? currentValue : null;
+          permissions[item.key] = Boolean(draftPermissions[item.key]);
         }
       }
 
       const response = await fetch(`/api/users/${selectedUser.id}/permissions`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ overrides: patch }),
+        body: JSON.stringify({ permissions }),
       });
 
       const payload = (await response.json()) as
@@ -391,8 +387,8 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
       }
 
       handleUserMutation(payload.user);
-      setDraftOverrides(cloneOverrides(payload.user));
-      setBaselineOverridesSignature(toOverrideSignature(payload.user));
+      setDraftPermissions(clonePermissions(payload.user));
+      setBaselinePermissionsSignature(toPermissionsSignature(payload.user));
       toast.success("Permissions mises a jour");
     } catch (error) {
       console.error(error);
@@ -439,7 +435,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                 {sortedUsers.map((user) => {
                   const status = getUserStatus(user);
                   const isSelf = user.id === currentUserId;
-                  const overrideCount = countPermissionOverrides(user.permissionOverrides);
+                  const overrideCount = countPermissionOverrides(user.permissions, user.role);
 
                   return (
                     <TableRow key={user.id} className="hover:bg-muted/20">
@@ -486,52 +482,61 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
         </TabsContent>
 
         <TabsContent value="permissions" className="mt-0">
-          <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+          <div className="space-y-4">
             <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm">
               <div className="border-b border-border/60 px-4 py-3">
                 <h2 className="text-sm font-semibold text-foreground">Utilisateurs</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Sélectionnez un compte pour ajuster les dérogations.
+                  Sélectionnez un compte pour ajuster ses permissions.
                 </p>
               </div>
-              <div className="max-h-[640px] overflow-y-auto">
-                {sortedUsers.map((user) => {
-                  const isSelected = selectedUser?.id === user.id;
-                  const overrideCount = countPermissionOverrides(user.permissionOverrides);
+              <div className="overflow-x-auto px-4 py-4">
+                <div className="flex min-w-max gap-3">
+                  {sortedUsers.map((user) => {
+                    const isSelected = selectedUser?.id === user.id;
 
-                  return (
-                    <button
-                      key={user.id}
-                      type="button"
-                      onClick={() => handleSelectUser(user.id)}
-                      className={`flex w-full items-start justify-between gap-3 border-b border-border/50 px-4 py-3 text-left transition-colors ${
-                        isSelected ? "bg-muted/40" : "hover:bg-muted/20"
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-medium text-foreground">{user.name}</p>
-                          <Badge variant={roleBadgeVariant(user.role)}>{roleLabel(user.role)}</Badge>
+                    return (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => handleSelectUser(user.id)}
+                        className={`flex min-w-[220px] items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all ${
+                          isSelected
+                            ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
+                            : "border-border/60 bg-white hover:border-primary/30 hover:bg-muted/10"
+                        }`}
+                      >
+                        <div
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                            isSelected
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {getInitials(user.name)}
                         </div>
-                        <p className="mt-1 truncate text-xs text-muted-foreground">{user.email}</p>
-                      </div>
-                      <Badge variant={overrideCount > 0 ? "secondary" : "outline"}>
-                        {overrideCount}
-                      </Badge>
-                    </button>
-                  );
-                })}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="truncate text-sm font-medium text-foreground">{user.name}</p>
+                            <Badge variant={roleBadgeVariant(user.role)}>{roleLabel(user.role)}</Badge>
+                          </div>
+                          <p className="mt-1 truncate text-xs text-muted-foreground">{user.email}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm">
-              <div className="flex flex-col gap-3 border-b border-border/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 border-b border-border/60 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <h2 className="text-sm font-semibold text-foreground">
-                    {selectedUser ? `Matrice de ${selectedUser.name}` : "Matrice de permissions"}
+                    {selectedUser ? `Permissions de ${selectedUser.name}` : "Permissions"}
                   </h2>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Base par rôle + dérogations explicites.
+                    Activez ou retirez les accès utilisateur permission par permission.
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -562,80 +567,50 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                 </div>
               ) : selectedUser.role === "OWNER" ? (
                 <div className="px-4 py-8">
-                  <div className="rounded-xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
-                    Le propriétaire conserve toutes les permissions. Aucune dérogation n&apos;est modifiable.
+                  <div className="rounded-2xl border border-dashed border-border bg-muted/10 px-4 py-6 text-sm text-muted-foreground">
+                    Le propriétaire conserve toutes les permissions. Aucune modification n&apos;est disponible pour ce compte.
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6 px-4 py-4">
-                  {getPermissionGroups().map((group) => {
-                    const roleDefaults = getRoleDefaultPermissions(selectedUser.role);
-
-                    return (
-                      <div key={group.key} className="space-y-3">
-                        <div>
-                          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            {group.label}
-                          </h3>
-                        </div>
-                        <div className="overflow-hidden rounded-xl border border-border/60">
-                          <Table>
-                            <TableHeader className="bg-muted/20">
-                              <TableRow>
-                                <TableHead>Permission</TableHead>
-                                <TableHead>Défaut du rôle</TableHead>
-                                <TableHead>Dérogation</TableHead>
-                                <TableHead>Effectif</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {group.items.map((item) => {
-                                const state = getPermissionState(draftOverrides, item.key);
-                                const effectiveValue = effectivePreview?.[item.key] ?? false;
-
-                                return (
-                                  <TableRow key={item.key}>
-                                    <TableCell>
-                                      <div>
-                                        <p className="font-medium text-foreground">{item.label}</p>
-                                        <p className="text-xs text-muted-foreground">{item.description}</p>
-                                      </div>
-                                    </TableCell>
-                                    <TableCell>
-                                      <Badge variant={roleDefaults[item.key] ? "default" : "outline"}>
-                                        {roleDefaults[item.key] ? "Autorisé" : "Refusé"}
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                      <select
-                                        value={state}
-                                        onChange={(event) =>
-                                          handlePermissionStateChange(
-                                            item.key,
-                                            event.target.value as PermissionMatrixState,
-                                          )
-                                        }
-                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                      >
-                                        <option value="inherit">Hériter</option>
-                                        <option value="allow">Autoriser</option>
-                                        <option value="deny">Refuser</option>
-                                      </select>
-                                    </TableCell>
-                                    <TableCell>
-                                      <Badge variant={effectiveValue ? "default" : "outline"}>
-                                        {effectiveValue ? "Autorisé" : "Refusé"}
-                                      </Badge>
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </div>
+                <div className="grid gap-4 px-4 py-4 xl:grid-cols-2">
+                  {getPermissionGroups().map((group) => (
+                    <section key={group.key} className="overflow-hidden rounded-2xl border border-border/60">
+                      <div className="border-b border-border/60 bg-muted/10 px-4 py-3">
+                        <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>
                       </div>
-                    );
-                  })}
+                      <div className="divide-y divide-border/60">
+                        {group.items.map((item) => {
+                          const isEnabled = Boolean(draftPermissions[item.key]);
+
+                          return (
+                            <div
+                              key={item.key}
+                              className="flex items-center justify-between gap-4 px-4 py-4"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-foreground">{item.label}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {item.description}
+                                </p>
+                              </div>
+                              <div className="flex shrink-0 items-center gap-3">
+                                <span className="text-xs text-muted-foreground">
+                                  {isEnabled ? "Autorisé" : "Refusé"}
+                                </span>
+                                <Switch
+                                  checked={isEnabled}
+                                  onCheckedChange={(checked) =>
+                                    handlePermissionToggle(item.key, checked)
+                                  }
+                                  aria-label={item.label}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ))}
                 </div>
               )}
             </div>
