@@ -43,12 +43,23 @@ export function formatTime(date: Date | string): string {
   return format(dateObj, "HH:mm", { locale: fr });
 }
 
+export function formatPhoneForCall(phone?: string | null): string | null {
+  const cleanPhone = phone?.replace(/\D/g, "") ?? "";
+  if (!cleanPhone) return null;
+
+  return cleanPhone.startsWith("212")
+    ? `+${cleanPhone}`
+    : `+212${cleanPhone.startsWith("0") ? cleanPhone.slice(1) : cleanPhone}`;
+}
+
 /** Build wa.me link for Morocco (212) with optional prefilled message */
 export function formatWhatsAppLink(
-  phone: string,
+  phone?: string | null,
   message?: string
-): string {
-  const cleanPhone = phone.replace(/\D/g, "");
+): string | null {
+  const cleanPhone = phone?.replace(/\D/g, "") ?? "";
+  if (!cleanPhone) return null;
+
   const fullPhone = cleanPhone.startsWith("212")
     ? cleanPhone
     : `212${cleanPhone.startsWith("0") ? cleanPhone.slice(1) : cleanPhone}`;

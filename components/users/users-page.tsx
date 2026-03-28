@@ -407,77 +407,146 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
             Gérez les accès, les permissions et l&apos;historique de votre agence.
           </p>
         </div>
-        <Button onClick={() => setIsAddOpen(true)}>Ajouter un utilisateur</Button>
+        <Button onClick={() => setIsAddOpen(true)} className="w-full sm:w-auto">
+          Ajouter un utilisateur
+        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid h-auto w-full grid-cols-3">
-          <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-          <TabsTrigger value="permissions">Permissions</TabsTrigger>
-          <TabsTrigger value="activity">Activité</TabsTrigger>
+          <TabsTrigger value="users" className="px-2 text-xs sm:text-sm">
+            Utilisateurs
+          </TabsTrigger>
+          <TabsTrigger value="permissions" className="px-2 text-xs sm:text-sm">
+            Permissions
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="px-2 text-xs sm:text-sm">
+            Activité
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="mt-0">
           <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm">
-            <Table className="min-w-[960px]">
-              <TableHeader className="bg-muted/20">
-                <TableRow>
-                  <TableHead className="px-5">Nom</TableHead>
-                  <TableHead className="px-5">Email</TableHead>
-                  <TableHead className="px-5">Rôle</TableHead>
-                  <TableHead className="px-5">Statut</TableHead>
-                  <TableHead className="px-5">Dérogations</TableHead>
-                  <TableHead className="px-5">Dernière connexion</TableHead>
-                  <TableHead className="px-5 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedUsers.map((user) => {
-                  const status = getUserStatus(user);
-                  const isSelf = user.id === currentUserId;
-                  const overrideCount = countPermissionOverrides(user.permissions, user.role);
+            <div className="space-y-3 p-4 md:hidden">
+              {sortedUsers.map((user) => {
+                const status = getUserStatus(user);
+                const isSelf = user.id === currentUserId;
+                const overrideCount = countPermissionOverrides(user.permissions, user.role);
 
-                  return (
-                    <TableRow key={user.id} className="hover:bg-muted/20">
-                      <TableCell className="px-5 font-medium text-foreground">
-                        <div className="flex items-center gap-2">
-                          <span>{user.name}</span>
+                return (
+                  <div
+                    key={user.id}
+                    className="rounded-2xl border border-border/60 bg-white p-4 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">{user.name}</p>
                           {isSelf ? (
                             <Badge variant="outline" className="text-[10px]">
                               Moi
                             </Badge>
                           ) : null}
                         </div>
-                      </TableCell>
-                      <TableCell className="px-5 text-muted-foreground">{user.email}</TableCell>
-                      <TableCell className="px-5">
-                        <Badge variant={roleBadgeVariant(user.role)}>{roleLabel(user.role)}</Badge>
-                      </TableCell>
-                      <TableCell className="px-5">
-                        <Badge variant={statusBadgeVariant(status)}>{statusLabel(status)}</Badge>
-                      </TableCell>
-                      <TableCell className="px-5">
-                        <Badge variant={overrideCount > 0 ? "secondary" : "outline"}>
-                          {overrideCount} dérogation{overrideCount > 1 ? "s" : ""}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="px-5 text-muted-foreground">
-                        {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : "Jamais connecté"}
-                      </TableCell>
-                      <TableCell className="px-5 text-right">
-                        <UserActionsMenu
-                          user={user}
-                          isSelf={isSelf}
-                          onChangeRole={setRoleDialogUser}
-                          onResetPassword={setPasswordDialogUser}
-                          onToggleStatus={setStatusDialogUser}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        <p className="mt-1 break-all text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                      <UserActionsMenu
+                        user={user}
+                        isSelf={isSelf}
+                        onChangeRole={setRoleDialogUser}
+                        onResetPassword={setPasswordDialogUser}
+                        onToggleStatus={setStatusDialogUser}
+                      />
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Badge variant={roleBadgeVariant(user.role)}>{roleLabel(user.role)}</Badge>
+                      <Badge variant={statusBadgeVariant(status)}>{statusLabel(status)}</Badge>
+                      <Badge variant={overrideCount > 0 ? "secondary" : "outline"}>
+                        {overrideCount} dérogation{overrideCount > 1 ? "s" : ""}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-3 grid gap-2 rounded-xl bg-muted/20 p-3 text-xs">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">Dernière connexion</span>
+                        <span className="text-right text-foreground">
+                          {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : "Jamais connecté"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">Créé le</span>
+                        <span className="text-right text-foreground">
+                          {formatDateTime(user.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
+              <Table className="min-w-[960px]">
+                <TableHeader className="bg-muted/20">
+                  <TableRow>
+                    <TableHead className="px-5">Nom</TableHead>
+                    <TableHead className="px-5">Email</TableHead>
+                    <TableHead className="px-5">Rôle</TableHead>
+                    <TableHead className="px-5">Statut</TableHead>
+                    <TableHead className="px-5">Dérogations</TableHead>
+                    <TableHead className="px-5">Dernière connexion</TableHead>
+                    <TableHead className="px-5 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedUsers.map((user) => {
+                    const status = getUserStatus(user);
+                    const isSelf = user.id === currentUserId;
+                    const overrideCount = countPermissionOverrides(user.permissions, user.role);
+
+                    return (
+                      <TableRow key={user.id} className="hover:bg-muted/20">
+                        <TableCell className="px-5 font-medium text-foreground">
+                          <div className="flex items-center gap-2">
+                            <span>{user.name}</span>
+                            {isSelf ? (
+                              <Badge variant="outline" className="text-[10px]">
+                                Moi
+                              </Badge>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-5 text-muted-foreground">{user.email}</TableCell>
+                        <TableCell className="px-5">
+                          <Badge variant={roleBadgeVariant(user.role)}>{roleLabel(user.role)}</Badge>
+                        </TableCell>
+                        <TableCell className="px-5">
+                          <Badge variant={statusBadgeVariant(status)}>{statusLabel(status)}</Badge>
+                        </TableCell>
+                        <TableCell className="px-5">
+                          <Badge variant={overrideCount > 0 ? "secondary" : "outline"}>
+                            {overrideCount} dérogation{overrideCount > 1 ? "s" : ""}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="px-5 text-muted-foreground">
+                          {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : "Jamais connecté"}
+                        </TableCell>
+                        <TableCell className="px-5 text-right">
+                          <UserActionsMenu
+                            user={user}
+                            isSelf={isSelf}
+                            onChangeRole={setRoleDialogUser}
+                            onResetPassword={setPasswordDialogUser}
+                            onToggleStatus={setStatusDialogUser}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </TabsContent>
 
@@ -490,8 +559,8 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                   Sélectionnez un compte pour ajuster ses permissions.
                 </p>
               </div>
-              <div className="overflow-x-auto px-4 py-4">
-                <div className="flex min-w-max gap-3">
+              <div className="px-4 py-4">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {sortedUsers.map((user) => {
                     const isSelected = selectedUser?.id === user.id;
 
@@ -500,7 +569,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                         key={user.id}
                         type="button"
                         onClick={() => handleSelectUser(user.id)}
-                        className={`flex min-w-[220px] items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all ${
+                        className={`flex min-w-0 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all ${
                           isSelected
                             ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
                             : "border-border/60 bg-white hover:border-primary/30 hover:bg-muted/10"
@@ -539,11 +608,12 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                     Activez ou retirez les accès utilisateur permission par permission.
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Button
                     variant="outline"
                     onClick={handleResetPermissionDraft}
                     disabled={!selectedUser || !isPermissionsDirty || isPermissionSaving}
+                    className="w-full sm:w-auto"
                   >
                     Annuler
                   </Button>
@@ -555,6 +625,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                       !isPermissionsDirty ||
                       isPermissionSaving
                     }
+                    className="w-full sm:w-auto"
                   >
                     {isPermissionSaving ? "Enregistrement..." : "Enregistrer"}
                   </Button>
@@ -585,7 +656,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                           return (
                             <div
                               key={item.key}
-                              className="flex items-center justify-between gap-4 px-4 py-4"
+                              className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
                             >
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium text-foreground">{item.label}</p>
@@ -593,7 +664,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                                   {item.description}
                                 </p>
                               </div>
-                              <div className="flex shrink-0 items-center gap-3">
+                              <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:shrink-0 sm:justify-end">
                                 <span className="text-xs text-muted-foreground">
                                   {isEnabled ? "Autorisé" : "Refusé"}
                                 </span>
@@ -630,6 +701,7 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
                 variant="outline"
                 onClick={() => void loadActivityPage(true)}
                 disabled={isActivityLoading}
+                className="w-full sm:w-auto"
               >
                 Rafraîchir
               </Button>
@@ -684,51 +756,105 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
               </div>
             ) : (
               <>
-                <div className="overflow-hidden rounded-xl border border-border/60">
-                  <Table className="min-w-[860px]">
-                    <TableHeader className="bg-muted/20">
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Action</TableHead>
-                        <TableHead>Acteur</TableHead>
-                        <TableHead>Cible</TableHead>
-                        <TableHead>Résultat</TableHead>
-                        <TableHead>Détails</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {activityItems.map((item) => {
-                        const targetUser =
-                          sortedUsers.find((user) => user.id === item.target.entityId) ?? null;
+                <div className="space-y-3 md:hidden">
+                  {activityItems.map((item) => {
+                    const targetUser =
+                      sortedUsers.find((user) => user.id === item.target.entityId) ?? null;
 
-                        return (
-                          <TableRow key={item.id}>
-                            <TableCell>{formatDateTime(item.occurredAt)}</TableCell>
-                            <TableCell>{actionLabel(item.action)}</TableCell>
-                            <TableCell>
-                              <div>
-                                <p className="text-sm font-medium text-foreground">
-                                  {item.actor.email ?? "Système"}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {item.actor.role ?? "n/a"}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell>{targetUser?.name ?? item.target.entityId}</TableCell>
-                            <TableCell>
-                              <Badge variant={outcomeBadgeVariant(item.outcome)}>
-                                {outcomeLabel(item.outcome)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="max-w-[280px] truncate text-xs text-muted-foreground">
-                              {detailsSummary(item)}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+                    return (
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-border/60 bg-white p-4"
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant={outcomeBadgeVariant(item.outcome)}>
+                            {outcomeLabel(item.outcome)}
+                          </Badge>
+                          <Badge variant="outline">{actionLabel(item.action)}</Badge>
+                        </div>
+
+                        <div className="mt-3 space-y-2 text-xs">
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="text-muted-foreground">Date</span>
+                            <span className="text-right text-foreground">
+                              {formatDateTime(item.occurredAt)}
+                            </span>
+                          </div>
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="text-muted-foreground">Acteur</span>
+                            <div className="text-right">
+                              <p className="text-foreground">{item.actor.email ?? "Système"}</p>
+                              <p className="text-muted-foreground">{item.actor.role ?? "n/a"}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="text-muted-foreground">Cible</span>
+                            <span className="text-right text-foreground">
+                              {targetUser?.name ?? item.target.entityId}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 rounded-lg bg-muted/20 p-3">
+                          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Détails
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-foreground">
+                            {detailsSummary(item)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="hidden overflow-hidden rounded-xl border border-border/60 md:block">
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-[860px]">
+                      <TableHeader className="bg-muted/20">
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Action</TableHead>
+                          <TableHead>Acteur</TableHead>
+                          <TableHead>Cible</TableHead>
+                          <TableHead>Résultat</TableHead>
+                          <TableHead>Détails</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {activityItems.map((item) => {
+                          const targetUser =
+                            sortedUsers.find((user) => user.id === item.target.entityId) ?? null;
+
+                          return (
+                            <TableRow key={item.id}>
+                              <TableCell>{formatDateTime(item.occurredAt)}</TableCell>
+                              <TableCell>{actionLabel(item.action)}</TableCell>
+                              <TableCell>
+                                <div>
+                                  <p className="text-sm font-medium text-foreground">
+                                    {item.actor.email ?? "Système"}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {item.actor.role ?? "n/a"}
+                                  </p>
+                                </div>
+                              </TableCell>
+                              <TableCell>{targetUser?.name ?? item.target.entityId}</TableCell>
+                              <TableCell>
+                                <Badge variant={outcomeBadgeVariant(item.outcome)}>
+                                  {outcomeLabel(item.outcome)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="max-w-[280px] truncate text-xs text-muted-foreground">
+                                {detailsSummary(item)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
 
                 {activityCursor ? (

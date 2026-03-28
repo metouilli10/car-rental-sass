@@ -97,7 +97,7 @@ export default async function CaissePage({ searchParams }: CaissePageProps) {
         </Suspense>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
@@ -128,7 +128,7 @@ export default async function CaissePage({ searchParams }: CaissePageProps) {
             </p>
           </CardContent>
         </Card>
-        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <Card className="col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm lg:col-span-1">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100">

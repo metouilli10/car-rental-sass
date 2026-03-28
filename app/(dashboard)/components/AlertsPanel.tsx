@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatWhatsAppLink } from "@/lib/utils";
 import {
   AlertCircle,
   Clock,
@@ -464,10 +464,10 @@ export async function AlertsPanel({ agencyId }: { agencyId: string }) {
                       alert.metadata?.phone
                     ) {
                       e.preventDefault();
-                      window.open(
-                        `https://wa.me/${alert.metadata.phone.replace(/\D/g, "")}`,
-                        "_blank"
-                      );
+                      const whatsappLink = formatWhatsAppLink(alert.metadata.phone);
+                      if (whatsappLink) {
+                        window.open(whatsappLink, "_blank");
+                      }
                     }
                     // For 'view' and 'payment', let the Link handle navigation
                   }}

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { formatCurrency, formatDate, formatWhatsAppLink } from "@/lib/utils";
+import { formatCurrency, formatDate, formatPhoneForCall, formatWhatsAppLink } from "@/lib/utils";
 import { ActionRequiredClient } from "./ActionRequiredClient";
 
 interface ActionRequiredPanelProps {
@@ -25,18 +25,11 @@ export interface ActionItem {
   amount: number;
   amountText: string;
   // Contact
-  phone: string;
-  phoneHref: string;
-  waLink: string;
+  phone: string | null;
+  phoneHref?: string;
+  waLink?: string;
   detailsHref: string;
 }
-
-const sanitizePhoneForCall = (phone: string) => {
-  const cleaned = phone.replace(/\D/g, "");
-  return cleaned.startsWith("212")
-    ? `+${cleaned}`
-    : `+212${cleaned.startsWith("0") ? cleaned.slice(1) : cleaned}`;
-};
 
 export async function ActionRequiredPanel({ agencyId }: ActionRequiredPanelProps) {
   const now = new Date();
@@ -116,12 +109,14 @@ export async function ActionRequiredPanel({ agencyId }: ActionRequiredPanelProps
         dueLabel: `Retour prévu le ${formatDate(booking.endDate)}`,
         delayDays,
         severity,
-        phone: booking.customer.phone,
-        phoneHref: `tel:${sanitizePhoneForCall(booking.customer.phone)}`,
+        phone: booking.customer.phone ?? null,
+        phoneHref: formatPhoneForCall(booking.customer.phone)
+          ? `tel:${formatPhoneForCall(booking.customer.phone)}`
+          : undefined,
         waLink: formatWhatsAppLink(
           booking.customer.phone,
           `Bonjour ${booking.customer.name}, votre retour de véhicule est en retard de ${delayDays} jour${delayDays > 1 ? "s" : ""}. Merci de nous contacter.`
-        ),
+        ) ?? undefined,
         detailsHref: `/bookings/${booking.id}`,
       };
     }),
@@ -137,12 +132,14 @@ export async function ActionRequiredPanel({ agencyId }: ActionRequiredPanelProps
       dueLabel: "Paiement en attente",
       delayDays: null,
       severity: "high" as const,
-      phone: payment.booking.customer.phone,
-      phoneHref: `tel:${sanitizePhoneForCall(payment.booking.customer.phone)}`,
+      phone: payment.booking.customer.phone ?? null,
+      phoneHref: formatPhoneForCall(payment.booking.customer.phone)
+        ? `tel:${formatPhoneForCall(payment.booking.customer.phone)}`
+        : undefined,
       waLink: formatWhatsAppLink(
         payment.booking.customer.phone,
         `Bonjour ${payment.booking.customer.name}, rappel : paiement en attente (${formatCurrency(payment.amount)}).`
-      ),
+      ) ?? undefined,
       detailsHref: `/payments`,
     })),
     ...depositsToRelease.map((deposit) => ({
@@ -157,12 +154,14 @@ export async function ActionRequiredPanel({ agencyId }: ActionRequiredPanelProps
       dueLabel: `Retenue depuis le ${formatDate(deposit.heldAt)}`,
       delayDays: null,
       severity: "medium" as const,
-      phone: deposit.booking.customer.phone,
-      phoneHref: `tel:${sanitizePhoneForCall(deposit.booking.customer.phone)}`,
+      phone: deposit.booking.customer.phone ?? null,
+      phoneHref: formatPhoneForCall(deposit.booking.customer.phone)
+        ? `tel:${formatPhoneForCall(deposit.booking.customer.phone)}`
+        : undefined,
       waLink: formatWhatsAppLink(
         deposit.booking.customer.phone,
         `Bonjour ${deposit.booking.customer.name}, votre caution peut être remboursée. Merci de nous contacter.`
-      ),
+      ) ?? undefined,
       detailsHref: `/bookings/${deposit.bookingId}`,
     })),
   ];

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { formatCurrency, formatDate, formatWhatsAppLink } from "@/lib/utils";
+import { formatCurrency, formatDate, formatPhoneForCall, formatWhatsAppLink } from "@/lib/utils";
 import {
   AlertTriangle,
   CreditCard,
@@ -12,14 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
-// Helper to format phone number for tel: links
-const sanitizePhoneForCall = (phone: string) => {
-  const cleaned = phone.replace(/\D/g, "");
-  return cleaned.startsWith("212")
-    ? `+${cleaned}`
-    : `+212${cleaned.startsWith("0") ? cleaned.slice(1) : cleaned}`;
-};
 
 export async function ActionRequise({ agencyId }: { agencyId: string }) {
   const now = new Date();
@@ -125,6 +117,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
               booking.customer.phone,
               `Bonjour ${booking.customer.name}, retour véhicule en retard - merci de nous contacter.`
             );
+            const phoneHref = formatPhoneForCall(booking.customer.phone);
 
             // Severity-based styling
             const getSeverityStyles = () => {
@@ -192,16 +185,28 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                       {formatCurrency(booking.totalPrice)}
                     </p>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-info hover:text-info/80 hover:bg-info/10" asChild>
-                    <a href={`tel:${sanitizePhoneForCall(booking.customer.phone)}`} title="Appeler">
+                  {phoneHref ? (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-info hover:text-info/80 hover:bg-info/10" asChild>
+                      <a href={`tel:${phoneHref}`} title="Appeler">
+                        <Phone className="w-4 h-4" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-info" disabled title="Numéro indisponible">
                       <Phone className="w-4 h-4" />
-                    </a>
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-success hover:text-success/80 hover:bg-success/10" asChild>
-                    <a href={waLink} target="_blank" rel="noopener noreferrer" title="WhatsApp">
+                    </Button>
+                  )}
+                  {waLink ? (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-success hover:text-success/80 hover:bg-success/10" asChild>
+                      <a href={waLink} target="_blank" rel="noopener noreferrer" title="WhatsApp">
+                        <MessageCircle className="w-4 h-4" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-success" disabled title="WhatsApp indisponible">
                       <MessageCircle className="w-4 h-4" />
-                    </a>
-                  </Button>
+                    </Button>
+                  )}
                 </div>
               </div>
             );
@@ -213,6 +218,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
               payment.booking.customer.phone,
               `Bonjour ${payment.booking.customer.name}, rappel paiement en attente - ${formatCurrency(payment.amount)}.`
             );
+            const phoneHref = formatPhoneForCall(payment.booking.customer.phone);
 
             return (
               <div
@@ -252,16 +258,28 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                       {formatCurrency(payment.amount)}
                     </p>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-info hover:text-info/80 hover:bg-info/10" asChild>
-                    <a href={`tel:${sanitizePhoneForCall(payment.booking.customer.phone)}`} title="Appeler">
+                  {phoneHref ? (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-info hover:text-info/80 hover:bg-info/10" asChild>
+                      <a href={`tel:${phoneHref}`} title="Appeler">
+                        <Phone className="w-4 h-4" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-info" disabled title="Numéro indisponible">
                       <Phone className="w-4 h-4" />
-                    </a>
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-success hover:text-success/80 hover:bg-success/10" asChild>
-                    <a href={waLink} target="_blank" rel="noopener noreferrer" title="WhatsApp">
+                    </Button>
+                  )}
+                  {waLink ? (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-success hover:text-success/80 hover:bg-success/10" asChild>
+                      <a href={waLink} target="_blank" rel="noopener noreferrer" title="WhatsApp">
+                        <MessageCircle className="w-4 h-4" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-success" disabled title="WhatsApp indisponible">
                       <MessageCircle className="w-4 h-4" />
-                    </a>
-                  </Button>
+                    </Button>
+                  )}
                   <Button variant="ghost" size="icon" className="h-9 w-9" asChild title="Encaisser">
                     <Link href="/payments">
                       <CreditCard className="w-4 h-4" />
@@ -278,6 +296,7 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
               deposit.booking.customer.phone,
               `Bonjour ${deposit.booking.customer.name}, votre caution peut être remboursée. Merci de nous contacter.`
             );
+            const phoneHref = formatPhoneForCall(deposit.booking.customer.phone);
 
             return (
               <div
@@ -314,16 +333,28 @@ export async function ActionRequise({ agencyId }: { agencyId: string }) {
                       {formatCurrency(deposit.amount)}
                     </p>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-info hover:text-info/80 hover:bg-info/10" asChild>
-                    <a href={`tel:${sanitizePhoneForCall(deposit.booking.customer.phone)}`} title="Appeler">
+                  {phoneHref ? (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-info hover:text-info/80 hover:bg-info/10" asChild>
+                      <a href={`tel:${phoneHref}`} title="Appeler">
+                        <Phone className="w-4 h-4" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-info" disabled title="Numéro indisponible">
                       <Phone className="w-4 h-4" />
-                    </a>
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-success hover:text-success/80 hover:bg-success/10" asChild>
-                    <a href={waLink} target="_blank" rel="noopener noreferrer" title="WhatsApp">
+                    </Button>
+                  )}
+                  {waLink ? (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-success hover:text-success/80 hover:bg-success/10" asChild>
+                      <a href={waLink} target="_blank" rel="noopener noreferrer" title="WhatsApp">
+                        <MessageCircle className="w-4 h-4" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-success" disabled title="WhatsApp indisponible">
                       <MessageCircle className="w-4 h-4" />
-                    </a>
-                  </Button>
+                    </Button>
+                  )}
                   <Button variant="ghost" size="icon" className="h-9 w-9" asChild title="Rembourser">
                     <Link href={`/bookings/${deposit.bookingId}`}>
                       <Banknote className="w-4 h-4" />

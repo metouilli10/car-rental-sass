@@ -18,8 +18,8 @@ import {
 
 interface ActionQuickActionsProps {
   type: "retard" | "paiement" | "caution";
-  phoneHref: string;
-  waLink: string;
+  phoneHref?: string;
+  waLink?: string;
   detailsHref: string;
   bookingId: string;
   isPending: boolean;
@@ -111,7 +111,9 @@ export function ActionQuickActions({
           variant="outline"
           size="icon"
           className="h-10 w-10 shrink-0 rounded-xl border-slate-200 text-blue-600 transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98]"
+          disabled={!phoneHref}
           onClick={() => {
+            if (!phoneHref) return;
             window.location.href = phoneHref;
           }}
           aria-label="Appeler"
@@ -125,7 +127,9 @@ export function ActionQuickActions({
           variant="outline"
           size="icon"
           className="h-10 w-10 shrink-0 rounded-xl border-slate-200 text-emerald-600 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-700 active:scale-[0.98]"
+          disabled={!waLink}
           onClick={() => {
+            if (!waLink) return;
             window.open(waLink, "_blank", "noopener,noreferrer");
           }}
           aria-label="WhatsApp"

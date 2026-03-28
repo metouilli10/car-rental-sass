@@ -12,9 +12,9 @@ export default function CaisseLoading() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="rounded-xl">
+          <Card key={i} className={`rounded-xl ${i === 3 ? "col-span-2 lg:col-span-1" : ""}`}>
             <CardHeader className="pb-2">
               <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
             </CardHeader>

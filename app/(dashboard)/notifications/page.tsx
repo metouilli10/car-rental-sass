@@ -209,55 +209,59 @@ function NotificationCard({
 
   return (
     <div
-      className={`flex items-start gap-4 rounded-xl border p-4 transition-colors ${
+      className={`rounded-xl border p-4 transition-colors ${
         notif.status === "OPEN"
           ? "border-border/40 bg-white hover:bg-muted/10"
           : "border-border/20 bg-muted/20"
       }`}
     >
-      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${colorCls}`}>
-        <Icon className="h-5 w-5" />
-      </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 gap-3">
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${colorCls}`}>
+            <Icon className="h-5 w-5" />
+          </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p
-            className={`text-sm font-semibold ${
-              notif.status !== "OPEN" ? "text-muted-foreground" : "text-foreground"
-            }`}
-          >
-            {notif.title}
-          </p>
-          <SeverityBadge severity={notif.severity} />
-          <StatusBadge status={notif.status} />
-          <span className="rounded-full border border-border/30 bg-muted/60 px-1.5 py-0.5 text-[10px] text-muted-foreground">
-            {TYPE_LABELS[notif.type]}
-          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-start gap-2">
+              <p
+                className={`min-w-0 text-sm font-semibold sm:text-base ${
+                  notif.status !== "OPEN" ? "text-muted-foreground" : "text-foreground"
+                }`}
+              >
+                {notif.title}
+              </p>
+              <SeverityBadge severity={notif.severity} />
+              <StatusBadge status={notif.status} />
+              <span className="rounded-full border border-border/30 bg-muted/60 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                {TYPE_LABELS[notif.type]}
+              </span>
+            </div>
+
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">{notif.body}</p>
+
+            <div className="mt-2 flex flex-wrap items-center gap-2.5">
+              <span className="text-xs font-medium text-muted-foreground/80">
+                {notif.vehicle.make} {notif.vehicle.model} · {notif.vehicle.plate}
+              </span>
+              {dueLine && <span className="text-xs text-muted-foreground">{dueLine}</span>}
+              {snoozeLine && (
+                <span className="flex items-center gap-1 text-xs text-amber-600">
+                  <Clock className="h-3 w-3" />
+                  {snoozeLine}
+                </span>
+              )}
+              {notif.status === "DONE" && (
+                <span className="flex items-center gap-1 text-xs text-emerald-600">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Terminé
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        <p className="mt-0.5 text-xs text-muted-foreground">{notif.body}</p>
-
-        <div className="mt-1 flex flex-wrap items-center gap-3">
-          <span className="text-xs font-medium text-muted-foreground/70">
-            {notif.vehicle.make} {notif.vehicle.model} · {notif.vehicle.plate}
-          </span>
-          {dueLine && <span className="text-xs text-muted-foreground">{dueLine}</span>}
-          {snoozeLine && (
-            <span className="flex items-center gap-1 text-xs text-amber-600">
-              <Clock className="h-3 w-3" />
-              {snoozeLine}
-            </span>
-          )}
-          {notif.status === "DONE" && (
-            <span className="flex items-center gap-1 text-xs text-emerald-600">
-              <CheckCircle2 className="h-3 w-3" />
-              Terminé
-            </span>
-          )}
-        </div>
+        <NotificationActions id={notif.id} vehicleId={notif.vehicle.id} status={notif.status} />
       </div>
-
-      <NotificationActions id={notif.id} vehicleId={notif.vehicle.id} status={notif.status} />
     </div>
   );
 }

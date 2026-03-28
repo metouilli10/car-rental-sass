@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { formatWhatsAppLink } from "@/lib/utils";
 
 interface QuickActionBarProps {
   agencyId: string;
@@ -42,18 +43,7 @@ export async function QuickActionBar({ agencyId }: QuickActionBarProps) {
     take: 5,
   });
 
-  const formatWhatsAppLink = (phone: string, clientName: string) => {
-    // Remove non-digit characters and ensure Morocco country code
-    const cleanPhone = phone.replace(/\D/g, "");
-
-    // Add 212 prefix if not present (Morocco)
-    const fullPhone = cleanPhone.startsWith("212")
-      ? cleanPhone
-      : `212${cleanPhone.startsWith("0") ? cleanPhone.slice(1) : cleanPhone}`;
-
-    const message = `Bonjour ${encodeURIComponent(clientName)}`;
-    return `https://wa.me/${fullPhone}?text=${message}`;
-  };
+  const rentalsWithPhone = activeRentals.filter((rental) => Boolean(rental.customer.phone));
 
   return (
     <>
@@ -87,18 +77,18 @@ export async function QuickActionBar({ agencyId }: QuickActionBarProps) {
             <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuLabel>Clients actifs</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {activeRentals.length === 0 ? (
+              {rentalsWithPhone.length === 0 ? (
                 <div className="px-2 py-6 text-center text-sm text-muted-foreground">
                   Aucune location active
                 </div>
               ) : (
-                activeRentals.map((rental) => (
+                rentalsWithPhone.map((rental) => (
                   <DropdownMenuItem key={rental.id} asChild>
                     <a
                       href={formatWhatsAppLink(
                         rental.customer.phone,
-                        rental.customer.name
-                      )}
+                        `Bonjour ${rental.customer.name}`
+                      ) ?? "#"}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="cursor-pointer"
@@ -157,18 +147,18 @@ export async function QuickActionBar({ agencyId }: QuickActionBarProps) {
               <DropdownMenuContent align="center" className="w-72 mb-2">
                 <DropdownMenuLabel>Clients actifs</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {activeRentals.length === 0 ? (
+                {rentalsWithPhone.length === 0 ? (
                   <div className="px-2 py-6 text-center text-sm text-muted-foreground">
                     Aucune location active
                   </div>
                 ) : (
-                  activeRentals.map((rental) => (
+                  rentalsWithPhone.map((rental) => (
                     <DropdownMenuItem key={rental.id} asChild>
                       <a
                         href={formatWhatsAppLink(
                           rental.customer.phone,
-                          rental.customer.name
-                        )}
+                          `Bonjour ${rental.customer.name}`
+                        ) ?? "#"}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="cursor-pointer"

@@ -1,6 +1,5 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, AlertTriangle, Info } from "lucide-react";
-import { formatMad } from "@/lib/reservations/presentation";
 
 export type AlertSeverity = "danger" | "warning" | "info";
 
@@ -10,7 +9,6 @@ export interface OperationalAlertItem {
 }
 
 export interface ReservationOperationalAlertsProps {
-  /** Max 2 alerts, already ordered by priority (danger > warning > info). */
   alerts: OperationalAlertItem[];
 }
 
@@ -62,45 +60,4 @@ export function ReservationOperationalAlerts({
       })}
     </div>
   );
-}
-
-/** Build alerts for a reservation (call from page). Max 2 returned, priority order. */
-export function buildReservationAlerts(params: {
-  remainingAmount: number;
-  status: string;
-  depositStatusLabel: string;
-  startDate: Date | string;
-  isStartToday: boolean;
-}): OperationalAlertItem[] {
-  const {
-    remainingAmount,
-    status,
-    depositStatusLabel,
-    isStartToday,
-  } = params;
-  const alerts: OperationalAlertItem[] = [];
-
-  if (remainingAmount > 0) {
-    alerts.push({
-      severity: "warning",
-      message: `Paiement en attente : ${formatMad(remainingAmount)}`,
-    });
-  }
-  if (
-    status === "COMPLETED" &&
-    (depositStatusLabel === "À restituer" || depositStatusLabel === "Partiel")
-  ) {
-    alerts.push({
-      severity: "warning",
-      message: "Caution à restituer",
-    });
-  }
-  if (isStartToday && status === "CONFIRMED") {
-    alerts.push({
-      severity: "info",
-      message: "La location démarre aujourd'hui",
-    });
-  }
-
-  return alerts;
 }

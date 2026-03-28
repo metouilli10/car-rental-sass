@@ -485,7 +485,7 @@ function MetricsGrid({
   ];
 
   return (
-    <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="mb-6 grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
       {cards.map((card, index) => {
         const isFirst = index === 0;
         const isActive = activeMetricFilter === card.filterKey;
@@ -494,7 +494,7 @@ function MetricsGrid({
             key={card.label}
             type="button"
             onClick={() => onMetricFilterChange(card.filterKey)}
-            className={`rounded-xl border p-4 text-left shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+            className={`rounded-xl border p-3 text-left shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:p-4 ${
               isFirst
                 ? "border-blue-200 bg-blue-50"
                 : isActive
@@ -505,12 +505,14 @@ function MetricsGrid({
             aria-label={`Filtrer: ${card.label}`}
           >
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{card.label}</p>
+              <p className="text-[11px] font-medium uppercase leading-snug tracking-wider text-muted-foreground sm:text-xs">
+                {card.label}
+              </p>
               <card.icon
                 className={`h-4 w-4 shrink-0 ${isFirst ? "text-blue-600" : isActive ? "text-primary" : "text-muted-foreground"}`}
               />
             </div>
-            <p className="text-2xl font-semibold tracking-tight text-slate-900">{card.value}</p>
+            <p className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{card.value}</p>
           </button>
         );
       })}

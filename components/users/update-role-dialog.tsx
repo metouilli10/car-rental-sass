@@ -70,7 +70,7 @@ export function UpdateRoleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md">
         <DialogHeader>
           <DialogTitle>Modifier rôle</DialogTitle>
           <DialogDescription>
@@ -92,11 +92,16 @@ export function UpdateRoleDialog({
           </select>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+        <DialogFooter className="flex-col gap-2 sm:flex-row">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+            className="w-full sm:w-auto"
+          >
             Annuler
           </Button>
-          <Button onClick={handleSubmit} disabled={isLoading}>
+          <Button onClick={handleSubmit} disabled={isLoading} className="w-full sm:w-auto">
             {isLoading ? "Enregistrement..." : "Enregistrer"}
           </Button>
         </DialogFooter>

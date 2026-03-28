@@ -206,6 +206,7 @@ model Agency {
   vehicles         Vehicle[]
   customers        Customer[]
   bookings         Booking[]
+  bookingComments  BookingComment[]
   expenses         Expense[]
   reminderRules    ReminderRule[]
   notifications    Notification[]
@@ -234,6 +235,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   agency              Agency                  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  bookingComments     BookingComment[]
   emailVerificationTokens EmailVerificationToken[]
 
   @@index([agencyId])
@@ -431,6 +433,7 @@ model Booking {
   payments      Payment[]
   deposit       Deposit?
   addons        BookingAddon[]
+  comments      BookingComment[]
   damageReports DamageReport[]
   infractions   Infraction[]
 
@@ -446,6 +449,25 @@ model Booking {
   @@index([agencyId, status, startDate, endDate], map: "bookings_agency_status_start_end_idx")
   @@index([agencyId, status, endDate], map: "bookings_agency_status_end_idx")
   @@map("bookings")
+}
+
+model BookingComment {
+  id           String   @id @default(cuid())
+  bookingId    String
+  agencyId     String
+  authorUserId String
+  body         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  agency  Agency  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+  @@index([agencyId, bookingId, createdAt], map: "booking_comments_agency_booking_created_at_idx")
+  @@index([authorUserId, createdAt], map: "booking_comments_author_created_at_idx")
+  @@map("booking_comments")
 }
 
 model BookingAddon {

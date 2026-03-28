@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { formatWhatsAppLink } from "@/lib/utils";
 
 export type ActiveRentalForWhatsApp = {
   id: string;
@@ -22,16 +23,8 @@ interface DashboardActionStripProps {
   activeRentals: ActiveRentalForWhatsApp[];
 }
 
-function formatWhatsAppLink(phone: string, clientName: string) {
-  const cleanPhone = phone.replace(/\D/g, "");
-  const fullPhone = cleanPhone.startsWith("212")
-    ? cleanPhone
-    : `212${cleanPhone.startsWith("0") ? cleanPhone.slice(1) : cleanPhone}`;
-  const message = `Bonjour ${encodeURIComponent(clientName)}`;
-  return `https://wa.me/${fullPhone}?text=${message}`;
-}
-
 export function DashboardActionStrip({ activeRentals }: DashboardActionStripProps) {
+  const rentalsWithPhone = activeRentals.filter((rental) => Boolean(rental.customer.phone));
   return (
     <div className="flex items-center gap-3 min-w-0">
       <Button asChild className="shrink-0">
@@ -64,18 +57,18 @@ export function DashboardActionStrip({ activeRentals }: DashboardActionStripProp
         <DropdownMenuContent align="start" className="w-64">
           <DropdownMenuLabel>Clients actifs</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {activeRentals.length === 0 ? (
+          {rentalsWithPhone.length === 0 ? (
             <div className="px-2 py-6 text-center text-sm text-muted-foreground/70">
               Aucune location active
             </div>
           ) : (
-            activeRentals.map((rental) => (
+            rentalsWithPhone.map((rental) => (
               <DropdownMenuItem key={rental.id} asChild>
                 <a
                   href={formatWhatsAppLink(
                     rental.customer.phone,
-                    rental.customer.name
-                  )}
+                    `Bonjour ${rental.customer.name}`
+                  ) ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="cursor-pointer"

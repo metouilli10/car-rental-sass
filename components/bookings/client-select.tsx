@@ -102,14 +102,16 @@ export function ClientSelect({
               ? `, dernier le ${format(selectedCustomer.lastBookingAt, "dd/MM/yyyy", { locale: fr })}`
               : ""}
           </p>
-          <a
-            href={formatWhatsAppLink(selectedCustomer.phone)}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-flex text-xs font-medium text-blue-700 underline underline-offset-2"
-          >
-            Contacter sur WhatsApp
-          </a>
+          {formatWhatsAppLink(selectedCustomer.phone) ? (
+            <a
+              href={formatWhatsAppLink(selectedCustomer.phone) ?? undefined}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex text-xs font-medium text-blue-700 underline underline-offset-2"
+            >
+              Contacter sur WhatsApp
+            </a>
+          ) : null}
         </div>
       ) : null}
 

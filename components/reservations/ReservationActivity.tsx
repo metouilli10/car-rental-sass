@@ -5,7 +5,6 @@ export interface ReservationActivityProps {
   createdAt: Date | string;
   statusLabel: string;
   paymentLabel: string;
-  /** Compact layout for right sidebar (tighter spacing, smaller dots). */
   compact?: boolean;
 }
 

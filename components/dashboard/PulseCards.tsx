@@ -18,12 +18,12 @@ const CARD_META = [
   {
     key: "net",
     title: "Net",
-    getMeta: (pulse: DashboardV3Pulse) => pulse.net.subtitle,
+    getMeta: (pulse: DashboardV3Pulse, _operations: DashboardV3TodayOperations) => pulse.net.subtitle,
   },
   {
     key: "toCollect",
     title: "A encaisser",
-    getMeta: (pulse: DashboardV3Pulse) => pulse.toCollect.subtitle,
+    getMeta: (pulse: DashboardV3Pulse, _operations: DashboardV3TodayOperations) => pulse.toCollect.subtitle,
   },
   {
     key: "occupancy",
@@ -34,7 +34,7 @@ const CARD_META = [
   {
     key: "deposits",
     title: "Cautions a rendre",
-    getMeta: (pulse: DashboardV3Pulse) => pulse.deposits.subtitle,
+    getMeta: (pulse: DashboardV3Pulse, _operations: DashboardV3TodayOperations) => pulse.deposits.subtitle,
   },
 ] as const;
 
@@ -78,8 +78,7 @@ export function PulseCards({ pulse, operations, period }: PulseCardsProps) {
                   ? `${pulse.occupancy.rate}%`
                   : formatCurrency(pulse.deposits.amount);
 
-          const meta =
-            card.key === "occupancy" ? card.getMeta(pulse, operations) : card.getMeta(pulse);
+          const meta = card.getMeta(pulse, operations);
 
           return (
             <article

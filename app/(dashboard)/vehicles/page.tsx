@@ -182,7 +182,7 @@ export default async function VehiclesPage({
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
             Véhicules
@@ -192,17 +192,17 @@ export default async function VehiclesPage({
           </p>
         </div>
         {canManage ? (
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
             <Link
               href="/vehicles/import"
-              className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition-colors duration-200 hover:bg-blue-100"
+              className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-medium text-blue-700 transition-colors duration-200 hover:bg-blue-100 sm:flex-none sm:px-4 sm:text-sm"
             >
               <FileSpreadsheet className="h-4 w-4" />
               Importer Excel
             </Link>
             <Link
               href="/vehicles/add"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors duration-200 shadow-sm shrink-0"
+              className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-medium text-white shadow-sm transition-colors duration-200 hover:bg-blue-700 sm:flex-none sm:px-4 sm:text-sm"
             >
               <Plus className="h-4 w-4" />
               Ajouter un véhicule

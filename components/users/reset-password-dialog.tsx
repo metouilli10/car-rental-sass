@@ -88,10 +88,10 @@ export function ResetPasswordDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md">
         <DialogHeader>
           <DialogTitle>Réinitialiser mot de passe</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="break-all sm:break-normal">
             Définissez un nouveau mot de passe temporaire pour {user?.email}.
           </DialogDescription>
         </DialogHeader>
@@ -150,11 +150,16 @@ export function ResetPasswordDialog({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+        <DialogFooter className="flex-col gap-2 sm:flex-row">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+            className="w-full sm:w-auto"
+          >
             Annuler
           </Button>
-          <Button onClick={handleSubmit} disabled={isLoading}>
+          <Button onClick={handleSubmit} disabled={isLoading} className="w-full sm:w-auto">
             {isLoading ? "Réinitialisation..." : "Valider"}
           </Button>
         </DialogFooter>

@@ -317,19 +317,19 @@ export function BookingsControlCenter({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <button
           type="button"
           onClick={() => {
             setQuickFilter("active");
             setStatusFilter("ACTIVE");
           }}
-          className="rounded-xl border bg-white p-4 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md"
+          className="rounded-xl border bg-white p-3 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md sm:p-4"
         >
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-[11px] font-medium uppercase leading-snug tracking-wide text-muted-foreground sm:text-xs">
             Actives
           </p>
-          <p className="mt-1 text-2xl font-semibold">{stats.active}</p>
+          <p className="mt-1 text-xl font-semibold sm:text-2xl">{stats.active}</p>
         </button>
         <button
           type="button"
@@ -337,12 +337,12 @@ export function BookingsControlCenter({
             setQuickFilter("startToday");
             setDatePreset("TODAY");
           }}
-          className="rounded-xl border bg-white p-4 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md"
+          className="rounded-xl border bg-white p-3 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md sm:p-4"
         >
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-[11px] font-medium uppercase leading-snug tracking-wide text-muted-foreground sm:text-xs">
             Départs aujourd&apos;hui
           </p>
-          <p className="mt-1 text-2xl font-semibold">{stats.departuresToday}</p>
+          <p className="mt-1 text-xl font-semibold sm:text-2xl">{stats.departuresToday}</p>
         </button>
         <button
           type="button"
@@ -350,12 +350,12 @@ export function BookingsControlCenter({
             setQuickFilter("endToday");
             setDatePreset("TODAY");
           }}
-          className="rounded-xl border bg-white p-4 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md"
+          className="rounded-xl border bg-white p-3 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md sm:p-4"
         >
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-[11px] font-medium uppercase leading-snug tracking-wide text-muted-foreground sm:text-xs">
             Retours aujourd&apos;hui
           </p>
-          <p className="mt-1 text-2xl font-semibold">{stats.returnsToday}</p>
+          <p className="mt-1 text-xl font-semibold sm:text-2xl">{stats.returnsToday}</p>
         </button>
         <button
           type="button"
@@ -363,12 +363,12 @@ export function BookingsControlCenter({
             setQuickFilter("overdue");
             setStatusFilter("OVERDUE");
           }}
-          className="rounded-xl border bg-white p-4 text-left shadow-sm transition hover:border-red-300 hover:shadow-md"
+          className="rounded-xl border bg-white p-3 text-left shadow-sm transition hover:border-red-300 hover:shadow-md sm:p-4"
         >
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-[11px] font-medium uppercase leading-snug tracking-wide text-muted-foreground sm:text-xs">
             En retard
           </p>
-          <p className="mt-1 text-2xl font-semibold text-red-600">{stats.overdue}</p>
+          <p className="mt-1 text-xl font-semibold text-red-600 sm:text-2xl">{stats.overdue}</p>
         </button>
       </div>
 

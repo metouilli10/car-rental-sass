@@ -8,7 +8,7 @@ import type { VehicleStatus } from "@prisma/client";
 
 type CustomerPanel = {
   name: string;
-  phone: string;
+  phone: string | null;
   email: string | null;
   passportOrCIN: string | null;
 };
@@ -37,17 +37,19 @@ export interface ReservationPanelsProps {
   customer: CustomerPanel;
   vehicle: VehiclePanel;
   reservation: ReservationPanel;
-  whatsappLink: string;
+  whatsappLink: string | null;
 }
 
 function getInitials(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((s) => s[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase() || "?";
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .map((s) => s[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?"
+  );
 }
 
 function formatMaintenance(
@@ -71,7 +73,6 @@ export function ReservationPanels({
 }: ReservationPanelsProps) {
   return (
     <div className="space-y-6">
-      {/* Client */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Client</CardTitle>
@@ -88,12 +89,16 @@ export function ReservationPanels({
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Téléphone</p>
-            <a
-              href={`tel:${customer.phone}`}
-              className="font-medium text-primary hover:underline"
-            >
-              {customer.phone}
-            </a>
+            {customer.phone ? (
+              <a
+                href={`tel:${customer.phone}`}
+                className="font-medium text-primary hover:underline"
+              >
+                {customer.phone}
+              </a>
+            ) : (
+              <p className="font-medium">Non renseigné</p>
+            )}
           </div>
           {customer.email ? (
             <div>
@@ -112,21 +117,22 @@ export function ReservationPanels({
               <p className="font-medium">{customer.passportOrCIN}</p>
             </div>
           ) : null}
-          <Button asChild variant="outline" size="sm" className="w-full">
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Contacter sur WhatsApp"
-            >
-              <MessageCircle className="mr-2 h-4 w-4" />
-              WhatsApp
-            </a>
-          </Button>
+          {whatsappLink ? (
+            <Button asChild variant="outline" size="sm" className="w-full">
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Contacter sur WhatsApp"
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                WhatsApp
+              </a>
+            </Button>
+          ) : null}
         </CardContent>
       </Card>
 
-      {/* Véhicule */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Véhicule</CardTitle>
@@ -168,7 +174,6 @@ export function ReservationPanels({
         </CardContent>
       </Card>
 
-      {/* Réservation */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Réservation</CardTitle>
@@ -188,7 +193,7 @@ export function ReservationPanels({
             <p className="text-sm text-muted-foreground">Durée</p>
             <p className="font-medium">{reservation.durationDays} jour(s)</p>
           </div>
-          {(reservation.pickupLocation || reservation.returnLocation) ? (
+          {reservation.pickupLocation || reservation.returnLocation ? (
             <>
               {reservation.pickupLocation ? (
                 <div>

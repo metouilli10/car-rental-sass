@@ -39,6 +39,7 @@ OWNER_SIGNUPS_ACCESS.md
 # MCP config (contains API keys)
 .cursor/mcp.json
 /.firecrawl
+/.codex
 
 # vercel
 .vercel

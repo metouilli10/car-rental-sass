@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatWhatsAppLink } from "@/lib/utils";
 import {
   Car,
   RotateCcw,
@@ -26,7 +26,7 @@ interface TimelineOperation {
   time: Date;
   type: OperationType;
   clientName: string;
-  clientPhone: string;
+  clientPhone: string | null;
   vehicleModel: string;
   vehiclePlate: string;
   paymentStatus: "paid" | "unpaid";
@@ -110,7 +110,7 @@ export async function OperationsTimeline({ agencyId }: { agencyId: string }) {
         time: pickupTime,
         type: "SORTIE",
         clientName: booking.customer.name,
-        clientPhone: booking.customer.phone,
+        clientPhone: booking.customer.phone ?? null,
         vehicleModel: `${booking.vehicle.make} ${booking.vehicle.model}`,
         vehiclePlate: booking.vehicle.plate,
         paymentStatus,
@@ -141,7 +141,7 @@ export async function OperationsTimeline({ agencyId }: { agencyId: string }) {
         time: returnTime,
         type: "RETOUR",
         clientName: booking.customer.name,
-        clientPhone: booking.customer.phone,
+        clientPhone: booking.customer.phone ?? null,
         vehicleModel: `${booking.vehicle.make} ${booking.vehicle.model}`,
         vehiclePlate: booking.vehicle.plate,
         paymentStatus,
@@ -236,6 +236,7 @@ export async function OperationsTimeline({ agencyId }: { agencyId: string }) {
               const config = getStatusConfig(op.operationStatus);
               const relativeTime = getRelativeTime(op.time);
               const TypeIcon = op.type === "SORTIE" ? Car : RotateCcw;
+              const whatsappLink = formatWhatsAppLink(op.clientPhone);
 
               return (
                 <div
@@ -360,21 +361,33 @@ export async function OperationsTimeline({ agencyId }: { agencyId: string }) {
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2 flex-wrap">
                       {/* WhatsApp */}
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs"
-                      >
-                        <a
-                          href={`https://wa.me/${op.clientPhone.replace(/\D/g, "")}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                      {whatsappLink ? (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs"
+                        >
+                          <a
+                            href={whatsappLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+                            WhatsApp
+                          </a>
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs"
+                          disabled
                         >
                           <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
                           WhatsApp
-                        </a>
-                      </Button>
+                        </Button>
+                      )}
 
                       {/* Payment Action */}
                       {op.paymentStatus === "unpaid" && (

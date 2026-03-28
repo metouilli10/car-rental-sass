@@ -74,7 +74,6 @@ export function ReservationSummarySticky({
 
   return (
     <>
-      {/* Desktop: sticky card */}
       <Card className="lg:sticky lg:top-6 lg:self-start hidden lg:block">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Résumé financier</CardTitle>
@@ -120,9 +119,7 @@ export function ReservationSummarySticky({
               <span className="text-sm font-medium">Caution</span>
               <Badge variant={depositVariant}>{depositStatus.label}</Badge>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {formatMad(depositAmount)}
-            </p>
+            <p className="text-sm text-muted-foreground">{formatMad(depositAmount)}</p>
             {canReleaseInPlace && deposit ? (
               <Button
                 variant="outline"
@@ -145,7 +142,6 @@ export function ReservationSummarySticky({
         </CardContent>
       </Card>
 
-      {/* Mobile: fixed bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:hidden">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">

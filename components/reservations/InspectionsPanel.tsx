@@ -12,7 +12,6 @@ export interface DamageReportItem {
 export interface InspectionsPanelProps {
   bookingId: string;
   damageReports: DamageReportItem[];
-  /** Compact layout for right sidebar (smaller empty state, tighter spacing). */
   compact?: boolean;
 }
 

@@ -172,40 +172,42 @@ export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
   return (
     <div className="sticky top-0 z-30 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mb-6 pb-4 pt-2" suppressHydrationWarning>
       <div className="flex flex-col gap-4" suppressHydrationWarning>
-        <div className="flex flex-wrap items-center gap-3" suppressHydrationWarning>
-          <div className="relative flex-1 min-w-[300px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher (modèle, plaque, catégorie...)"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+        <div className="relative w-full" suppressHydrationWarning>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher (modèle, plaque, catégorie...)"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
 
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3" suppressHydrationWarning>
+          <div className="min-w-0 flex-1">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "justify-start text-left font-normal w-[240px]",
+                    "w-full justify-start text-left font-normal",
                     !startDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate ? (
-                    endDate ? (
-                      <>
-                        {format(startDate, "dd MMM", { locale: fr })} -{" "}
-                        {format(endDate, "dd MMM", { locale: fr })}
-                      </>
+                  <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                  <span className="truncate">
+                    {startDate ? (
+                      endDate ? (
+                        <>
+                          {format(startDate, "dd MMM", { locale: fr })} -{" "}
+                          {format(endDate, "dd MMM", { locale: fr })}
+                        </>
+                      ) : (
+                        format(startDate, "dd MMM", { locale: fr })
+                      )
                     ) : (
-                      format(startDate, "dd MMM", { locale: fr })
-                    )
-                  ) : (
-                    <span>Sélectionnez des dates</span>
-                  )}
+                      <span>Sélectionnez des dates</span>
+                    )}
+                  </span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -261,7 +263,7 @@ export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
             </Popover>
           </div>
 
-          <div className="flex items-center rounded-xl p-1 bg-muted/40">
+          <div className="flex shrink-0 items-center rounded-xl bg-muted/40 p-1">
             <Button
               variant={view === "grid" ? "secondary" : "ghost"}
               size="sm"
@@ -279,31 +281,50 @@ export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
               <List className="h-4 w-4" />
             </Button>
           </div>
+        </div>
 
+        <div className="grid grid-cols-2 gap-2" suppressHydrationWarning>
           <Select
             value={sortParam}
             onValueChange={(value) => updateQueryParams({ sort: value })}
           >
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Trier par" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="price_asc">Prix: Croissant</SelectItem>
-              <SelectItem value="price_desc">Prix: Décroissant</SelectItem>
-              <SelectItem value="availability">Disponibilité</SelectItem>
-              <SelectItem value="name">Nom</SelectItem>
+              <SelectItem value="availability">Tri: disponibilité</SelectItem>
+              <SelectItem value="price_asc">Tri: prix croissant</SelectItem>
+              <SelectItem value="price_desc">Tri: prix décroissant</SelectItem>
+              <SelectItem value="name">Tri: nom</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={availabilityParam || "all"}
+            onValueChange={(value) =>
+              updateQueryParams({ availability: value === "all" ? undefined : value })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Disponibilité" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Disponibilité: Toutes</SelectItem>
+              <SelectItem value="AVAILABLE">Disponible</SelectItem>
+              <SelectItem value="RETURNING_TODAY">Retour aujourd&apos;hui</SelectItem>
+              <SelectItem value="UNAVAILABLE">Indisponible</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1" suppressHydrationWarning>
+        <div className="grid grid-cols-2 gap-2" suppressHydrationWarning>
           <Select
             value={gearboxParam || "all"}
             onValueChange={(value) =>
               updateQueryParams({ gearbox: value === "all" ? undefined : value })
             }
           >
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Boîte" />
             </SelectTrigger>
             <SelectContent>
@@ -319,7 +340,7 @@ export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
               updateQueryParams({ category: value === "all" ? undefined : value })
             }
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Catégorie" />
             </SelectTrigger>
             <SelectContent>
@@ -331,28 +352,13 @@ export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
               ))}
             </SelectContent>
           </Select>
+        </div>
 
-          <Select
-            value={availabilityParam || "all"}
-            onValueChange={(value) =>
-              updateQueryParams({ availability: value === "all" ? undefined : value })
-            }
-          >
-            <SelectTrigger className="w-[190px]">
-              <SelectValue placeholder="Disponibilité" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Disponibilité: Toutes</SelectItem>
-              <SelectItem value="AVAILABLE">Disponible</SelectItem>
-              <SelectItem value="RETURNING_TODAY">Retour aujourd&apos;hui</SelectItem>
-              <SelectItem value="UNAVAILABLE">Indisponible</SelectItem>
-            </SelectContent>
-          </Select>
-
+        <div className="flex justify-start" suppressHydrationWarning>
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 text-xs gap-1"
+            className="h-9 gap-1 px-0 text-xs sm:px-3"
             onClick={() =>
               updateQueryParams({
                 category: undefined,

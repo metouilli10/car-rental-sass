@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { formatCurrency, formatDate, formatWhatsAppLink } from "@/lib/utils";
+import { formatCurrency, formatDate, formatPhoneForCall, formatWhatsAppLink } from "@/lib/utils";
 import { DashboardPeriod, getPeriodBounds } from "@/lib/dashboard-periods";
 import { PriorityActionsClient } from "./PriorityActionsClient";
 import type { PriorityActionItem } from "./PriorityActionsList";
@@ -8,13 +8,6 @@ interface PriorityActionsProps {
   agencyId: string;
   period: DashboardPeriod;
 }
-
-const sanitizePhoneForCall = (phone: string) => {
-  const cleaned = phone.replace(/\D/g, "");
-  return cleaned.startsWith("212")
-    ? `+${cleaned}`
-    : `+212${cleaned.startsWith("0") ? cleaned.slice(1) : cleaned}`;
-};
 
 const REMINDER_LABELS: Record<string, string> = {
   OIL_CHANGE: "Vidange à prévoir",
@@ -104,11 +97,13 @@ export async function PriorityActions({ agencyId, period }: PriorityActionsProps
       detailsHref: `/bookings/${booking.id}`,
       actionLabel: "Ouvrir",
       actionHref: `/bookings/${booking.id}`,
-      phoneHref: `tel:${sanitizePhoneForCall(booking.customer.phone)}`,
+      phoneHref: formatPhoneForCall(booking.customer.phone)
+        ? `tel:${formatPhoneForCall(booking.customer.phone)}`
+        : undefined,
       waLink: formatWhatsAppLink(
         booking.customer.phone,
         `Bonjour ${booking.customer.name}, votre retour de véhicule est attendu. Merci de nous contacter.`
-      ),
+      ) ?? undefined,
       dueLabel: `Retour prévu le ${formatDate(booking.endDate)}`,
       stripeColor: "bg-red-500",
     })),
@@ -123,11 +118,13 @@ export async function PriorityActions({ agencyId, period }: PriorityActionsProps
       detailsHref: `/bookings/${payment.booking.id}`,
       actionLabel: "Encaisser",
       actionHref: "/payments",
-      phoneHref: `tel:${sanitizePhoneForCall(payment.booking.customer.phone)}`,
+      phoneHref: formatPhoneForCall(payment.booking.customer.phone)
+        ? `tel:${formatPhoneForCall(payment.booking.customer.phone)}`
+        : undefined,
       waLink: formatWhatsAppLink(
         payment.booking.customer.phone,
         `Bonjour ${payment.booking.customer.name}, rappel de paiement en attente (${formatCurrency(payment.amount)}).`
-      ),
+      ) ?? undefined,
       dueLabel: "Paiement en attente",
       stripeColor: "bg-amber-500",
     })),
@@ -142,11 +139,13 @@ export async function PriorityActions({ agencyId, period }: PriorityActionsProps
       detailsHref: `/bookings/${deposit.bookingId}`,
       actionLabel: "Libérer",
       actionHref: `/bookings/${deposit.bookingId}`,
-      phoneHref: `tel:${sanitizePhoneForCall(deposit.booking.customer.phone)}`,
+      phoneHref: formatPhoneForCall(deposit.booking.customer.phone)
+        ? `tel:${formatPhoneForCall(deposit.booking.customer.phone)}`
+        : undefined,
       waLink: formatWhatsAppLink(
         deposit.booking.customer.phone,
         `Bonjour ${deposit.booking.customer.name}, votre caution est prête à être libérée.`
-      ),
+      ) ?? undefined,
       dueLabel: `Retenue depuis le ${formatDate(deposit.heldAt)}`,
       stripeColor: "bg-blue-500",
     })),

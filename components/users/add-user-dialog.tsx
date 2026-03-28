@@ -119,7 +119,7 @@ export function AddUserDialog({ open, onOpenChange, onCreated }: AddUserDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-lg">
         {!createdUser ? (
           <>
             <DialogHeader>
@@ -215,11 +215,20 @@ export function AddUserDialog({ open, onOpenChange, onCreated }: AddUserDialogPr
               </div>
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+            <DialogFooter className="flex-col gap-2 sm:flex-row">
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+                className="w-full sm:w-auto"
+              >
                 Annuler
               </Button>
-              <Button onClick={handleCreate} disabled={isLoading || !canSubmit}>
+              <Button
+                onClick={handleCreate}
+                disabled={isLoading || !canSubmit}
+                className="w-full sm:w-auto"
+              >
                 {isLoading ? "Création..." : "Créer l'utilisateur"}
               </Button>
             </DialogFooter>
@@ -236,7 +245,7 @@ export function AddUserDialog({ open, onOpenChange, onCreated }: AddUserDialogPr
             <div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
               <div className="space-y-1">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Email</p>
-                <p className="text-sm font-medium">{createdUser.email}</p>
+                <p className="break-all text-sm font-medium">{createdUser.email}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Rôle</p>
@@ -246,7 +255,7 @@ export function AddUserDialog({ open, onOpenChange, onCreated }: AddUserDialogPr
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Mot de passe temporaire
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <Input
                     readOnly
                     value={
@@ -262,10 +271,17 @@ export function AddUserDialog({ open, onOpenChange, onCreated }: AddUserDialogPr
                     type="button"
                     variant="outline"
                     onClick={() => setShowSuccessPassword((prev) => !prev)}
+                    className="w-full sm:w-auto"
                   >
                     {showSuccessPassword ? "Masquer" : "Afficher"}
                   </Button>
-                  <Button type="button" variant="outline" size="icon" onClick={handleCopyPassword}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleCopyPassword}
+                    className="w-full sm:w-10"
+                  >
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
@@ -275,8 +291,8 @@ export function AddUserDialog({ open, onOpenChange, onCreated }: AddUserDialogPr
               </div>
             </div>
 
-            <DialogFooter className="sm:justify-between">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+              <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
                 Fermer
               </Button>
               <Button
@@ -289,6 +305,7 @@ export function AddUserDialog({ open, onOpenChange, onCreated }: AddUserDialogPr
                   setRole("EMPLOYEE");
                   setForcePasswordChange(false);
                 }}
+                className="w-full sm:w-auto"
               >
                 Ajouter un autre
               </Button>

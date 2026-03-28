@@ -102,13 +102,13 @@ export function NotificationActions({
   const isActive = status === "OPEN";
 
   return (
-    <div className="flex items-center gap-1.5 shrink-0">
+    <div className="flex w-full flex-wrap items-center gap-1.5 border-t border-border/40 pt-3 sm:w-auto sm:shrink-0 sm:justify-end sm:border-t-0 sm:pt-0">
       {isActive && (
         <>
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 px-2 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+            className="h-8 px-2 text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
             onClick={handleDone}
             disabled={isPending}
           >
@@ -184,7 +184,7 @@ export function NotificationActions({
         <Button
           size="sm"
           variant="ghost"
-          className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-50"
+          className="h-8 w-8 p-0 text-muted-foreground hover:bg-red-50 hover:text-red-500"
           onClick={handleDismiss}
           disabled={isPending}
           title="Ignorer"
@@ -197,7 +197,7 @@ export function NotificationActions({
         <Button
           size="sm"
           variant="ghost"
-          className="h-8 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          className="h-8 px-2 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
           onClick={handleReopen}
           disabled={isPending}
         >
