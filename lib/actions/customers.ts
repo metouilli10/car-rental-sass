@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUserAccessOrThrow } from "@/lib/authz";
 import { canDeleteCustomer, canManageCustomers } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { supportsCustomerDocumentBacks } from "@/lib/customer-document-backs";
 import { customerSchema, CustomerFormData } from "@/lib/validations/customer";
 
 export async function createCustomer(data: CustomerFormData) {
@@ -23,10 +24,17 @@ export async function createCustomer(data: CustomerFormData) {
         name: validatedData.name,
         email: validatedData.email || null,
         phone: validatedData.phone,
+        nationality: validatedData.nationality,
         passportOrCIN: validatedData.passportOrCIN || null,
         passportOrCINExpiry: validatedData.passportOrCINExpiry ?? null,
         passportPhotoUrl: validatedData.passportPhotoUrl || null,
         licensePhotoUrl: validatedData.licensePhotoUrl || null,
+        ...(supportsCustomerDocumentBacks
+          ? {
+              passportPhotoBackUrl: validatedData.passportPhotoBackUrl || null,
+              licensePhotoBackUrl: validatedData.licensePhotoBackUrl || null,
+            }
+          : {}),
         ice: validatedData.ice || null,
         rc: validatedData.rc || null,
         representativeName: validatedData.representativeName || null,
@@ -61,10 +69,17 @@ export async function createCustomerForBooking(data: CustomerFormData) {
         name: validatedData.name,
         email: validatedData.email || null,
         phone: validatedData.phone,
+        nationality: validatedData.nationality,
         passportOrCIN: validatedData.passportOrCIN || null,
         passportOrCINExpiry: validatedData.passportOrCINExpiry ?? null,
         passportPhotoUrl: validatedData.passportPhotoUrl || null,
         licensePhotoUrl: validatedData.licensePhotoUrl || null,
+        ...(supportsCustomerDocumentBacks
+          ? {
+              passportPhotoBackUrl: validatedData.passportPhotoBackUrl || null,
+              licensePhotoBackUrl: validatedData.licensePhotoBackUrl || null,
+            }
+          : {}),
         ice: validatedData.ice || null,
         rc: validatedData.rc || null,
         representativeName: validatedData.representativeName || null,
@@ -110,10 +125,17 @@ export async function updateCustomer(id: string, data: CustomerFormData) {
         name: validatedData.name,
         email: validatedData.email || null,
         phone: validatedData.phone,
+        nationality: validatedData.nationality,
         passportOrCIN: validatedData.passportOrCIN || null,
         passportOrCINExpiry: validatedData.passportOrCINExpiry ?? null,
         passportPhotoUrl: validatedData.passportPhotoUrl || null,
         licensePhotoUrl: validatedData.licensePhotoUrl || null,
+        ...(supportsCustomerDocumentBacks
+          ? {
+              passportPhotoBackUrl: validatedData.passportPhotoBackUrl || null,
+              licensePhotoBackUrl: validatedData.licensePhotoBackUrl || null,
+            }
+          : {}),
         ice: validatedData.ice || null,
         rc: validatedData.rc || null,
         representativeName: validatedData.representativeName || null,

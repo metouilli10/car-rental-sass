@@ -97,4 +97,42 @@ test.describe("owner user flows", () => {
     await expect(row).toBeVisible();
     await expect(row).toContainText(email);
   });
+
+  test("mobile booking wizard shows live summary and can create/select a client", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await loginAsOwner(page);
+
+    await page.goto("/bookings/create");
+    await expect(page.getByRole("heading", { name: "Nouvelle réservation" })).toBeVisible();
+
+    const dateInputs = page.locator('main input[type="datetime-local"]');
+    await dateInputs.nth(0).fill("2030-01-10T10:00");
+    await dateInputs.nth(1).fill("2030-01-13T10:00");
+
+    await page.locator('label:has-text("Véhicule *")').locator("..").getByRole("combobox").click();
+    await page.getByRole("option", { name: /Disponible|Libre sur ces dates/i }).first().click();
+
+    await page.getByRole("button", { name: /Vue d'ensemble/i }).click();
+    await expect(page.getByRole("heading", { name: "Résumé réservation" })).toBeVisible();
+    await expect(page.getByLabel("Résumé réservation").getByText(/Restant:/i)).toBeVisible();
+    await page.getByRole("button", { name: "Fermer" }).click();
+
+    await page.getByRole("button", { name: "Suivant" }).click();
+    await expect(page.getByText("Sélectionnez le conducteur ou la société")).toBeVisible();
+
+    const suffix = Date.now().toString().slice(-6);
+    const name = `Mobile Client ${suffix}`;
+    const phone = `+212611${suffix}`;
+    const identity = `MOB${suffix}`;
+
+    await page.getByRole("button", { name: /\+ Nouveau client/i }).click();
+    await expect(page.getByRole("heading", { name: "Nouveau client" })).toBeVisible();
+    await page.getByLabel("Nom complet *").fill(name);
+    await page.getByLabel("Téléphone (WhatsApp) *").fill(phone);
+    await page.getByLabel("Passeport ou CIN *").fill(identity);
+    await page.getByRole("button", { name: "Ajouter et sélectionner" }).click();
+
+    await expect(page.getByText("Client sélectionné")).toBeVisible();
+    await expect(page.getByText(name, { exact: true }).first()).toBeVisible();
+  });
 });

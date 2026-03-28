@@ -30,7 +30,9 @@ export interface ClientListItem {
   phone: string;
   passportOrCIN: string | null;
   passportPhotoUrl: string | null;
+  passportPhotoBackUrl: string | null;
   licensePhotoUrl: string | null;
+  licensePhotoBackUrl: string | null;
   nationality: string;
   createdAt: string;
   bookingsCount: number;
@@ -117,7 +119,12 @@ export function ClientsPageV2({
 
   const filteredCustomers = useMemo(() => {
     return customers.filter((customer) => {
-      const hasDocuments = Boolean(customer.passportPhotoUrl || customer.licensePhotoUrl);
+      const hasDocuments = Boolean(
+        customer.passportPhotoUrl ||
+        customer.passportPhotoBackUrl ||
+        customer.licensePhotoUrl ||
+        customer.licensePhotoBackUrl,
+      );
       const hasReservations = customer.bookingsCount > 0;
       const createdAtMs = new Date(customer.createdAt).getTime();
       const createdFromMs = filters.createdFrom ? new Date(filters.createdFrom).getTime() : null;

@@ -20,10 +20,13 @@ export const customerSchema = z
     name: z.string().min(1, "Le nom est requis"),
     email: z.string().email("Email invalide").optional().or(z.literal("")),
     phone: z.string().min(1, "Le téléphone est requis"),
+    nationality: z.string().trim().min(1, "La nationalité est requise").default("Marocaine"),
     passportOrCIN: z.string().optional(),
     passportOrCINExpiry: dateOptional,
     passportPhotoUrl: z.string().optional(),
+    passportPhotoBackUrl: z.string().optional(),
     licensePhotoUrl: z.string().optional(),
+    licensePhotoBackUrl: z.string().optional(),
     // Personne morale
     ice: z.string().optional(),
     rc: z.string().optional(),

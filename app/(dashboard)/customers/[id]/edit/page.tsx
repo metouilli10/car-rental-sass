@@ -46,13 +46,16 @@ export default async function EditCustomerPage({
           name: customer.name,
           email: customer.email || "",
           phone: customer.phone,
+          nationality: customer.nationality,
           passportOrCIN: customer.passportOrCIN || undefined,
           // @ts-expect-error - passportOrCINExpiry expects string (input type) not Date (output type)
           passportOrCINExpiry: customer.passportOrCINExpiry
             ? customer.passportOrCINExpiry.toISOString().slice(0, 10)
             : undefined,
           passportPhotoUrl: customer.passportPhotoUrl || undefined,
+          passportPhotoBackUrl: customer.passportPhotoBackUrl || undefined,
           licensePhotoUrl: customer.licensePhotoUrl || undefined,
+          licensePhotoBackUrl: customer.licensePhotoBackUrl || undefined,
           ice: customer.ice || undefined,
           rc: customer.rc || undefined,
           representativeName: customer.representativeName || undefined,

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-cache";
+import { supportsCustomerDocumentBacks } from "@/lib/customer-document-backs";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -63,6 +64,12 @@ export default async function CustomerDetailPage({
       representativeName: true,
       passportPhotoUrl: true,
       licensePhotoUrl: true,
+      ...(supportsCustomerDocumentBacks
+        ? {
+            passportPhotoBackUrl: true,
+            licensePhotoBackUrl: true,
+          }
+        : {}),
       createdAt: true,
       infractions: {
         orderBy: { date: "desc" },
@@ -184,12 +191,14 @@ export default async function CustomerDetailPage({
           <div className="mt-4 space-y-3">
             <DocumentRow
               label="Passeport / CIN"
-              url={customer.passportPhotoUrl}
+              frontUrl={customer.passportPhotoUrl}
+              backUrl={supportsCustomerDocumentBacks ? customer.passportPhotoBackUrl ?? null : null}
               editHref={`/customers/${customer.id}/edit?tab=documents`}
             />
             <DocumentRow
               label="Permis de conduire"
-              url={customer.licensePhotoUrl}
+              frontUrl={customer.licensePhotoUrl}
+              backUrl={supportsCustomerDocumentBacks ? customer.licensePhotoBackUrl ?? null : null}
               editHref={`/customers/${customer.id}/edit?tab=documents`}
             />
           </div>
@@ -509,14 +518,16 @@ function getReturnConditionVariant(condition: ReturnCondition) {
 
 function DocumentRow({
   label,
-  url,
+  frontUrl,
+  backUrl,
   editHref,
 }: {
   label: string;
-  url: string | null;
+  frontUrl: string | null;
+  backUrl: string | null;
   editHref: string;
 }) {
-  if (!url) {
+  if (!frontUrl && !backUrl) {
     return (
       <div className="rounded-xl border border-dashed border-muted p-3 text-sm text-muted-foreground">
         {label}: Non fourni
@@ -527,12 +538,21 @@ function DocumentRow({
   return (
     <div className="rounded-xl border border-muted p-3">
       <p className="text-sm font-medium text-foreground">{label}</p>
-      <div className="mt-2 flex items-center gap-2">
-        <Button asChild size="sm" variant="outline">
-          <a href={url} target="_blank" rel="noopener noreferrer">
-            Ouvrir
-          </a>
-        </Button>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {frontUrl ? (
+          <Button asChild size="sm" variant="outline">
+            <a href={frontUrl} target="_blank" rel="noopener noreferrer">
+              Ouvrir recto
+            </a>
+          </Button>
+        ) : null}
+        {backUrl ? (
+          <Button asChild size="sm" variant="outline">
+            <a href={backUrl} target="_blank" rel="noopener noreferrer">
+              Ouvrir verso
+            </a>
+          </Button>
+        ) : null}
         <Button asChild size="sm" variant="ghost">
           <Link href={editHref}>Mettre à jour</Link>
         </Button>

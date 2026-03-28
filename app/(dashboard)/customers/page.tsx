@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { startOfMonth } from "date-fns";
 import { canDeleteCustomer, canManageCustomers } from "@/lib/permissions";
 import { getCurrentUserAccessForPage } from "@/lib/authz";
+import { supportsCustomerDocumentBacks } from "@/lib/customer-document-backs";
 import { prisma } from "@/lib/prisma";
 import { ClientsPageV2 } from "@/components/customers/clients-page-v2";
 
@@ -39,6 +40,29 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     currentUser.role,
     currentUser.permissions,
   );
+  const withoutDocumentsWhere = supportsCustomerDocumentBacks
+    ? {
+        AND: [
+          {
+            AND: [
+              { OR: [{ passportPhotoUrl: null }, { passportPhotoUrl: "" }] },
+              { OR: [{ passportPhotoBackUrl: null }, { passportPhotoBackUrl: "" }] },
+            ],
+          },
+          {
+            AND: [
+              { OR: [{ licensePhotoUrl: null }, { licensePhotoUrl: "" }] },
+              { OR: [{ licensePhotoBackUrl: null }, { licensePhotoBackUrl: "" }] },
+            ],
+          },
+        ],
+      }
+    : {
+        AND: [
+          { OR: [{ passportPhotoUrl: null }, { passportPhotoUrl: "" }] },
+          { OR: [{ licensePhotoUrl: null }, { licensePhotoUrl: "" }] },
+        ],
+      };
 
   const [customers, total, withReservations, withoutDocuments, createdThisMonth] =
     await Promise.all([
@@ -65,14 +89,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     prisma.customer.count({
       where: {
         ...where,
-        AND: [
-          {
-            OR: [{ passportPhotoUrl: null }, { passportPhotoUrl: "" }],
-          },
-          {
-            OR: [{ licensePhotoUrl: null }, { licensePhotoUrl: "" }],
-          },
-        ],
+        ...withoutDocumentsWhere,
       },
     }),
     prisma.customer.count({
@@ -123,7 +140,9 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         phone: customer.phone,
         passportOrCIN: customer.passportOrCIN,
         passportPhotoUrl: customer.passportPhotoUrl,
+        passportPhotoBackUrl: supportsCustomerDocumentBacks ? customer.passportPhotoBackUrl ?? null : null,
         licensePhotoUrl: customer.licensePhotoUrl,
+        licensePhotoBackUrl: supportsCustomerDocumentBacks ? customer.licensePhotoBackUrl ?? null : null,
         nationality: customer.nationality,
         createdAt: customer.createdAt.toISOString(),
         bookingsCount: customer._count.bookings,

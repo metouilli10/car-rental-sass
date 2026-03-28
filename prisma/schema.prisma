@@ -366,12 +366,14 @@ model Customer {
   passportOrCIN       String?
   passportOrCINExpiry DateTime?
   passportPhotoUrl    String?
+  passportPhotoBackUrl String?
   address             String?
   dateOfBirth         DateTime?
   nationality         String       @default("Marocaine")
   licenseNumber       String?
   licenseExpiry       DateTime?
   licensePhotoUrl     String?
+  licensePhotoBackUrl String?
   // Personne morale
   ice                 String?
   rc                  String?
