@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { bookingSchema, BookingFormData } from "@/lib/validations/booking";
 import { canDelete } from "@/lib/authz";
 import { canDeleteBookings } from "@/lib/permissions";
-import { updateVehicleStatusCompat } from "@/lib/vehicle-fuel-type";
+import { hasVehicleFuelTypeColumn, updateVehicleStatusCompat } from "@/lib/vehicle-fuel-type";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
 import { createPerfLogger } from "@/lib/perf";
 
@@ -417,6 +417,7 @@ export async function updateBookingStatus(
   }
 
   try {
+    const hasFuelTypeColumn = await hasVehicleFuelTypeColumn();
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       select: { id: true, agencyId: true, vehicleId: true, status: true },
@@ -434,7 +435,7 @@ export async function updateBookingStatus(
       });
 
       if (status === "ACTIVE") {
-        await updateVehicleStatusCompat(tx, booking.vehicleId, "RENTED");
+        await updateVehicleStatusCompat(tx, booking.vehicleId, "RENTED", hasFuelTypeColumn);
       } else if (status === "COMPLETED" || status === "CANCELED") {
         const vehicle = await tx.vehicle.findUnique({
           where: { id: booking.vehicleId },
@@ -461,7 +462,7 @@ export async function updateBookingStatus(
           nextVehicleStatus = hasAnotherActiveBooking ? "RENTED" : "AVAILABLE";
         }
 
-        await updateVehicleStatusCompat(tx, booking.vehicleId, nextVehicleStatus);
+        await updateVehicleStatusCompat(tx, booking.vehicleId, nextVehicleStatus, hasFuelTypeColumn);
       }
     });
 
@@ -501,6 +502,7 @@ export async function deleteBooking(bookingId: string) {
   }
 
   try {
+    const hasFuelTypeColumn = await hasVehicleFuelTypeColumn();
     const booking = await prisma.booking.findFirst({
       where: {
         id: bookingId,
@@ -551,7 +553,7 @@ export async function deleteBooking(bookingId: string) {
       });
 
       if (!remainingActiveBooking) {
-        await updateVehicleStatusCompat(tx, booking.vehicleId, "AVAILABLE");
+        await updateVehicleStatusCompat(tx, booking.vehicleId, "AVAILABLE", hasFuelTypeColumn);
       }
     });
 

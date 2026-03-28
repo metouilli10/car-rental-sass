@@ -54,8 +54,14 @@ export async function updateVehicleStatusCompat(
   executor: RawExecutor,
   vehicleId: string,
   status: VehicleStatus,
+  hasFuelTypeColumn?: boolean,
 ) {
-  if (await hasVehicleFuelTypeColumn()) {
+  const resolvedHasFuelTypeColumn =
+    typeof hasFuelTypeColumn === "boolean"
+      ? hasFuelTypeColumn
+      : await hasVehicleFuelTypeColumn();
+
+  if (resolvedHasFuelTypeColumn) {
     await executor.$executeRaw`
       UPDATE "vehicles"
       SET "status" = CAST(${status} AS "VehicleStatus")
