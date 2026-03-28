@@ -40,6 +40,7 @@ export async function getBookingFormOptions(
         pricePerDay: true,
         depositAmount: true,
         category: true,
+        gearbox: true,
         status: true,
       },
     }),

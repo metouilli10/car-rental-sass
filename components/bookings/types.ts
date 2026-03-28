@@ -17,6 +17,7 @@ export interface BookingVehicleOption {
   pricePerDay: number;
   depositAmount: number;
   category: string;
+  gearbox: "MANUAL" | "AUTO";
   status: string;
 }
 

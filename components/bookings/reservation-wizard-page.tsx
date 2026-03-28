@@ -733,7 +733,6 @@ function StepLocation({
         icon={Clock3}
         eyebrow="Période"
         title="Planifiez le départ et le retour"
-        description="Structurez la location d’abord, le reste suivra naturellement."
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <FieldError label="Date/Heure de départ *" error={errors.startAt}>
@@ -785,7 +784,6 @@ function StepLocation({
         icon={CarFront}
         eyebrow="Sélection"
         title="Choisissez le véhicule opérationnel"
-        description="Lieux, disponibilité et aperçu du véhicule dans le même espace."
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
@@ -848,7 +846,7 @@ function StepLocation({
                         {vehicle.make} {vehicle.model}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {vehicle.plate} • {vehicle.category}
+                        {vehicle.plate} • {vehicle.gearbox === "AUTO" ? "Automatique" : "Manuelle"}
                       </p>
                     </div>
                     <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", availabilityToneClasses[tone].badge)}>
@@ -870,7 +868,7 @@ function StepLocation({
                   {selectedVehicle.make} {selectedVehicle.model}
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
-                  {selectedVehicle.plate} • {selectedVehicle.category}
+                  {selectedVehicle.plate} • {selectedVehicle.gearbox === "AUTO" ? "Automatique" : "Manuelle"}
                 </p>
                 <p className="mt-3 text-sm font-medium text-slate-700">
                   {formatCurrency(selectedVehicle.pricePerDay)}/jour
@@ -934,7 +932,6 @@ function StepClient({
         icon={UserRound}
         eyebrow="Client"
         title="Sélectionnez le conducteur ou la société"
-        description="Recherche rapide, création express et aperçu du dossier client."
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Label>Client *</Label>
@@ -1061,7 +1058,6 @@ function StepPricing({
         icon={ShieldCheck}
         eyebrow="Tarification"
         title="Ajustez la base opérationnelle"
-        description="Validez d’abord le tarif journalier et la caution."
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <FieldError label="Prix/jour (MAD) *" error={errors.pricePerDay}>
@@ -1089,7 +1085,6 @@ function StepPricing({
         icon={CarFront}
         eyebrow="Add-ons"
         title="Composez les options facturées"
-        description="Empilez les extras comme des cartes lisibles sur mobile."
       >
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm text-slate-500">GPS, siège bébé, assurance ou options manuelles.</p>
@@ -1183,7 +1178,6 @@ function StepPricing({
         icon={WalletCards}
         eyebrow="Ajustements"
         title="Remise et TVA"
-        description="Finalisez les éléments qui modifient le total facturé."
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
@@ -1295,7 +1289,6 @@ function StepPayment({
         icon={WalletCards}
         eyebrow="Validation"
         title="Finalisez l’encaissement"
-        description="Choisissez comment la réservation sera enregistrée avant création."
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
@@ -1359,7 +1352,6 @@ function StepPayment({
         icon={ShieldCheck}
         eyebrow="Notes"
         title="Ajoutez le contexte opérationnel"
-        description="Conservez ici les consignes utiles pour l’équipe."
       >
         <div className="space-y-2">
           <Label>Notes</Label>
@@ -1411,7 +1403,7 @@ function WizardSection({
   icon: React.ComponentType<{ className?: string }>;
   eyebrow: string;
   title: string;
-  description: string;
+  description?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -1423,7 +1415,7 @@ function WizardSection({
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{eyebrow}</p>
           <h3 className="mt-1 text-lg font-semibold text-slate-950">{title}</h3>
-          <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+          {description ? <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p> : null}
         </div>
       </div>
       <div className="space-y-4">{children}</div>
