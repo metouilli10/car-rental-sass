@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Gearbox } from "@prisma/client";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -192,8 +193,10 @@ export function VehicleCard({ vehicle, startDate, endDate }: VehicleCardProps) {
         <Button variant="outline" size="icon" onClick={handleShare} title="Partager sur WhatsApp">
           <Share2 className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" title="Détails du véhicule">
+        <Button asChild variant="ghost" size="icon" title="Détails du véhicule">
+          <Link href={`/vehicles/${vehicle.id}`} aria-label={`Voir les détails de ${vehicle.make} ${vehicle.model}`}>
           <Info className="h-4 w-4" />
+          </Link>
         </Button>
       </CardFooter>
 
