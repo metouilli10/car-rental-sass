@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-import { PaymentType } from "@prisma/client";
+import { PaymentType, VehicleStatus } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserAccessOrThrow } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +11,10 @@ import { canDelete } from "@/lib/authz";
 import { canDeleteBookings } from "@/lib/permissions";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
 import { createPerfLogger } from "@/lib/perf";
+
+export type BookingStatusActionResult =
+  | { success: true }
+  | { error: string };
 
 async function validateBookingRelationsForAgency(params: {
   agencyId: string;
@@ -398,17 +402,17 @@ export async function updateBooking(bookingId: string, data: BookingFormData) {
 export async function updateBookingStatus(
   bookingId: string,
   status: "ACTIVE" | "COMPLETED" | "CANCELED"
-) {
+): Promise<BookingStatusActionResult> {
   const perf = createPerfLogger("action-update-booking-status", { bookingId, status });
   const session = await getServerSession(authOptions);
   perf.step("session-loaded", { hasSession: Boolean(session?.user) });
 
   if (!session) {
-    throw new Error("Non autorisé");
+    return { error: "Session expirée. Reconnectez-vous puis réessayez." };
   }
 
   if (status === "CANCELED" && !canDelete(session.user.role)) {
-    throw new Error("Vous n'avez pas l'autorisation d'annuler une réservation");
+    return { error: "Vous n'avez pas l'autorisation d'annuler une réservation" };
   }
 
   try {
@@ -418,7 +422,7 @@ export async function updateBookingStatus(
     });
 
     if (!booking || booking.agencyId !== session.user.agencyId) {
-      throw new Error("Réservation non trouvée");
+      return { error: "Réservation non trouvée pour cette agence" };
     }
 
     // Atomic transaction: update booking + vehicle status together to prevent inconsistency
@@ -434,9 +438,34 @@ export async function updateBookingStatus(
           data: { status: "RENTED" },
         });
       } else if (status === "COMPLETED" || status === "CANCELED") {
+        const vehicle = await tx.vehicle.findUnique({
+          where: { id: booking.vehicleId },
+          select: { status: true },
+        });
+
+        if (!vehicle) {
+          throw new Error("Véhicule introuvable pour cette réservation");
+        }
+
+        const hasAnotherActiveBooking = await tx.booking.findFirst({
+          where: {
+            agencyId: session.user.agencyId,
+            vehicleId: booking.vehicleId,
+            id: { not: bookingId },
+            status: "ACTIVE",
+          },
+          select: { id: true },
+        });
+
+        let nextVehicleStatus: VehicleStatus = vehicle.status;
+
+        if (vehicle.status === "RENTED") {
+          nextVehicleStatus = hasAnotherActiveBooking ? "RENTED" : "AVAILABLE";
+        }
+
         await tx.vehicle.update({
           where: { id: booking.vehicleId },
-          data: { status: "AVAILABLE" },
+          data: { status: nextVehicleStatus },
         });
       }
     });
@@ -446,10 +475,14 @@ export async function updateBookingStatus(
     revalidatePath("/vehicles");
     revalidatePath("/catalogue");
     perf.end({ success: true });
+    return { success: true };
   } catch (error) {
     console.error("updateBookingStatus error:", error);
     perf.end({ failed: true });
-    throw new Error("Erreur lors de la mise à jour du statut de la réservation");
+    if (error instanceof Error && error.message) {
+      return { error: error.message };
+    }
+    return { error: "Erreur lors de la mise à jour du statut de la réservation" };
   }
 }
 

@@ -101,7 +101,11 @@ export function ReservationDetailsHeader({
   const handleCancel = async () => {
     setIsCanceling(true);
     try {
-      await cancelBooking(bookingId);
+      const result = await cancelBooking(bookingId);
+      if (result && "error" in result) {
+        toast.error(result.error);
+        return;
+      }
       toast.success("Réservation annulée");
       setCancelDialogOpen(false);
     } catch (err) {

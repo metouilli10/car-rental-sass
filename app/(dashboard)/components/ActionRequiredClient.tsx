@@ -67,7 +67,11 @@ export function ActionRequiredClient({ items }: ActionRequiredClientProps) {
   const handleCompleteBooking = async (item: ActionItem) => {
     setPendingId(item.id);
     try {
-      await completeBooking(item.bookingId);
+      const result = await completeBooking(item.bookingId);
+      if (result && "error" in result) {
+        toast.error(result.error);
+        return;
+      }
       toast.success(`${item.clientName} — retour enregistré`);
     } catch {
       toast.error("Erreur lors de l'enregistrement du retour");

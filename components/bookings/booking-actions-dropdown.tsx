@@ -58,10 +58,17 @@ export function BookingActionsDropdown({
     return paymentStatus === "PENDING" || paymentStatus === "PARTIAL";
   }, [paymentStatus]);
 
-  const handleServerAction = (action: () => Promise<void>, successMessage: string) => {
+  const handleServerAction = (
+    action: () => Promise<void | { success: true } | { error: string }>,
+    successMessage: string
+  ) => {
     startTransition(async () => {
       try {
-        await action();
+        const result = await action();
+        if (result && typeof result === "object" && "error" in result) {
+          toast.error(result.error);
+          return;
+        }
         toast.success(successMessage);
         router.refresh();
       } catch (error) {

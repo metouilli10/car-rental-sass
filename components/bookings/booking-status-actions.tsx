@@ -42,10 +42,17 @@ export function BookingStatusActions({
   const [isLoading, setIsLoading] = useState(false);
   const [additionalDays, setAdditionalDays] = useState(1);
 
-  const handleAction = async (action: () => Promise<void>, successMessage: string) => {
+  const handleAction = async (
+    action: () => Promise<void | { success: true } | { error: string }>,
+    successMessage: string
+  ) => {
     setIsLoading(true);
     try {
-      await action();
+      const result = await action();
+      if (result && typeof result === "object" && "error" in result) {
+        toast.error(result.error);
+        return;
+      }
       toast.success(successMessage);
     } catch (error) {
       console.error(error);

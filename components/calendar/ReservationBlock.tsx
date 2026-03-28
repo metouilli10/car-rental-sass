@@ -71,10 +71,17 @@ export function ReservationBlock({
     [booking.depositAmount],
   );
 
-  const runServerAction = (action: () => Promise<void>, successMessage: string) => {
+  const runServerAction = (
+    action: () => Promise<void | { success: true } | { error: string }>,
+    successMessage: string
+  ) => {
     startTransition(async () => {
       try {
-        await action();
+        const result = await action();
+        if (result && typeof result === "object" && "error" in result) {
+          toast.error(result.error);
+          return;
+        }
         toast.success(successMessage);
         router.refresh();
       } catch (error) {
