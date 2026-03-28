@@ -26,10 +26,17 @@ interface VehiclesListProps {
   vehicles: VehicleListItem[];
   isRentedView: boolean;
   canManageVehicles: boolean;
+  canDeleteVehicles?: boolean;
   statusFilter?: string;
 }
 
-export function VehiclesList({ vehicles, isRentedView, canManageVehicles, statusFilter }: VehiclesListProps) {
+export function VehiclesList({
+  vehicles,
+  isRentedView,
+  canManageVehicles,
+  canDeleteVehicles = false,
+  statusFilter,
+}: VehiclesListProps) {
   const router = useRouter();
   const [rows, setRows] = useState<VehicleListItem[]>(vehicles);
 
@@ -170,6 +177,7 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles, status
                         vehicleId={vehicle.id}
                         vehicleStatus={vehicle.status}
                         canManageVehicles={canManageVehicles}
+                        canDeleteVehicle={canDeleteVehicles}
                         onEdit={handleEdit}
                         onToggleActive={(id, nextStatus) => {
                           if (nextStatus) {
@@ -194,6 +202,9 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles, status
                                 : updated.filter((row) => row.id !== id);
                             });
                           }
+                        }}
+                        onDelete={(id) => {
+                          setRows((prev) => prev.filter((row) => row.id !== id));
                         }}
                       />
                     </td>
@@ -253,6 +264,7 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles, status
                       vehicleId={vehicle.id}
                       vehicleStatus={vehicle.status}
                       canManageVehicles={canManageVehicles}
+                      canDeleteVehicle={canDeleteVehicles}
                       onEdit={handleEdit}
                     onToggleActive={(id, nextStatus) => {
                       if (nextStatus) {
@@ -277,6 +289,9 @@ export function VehiclesList({ vehicles, isRentedView, canManageVehicles, status
                             : updated.filter((row) => row.id !== id);
                         });
                       }
+                    }}
+                    onDelete={(id) => {
+                      setRows((prev) => prev.filter((row) => row.id !== id));
                     }}
                   />
                 </div>

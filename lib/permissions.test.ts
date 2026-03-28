@@ -22,7 +22,9 @@ test("manager default matrix matches expected scope", () => {
   assert.equal(permissions["caisse.view"], false);
   assert.equal(permissions["users.manage"], false);
   assert.equal(permissions["vehicles.manage"], true);
+  assert.equal(permissions["vehicles.delete"], false);
   assert.equal(permissions["customers.delete"], true);
+  assert.equal(permissions["bookings.delete"], false);
 });
 
 test("employee default matrix matches expected scope", () => {
@@ -32,7 +34,9 @@ test("employee default matrix matches expected scope", () => {
   assert.equal(permissions["caisse.view"], false);
   assert.equal(permissions["users.manage"], false);
   assert.equal(permissions["vehicles.manage"], false);
+  assert.equal(permissions["vehicles.delete"], false);
   assert.equal(permissions["customers.manage"], true);
+  assert.equal(permissions["bookings.delete"], false);
 });
 
 test("overrides can allow a denied role default", () => {

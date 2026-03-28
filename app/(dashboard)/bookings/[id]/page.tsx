@@ -118,6 +118,7 @@ export default async function BookingDetailsPage({
         }}
         customer={{ id: booking.customer.id, name: booking.customer.name }}
         canCancel={canDelete(session.user.role)}
+        canDelete={session.user.role === "OWNER"}
         endDateForExtend={booking.endDate}
         pricePerDay={booking.pricePerDay}
       />

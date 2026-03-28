@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUserAccessOrThrow } from "@/lib/authz";
-import { canManageVehicles } from "@/lib/permissions";
+import { canDeleteVehicles, canManageVehicles } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { vehicleSchema, VehicleFormData } from "@/lib/validations/vehicle";
 import {
@@ -267,7 +267,7 @@ export async function setVehicleMaintenance(id: string) {
 export async function deleteVehicle(id: string) {
   const currentUser = await getCurrentUserAccessOrThrow();
 
-  if (!canManageVehicles(currentUser.role, currentUser.permissions)) {
+  if (!canDeleteVehicles(currentUser.role, currentUser.permissions)) {
     return {
       error: "Vous n'avez pas l'autorisation de supprimer un véhicule",
     };
@@ -302,6 +302,9 @@ export async function deleteVehicle(id: string) {
     });
 
     revalidatePath("/vehicles");
+    revalidatePath(`/vehicles/${id}`);
+    revalidatePath("/catalogue");
+    revalidatePath("/dashboard");
   } catch (error) {
     console.error("deleteVehicle error:", error);
     return { error: "Erreur lors de la suppression du véhicule" };

@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarPlus, CarFront, ChevronDown, ClipboardCheck, FilePenLine, ShieldAlert, Wrench } from "lucide-react";
+import { useState } from "react";
+import { CalendarPlus, CarFront, ChevronDown, ClipboardCheck, FilePenLine, ShieldAlert, Wrench, Trash2 } from "lucide-react";
 import { brandLogoSrc } from "@/lib/brands";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatCurrency } from "@/lib/utils";
+import { deleteVehicle } from "@/lib/actions/vehicles";
+import { toast } from "sonner";
 
 interface VehicleProfileHeaderProps {
   vehicle: {
@@ -35,6 +48,7 @@ interface VehicleProfileHeaderProps {
   currentOrNextBookingId: string | null;
   inspectionLabel: string | null;
   canManageVehicle: boolean;
+  canDeleteVehicle?: boolean;
 }
 
 export function VehicleProfileHeader({
@@ -42,10 +56,33 @@ export function VehicleProfileHeader({
   currentOrNextBookingId,
   inspectionLabel,
   canManageVehicle,
+  canDeleteVehicle = false,
 }: VehicleProfileHeaderProps) {
   const router = useRouter();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const logoSrc = brandLogoSrc(vehicle.brandKey);
   const reminderHref = `/vehicles/${vehicle.id}?tab=maintenance&sheet=1`;
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteVehicle(vehicle.id);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Véhicule supprimé");
+      setConfirmDeleteOpen(false);
+      router.push("/vehicles");
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de la suppression du véhicule");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-sm md:p-6">
@@ -160,6 +197,18 @@ export function VehicleProfileHeader({
                 <ShieldAlert className="mr-2 h-4 w-4" />
                 Ajouter infraction
               </DropdownMenuItem>
+              {canDeleteVehicle ? (
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    setConfirmDeleteOpen(true);
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Supprimer
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -167,6 +216,27 @@ export function VehicleProfileHeader({
       {!currentOrNextBookingId && inspectionLabel ? (
         <p className="mt-4 text-sm text-slate-500">{inspectionLabel}</p>
       ) : null}
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le véhicule</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Le véhicule sera supprimé définitivement.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

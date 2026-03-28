@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { canManageVehicles } from "@/lib/permissions";
+import { canDeleteVehicles, canManageVehicles } from "@/lib/permissions";
 import { getCurrentUserAccessForPage } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { Pagination } from "@/components/shared/pagination";
@@ -34,6 +34,10 @@ export default async function VehiclesPage({
   const page = Math.max(1, Number(pageParam) || 1);
   const now = new Date();
   const canManage = canManageVehicles(
+    currentUser.role,
+    currentUser.permissions,
+  );
+  const canDelete = canDeleteVehicles(
     currentUser.role,
     currentUser.permissions,
   );
@@ -291,6 +295,7 @@ export default async function VehiclesPage({
           vehicles={vehicles}
           isRentedView={isRentedView}
           canManageVehicles={canManage}
+          canDeleteVehicles={canDelete}
           statusFilter={statusFilter}
         />
           {totalPages > 1 ? (

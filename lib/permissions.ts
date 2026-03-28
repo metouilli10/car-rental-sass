@@ -29,6 +29,12 @@ export const PERMISSION_CATALOG = [
     group: "operations",
   },
   {
+    key: "bookings.delete",
+    label: "Suppression reservations",
+    description: "Supprimer des reservations",
+    group: "operations",
+  },
+  {
     key: "calendar.view",
     label: "Calendrier",
     description: "Voir le calendrier",
@@ -62,6 +68,12 @@ export const PERMISSION_CATALOG = [
     key: "vehicles.manage",
     label: "Gestion vehicules",
     description: "Creer et modifier les vehicules",
+    group: "operations",
+  },
+  {
+    key: "vehicles.delete",
+    label: "Suppression vehicules",
+    description: "Supprimer des vehicules",
     group: "operations",
   },
   {
@@ -299,4 +311,18 @@ export function canManageVehicles(
   permissions?: UserPermissions | Prisma.JsonValue | null,
 ): boolean {
   return getEffectivePermissions(role, permissions)["vehicles.manage"];
+}
+
+export function canDeleteBookings(
+  role: UserRole,
+  permissions?: UserPermissions | Prisma.JsonValue | null,
+): boolean {
+  return getEffectivePermissions(role, permissions)["bookings.delete"];
+}
+
+export function canDeleteVehicles(
+  role: UserRole,
+  permissions?: UserPermissions | Prisma.JsonValue | null,
+): boolean {
+  return getEffectivePermissions(role, permissions)["vehicles.delete"];
 }

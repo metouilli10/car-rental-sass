@@ -3,7 +3,7 @@ import { ArrowLeft, ClipboardCheck, Info, Wrench } from "lucide-react";
 import Link from "next/link";
 import { getCurrentUserAccessForPage } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
-import { canManageVehicles } from "@/lib/permissions";
+import { canDeleteVehicles, canManageVehicles } from "@/lib/permissions";
 import {
   getVehicleProfile,
   isVehicleProfileTab,
@@ -53,6 +53,10 @@ export default async function VehicleProfilePage({
     currentUser.role,
     currentUser.permissions,
   );
+  const canDeleteVehicle = canDeleteVehicles(
+    currentUser.role,
+    currentUser.permissions,
+  );
 
   const currentOrNextBookingId = profile.currentReservation?.id ?? profile.nextReservation?.id ?? null;
   const inspectionDisabledReason = currentOrNextBookingId
@@ -73,6 +77,7 @@ export default async function VehicleProfilePage({
         currentOrNextBookingId={currentOrNextBookingId}
         inspectionLabel={inspectionDisabledReason}
         canManageVehicle={canManageVehicle}
+        canDeleteVehicle={canDeleteVehicle}
       />
 
       <VehicleSummaryCards data={profile} />

@@ -4,9 +4,11 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { PaymentType } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
+import { getCurrentUserAccessOrThrow } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { bookingSchema, BookingFormData } from "@/lib/validations/booking";
 import { canDelete } from "@/lib/authz";
+import { canDeleteBookings } from "@/lib/permissions";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
 import { createPerfLogger } from "@/lib/perf";
 
@@ -461,6 +463,50 @@ export async function startBooking(bookingId: string) {
 
 export async function completeBooking(bookingId: string) {
   return updateBookingStatus(bookingId, "COMPLETED");
+}
+
+export async function deleteBooking(bookingId: string) {
+  const currentUser = await getCurrentUserAccessOrThrow();
+
+  if (!canDeleteBookings(currentUser.role, currentUser.permissions)) {
+    return { error: "Vous n'avez pas l'autorisation de supprimer une réservation" };
+  }
+
+  try {
+    const booking = await prisma.booking.findFirst({
+      where: {
+        id: bookingId,
+        agencyId: currentUser.agencyId,
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!booking) {
+      return { error: "Réservation non trouvée" };
+    }
+
+    if (booking.status === "ACTIVE") {
+      return { error: "Impossible de supprimer une réservation active" };
+    }
+
+    await prisma.booking.delete({
+      where: { id: bookingId },
+    });
+
+    revalidatePath("/bookings");
+    revalidatePath(`/bookings/${bookingId}`);
+    revalidatePath("/reservations");
+    revalidatePath("/vehicles");
+    revalidatePath("/dashboard");
+
+    return { success: true as const };
+  } catch (error) {
+    console.error("deleteBooking error:", error);
+    return { error: "Erreur lors de la suppression de la réservation" };
+  }
 }
 
 /**

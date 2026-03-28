@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +29,7 @@ import {
   CalendarClock,
   CarFront,
   User2,
+  Trash2,
 } from "lucide-react";
 import { BookingStatusActions } from "@/components/bookings/booking-status-actions";
 import {
@@ -36,7 +37,7 @@ import {
   getReservationTone,
   type ReservationToneVariant,
 } from "@/lib/reservations/presentation";
-import { cancelBooking, extendActiveBooking } from "@/lib/actions/bookings";
+import { cancelBooking, deleteBooking } from "@/lib/actions/bookings";
 import { toast } from "sonner";
 import type { BookingStatus } from "@prisma/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,6 +55,7 @@ export interface ReservationDetailsHeaderProps {
   vehicle: Vehicle;
   customer: Customer;
   canCancel: boolean;
+  canDelete: boolean;
   endDateForExtend?: Date;
   pricePerDay?: number;
 }
@@ -80,11 +82,15 @@ export function ReservationDetailsHeader({
   vehicle,
   customer,
   canCancel,
+  canDelete,
   endDateForExtend,
   pricePerDay,
 }: ReservationDetailsHeaderProps) {
+  const router = useRouter();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { label: statusLabel, variant: statusVariant } = getReservationTone(status);
   const startStr = formatDateFR(startDate);
@@ -106,7 +112,28 @@ export function ReservationDetailsHeader({
     }
   };
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteBooking(bookingId);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Réservation supprimée");
+      setDeleteDialogOpen(false);
+      router.push("/bookings");
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de la suppression");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const isCanceled = status === "CANCELED";
+  const canDeleteThisReservation = canDelete && status !== "ACTIVE";
 
   return (
     <header>
@@ -188,6 +215,18 @@ export function ReservationDetailsHeader({
                       Annuler
                     </DropdownMenuItem>
                   )}
+                  {canDeleteThisReservation ? (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  ) : null}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -211,6 +250,27 @@ export function ReservationDetailsHeader({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Annuler la réservation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer la réservation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. La réservation sera supprimée définitivement.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Retour</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
