@@ -34,10 +34,6 @@ function startOfDayLocal(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-function getDayDistance(a: Date, b: Date): number {
-  return Math.abs(startOfDayLocal(a).getTime() - startOfDayLocal(b).getTime());
-}
-
 function parseDateFromUrl(value: string | null): Date | undefined {
   if (!value) return undefined;
   const d = new Date(value);
@@ -78,63 +74,42 @@ export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
   const [endDate, setEndDate] = useState<Date | undefined>(initialEnd);
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  const handleDateRangeClick = (day: Date) => {
-    const clickedDay = startOfDayLocal(day);
+  const resetDateRange = () => {
+    const today = startOfDayLocal(new Date());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setStartDate(today);
+    setEndDate(tomorrow);
+  };
 
-    if (!startDate && !endDate) {
-      setStartDate(clickedDay);
-      setEndDate(undefined);
+  const handleStartDateSelect = (day: Date | undefined) => {
+    if (!day) return;
+
+    const nextStart = startOfDayLocal(day);
+    setStartDate(nextStart);
+
+    if (!endDate || nextStart.getTime() > startOfDayLocal(endDate).getTime()) {
+      setEndDate(nextStart);
+    }
+  };
+
+  const handleEndDateSelect = (day: Date | undefined) => {
+    if (!day) return;
+
+    const nextEnd = startOfDayLocal(day);
+
+    if (!startDate) {
+      setStartDate(nextEnd);
+      setEndDate(nextEnd);
       return;
     }
 
-    if (startDate && !endDate) {
-      const currentStart = startOfDayLocal(startDate);
-
-      if (clickedDay.getTime() < currentStart.getTime()) {
-        setStartDate(clickedDay);
-        setEndDate(currentStart);
-        return;
-      }
-
-      setEndDate(clickedDay);
+    if (nextEnd.getTime() < startOfDayLocal(startDate).getTime()) {
+      setEndDate(startOfDayLocal(startDate));
       return;
     }
 
-    if (!startDate && endDate) {
-      const currentEnd = startOfDayLocal(endDate);
-
-      if (clickedDay.getTime() <= currentEnd.getTime()) {
-        setStartDate(clickedDay);
-        return;
-      }
-
-      setStartDate(currentEnd);
-      setEndDate(clickedDay);
-      return;
-    }
-
-    const currentStart = startOfDayLocal(startDate!);
-    const currentEnd = startOfDayLocal(endDate!);
-
-    if (clickedDay.getTime() <= currentStart.getTime()) {
-      setStartDate(clickedDay);
-      return;
-    }
-
-    if (clickedDay.getTime() >= currentEnd.getTime()) {
-      setEndDate(clickedDay);
-      return;
-    }
-
-    const distanceToStart = getDayDistance(clickedDay, currentStart);
-    const distanceToEnd = getDayDistance(clickedDay, currentEnd);
-
-    if (distanceToStart <= distanceToEnd) {
-      setStartDate(clickedDay);
-      return;
-    }
-
-    setEndDate(clickedDay);
+    setEndDate(nextEnd);
   };
 
   const updateQueryParams = (updates: Record<string, string | undefined>) => {
@@ -239,30 +214,48 @@ export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => {
-                      const today = startOfDayLocal(new Date());
-                      const tomorrow = new Date(today);
-                      tomorrow.setDate(tomorrow.getDate() + 1);
-                      setStartDate(today);
-                      setEndDate(tomorrow);
-                    }}
+                    onClick={resetDateRange}
                   >
                     Réinitialiser
                   </Button>
                 </div>
-                <div className="flex">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={startDate ?? new Date()}
-                    selected={{
-                      from: startDate ? startOfDayLocal(startDate) : undefined,
-                      to: endDate ? startOfDayLocal(endDate) : undefined,
-                    }}
-                    onDayClick={handleDateRangeClick}
-                    numberOfMonths={2}
-                    locale={fr}
-                  />
+                <div className="grid gap-4 p-3 md:grid-cols-2">
+                  <div className="rounded-xl border bg-muted/20 p-3">
+                    <div className="mb-3">
+                      <p className="text-sm font-medium">Début</p>
+                      <p className="text-xs text-muted-foreground">
+                        {startDate
+                          ? format(startDate, "PPP", { locale: fr })
+                          : "Choisir la date de départ"}
+                      </p>
+                    </div>
+                    <Calendar
+                      initialFocus
+                      mode="single"
+                      month={startDate ?? new Date()}
+                      selected={startDate ? startOfDayLocal(startDate) : undefined}
+                      onSelect={handleStartDateSelect}
+                      locale={fr}
+                    />
+                  </div>
+                  <div className="rounded-xl border bg-muted/20 p-3">
+                    <div className="mb-3">
+                      <p className="text-sm font-medium">Fin</p>
+                      <p className="text-xs text-muted-foreground">
+                        {endDate
+                          ? format(endDate, "PPP", { locale: fr })
+                          : "Choisir la date de retour"}
+                      </p>
+                    </div>
+                    <Calendar
+                      mode="single"
+                      month={endDate ?? startDate ?? new Date()}
+                      selected={endDate ? startOfDayLocal(endDate) : undefined}
+                      onSelect={handleEndDateSelect}
+                      disabled={startDate ? { before: startOfDayLocal(startDate) } : undefined}
+                      locale={fr}
+                    />
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>
