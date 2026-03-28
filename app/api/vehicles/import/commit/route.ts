@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
         await prisma.vehicle.update({
           where: { id: existing.id },
           data: buildVehicleUpdatePayload(normalized),
+          select: { id: true },
         });
         updated += 1;
       } else {
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
             ...buildVehicleCreatePayload(normalized),
             agencyId: currentUser.agencyId,
           },
+          select: { id: true, plate: true },
         });
         existingByPlate.set(normalized.plate, { id: createdVehicle.id, plate: createdVehicle.plate });
         created += 1;

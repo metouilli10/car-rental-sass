@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { bookingSchema, BookingFormData } from "@/lib/validations/booking";
 import { canDelete } from "@/lib/authz";
 import { canDeleteBookings } from "@/lib/permissions";
+import { updateVehicleStatusCompat } from "@/lib/vehicle-fuel-type";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
 import { createPerfLogger } from "@/lib/perf";
 
@@ -433,10 +434,7 @@ export async function updateBookingStatus(
       });
 
       if (status === "ACTIVE") {
-        await tx.vehicle.update({
-          where: { id: booking.vehicleId },
-          data: { status: "RENTED" },
-        });
+        await updateVehicleStatusCompat(tx, booking.vehicleId, "RENTED");
       } else if (status === "COMPLETED" || status === "CANCELED") {
         const vehicle = await tx.vehicle.findUnique({
           where: { id: booking.vehicleId },
@@ -463,10 +461,7 @@ export async function updateBookingStatus(
           nextVehicleStatus = hasAnotherActiveBooking ? "RENTED" : "AVAILABLE";
         }
 
-        await tx.vehicle.update({
-          where: { id: booking.vehicleId },
-          data: { status: nextVehicleStatus },
-        });
+        await updateVehicleStatusCompat(tx, booking.vehicleId, nextVehicleStatus);
       }
     });
 
@@ -556,10 +551,7 @@ export async function deleteBooking(bookingId: string) {
       });
 
       if (!remainingActiveBooking) {
-        await tx.vehicle.update({
-          where: { id: booking.vehicleId },
-          data: { status: "AVAILABLE" },
-        });
+        await updateVehicleStatusCompat(tx, booking.vehicleId, "AVAILABLE");
       }
     });
 

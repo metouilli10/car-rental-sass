@@ -13,7 +13,7 @@ import {
 import { vehicleReminderSchema, type VehicleReminderFormData } from "@/lib/validations/vehicle-reminder";
 import { computeVehicleReminders } from "@/lib/reminders/engine";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
-import { persistVehicleFuelType } from "@/lib/vehicle-fuel-type";
+import { persistVehicleFuelType, updateVehicleStatusCompat } from "@/lib/vehicle-fuel-type";
 import { buildVehiclePayload } from "@/lib/vehicles/payload";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -41,6 +41,7 @@ export async function createVehicle(data: VehicleFormData) {
     // Check if plate already exists
     const existingVehicle = await prisma.vehicle.findUnique({
       where: { plate: validatedData.plate },
+      select: { id: true },
     });
 
     if (existingVehicle) {
@@ -79,6 +80,7 @@ export async function createVehicle(data: VehicleFormData) {
         }),
         agencyId: currentUser.agencyId,
       },
+      select: { id: true },
     });
 
     vehicleId = vehicle.id;
@@ -135,6 +137,7 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
     if (validatedData.plate !== vehicle.plate) {
       const existingVehicle = await prisma.vehicle.findUnique({
         where: { plate: validatedData.plate },
+        select: { id: true },
       });
 
       if (existingVehicle && existingVehicle.id !== id) {
@@ -175,6 +178,7 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
         }),
         mileage: validatedData.mileage ?? vehicle.mileage,
       },
+      select: { id: true },
     });
     await persistVehicleFuelType(id, validatedData.fuelType);
 
@@ -215,10 +219,7 @@ export async function deactivateVehicle(id: string) {
 
     const newStatus = vehicle.status === "AVAILABLE" ? "UNAVAILABLE" : "AVAILABLE";
 
-    await prisma.vehicle.update({
-      where: { id },
-      data: { status: newStatus },
-    });
+    await updateVehicleStatusCompat(prisma, id, newStatus);
 
     revalidatePath("/vehicles");
     revalidatePath("/catalogue");
@@ -250,10 +251,7 @@ export async function setVehicleMaintenance(id: string) {
       return { error: "Le véhicule est déjà en maintenance" };
     }
 
-    await prisma.vehicle.update({
-      where: { id },
-      data: { status: "MAINTENANCE" },
-    });
+    await updateVehicleStatusCompat(prisma, id, "MAINTENANCE");
 
     revalidatePath("/vehicles");
     revalidatePath("/catalogue");
@@ -342,6 +340,7 @@ export async function updateVehicleReminderFields(
         vignetteExpiryDate: toDateOrNull(validated.vignetteExpiryDate),
         maintenanceNotes: validated.maintenanceNotes?.trim() || null,
       },
+      select: { id: true },
     });
 
     try {
@@ -448,6 +447,7 @@ export async function upsertVehicleDocument(
       await prisma.vehicle.update({
         where: { id },
         data: vehicleUpdateData,
+        select: { id: true },
       });
     }
 

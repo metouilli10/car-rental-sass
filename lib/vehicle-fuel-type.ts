@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import type { VehicleStatus } from "@prisma/client";
 
 export type VehicleFuelType = "DIESEL" | "ESSENCE" | "HYBRID" | "ELECTRIC";
+type RawExecutor = Pick<typeof prisma, "$executeRaw" | "$executeRawUnsafe">;
 
 let cachedHasFuelTypeColumn: boolean | null = null;
 
@@ -46,4 +48,25 @@ export async function persistVehicleFuelType(vehicleId: string, fuelType: Vehicl
     SET "fuelType" = CAST(${fuelType} AS "FuelType")
     WHERE id = ${vehicleId}
   `;
+}
+
+export async function updateVehicleStatusCompat(
+  executor: RawExecutor,
+  vehicleId: string,
+  status: VehicleStatus,
+) {
+  if (await hasVehicleFuelTypeColumn()) {
+    await executor.$executeRaw`
+      UPDATE "vehicles"
+      SET "status" = CAST(${status} AS "VehicleStatus")
+      WHERE id = ${vehicleId}
+    `;
+    return;
+  }
+
+  await executor.$executeRawUnsafe(
+    'UPDATE "vehicles" SET "status" = $1::"VehicleStatus" WHERE id = $2',
+    status,
+    vehicleId,
+  );
 }
