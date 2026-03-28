@@ -34,6 +34,10 @@ function startOfDayLocal(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
+function getDayDistance(a: Date, b: Date): number {
+  return Math.abs(startOfDayLocal(a).getTime() - startOfDayLocal(b).getTime());
+}
+
 function parseDateFromUrl(value: string | null): Date | undefined {
   if (!value) return undefined;
   const d = new Date(value);
@@ -73,6 +77,65 @@ export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
   const [startDate, setStartDate] = useState<Date | undefined>(initialStart);
   const [endDate, setEndDate] = useState<Date | undefined>(initialEnd);
   const [view, setView] = useState<"grid" | "list">("grid");
+
+  const handleDateRangeClick = (day: Date) => {
+    const clickedDay = startOfDayLocal(day);
+
+    if (!startDate && !endDate) {
+      setStartDate(clickedDay);
+      setEndDate(undefined);
+      return;
+    }
+
+    if (startDate && !endDate) {
+      const currentStart = startOfDayLocal(startDate);
+
+      if (clickedDay.getTime() < currentStart.getTime()) {
+        setStartDate(clickedDay);
+        setEndDate(currentStart);
+        return;
+      }
+
+      setEndDate(clickedDay);
+      return;
+    }
+
+    if (!startDate && endDate) {
+      const currentEnd = startOfDayLocal(endDate);
+
+      if (clickedDay.getTime() <= currentEnd.getTime()) {
+        setStartDate(clickedDay);
+        return;
+      }
+
+      setStartDate(currentEnd);
+      setEndDate(clickedDay);
+      return;
+    }
+
+    const currentStart = startOfDayLocal(startDate!);
+    const currentEnd = startOfDayLocal(endDate!);
+
+    if (clickedDay.getTime() <= currentStart.getTime()) {
+      setStartDate(clickedDay);
+      return;
+    }
+
+    if (clickedDay.getTime() >= currentEnd.getTime()) {
+      setEndDate(clickedDay);
+      return;
+    }
+
+    const distanceToStart = getDayDistance(clickedDay, currentStart);
+    const distanceToEnd = getDayDistance(clickedDay, currentEnd);
+
+    if (distanceToStart <= distanceToEnd) {
+      setStartDate(clickedDay);
+      return;
+    }
+
+    setEndDate(clickedDay);
+  };
 
   const updateQueryParams = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -196,10 +259,7 @@ export function CatalogueFilters({ categories }: CatalogueFiltersProps) {
                       from: startDate ? startOfDayLocal(startDate) : undefined,
                       to: endDate ? startOfDayLocal(endDate) : undefined,
                     }}
-                    onSelect={(range) => {
-                      setStartDate(range?.from ? startOfDayLocal(range.from) : undefined);
-                      setEndDate(range?.to ? startOfDayLocal(range.to) : undefined);
-                    }}
+                    onDayClick={handleDateRangeClick}
                     numberOfMonths={2}
                     locale={fr}
                   />
