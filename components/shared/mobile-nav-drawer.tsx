@@ -96,7 +96,7 @@ export function MobileNavDrawer({
           <Menu className="h-4 w-4" />
         </button>
       </SheetTrigger>
-      <SheetContent side="left" hideCloseButton className="w-[86vw] max-w-[360px] border-r border-slate-200 bg-white p-0 md:hidden">
+      <SheetContent side="left" hideCloseButton className="w-[86vw] max-w-[360px] border-r border-slate-200 bg-white p-0 pt-safe-top pb-safe-bottom md:hidden">
         <SheetTitle className="sr-only">Navigation</SheetTitle>
         <SheetDescription className="sr-only">
           Navigation mobile vers les modules Locaryx.

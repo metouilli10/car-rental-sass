@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { PwaBootstrap } from "@/components/pwa/PwaBootstrap";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,10 +20,20 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Locaryx — Votre agence, sous contrôle",
   description: "Système de gestion professionnel pour agences de location de voitures",
+  applicationName: "Locaryx",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Locaryx",
+    statusBarStyle: "default",
+  },
   icons: {
-    icon: "/assets/locaryx-icon-dark.png",
-    shortcut: "/assets/locaryx-icon-dark.png",
-    apple: "/assets/locaryx-icon-dark.png",
+    icon: [
+      { url: "/pwa/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/pwa/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/pwa/icon-192.png",
+    apple: [{ url: "/pwa/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 
@@ -30,6 +41,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#002e5d",
 };
 
 export default function RootLayout({
@@ -44,6 +57,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="antialiased" suppressHydrationWarning>
+        <PwaBootstrap />
         {children}
       </body>
     </html>

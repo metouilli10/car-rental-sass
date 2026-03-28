@@ -14,6 +14,7 @@ import {
   isAgencyEligibleForGuidedOnboarding,
 } from "@/lib/onboarding/agency-onboarding";
 import { authOptions } from "@/lib/auth";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 
 export const runtime = "nodejs";
 
@@ -136,7 +137,7 @@ export default async function DashboardLayout({
   );
 
   return (
-    <div className="flex min-h-screen bg-[hsl(var(--background))]" suppressHydrationWarning>
+    <div className="dashboard-app-shell flex min-h-dvh-screen bg-[hsl(var(--background))]" suppressHydrationWarning>
       {/* Collapsible Sidebar */}
       <Sidebar
         agencyName={displayAgencyName}
@@ -148,7 +149,7 @@ export default async function DashboardLayout({
       <Toaster richColors position="top-right" />
 
       {/* Right side — TopNav + Content */}
-      <div className="flex min-w-0 flex-1 flex-col bg-transparent" suppressHydrationWarning>
+      <div className="flex min-w-0 flex-1 flex-col bg-transparent pb-safe-bottom" suppressHydrationWarning>
         <TopNavBar
           userName={membership.name || session?.user?.name || "Utilisateur"}
           userEmail={currentUser.email}
@@ -169,6 +170,8 @@ export default async function DashboardLayout({
           </div>
         </main>
       </div>
+
+      <InstallPrompt />
     </div>
   );
 }

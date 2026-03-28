@@ -122,7 +122,7 @@ export function TopNavBar({
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between border-b border-subtle bg-white/90 px-4 backdrop-blur-sm sm:px-6">
+      <header className="sticky top-0 z-40 flex min-h-[calc(3.5rem+env(safe-area-inset-top,0px))] shrink-0 items-center justify-between border-b border-subtle bg-white/90 px-4 pt-safe-top backdrop-blur-sm sm:px-6">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 md:hidden">
             <MobileNavDrawer
@@ -178,7 +178,7 @@ export function TopNavBar({
 
             {/* Notification Dropdown */}
             {notifOpen && (
-              <div className="fixed left-4 right-4 top-[4.5rem] z-50 w-auto max-w-none overflow-hidden rounded-2xl border border-border bg-popover shadow-card-lg animate-scale-in origin-top-right sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 sm:max-w-sm">
+              <div className="fixed left-4 right-4 top-[calc(4.5rem+env(safe-area-inset-top,0px))] z-50 w-auto max-w-none origin-top-right overflow-hidden rounded-2xl border border-border bg-popover shadow-card-lg animate-scale-in sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 sm:max-w-sm">
                 <div className="flex items-center justify-between border-b border-border px-5 py-4">
                   <h3 className="text-sm font-semibold text-foreground">
                     Rappels &amp; alertes

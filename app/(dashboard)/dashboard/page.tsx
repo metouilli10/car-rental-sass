@@ -52,7 +52,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   if (!dashboard) {
     return (
-      <div className="-mx-4 -my-4 min-h-screen dashboard-shell pb-24 sm:-mx-6 sm:-my-6 md:pb-0 lg:-mx-8">
+      <div className="-mx-4 -my-4 min-h-dvh-screen dashboard-shell pb-24 sm:-mx-6 sm:-my-6 md:pb-0 lg:-mx-8">
         <div className="mx-auto max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-section">
             <DashboardHeaderV3
@@ -92,7 +92,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   return (
-    <div className="-mx-4 -my-4 min-h-screen dashboard-shell pb-24 sm:-mx-6 sm:-my-6 md:pb-0 lg:-mx-8">
+    <div className="-mx-4 -my-4 min-h-dvh-screen dashboard-shell pb-24 sm:-mx-6 sm:-my-6 md:pb-0 lg:-mx-8">
       <div className="mx-auto max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-section">
           <DashboardPeriodShell

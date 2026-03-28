@@ -1,5 +1,8 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isDevLike = process.env.NODE_ENV !== "production";
 const scriptSrc = [
   "'self'",
@@ -30,6 +33,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: __dirname,
+
   // Exclude playwright from server-side bundling
   serverExternalPackages: ['playwright'],
 
