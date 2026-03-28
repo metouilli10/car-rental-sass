@@ -141,14 +141,8 @@ export function ReservationWizardPage({
     return vehicles.map((vehicle) => {
       let tone: "green" | "red" | "yellow" = "green";
       let label = "Disponible";
-
-      if (vehicle.status === "MAINTENANCE" || vehicle.status === "UNAVAILABLE") {
-        tone = "yellow";
-        label = "En maintenance";
-      } else if (vehicle.status === "RENTED") {
-        tone = "red";
-        label = "Loué";
-      }
+      const isBlockedByStatus =
+        vehicle.status === "MAINTENANCE" || vehicle.status === "UNAVAILABLE";
 
       if (hasValidRange) {
         const overlap = activeBookings.some((booking) => {
@@ -157,10 +151,23 @@ export function ReservationWizardPage({
           const bookingEnd = new Date(booking.endDate);
           return start < bookingEnd && end > bookingStart;
         });
-        if (overlap) {
+
+        if (isBlockedByStatus) {
+          tone = "yellow";
+          label = vehicle.status === "MAINTENANCE" ? "En maintenance" : "Indisponible";
+        } else if (overlap) {
           tone = "red";
           label = "Loué sur ces dates";
+        } else if (vehicle.status === "RENTED") {
+          tone = "green";
+          label = "Libre sur ces dates";
         }
+      } else if (isBlockedByStatus) {
+        tone = "yellow";
+        label = vehicle.status === "MAINTENANCE" ? "En maintenance" : "Indisponible";
+      } else if (vehicle.status === "RENTED") {
+        tone = "red";
+        label = "Sélectionnez des dates pour vérifier la disponibilité";
       }
 
       return {

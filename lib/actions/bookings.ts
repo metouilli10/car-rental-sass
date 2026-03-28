@@ -481,6 +481,7 @@ export async function deleteBooking(bookingId: string) {
       select: {
         id: true,
         status: true,
+        vehicleId: true,
       },
     });
 
@@ -492,8 +493,41 @@ export async function deleteBooking(bookingId: string) {
       return { error: "Impossible de supprimer une réservation active" };
     }
 
-    await prisma.booking.delete({
-      where: { id: bookingId },
+    await prisma.$transaction(async (tx) => {
+      await tx.booking.delete({
+        where: { id: bookingId },
+      });
+
+      const vehicle = await tx.vehicle.findFirst({
+        where: {
+          id: booking.vehicleId,
+          agencyId: currentUser.agencyId,
+        },
+        select: {
+          id: true,
+          status: true,
+        },
+      });
+
+      if (!vehicle || vehicle.status !== "RENTED") {
+        return;
+      }
+
+      const remainingActiveBooking = await tx.booking.findFirst({
+        where: {
+          agencyId: currentUser.agencyId,
+          vehicleId: booking.vehicleId,
+          status: "ACTIVE",
+        },
+        select: { id: true },
+      });
+
+      if (!remainingActiveBooking) {
+        await tx.vehicle.update({
+          where: { id: booking.vehicleId },
+          data: { status: "AVAILABLE" },
+        });
+      }
     });
 
     revalidatePath("/bookings");
@@ -501,6 +535,7 @@ export async function deleteBooking(bookingId: string) {
     revalidatePath("/reservations");
     revalidatePath("/vehicles");
     revalidatePath("/dashboard");
+    revalidatePath("/catalogue");
 
     return { success: true as const };
   } catch (error) {
