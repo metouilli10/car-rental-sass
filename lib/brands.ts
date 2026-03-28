@@ -58,10 +58,19 @@ export function brandKeyFromMake(make: string): string {
   return KNOWN_BRAND_KEYS.has(normalizedMake) ? normalizedMake : "other";
 }
 
-export function brandLogoSrc(brandKey: string): string {
-  if (brandKey === "other" || !KNOWN_BRAND_KEYS.has(brandKey)) {
-    return "/brands/generic-car.svg";
+export function brandLogoSrc(brandKey: string, make?: string): string {
+  const normalizedBrandKey = brandKey?.trim().toLowerCase();
+
+  if (normalizedBrandKey && normalizedBrandKey !== "other" && KNOWN_BRAND_KEYS.has(normalizedBrandKey)) {
+    return `/brands/${normalizedBrandKey}.svg`;
   }
 
-  return `/brands/${brandKey}.svg`;
+  if (make) {
+    const fallbackBrandKey = brandKeyFromMake(make);
+    if (fallbackBrandKey !== "other" && KNOWN_BRAND_KEYS.has(fallbackBrandKey)) {
+      return `/brands/${fallbackBrandKey}.svg`;
+    }
+  }
+
+  return "/brands/generic-car.svg";
 }

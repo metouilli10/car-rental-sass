@@ -25,4 +25,5 @@ test("brandLogoSrc resolves known and fallback assets", () => {
   assert.equal(brandLogoSrc("porsche"), "/brands/porsche.svg");
   assert.equal(brandLogoSrc("other"), "/brands/generic-car.svg");
   assert.equal(brandLogoSrc("unknown"), "/brands/generic-car.svg");
+  assert.equal(brandLogoSrc("other", "porshe"), "/brands/porsche.svg");
 });

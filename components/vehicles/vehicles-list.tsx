@@ -96,7 +96,7 @@ export function VehiclesList({
             </thead>
             <tbody className="divide-y divide-gray-50">
               {rows.map((vehicle) => {
-                const logoSrc = brandLogoSrc(vehicle.brandKey);
+                const logoSrc = brandLogoSrc(vehicle.brandKey, vehicle.make);
                 const activeBooking = vehicle.bookings?.[0];
 
                 return (
@@ -217,7 +217,7 @@ export function VehiclesList({
 
         <div className="divide-y divide-border sm:hidden">
           {rows.map((vehicle) => {
-            const logoSrc = brandLogoSrc(vehicle.brandKey);
+            const logoSrc = brandLogoSrc(vehicle.brandKey, vehicle.make);
             return (
               <div
                 key={vehicle.id}

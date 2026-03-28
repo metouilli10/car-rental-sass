@@ -61,7 +61,7 @@ export function VehicleProfileHeader({
   const router = useRouter();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const logoSrc = brandLogoSrc(vehicle.brandKey);
+  const logoSrc = brandLogoSrc(vehicle.brandKey, vehicle.make);
   const reminderHref = `/vehicles/${vehicle.id}?tab=maintenance&sheet=1`;
 
   const handleDelete = async () => {
