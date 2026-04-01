@@ -33,6 +33,7 @@ import { VehicleSelect } from "@/components/bookings/vehicle-select";
 import { ClientSelect } from "@/components/bookings/client-select";
 import { PricingEditor } from "@/components/bookings/pricing-editor";
 import { PaymentSection } from "@/components/bookings/payment-section";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 import { StickySummary } from "@/components/bookings/sticky-summary";
 import type {
   ActiveBookingSlot,
@@ -102,6 +103,7 @@ export function ReservationCreatePage({
   submitLabel,
   showDraft = true,
 }: ReservationCreatePageProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [customers, setCustomers] = useState(initialCustomers);
   const [addons, setAddons] = useState<BookingFormData["addons"]>(
@@ -270,9 +272,9 @@ export function ReservationCreatePage({
         toast.success("Réservation mise à jour");
         setTimeout(() => {
           if (result && "bookingId" in result) {
-            router.push(`/bookings/${result.bookingId}`);
+            router.push(lp(`/bookings/${result.bookingId}`));
           } else {
-            router.push("/bookings");
+            router.push(lp("/bookings"));
           }
         }, 500);
       } else {
@@ -282,10 +284,10 @@ export function ReservationCreatePage({
         });
         setTimeout(() => {
           if (result && "bookingId" in result) {
-            router.push(`/bookings/${result.bookingId}`);
+            router.push(lp(`/bookings/${result.bookingId}`));
             return;
           }
-          router.push("/bookings");
+          router.push(lp("/bookings"));
         }, 900);
       }
     } catch {

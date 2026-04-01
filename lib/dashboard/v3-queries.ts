@@ -3,15 +3,17 @@ import type { BookingStatus, DepositStatus, NotificationSeverity, VehicleStatus 
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { computeBookingDue, computeOutstanding } from "./rules";
-import { resolveDashboardV3Period, type DashboardV3PeriodInput } from "./ranges";
+import { resolveDashboardV3Period, type DashboardV3PeriodInput, type DashboardV3Period } from "./ranges";
 import type {
   DashboardV3ActiveBookingsDTO,
   DashboardV3CollectionsSheetDTO,
   DashboardV3DTO,
   DashboardV3DueDepositsSheetDTO,
   DashboardV3LateReturnsSheetDTO,
-  DashboardV3Period,
 } from "./types";
+import type { AppLocale } from "@/lib/i18n/config";
+import type { Messages } from "@/lib/i18n/messages";
+import { getMessages, interpolate, messageAt } from "@/lib/i18n/messages";
 import {
   buildActiveBookingTabs,
   computeAverageDailyOccupancyFallback,
@@ -48,6 +50,95 @@ function logPerf(step: string, startedAt: number, metadata?: Record<string, unkn
 
 function isIncrementalCacheMissing(error: unknown): boolean {
   return error instanceof Error && error.message.includes("incrementalCache missing");
+}
+
+function dTxt(ui: Messages, path: string, vars?: Record<string, string | number>): string {
+  const raw = messageAt(ui, path);
+  return vars ? interpolate(raw, vars) : raw;
+}
+
+function periodUiLabel(ui: Messages, key: DashboardV3Period): string {
+  switch (key) {
+    case "today":
+      return messageAt(ui, "dashboard.periodTabs.today");
+    case "7d":
+      return messageAt(ui, "dashboard.periodTabs.sevenDays");
+    case "month":
+      return messageAt(ui, "dashboard.periodTabs.thisMonth");
+    default:
+      return messageAt(ui, "dashboard.periodTabs.custom");
+  }
+}
+
+function buildLocalizedPulse(
+  ui: Messages,
+  args: {
+    netAmount: number;
+    earnedIn: number;
+    earnedOut: number;
+    toCollectAmount: number;
+    toCollectCount: number;
+    overdueCollectionsCount: number;
+    occupancyRate: number;
+    rented: number;
+    totalActive: number;
+    depositDueAmountTotal: number;
+    depositDueCount: number;
+    overdueDepositCount: number;
+    lateReturnCount: number;
+    riskExposure: number;
+  }
+): DashboardV3DTO["pulse"] {
+  return {
+    net: {
+      amount: Math.round(args.netAmount * 100) / 100,
+      subtitle: dTxt(ui, "dashboard.pulseSubtitles.net", {
+        in: formatCurrency(args.earnedIn),
+        out: formatCurrency(args.earnedOut),
+      }),
+    },
+    toCollect: {
+      amount: Math.round(args.toCollectAmount * 100) / 100,
+      bookingCount: args.toCollectCount,
+      overdueCount: args.overdueCollectionsCount,
+      subtitle: dTxt(ui, "dashboard.pulseSubtitles.toCollect", {
+        count: args.toCollectCount,
+        overdue: args.overdueCollectionsCount,
+      }),
+    },
+    occupancy: {
+      rate: args.occupancyRate,
+      rented: args.rented,
+      total: args.totalActive,
+      subtitle: dTxt(ui, "dashboard.pulseSubtitles.occupancy", {
+        rented: args.rented,
+        total: args.totalActive,
+      }),
+    },
+    deposits: {
+      amount: Math.round(args.depositDueAmountTotal * 100) / 100,
+      count: args.depositDueCount,
+      overdueCount: args.overdueDepositCount,
+      subtitle: dTxt(ui, "dashboard.pulseSubtitles.deposits", {
+        count: args.depositDueCount,
+        overdue: args.overdueDepositCount,
+      }),
+    },
+    risks: {
+      count: args.toCollectCount + args.depositDueCount + args.lateReturnCount,
+      exposureAmount: Math.round(args.riskExposure * 100) / 100,
+      breakdown: {
+        unpaidCount: args.toCollectCount,
+        depositDueCount: args.depositDueCount,
+        lateReturnCount: args.lateReturnCount,
+      },
+      subtitle: dTxt(ui, "dashboard.pulseSubtitles.risks", {
+        unpaid: args.toCollectCount,
+        depositDue: args.depositDueCount,
+        late: args.lateReturnCount,
+      }),
+    },
+  };
 }
 
 function buildPeriodQuery(input: {
@@ -275,7 +366,9 @@ export function buildActiveBookingsDTOFromLiveData(input: {
 export function buildCollectionsSheetDTO(input: {
   liveBookings: DashboardLiveData["liveBookings"];
   now: Date;
+  locale?: AppLocale;
 }): DashboardV3CollectionsSheetDTO {
+  const ui = getMessages(input.locale ?? "fr");
   const items = sortCollectionItems(
     input.liveBookings
       .map((booking) => {
@@ -286,6 +379,7 @@ export function buildCollectionsSheetDTO(input: {
         const isOverdue = isCollectionOverdue(booking, outstanding, input.now);
         const customerName = booking.customer.name;
         const vehicleLabel = `${booking.vehicle.make} ${booking.vehicle.model}`;
+        const dt = formatDateTime(dueDate);
 
         return {
           id: booking.id,
@@ -295,13 +389,13 @@ export function buildCollectionsSheetDTO(input: {
           plate: booking.vehicle.plate,
           amount: outstanding,
           dueLabel: isOverdue
-            ? `En retard depuis ${formatDateTime(dueDate)}`
-            : `A encaisser avant ${formatDateTime(dueDate)}`,
+            ? dTxt(ui, "dashboard.dueLines.collectionOverdue", { datetime: dt })
+            : dTxt(ui, "dashboard.dueLines.collectionBefore", { datetime: dt }),
           isOverdue,
           primaryHref: `/bookings/${booking.id}`,
           label: `${customerName} - ${vehicleLabel}`,
           sublabel: booking.vehicle.plate,
-          primaryAction: "Encaisser",
+          primaryAction: dTxt(ui, "dashboard.rowActions.collect"),
           actionType: "collection" as const,
         };
       })
@@ -329,7 +423,9 @@ export function buildCollectionsSheetDTO(input: {
 export function buildDueDepositsSheetDTO(input: {
   deposits: DashboardLiveData["deposits"];
   now: Date;
+  locale?: AppLocale;
 }): DashboardV3DueDepositsSheetDTO {
+  const ui = getMessages(input.locale ?? "fr");
   const items = sortDepositItems(
     input.deposits
       .filter((deposit) => isDepositReleaseDue(deposit, deposit.booking, input.now))
@@ -338,6 +434,8 @@ export function buildDueDepositsSheetDTO(input: {
         const isOverdue = dueDate.getTime() < input.now.getTime();
         const customerName = deposit.booking.customer.name;
         const vehicleLabel = `${deposit.booking.vehicle.make} ${deposit.booking.vehicle.model}`;
+        const plate = deposit.booking.vehicle.plate;
+        const dt = formatDateTime(dueDate);
 
         return {
           id: deposit.id,
@@ -345,16 +443,16 @@ export function buildDueDepositsSheetDTO(input: {
           bookingId: deposit.bookingId,
           customerName,
           vehicleLabel,
-          plate: deposit.booking.vehicle.plate,
+          plate,
           amount: deposit.amount,
           dueLabel: isOverdue
-            ? `En retard depuis ${formatDateTime(dueDate)}`
-            : `A liberer le ${formatDateTime(dueDate)}`,
+            ? dTxt(ui, "dashboard.dueLines.depositOverdue", { datetime: dt })
+            : dTxt(ui, "dashboard.dueLines.depositReleaseOn", { datetime: dt }),
           isOverdue,
           primaryHref: `/bookings/${deposit.bookingId}`,
           label: `${customerName} - ${vehicleLabel}`,
-          sublabel: `${deposit.booking.vehicle.plate} - caution en attente`,
-          primaryAction: "Liberer",
+          sublabel: dTxt(ui, "dashboard.dueLines.depositPendingSublabel", { plate }),
+          primaryAction: dTxt(ui, "dashboard.rowActions.release"),
           actionType: "deposit_release" as const,
         };
       })
@@ -381,7 +479,9 @@ export function buildDueDepositsSheetDTO(input: {
 export function buildLateReturnsSheetDTO(input: {
   liveBookings: DashboardLiveData["liveBookings"];
   now: Date;
+  locale?: AppLocale;
 }): DashboardV3LateReturnsSheetDTO {
+  const ui = getMessages(input.locale ?? "fr");
   const items = input.liveBookings
     .filter((booking) => booking.endDate.getTime() < input.now.getTime())
     .map((booking) => {
@@ -395,7 +495,9 @@ export function buildLateReturnsSheetDTO(input: {
         customerName,
         vehicleLabel,
         plate: booking.vehicle.plate,
-        dueLabel: `Retour en retard depuis ${formatDateTime(booking.endDate)}`,
+        dueLabel: dTxt(ui, "dashboard.dueLines.lateReturnSince", {
+          datetime: formatDateTime(booking.endDate),
+        }),
         isOverdue: true,
         amount: outstanding > 0 ? outstanding : undefined,
         primaryHref: `/bookings/${booking.id}`,
@@ -711,7 +813,10 @@ async function getDashboardPeriodDataUncached(input: {
 async function getDashboardDataV3Uncached(input: {
   agencyId: string;
   periodInput: DashboardV3PeriodInput;
+  locale?: AppLocale;
 }): Promise<DashboardV3DTO> {
+  const locale = input.locale ?? "fr";
+  const ui = getMessages(locale);
   const startedAt = Date.now();
   const now = new Date();
   const [liveData, periodData] = await Promise.all([
@@ -788,10 +893,10 @@ async function getDashboardDataV3Uncached(input: {
       plate,
       amount: deposit.amount,
       label: `${customerName} - ${vehicleLabel}`,
-      sublabel: `${plate} - caution en attente`,
+      sublabel: dTxt(ui, "dashboard.dueLines.depositPendingSublabel", { plate }),
       dueLabel: isOverdue
-        ? `En retard depuis ${formatDateTime(dueDate)}`
-        : `A liberer le ${formatDateTime(dueDate)}`,
+        ? dTxt(ui, "dashboard.dueLines.depositOverdue", { datetime: formatDateTime(dueDate) })
+        : dTxt(ui, "dashboard.dueLines.depositReleaseOn", { datetime: formatDateTime(dueDate) }),
       isOverdue,
       depositId: deposit.id,
       primaryHref: `/bookings/${deposit.bookingId}`,
@@ -876,8 +981,8 @@ async function getDashboardDataV3Uncached(input: {
         label: `${customerName} - ${vehicleLabel}`,
         sublabel: plate,
         dueLabel: overdue
-          ? `En retard depuis ${formatDateTime(dueDate)}`
-          : `A encaisser avant ${formatDateTime(dueDate)}`,
+          ? dTxt(ui, "dashboard.dueLines.collectionOverdue", { datetime: formatDateTime(dueDate) })
+          : dTxt(ui, "dashboard.dueLines.collectionBefore", { datetime: formatDateTime(dueDate) }),
         isOverdue: overdue,
         bookingId: booking.id,
         primaryHref: `/bookings/${booking.id}`,
@@ -892,7 +997,9 @@ async function getDashboardDataV3Uncached(input: {
         amount: outstanding > 0 ? outstanding : undefined,
         label: `${booking.customer.name} - ${booking.vehicle.make} ${booking.vehicle.model}`,
         sublabel: booking.vehicle.plate,
-        dueLabel: `Retour en retard depuis ${formatDateTime(booking.endDate)}`,
+        dueLabel: dTxt(ui, "dashboard.dueLines.lateReturnSince", {
+          datetime: formatDateTime(booking.endDate),
+        }),
         isOverdue: true,
         primaryHref: `/bookings/${booking.id}`,
       });
@@ -926,8 +1033,12 @@ async function getDashboardDataV3Uncached(input: {
       id: notification.id,
       label: `${notification.vehicle.make} ${notification.vehicle.model}`,
       sublabel: `${notification.title} - ${notification.vehicle.plate}`,
-      dueLabel: notification.dueAt ? `Echeance ${formatDateTime(notification.dueAt)}` : undefined,
-      primaryAction: "Voir",
+      dueLabel: notification.dueAt
+        ? dTxt(ui, "dashboard.dueLines.notificationDue", {
+            datetime: formatDateTime(notification.dueAt),
+          })
+        : undefined,
+      primaryAction: dTxt(ui, "dashboard.rowActions.view"),
       primaryHref: `/notifications?filter=urgent`,
       actionType: "link" as const,
       severityRank: getSeverityRank(notification.severity),
@@ -939,13 +1050,14 @@ async function getDashboardDataV3Uncached(input: {
     depositDueAmountTotal,
   });
 
+  const seeAll = dTxt(ui, "dashboard.actionCenter.seeAll");
   const actionGroups = [
     {
       id: "collections" as const,
-      title: "A encaisser",
+      title: dTxt(ui, "dashboard.groupTitles.collections"),
       count: collectionItems.length,
       totalAmount: toCollectAmount,
-      ctaLabel: "Voir tout",
+      ctaLabel: seeAll,
       ctaHref: `/bookings?filter=unpaid&${periodQuery}`,
       items: sortCollectionItems(
         collectionItems.map((item) => ({
@@ -955,7 +1067,7 @@ async function getDashboardDataV3Uncached(input: {
           amount: item.amount,
           dueLabel: item.dueLabel,
           isOverdue: item.isOverdue,
-          primaryAction: "Encaisser",
+          primaryAction: dTxt(ui, "dashboard.rowActions.collect"),
           primaryHref: item.primaryHref,
           actionType: "collection" as const,
           bookingId: item.bookingId,
@@ -967,10 +1079,10 @@ async function getDashboardDataV3Uncached(input: {
     },
     {
       id: "deposits" as const,
-      title: "Cautions a rendre",
+      title: dTxt(ui, "dashboard.groupTitles.deposits"),
       count: depositDueItems.length,
       totalAmount: depositDueAmountTotal,
-      ctaLabel: "Voir tout",
+      ctaLabel: seeAll,
       ctaHref: `/finance?${periodQuery}`,
       items: sortDepositItems(
         depositDueItems.map((item) => ({
@@ -980,7 +1092,7 @@ async function getDashboardDataV3Uncached(input: {
           amount: item.amount,
           dueLabel: item.dueLabel,
           isOverdue: item.isOverdue,
-          primaryAction: "Liberer",
+          primaryAction: dTxt(ui, "dashboard.rowActions.release"),
           primaryHref: item.primaryHref,
           actionType: "deposit_release" as const,
           depositId: item.depositId,
@@ -992,9 +1104,9 @@ async function getDashboardDataV3Uncached(input: {
     },
     {
       id: "late_returns" as const,
-      title: "Retours en retard",
+      title: dTxt(ui, "dashboard.groupTitles.lateReturns"),
       count: lateReturnItems.length,
-      ctaLabel: "Voir tout",
+      ctaLabel: seeAll,
       ctaHref: `/bookings?filter=late&${periodQuery}`,
       items: sortLateReturnItems(
         lateReturnItems.map((item) => ({
@@ -1004,7 +1116,7 @@ async function getDashboardDataV3Uncached(input: {
           amount: item.amount,
           dueLabel: item.dueLabel,
           isOverdue: item.isOverdue,
-          primaryAction: "Voir dossier",
+          primaryAction: dTxt(ui, "dashboard.rowActions.viewBooking"),
           primaryHref: item.primaryHref,
           actionType: "link" as const,
         }))
@@ -1012,16 +1124,16 @@ async function getDashboardDataV3Uncached(input: {
     },
     {
       id: "notifications" as const,
-      title: "Entretien / Docs urgents",
+      title: dTxt(ui, "dashboard.groupTitles.notifications"),
       count: notifications.length,
-      ctaLabel: "Voir tout",
+      ctaLabel: seeAll,
       ctaHref: `/notifications?filter=urgent`,
       items: notificationItems.map((item) => ({
         id: item.id,
         label: item.label,
         sublabel: item.sublabel,
         dueLabel: item.dueLabel,
-        primaryAction: "Voir",
+        primaryAction: dTxt(ui, "dashboard.rowActions.view"),
         primaryHref: item.primaryHref,
         actionType: "link" as const,
       })),
@@ -1049,7 +1161,7 @@ async function getDashboardDataV3Uncached(input: {
   const dto: DashboardV3DTO = {
     period: {
       key: resolvedPeriod.key,
-      label: resolvedPeriod.label,
+      label: periodUiLabel(ui, resolvedPeriod.key),
       start: resolvedPeriod.range.start.toISOString(),
       end: resolvedPeriod.range.end.toISOString(),
     },
@@ -1057,42 +1169,22 @@ async function getDashboardDataV3Uncached(input: {
       updatedAt: now.toISOString(),
       activeReservationsCount,
     },
-    pulse: {
-      net: {
-        amount: Math.round(netAmount * 100) / 100,
-        subtitle: `${formatCurrency(financeTotals.earnedIn)} revenus / ${formatCurrency(
-          financeTotals.earnedOut
-        )} sorties`,
-      },
-      toCollect: {
-        amount: Math.round(toCollectAmount * 100) / 100,
-        bookingCount: toCollectCount,
-        overdueCount: overdueCollectionsCount,
-        subtitle: `${toCollectCount} dossiers, ${overdueCollectionsCount} en retard`,
-      },
-      occupancy: {
-        rate: occupancyRate,
-        rented: fleetSnapshot.rented,
-        total: fleetSnapshot.totalActive,
-        subtitle: `${fleetSnapshot.rented}/${fleetSnapshot.totalActive} vehicules loues`,
-      },
-      deposits: {
-        amount: Math.round(depositDueAmountTotal * 100) / 100,
-        count: depositDueItems.length,
-        overdueCount: depositDueItems.filter((item) => item.isOverdue).length,
-        subtitle: `${depositDueItems.length} cautions, ${depositDueItems.filter((item) => item.isOverdue).length} en retard`,
-      },
-      risks: {
-        count: toCollectCount + depositDueItems.length + lateReturnCount,
-        exposureAmount: Math.round(riskExposure * 100) / 100,
-        breakdown: {
-          unpaidCount: toCollectCount,
-          depositDueCount: depositDueItems.length,
-          lateReturnCount,
-        },
-        subtitle: `${toCollectCount} impayes, ${depositDueItems.length} cautions, ${lateReturnCount} retours`,
-      },
-    },
+    pulse: buildLocalizedPulse(ui, {
+      netAmount,
+      earnedIn: financeTotals.earnedIn,
+      earnedOut: financeTotals.earnedOut,
+      toCollectAmount,
+      toCollectCount,
+      overdueCollectionsCount,
+      occupancyRate,
+      rented: fleetSnapshot.rented,
+      totalActive: fleetSnapshot.totalActive,
+      depositDueAmountTotal,
+      depositDueCount: depositDueItems.length,
+      overdueDepositCount: depositDueItems.filter((item) => item.isOverdue).length,
+      lateReturnCount,
+      riskExposure,
+    }),
     todayOperations: {
       departures: liveData.departuresToday,
       returns: liveData.returnsToday,
@@ -1152,11 +1244,13 @@ const getDashboardDataV3Cached = unstable_cache(
     agencyId: string,
     period: string,
     start: string,
-    end: string
+    end: string,
+    locale: AppLocale
   ) =>
     getDashboardDataV3Uncached({
       agencyId,
       periodInput: { period, start, end },
+      locale,
     }),
   ["dashboard-v3-core"],
   { revalidate: DASHBOARD_V3_CORE_CACHE_SECONDS }
@@ -1181,29 +1275,35 @@ const getDashboardPeriodDataCached = unstable_cache(
 export async function getDashboardDataV3(input: {
   agencyId: string;
   periodInput: DashboardV3PeriodInput;
+  locale?: AppLocale;
 }): Promise<DashboardV3DTO> {
+  const locale = input.locale ?? "fr";
   try {
     return await getDashboardDataV3Cached(
       input.agencyId,
       input.periodInput.period ?? "",
       input.periodInput.start ?? "",
-      input.periodInput.end ?? ""
+      input.periodInput.end ?? "",
+      locale
     );
   } catch (error) {
     // Fall back to uncached on any cache error (incrementalCache missing, fs issues, etc.)
     if (isIncrementalCacheMissing(error) || (error instanceof Error && error.message?.includes("cache"))) {
-      return getDashboardDataV3Uncached(input);
+      return getDashboardDataV3Uncached({ ...input, locale });
     }
     // Log and fall back to uncached for robustness in production
     console.error("[dashboard:v3] Cache error, falling back to uncached:", error);
-    return getDashboardDataV3Uncached(input);
+    return getDashboardDataV3Uncached({ ...input, locale });
   }
 }
 
 export async function getDashboardPeriodSummary(input: {
   agencyId: string;
   periodInput: DashboardV3PeriodInput;
+  locale?: AppLocale;
 }): Promise<Pick<DashboardV3DTO, "period" | "context" | "pulse">> {
+  const locale = input.locale ?? "fr";
+  const ui = getMessages(locale);
   const now = new Date();
   const [liveData, periodData] = await Promise.all([
     getDashboardLiveData(input.agencyId),
@@ -1330,7 +1430,7 @@ export async function getDashboardPeriodSummary(input: {
   return {
     period: {
       key: resolvedPeriod.key,
-      label: resolvedPeriod.label,
+      label: periodUiLabel(ui, resolvedPeriod.key),
       start: resolvedPeriod.range.start.toISOString(),
       end: resolvedPeriod.range.end.toISOString(),
     },
@@ -1339,42 +1439,22 @@ export async function getDashboardPeriodSummary(input: {
       activeReservationsCount: liveData.liveBookings.filter((booking) => booking.status === "ACTIVE")
         .length,
     },
-    pulse: {
-      net: {
-        amount: Math.round(netAmount * 100) / 100,
-        subtitle: `${formatCurrency(financeTotals.earnedIn)} revenus / ${formatCurrency(
-          financeTotals.earnedOut
-        )} sorties`,
-      },
-      toCollect: {
-        amount: Math.round(toCollectAmount * 100) / 100,
-        bookingCount: toCollectCount,
-        overdueCount: overdueCollectionsCount,
-        subtitle: `${toCollectCount} dossiers, ${overdueCollectionsCount} en retard`,
-      },
-      occupancy: {
-        rate: occupancyRate,
-        rented: fleetSnapshot.rented,
-        total: fleetSnapshot.totalActive,
-        subtitle: `${fleetSnapshot.rented}/${fleetSnapshot.totalActive} vehicules loues`,
-      },
-      deposits: {
-        amount: Math.round(depositDueAmountTotal * 100) / 100,
-        count: depositDueCount,
-        overdueCount: overdueDepositCount,
-        subtitle: `${depositDueCount} cautions, ${overdueDepositCount} en retard`,
-      },
-      risks: {
-        count: toCollectCount + depositDueCount + lateReturnCount,
-        exposureAmount: Math.round(riskExposure * 100) / 100,
-        breakdown: {
-          unpaidCount: toCollectCount,
-          depositDueCount,
-          lateReturnCount,
-        },
-        subtitle: `${toCollectCount} impayes, ${depositDueCount} cautions, ${lateReturnCount} retours`,
-      },
-    },
+    pulse: buildLocalizedPulse(ui, {
+      netAmount,
+      earnedIn: financeTotals.earnedIn,
+      earnedOut: financeTotals.earnedOut,
+      toCollectAmount,
+      toCollectCount,
+      overdueCollectionsCount,
+      occupancyRate,
+      rented: fleetSnapshot.rented,
+      totalActive: fleetSnapshot.totalActive,
+      depositDueAmountTotal,
+      depositDueCount,
+      overdueDepositCount,
+      lateReturnCount,
+      riskExposure,
+    }),
   };
 }
 
@@ -1395,36 +1475,42 @@ export async function getDashboardActiveBookingsV3(input: {
 export async function getDashboardCollectionsSheetData(input: {
   agencyId: string;
   periodInput: DashboardV3PeriodInput;
+  locale?: AppLocale;
 }): Promise<DashboardV3CollectionsSheetDTO> {
   void input.periodInput;
   const liveData = await getDashboardLiveData(input.agencyId);
   return buildCollectionsSheetDTO({
     liveBookings: liveData.liveBookings,
     now: new Date(),
+    locale: input.locale,
   });
 }
 
 export async function getDashboardDueDepositsSheetData(input: {
   agencyId: string;
   periodInput: DashboardV3PeriodInput;
+  locale?: AppLocale;
 }): Promise<DashboardV3DueDepositsSheetDTO> {
   void input.periodInput;
   const liveData = await getDashboardLiveData(input.agencyId);
   return buildDueDepositsSheetDTO({
     deposits: liveData.deposits,
     now: new Date(),
+    locale: input.locale,
   });
 }
 
 export async function getDashboardLateReturnsSheetData(input: {
   agencyId: string;
   periodInput: DashboardV3PeriodInput;
+  locale?: AppLocale;
 }): Promise<DashboardV3LateReturnsSheetDTO> {
   void input.periodInput;
   const liveData = await getDashboardLiveData(input.agencyId);
   return buildLateReturnsSheetDTO({
     liveBookings: liveData.liveBookings,
     now: new Date(),
+    locale: input.locale,
   });
 }
 

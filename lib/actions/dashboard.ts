@@ -13,9 +13,11 @@ import type {
   DashboardV3DueDepositsSheetDTO,
   DashboardV3LateReturnsSheetDTO,
 } from "@/lib/dashboard/types";
+import type { AppLocale } from "@/lib/i18n/config";
 
 export async function getCollectionsForSheet(
-  periodInput: DashboardV3PeriodInput
+  periodInput: DashboardV3PeriodInput,
+  locale?: AppLocale
 ): Promise<DashboardV3CollectionsSheetDTO> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.agencyId) {
@@ -27,11 +29,13 @@ export async function getCollectionsForSheet(
   return getDashboardCollectionsSheetData({
     agencyId: session.user.agencyId,
     periodInput,
+    locale,
   });
 }
 
 export async function getDueDepositsForSheet(
-  periodInput: DashboardV3PeriodInput
+  periodInput: DashboardV3PeriodInput,
+  locale?: AppLocale
 ): Promise<DashboardV3DueDepositsSheetDTO> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.agencyId) {
@@ -43,11 +47,13 @@ export async function getDueDepositsForSheet(
   return getDashboardDueDepositsSheetData({
     agencyId: session.user.agencyId,
     periodInput,
+    locale,
   });
 }
 
 export async function getLateReturnsForSheet(
-  periodInput: DashboardV3PeriodInput
+  periodInput: DashboardV3PeriodInput,
+  locale?: AppLocale
 ): Promise<DashboardV3LateReturnsSheetDTO> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.agencyId) {
@@ -59,5 +65,6 @@ export async function getLateReturnsForSheet(
   return getDashboardLateReturnsSheetData({
     agencyId: session.user.agencyId,
     periodInput,
+    locale,
   });
 }

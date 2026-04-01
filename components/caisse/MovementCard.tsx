@@ -6,6 +6,7 @@ import { ExternalLink } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import type { SerializedMovement } from "./types";
 import type { CaisseMovementType } from "@/lib/dashboard/caisse";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 const BADGE_CLASSES: Record<CaisseMovementType, string> = {
   payment: "bg-blue-100 text-blue-700",
@@ -21,6 +22,7 @@ type MovementCardProps = {
 };
 
 export function MovementCard({ movement, showDate = false }: MovementCardProps) {
+  const lp = useLocalizedPath();
   const badgeClass = BADGE_CLASSES[movement.type];
   const amountFormatted = `${movement.direction === "in" ? "+" : "-"}${formatCurrency(movement.amount)}`;
   const metaTime = showDate
@@ -73,7 +75,7 @@ export function MovementCard({ movement, showDate = false }: MovementCardProps) 
     "block rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:bg-blue-50/40 space-y-1";
 
   if (movement.bookingId) {
-    return <Link href={`/bookings/${movement.bookingId}`} className={className}>{body}</Link>;
+    return <Link href={lp(`/bookings/${movement.bookingId}`)} className={className}>{body}</Link>;
   }
 
   return <div className={className}>{body}</div>;

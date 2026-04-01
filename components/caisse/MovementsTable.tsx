@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
 import type { SerializedMovement } from "./types";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 type MovementsTableProps = {
   movements: SerializedMovement[];
@@ -27,6 +28,7 @@ export function MovementsTable({
   showDateColumn = false,
   emptyMessage,
 }: MovementsTableProps) {
+  const lp = useLocalizedPath();
   if (movements.length === 0 && emptyMessage) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-card py-12 text-center text-muted-foreground">
@@ -93,7 +95,7 @@ export function MovementsTable({
                     asChild
                     title="Ouvrir la réservation"
                   >
-                    <Link href={`/bookings/${m.bookingId}`}>
+                    <Link href={lp(`/bookings/${m.bookingId}`)}>
                       <ExternalLink className="h-4 w-4" />
                     </Link>
                   </Button>

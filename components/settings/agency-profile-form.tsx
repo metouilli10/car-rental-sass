@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { saveAgencyProfile } from "@/lib/actions/agencies";
 import { cn } from "@/lib/utils";
+import { useLocalizedPathWithFallback } from "@/components/i18n/use-localized-path";
 
 interface AgencyProfileFormProps {
   initialValues: {
@@ -26,6 +27,7 @@ export function AgencyProfileForm({
   initialValues,
   mode,
 }: AgencyProfileFormProps) {
+  const lp = useLocalizedPathWithFallback();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -86,7 +88,7 @@ export function AgencyProfileForm({
         }
 
         if (mode === "setup") {
-          router.push("/dashboard");
+          router.push(lp("/dashboard"));
           router.refresh();
           return;
         }

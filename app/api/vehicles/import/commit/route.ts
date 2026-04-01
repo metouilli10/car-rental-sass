@@ -8,8 +8,10 @@ import {
   normalizeImportedPlate,
   parseImportCommitRows,
 } from "@/lib/vehicles/import";
+import { createVehicleCompat, updateVehicleCompat } from "@/lib/vehicle-fuel-type";
 import { revalidatePath } from "next/cache";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
+import { Prisma } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,22 +66,52 @@ export async function POST(request: NextRequest) {
       const existing = existingByPlate.get(normalized.plate);
 
       if (existing) {
-        await prisma.vehicle.update({
-          where: { id: existing.id },
-          data: buildVehicleUpdatePayload(normalized),
-          select: { id: true },
-        });
+        await updateVehicleCompat(existing.id, buildVehicleUpdatePayload(normalized), { id: true });
         updated += 1;
       } else {
-        const createdVehicle = await prisma.vehicle.create({
-          data: {
-            ...buildVehicleCreatePayload(normalized),
-            agencyId: currentUser.agencyId,
-          },
-          select: { id: true, plate: true },
-        });
-        existingByPlate.set(normalized.plate, { id: createdVehicle.id, plate: createdVehicle.plate });
-        created += 1;
+        try {
+          const createdVehicle = await createVehicleCompat<{ id: string; plate: string }>(
+            {
+              ...buildVehicleCreatePayload(normalized),
+              agencyId: currentUser.agencyId,
+            },
+            { id: true, plate: true },
+          );
+          existingByPlate.set(normalized.plate, {
+            id: createdVehicle.id,
+            plate: createdVehicle.plate,
+          });
+          created += 1;
+        } catch (error) {
+          const isUniquePlateConflict =
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            ((error.code === "P2002" && String(error.meta?.target).includes("plate")) ||
+              (error.code === "P2010" &&
+                typeof error.meta?.message === "string" &&
+                error.meta.message.includes("Key (plate)=")));
+
+          if (!isUniquePlateConflict) {
+            throw error;
+          }
+
+          const conflictingVehicle = await prisma.vehicle.findFirst({
+            where: { agencyId: currentUser.agencyId, plate: normalized.plate },
+            select: { id: true },
+          });
+
+          if (!conflictingVehicle) {
+            throw error;
+          }
+
+          await updateVehicleCompat(conflictingVehicle.id, buildVehicleUpdatePayload(normalized), {
+            id: true,
+          });
+          existingByPlate.set(normalized.plate, {
+            id: conflictingVehicle.id,
+            plate: normalized.plate,
+          });
+          updated += 1;
+        }
       }
     }
 

@@ -25,6 +25,25 @@ test.describe("owner user flows", () => {
     await expect(page.getByRole("heading", { name: "Tableau de bord" })).toBeVisible();
   });
 
+  test("top bar language switcher toggles locale prefix and rtl", async ({ page }) => {
+    await loginAsOwner(page);
+    await expect(page).toHaveURL(/\/fr\/dashboard/);
+
+    await page
+      .getByRole("group", { name: /Langue|اللغة/ })
+      .getByRole("button", { name: "عربي" })
+      .click();
+    await page.waitForURL(/\/ar\/dashboard/, { timeout: 15_000 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.dir)).toBe("rtl");
+
+    await page
+      .getByRole("group", { name: /Langue|اللغة/ })
+      .getByRole("button", { name: "FR" })
+      .click();
+    await page.waitForURL(/\/fr\/dashboard/, { timeout: 15_000 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.dir)).toBe("ltr");
+  });
+
   test("can navigate the main authenticated sections", async ({ page }) => {
     await loginAsOwner(page);
 

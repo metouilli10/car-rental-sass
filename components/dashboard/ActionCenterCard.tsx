@@ -10,6 +10,8 @@ import { CollectionsSheet } from "@/components/dashboard/CollectionsSheet";
 import { EncaisserDialog } from "@/components/dashboard/EncaisserDialog";
 import { LateReturnsSheet } from "@/components/dashboard/LateReturnsSheet";
 import { LibererCautionDialog } from "@/components/dashboard/LibererCautionDialog";
+import { useI18n } from "@/components/i18n/i18n-context";
+import { withLocalePath } from "@/lib/i18n/config";
 import { cn, formatCurrency } from "@/lib/utils";
 import type {
   DashboardV3ActionGroup,
@@ -105,18 +107,19 @@ function getRowActions(args: {
   groupId: DashboardV3ActionGroup["id"];
   onCollection: (item: DashboardV3ActionItem) => void;
   onDeposit: (item: DashboardV3ActionItem) => void;
+  viewBookingLabel: string;
 }): ResolvedRowAction {
-  const { item, groupId, onCollection, onDeposit } = args;
+  const { item, groupId, onCollection, onDeposit, viewBookingLabel } = args;
 
   if (item.actionType === "collection" && item.bookingId) {
     return {
       primary: {
-        label: "Encaisser",
+        label: item.primaryAction,
         className: primaryActionClassName,
         onClick: () => onCollection(item),
       },
       secondary: {
-        label: "Voir dossier",
+        label: viewBookingLabel,
         href: item.primaryHref,
       },
     };
@@ -125,12 +128,12 @@ function getRowActions(args: {
   if (item.actionType === "deposit_release" && item.depositId) {
     return {
       primary: {
-        label: "Liberer",
+        label: item.primaryAction,
         className: primaryActionClassName,
         onClick: () => onDeposit(item),
       },
       secondary: {
-        label: "Voir dossier",
+        label: viewBookingLabel,
         href: item.primaryHref,
       },
     };
@@ -139,7 +142,7 @@ function getRowActions(args: {
   if (groupId === "late_returns") {
     return {
       primary: {
-        label: "Voir dossier",
+        label: item.primaryAction,
         href: item.primaryHref,
         className: primaryActionClassName,
       },
@@ -175,27 +178,29 @@ function getGroupAction(args: {
   const { group, onCollections, onDeposits, onLateReturns } = args;
 
   if (group.id === "collections") {
-    return { label: "Voir tout", onClick: onCollections };
+    return { label: group.ctaLabel, onClick: onCollections };
   }
 
   if (group.id === "deposits") {
-    return { label: "Voir tout", onClick: onDeposits };
+    return { label: group.ctaLabel, onClick: onDeposits };
   }
 
   if (group.id === "late_returns") {
-    return { label: "Voir tout", onClick: onLateReturns };
+    return { label: group.ctaLabel, onClick: onLateReturns };
   }
 
-  return { label: "Voir tout", href: group.ctaHref };
+  return { label: group.ctaLabel, href: group.ctaHref };
 }
 
 export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps) {
+  const { t, locale } = useI18n();
   const [selectedCollectionItem, setSelectedCollectionItem] = useState<DashboardV3ActionItem | null>(null);
   const [selectedDepositItem, setSelectedDepositItem] = useState<DashboardV3ActionItem | null>(null);
   const [collectionsSheetOpen, setCollectionsSheetOpen] = useState(false);
   const [lateReturnsSheetOpen, setLateReturnsSheetOpen] = useState(false);
   const visibleGroups = actionCenter.groups.filter((group) => group.id !== "deposits");
   const isVisibleAllClear = visibleGroups.every((group) => group.count === 0);
+  const viewBookingLabel = t("dashboard.rowActions.viewBooking");
 
   function renderSection(group: DashboardV3ActionGroup) {
     const tone = GROUP_TONES[group.id];
@@ -218,7 +223,12 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
           <div className="min-w-0">
             <h3 className={cn("text-sm font-semibold", tone.titleAccent)}>{group.title}</h3>
             <p className={cn("mt-1 text-[12px]", tone.countText)}>
-              {group.count} element{group.count > 1 ? "s" : ""}
+              {t(
+                group.count === 1
+                  ? "dashboard.actionCenter.elementOne"
+                  : "dashboard.actionCenter.elementOther",
+                { n: group.count }
+              )}
             </p>
           </div>
           {groupAction.onClick ? (
@@ -234,7 +244,7 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
             </Button>
           ) : (
             <Button asChild variant="ghost" size="sm" className={tertiaryActionClassName}>
-              <Link href={groupAction.href!}>
+              <Link href={withLocalePath(locale, groupAction.href!)}>
                 {groupAction.label}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
@@ -251,7 +261,7 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
               tone.emptyText
             )}
           >
-            Rien à signaler
+            {t("dashboard.actionCenter.emptySection")}
           </div>
         ) : (
           <div className="mt-4 space-y-3">
@@ -261,6 +271,7 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
                 groupId: group.id,
                 onCollection: setSelectedCollectionItem,
                 onDeposit: setSelectedDepositItem,
+                viewBookingLabel,
               });
               const title = item.customerName ?? item.label;
               const vehicleLine =
@@ -281,7 +292,7 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
                         <p className="truncate text-sm font-semibold text-slate-950">{title}</p>
                         {item.isOverdue ? (
                           <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-red-600">
-                            En retard
+                            {t("dashboard.actionCenter.overdueBadge")}
                           </span>
                         ) : null}
                       </div>
@@ -333,7 +344,7 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
                         variant={actions.primary.variant}
                         className={actions.primary.className}
                       >
-                        <Link href={actions.primary.href!}>
+                        <Link href={withLocalePath(locale, actions.primary.href!)}>
                           {actions.primary.label}
                           <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
@@ -341,7 +352,9 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
                     )}
                     {actions.secondary ? (
                       <Button asChild size="sm" variant="ghost" className={tertiaryActionClassName}>
-                        <Link href={actions.secondary.href}>{actions.secondary.label}</Link>
+                        <Link href={withLocalePath(locale, actions.secondary.href)}>
+                          {actions.secondary.label}
+                        </Link>
                       </Button>
                     ) : null}
                   </div>
@@ -360,12 +373,12 @@ export function ActionCenterCard({ actionCenter, period }: ActionCenterCardProps
         <CardHeader className="p-4 pb-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <CardTitle className="section-title">Priorités opérationnelles</CardTitle>
-              <p className="meta-text mt-1">Les priorités à traiter maintenant</p>
+              <CardTitle className="section-title">{t("dashboard.actionCenter.title")}</CardTitle>
+              <p className="meta-text mt-1">{t("dashboard.actionCenter.subtitle")}</p>
             </div>
             {isVisibleAllClear ? (
               <Badge variant="success" className="rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">
-                Tout est sous contrôle
+                {t("dashboard.actionCenter.allClear")}
               </Badge>
             ) : null}
           </div>

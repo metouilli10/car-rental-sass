@@ -14,6 +14,7 @@ import { paymentMethodLabel } from "@/components/finance/constants";
 import { formatMad, type ReservationToneVariant } from "@/lib/reservations/presentation";
 import type { BookingDepositStatus, BookingPaymentStatus, DepositStatus, PaymentType } from "@prisma/client";
 import type { ReservationFinanceRow } from "@/lib/reservations/details";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 const badgeVariantMap: Record<
   ReservationToneVariant,
@@ -68,6 +69,7 @@ export function ReservationFinancialSummaryCard({
   breakdownRows: ReservationFinanceRow[];
   paymentMethods: PaymentType[];
 }) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [libererCautionOpen, setLibererCautionOpen] = useState(false);
   const [encaisserOpen, setEncaisserOpen] = useState(false);
@@ -169,7 +171,7 @@ export function ReservationFinancialSummaryCard({
                 </Button>
               ) : (
                 <Button asChild size="sm" variant="outline" className="w-full">
-                  <Link href="/finance?tab=cautions">
+                  <Link href={lp("/finance?tab=cautions")}>
                     <Banknote className="mr-2 h-4 w-4" />
                     Restituer caution
                   </Link>

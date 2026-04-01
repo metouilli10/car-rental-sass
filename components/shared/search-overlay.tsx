@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { searchGlobal, type SearchResult } from "@/lib/actions/search";
 import { STATUS_LABELS } from "@/lib/search-constants";
 import { formatCurrency } from "@/lib/utils";
+import { withLocalePath } from "@/lib/i18n/config";
+import { useI18n } from "@/components/i18n/i18n-context";
 
 interface SearchOverlayProps {
   open: boolean;
@@ -14,6 +16,7 @@ interface SearchOverlayProps {
 }
 
 export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
+  const { locale, t } = useI18n();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult>({
@@ -23,6 +26,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     infractions: [],
   });
   const router = useRouter();
+  const lp = (path: string) => withLocalePath(locale, path);
 
   const fetchResults = useCallback(async (q: string) => {
     if (!q || q.trim().length < 2) {
@@ -69,10 +73,10 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const showEmptyState = !loading && q.length >= 2 && !hasResults;
   const showPrompt = !q;
   const firstResultHref =
-    (results.clients[0] && `/customers/${results.clients[0].id}`) ||
-    (results.reservations[0] && `/bookings/${results.reservations[0].id}`) ||
-    (results.vehicles[0] && `/vehicles/${results.vehicles[0].id}`) ||
-    (results.infractions[0] && `/infractions/${results.infractions[0].id}`) ||
+    (results.clients[0] && lp(`/customers/${results.clients[0].id}`)) ||
+    (results.reservations[0] && lp(`/bookings/${results.reservations[0].id}`)) ||
+    (results.vehicles[0] && lp(`/vehicles/${results.vehicles[0].id}`)) ||
+    (results.infractions[0] && lp(`/infractions/${results.infractions[0].id}`)) ||
     null;
 
   function navigate(href: string) {
@@ -90,7 +94,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher (client, réservation, véhicule, téléphone…)"
+            placeholder={t("search.placeholder")}
             className="flex-1 text-sm bg-transparent outline-none text-foreground placeholder:text-muted-foreground/60"
             autoFocus
             autoComplete="off"
@@ -115,7 +119,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
         <div className="overflow-y-auto max-h-[400px]">
           {showEmptyState && (
             <div className="py-12 text-center text-sm text-muted-foreground">
-              Aucun résultat pour &ldquo;{query}&rdquo;
+              {t("search.noResults")} &ldquo;{query}&rdquo;
             </div>
           )}
 
@@ -127,13 +131,13 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                   <div className="px-4 py-2 flex items-center gap-2">
                     <User className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Clients
+                      {t("search.sectionClients")}
                     </span>
                   </div>
                   {results.clients.map((client) => (
                     <button
                       key={client.id}
-                      onClick={() => navigate(`/customers/${client.id}`)}
+                      onClick={() => navigate(lp(`/customers/${client.id}`))}
                       className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left group"
                     >
                       <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
@@ -149,8 +153,10 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                           {client.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {client.phone} · {client.bookings} réservation
-                          {client.bookings > 1 ? "s" : ""}
+                          {client.phone} · {client.bookings}{" "}
+                          {client.bookings > 1
+                            ? t("search.bookingsWordPlural")
+                            : t("search.bookingsWord")}
                         </p>
                       </div>
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -171,7 +177,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                   <div className="px-4 py-2 flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Réservations
+                      {t("search.sectionBookings")}
                     </span>
                   </div>
                   {results.reservations.map((res) => {
@@ -179,7 +185,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                     return (
                       <button
                         key={res.id}
-                        onClick={() => navigate(`/bookings/${res.id}`)}
+                        onClick={() => navigate(lp(`/bookings/${res.id}`))}
                         className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left group"
                       >
                         <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
@@ -222,7 +228,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                   <div className="px-4 py-2 flex items-center gap-2">
                     <Car className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Véhicules
+                      {t("search.sectionVehicles")}
                     </span>
                   </div>
                   {results.vehicles.map((vehicle) => {
@@ -230,7 +236,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                     return (
                       <button
                         key={vehicle.id}
-                        onClick={() => navigate(`/vehicles/${vehicle.id}`)}
+                        onClick={() => navigate(lp(`/vehicles/${vehicle.id}`))}
                         className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left group"
                       >
                         <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -273,7 +279,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                   <div className="px-4 py-2 flex items-center gap-2">
                     <ShieldAlert className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Infractions
+                      {t("search.sectionInfractions")}
                     </span>
                   </div>
                   {results.infractions.map((infraction) => {
@@ -281,7 +287,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                     return (
                       <button
                         key={infraction.id}
-                        onClick={() => navigate(`/infractions/${infraction.id}`)}
+                        onClick={() => navigate(lp(`/infractions/${infraction.id}`))}
                         className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left group"
                       >
                         <div className="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
@@ -301,7 +307,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground truncate">
-                            {infraction.client || "Client non assigné"} · {infraction.date}
+                            {infraction.client || t("search.unassignedClient")} · {infraction.date}
                             {infraction.amount != null ? ` · ${formatCurrency(infraction.amount)}` : ""}
                           </p>
                         </div>
@@ -317,10 +323,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
           {/* Empty state when no query */}
           {showPrompt && (
             <div className="px-4 py-6 text-center">
-              <p className="text-xs text-muted-foreground">
-                Tapez au moins 2 caractères pour rechercher des clients,
-                réservations, véhicules ou infractions.
-              </p>
+              <p className="text-xs text-muted-foreground">{t("search.prompt")}</p>
             </div>
           )}
         </div>
@@ -328,17 +331,17 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
         {/* Footer hint */}
         <div className="border-t border-border/30 px-4 py-2.5 flex items-center justify-between bg-muted/20">
           <span className="text-[11px] text-muted-foreground/60">
-            Appuyez sur{" "}
+            {t("search.footerEnter")}{" "}
             <kbd className="px-1 py-0.5 bg-muted rounded border border-border/50 font-mono text-[10px]">
               ↵
             </kbd>{" "}
-            pour ouvrir
+            {t("search.footerOpen")}
           </span>
           <span className="text-[11px] text-muted-foreground/60">
             <kbd className="px-1 py-0.5 bg-muted rounded border border-border/50 font-mono text-[10px]">
               ESC
             </kbd>{" "}
-            pour fermer
+            {t("search.footerClose")}
           </span>
         </div>
       </DialogContent>

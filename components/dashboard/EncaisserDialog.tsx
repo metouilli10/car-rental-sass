@@ -25,6 +25,8 @@ import { recordPaymentReceivedByBooking } from "@/lib/actions/payments";
 import { formatCurrency } from "@/lib/utils";
 import { paymentMethodLabel } from "@/components/finance/constants";
 import type { PaymentType } from "@prisma/client";
+import { useI18n } from "@/components/i18n/i18n-context";
+import { interpolate } from "@/lib/i18n/messages";
 
 interface EncaisserDialogProps {
   open: boolean;
@@ -45,6 +47,7 @@ export function EncaisserDialog({
   vehicleLabel,
   onSuccess,
 }: EncaisserDialogProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const [amount, setAmount] = useState(defaultAmount.toString());
   const [paymentType, setPaymentType] = useState<PaymentType>("CASH");
@@ -67,7 +70,7 @@ export function EncaisserDialog({
     try {
       const value = parseFloat(amount.replace(",", "."));
       if (!Number.isFinite(value) || value <= 0) {
-        setError("Montant invalide");
+        setError(t("dialogs.encaisser.invalidAmount"));
         setIsLoading(false);
         return;
       }
@@ -81,7 +84,7 @@ export function EncaisserDialog({
       router.refresh();
       onSuccess?.();
     } catch {
-      setError("Une erreur s'est produite");
+      setError(t("dialogs.encaisser.genericError"));
     } finally {
       setIsLoading(false);
     }
@@ -91,14 +94,17 @@ export function EncaisserDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Encaisser le paiement</DialogTitle>
+          <DialogTitle>{t("dialogs.encaisser.title")}</DialogTitle>
           <DialogDescription>
-            {customerName} – {vehicleLabel}. Confirmez le montant et le mode de paiement.
+            {interpolate(t("dialogs.encaisser.description"), {
+              customerName,
+              vehicleLabel,
+            })}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="encaisser-amount">Montant reçu (MAD)</Label>
+            <Label htmlFor="encaisser-amount">{t("dialogs.encaisser.amountLabel")}</Label>
             <Input
               id="encaisser-amount"
               type="number"
@@ -110,7 +116,7 @@ export function EncaisserDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label>Mode de paiement</Label>
+            <Label>{t("dialogs.encaisser.paymentMode")}</Label>
             <Select
               value={paymentType}
               onValueChange={(v) => setPaymentType(v as PaymentType)}
@@ -133,18 +139,20 @@ export function EncaisserDialog({
           )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isLoading}>
-              Annuler
+              {t("dialogs.encaisser.cancel")}
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Enregistrement...
+                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                  {t("dialogs.encaisser.saving")}
                 </>
               ) : (
                 <>
-                  Encaisser {formatCurrency(parseFloat(amount) || defaultAmount)}
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                  {interpolate(t("dialogs.encaisser.submitWithAmount"), {
+                    amount: formatCurrency(parseFloat(amount) || defaultAmount),
+                  })}
+                  <ArrowRight className="h-4 w-4 ms-2 rtl:rotate-180" />
                 </>
               )}
             </Button>

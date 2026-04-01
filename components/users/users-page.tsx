@@ -41,6 +41,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useI18n } from "@/components/i18n/i18n-context";
 
 type UsersPageProps = {
   initialUsers: ManagedUser[];
@@ -152,6 +153,7 @@ function clonePermissions(user: ManagedUser | null): UserPermissions | Record<st
 }
 
 export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
+  const { t } = useI18n();
   const [users, setUsers] = useState<ManagedUser[]>(initialUsers);
   const [activeTab, setActiveTab] = useState("users");
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -402,26 +404,28 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Utilisateurs</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            {t("users.management.pageTitle")}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Gérez les accès, les permissions et l&apos;historique de votre agence.
+            {t("users.management.pageSubtitle")}
           </p>
         </div>
         <Button onClick={() => setIsAddOpen(true)} className="w-full sm:w-auto">
-          Ajouter un utilisateur
+          {t("users.management.addUser")}
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid h-auto w-full grid-cols-3">
           <TabsTrigger value="users" className="px-2 text-xs sm:text-sm">
-            Utilisateurs
+            {t("users.management.tabLabel")}
           </TabsTrigger>
           <TabsTrigger value="permissions" className="px-2 text-xs sm:text-sm">
-            Permissions
+            {t("users.management.tabPermissions")}
           </TabsTrigger>
           <TabsTrigger value="activity" className="px-2 text-xs sm:text-sm">
-            Activité
+            {t("users.management.tabActivity")}
           </TabsTrigger>
         </TabsList>
 
@@ -554,9 +558,11 @@ export function UsersPage({ initialUsers, currentUserId }: UsersPageProps) {
           <div className="space-y-4">
             <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm">
               <div className="border-b border-border/60 px-4 py-3">
-                <h2 className="text-sm font-semibold text-foreground">Utilisateurs</h2>
+                <h2 className="text-sm font-semibold text-foreground">
+                  {t("users.management.sectionHeading")}
+                </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Sélectionnez un compte pour ajuster ses permissions.
+                  {t("users.management.permissionsSectionHint")}
                 </p>
               </div>
               <div className="px-4 py-4">

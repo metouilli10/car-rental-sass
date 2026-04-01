@@ -11,6 +11,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import type { CalendarVehicle, CalendarBooking } from "@/lib/actions/calendar";
 import { toDayKeyLocal } from "./conflict";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 interface BookingTimelineProps {
   vehicles: CalendarVehicle[];
@@ -27,6 +28,7 @@ export function BookingTimeline({
   weekEnd: initialWeekEnd,
   currentUserRole,
 }: BookingTimelineProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [statusFilter, setStatusFilter] = useState("all");
@@ -218,7 +220,7 @@ export function BookingTimeline({
             Il n&apos;y a aucune réservation pour la période sélectionnée.
           </p>
           <Button asChild>
-            <Link href="/bookings/create">
+            <Link href={lp("/bookings/create")}>
               <Plus className="h-4 w-4 mr-2" />
               Créer une réservation
             </Link>

@@ -293,7 +293,7 @@ model Vehicle {
   brandKey          String        @default("other")
   model             String
   year              Int
-  plate             String        @unique
+  plate             String
   color             String
   status            VehicleStatus @default(AVAILABLE)
   pricePerDay       Float
@@ -348,6 +348,7 @@ model Vehicle {
   @@index([agencyId])
   @@index([status])
   @@index([agencyId, status], map: "vehicles_agency_status_idx")
+  @@unique([agencyId, plate])
   @@map("vehicles")
 }
 

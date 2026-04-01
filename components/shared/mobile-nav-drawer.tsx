@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import type { UserRole } from "@prisma/client";
 import {
@@ -25,6 +25,8 @@ import {
 import type { EffectivePermissions } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { withLocalePath } from "@/lib/i18n/config";
+import { useI18n } from "@/components/i18n/i18n-context";
 
 type DrawerItem = {
   href: string;
@@ -46,30 +48,31 @@ export function MobileNavDrawer({
   permissions,
   userName,
 }: MobileNavDrawerProps) {
+  const { locale, t } = useI18n();
   const pathname = usePathname();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const p = (path: string) => withLocalePath(locale, path);
 
   const mainItems: DrawerItem[] = [
-    { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, allowed: true },
-    { href: "/bookings", label: "Réservations", icon: CalendarCheck, allowed: permissions["bookings.view"] },
-    { href: "/calendrier", label: "Calendrier", icon: Calendar, allowed: permissions["calendar.view"] },
-    { href: "/customers", label: "Clients", icon: Users, allowed: permissions["customers.view"] },
-    { href: "/vehicles", label: "Véhicules", icon: Car, allowed: permissions["vehicles.view"] },
-    { href: "/catalogue", label: "Catalogue", icon: Grid2x2, allowed: permissions["catalogue.view"] },
+    { href: p("/dashboard"), label: t("shell.sidebar.dashboard"), icon: LayoutDashboard, allowed: true },
+    { href: p("/bookings"), label: t("shell.sidebar.bookings"), icon: CalendarCheck, allowed: permissions["bookings.view"] },
+    { href: p("/calendrier"), label: t("shell.sidebar.calendar"), icon: Calendar, allowed: permissions["calendar.view"] },
+    { href: p("/customers"), label: t("shell.sidebar.customers"), icon: Users, allowed: permissions["customers.view"] },
+    { href: p("/vehicles"), label: t("shell.sidebar.vehicles"), icon: Car, allowed: permissions["vehicles.view"] },
+    { href: p("/catalogue"), label: t("shell.sidebar.catalogue"), icon: Grid2x2, allowed: permissions["catalogue.view"] },
   ];
 
   const operationsItems: DrawerItem[] = [
-    { href: "/caisse", label: "Caisse", icon: Wallet, allowed: permissions["caisse.view"] },
-    { href: "/infractions", label: "Infractions", icon: ShieldAlert, allowed: permissions["infractions.view"] },
-    { href: "/damage-reports", label: "Inspections", icon: ClipboardCheck, allowed: permissions["inspections.view"] },
-    { href: "/notifications", label: "Notifications", icon: Bell, allowed: permissions["notifications.view"] },
+    { href: p("/caisse"), label: t("shell.sidebar.cashRegister"), icon: Wallet, allowed: permissions["caisse.view"] },
+    { href: p("/infractions"), label: t("shell.sidebar.infractions"), icon: ShieldAlert, allowed: permissions["infractions.view"] },
+    { href: p("/damage-reports"), label: t("shell.sidebar.inspections"), icon: ClipboardCheck, allowed: permissions["inspections.view"] },
+    { href: p("/notifications"), label: t("shell.sidebar.notifications"), icon: Bell, allowed: permissions["notifications.view"] },
   ];
 
   const systemItems: DrawerItem[] = [
-    { href: "/settings/agency", label: "Paramètres agence", icon: Settings, allowed: true },
-    { href: "/settings/notifications", label: "Paramètres notifications", icon: Bell, allowed: permissions["notifications.view"] },
-    { href: "/users", label: "Utilisateurs", icon: UserCog, allowed: role === "OWNER" },
+    { href: p("/settings/agency"), label: t("shell.mobileNav.agencySettings"), icon: Settings, allowed: true },
+    { href: p("/settings/notifications"), label: t("shell.mobileNav.notificationSettings"), icon: Bell, allowed: permissions["notifications.view"] },
+    { href: p("/users"), label: t("shell.sidebar.users"), icon: UserCog, allowed: role === "OWNER" },
   ];
 
   const visibleMainItems = mainItems.filter((item) => item.allowed);
@@ -90,16 +93,16 @@ export function MobileNavDrawer({
       <SheetTrigger asChild>
         <button
           type="button"
-          aria-label="Ouvrir le menu"
+          aria-label={t("shell.mobileNav.openMenu")}
           className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-subtle bg-slate-50 text-slate-600 transition-colors hover:bg-white hover:text-slate-900 md:hidden"
         >
           <Menu className="h-4 w-4" />
         </button>
       </SheetTrigger>
       <SheetContent side="left" hideCloseButton className="w-[86vw] max-w-[360px] border-r border-slate-200 bg-white p-0 pt-safe-top pb-safe-bottom md:hidden">
-        <SheetTitle className="sr-only">Navigation</SheetTitle>
+        <SheetTitle className="sr-only">{t("shell.mobileNav.navigationTitle")}</SheetTitle>
         <SheetDescription className="sr-only">
-          Navigation mobile vers les modules Locaryx.
+          {t("shell.mobileNav.navigationDescription")}
         </SheetDescription>
 
         <div className="flex h-full flex-col">
@@ -111,21 +114,21 @@ export function MobileNavDrawer({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              aria-label="Fermer le menu"
+              aria-label={t("shell.mobileNav.closeMenu")}
               className="inline-flex items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
             >
               <PanelLeftClose className="h-4 w-4" />
-              <span className="sr-only">Fermer</span>
+              <span className="sr-only">{t("shell.mobileNav.close")}</span>
             </button>
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 py-4">
-            <DrawerSection label="Principal" items={visibleMainItems} isActive={isActive} onNavigate={() => setOpen(false)} />
-            <DrawerSection label="Opérations" items={visibleOperationsItems} isActive={isActive} onNavigate={() => setOpen(false)} />
-            <DrawerSection label="Système" items={visibleSystemItems} isActive={isActive} onNavigate={() => setOpen(false)} />
+            <DrawerSection label={t("shell.mobileNav.main")} items={visibleMainItems} isActive={isActive} onNavigate={() => setOpen(false)} />
+            <DrawerSection label={t("shell.mobileNav.operations")} items={visibleOperationsItems} isActive={isActive} onNavigate={() => setOpen(false)} />
+            <DrawerSection label={t("shell.mobileNav.system")} items={visibleSystemItems} isActive={isActive} onNavigate={() => setOpen(false)} />
             <div className="mb-6">
               <p className="mb-2 px-3 text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
-                Compte
+                {t("shell.mobileNav.account")}
               </p>
               <button
                 type="button"
@@ -133,7 +136,7 @@ export function MobileNavDrawer({
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
               >
                 <LogOut className="h-4 w-4 text-slate-400" />
-                Déconnexion
+                {t("shell.mobileNav.signOut")}
               </button>
             </div>
           </div>

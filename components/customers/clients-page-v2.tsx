@@ -19,6 +19,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ClientsTable } from "@/components/clients/ClientsTable";
 import { ClientCardList } from "@/components/clients/ClientCardList";
+import { useI18n } from "@/components/i18n/i18n-context";
+import { withLocalePath } from "@/lib/i18n/config";
 
 type ReservationFilterValue = "all" | "yes" | "no";
 
@@ -81,6 +83,7 @@ export function ClientsPageV2({
   stats,
   pagination,
 }: ClientsPageV2Props) {
+  const { t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -171,42 +174,49 @@ export function ClientsPageV2({
     if (debouncedSearch) {
       chips.push({
         id: "search",
-        label: `Recherche: ${debouncedSearch}`,
+        label: t("customers.chipSearch", { q: debouncedSearch }),
         onRemove: () => setSearchInput(""),
       });
     }
     if (filters.language !== "all") {
       chips.push({
         id: "language",
-        label: `Langue: ${filters.language}`,
+        label: t("customers.chipNationality", { value: filters.language }),
         onRemove: () => setFilters((prev) => ({ ...prev, language: "all" })),
       });
     }
     if (filters.hasDocuments !== "all") {
       chips.push({
         id: "docs",
-        label: `Documents: ${filters.hasDocuments === "yes" ? "Oui" : "Non"}`,
+        label: t("customers.chipDocuments", {
+          value: filters.hasDocuments === "yes" ? t("customers.yes") : t("customers.no"),
+        }),
         onRemove: () => setFilters((prev) => ({ ...prev, hasDocuments: "all" })),
       });
     }
     if (filters.hasReservations !== "all") {
       chips.push({
         id: "bookings",
-        label: `Reservations: ${filters.hasReservations === "yes" ? "Oui" : "Non"}`,
+        label: t("customers.chipBookings", {
+          value: filters.hasReservations === "yes" ? t("customers.yes") : t("customers.no"),
+        }),
         onRemove: () => setFilters((prev) => ({ ...prev, hasReservations: "all" })),
       });
     }
     if (filters.createdFrom || filters.createdTo) {
       chips.push({
         id: "createdAt",
-        label: `Cree entre ${filters.createdFrom || "..."} et ${filters.createdTo || "..."}`,
+        label: t("customers.chipCreatedRange", {
+          from: filters.createdFrom || "…",
+          to: filters.createdTo || "…",
+        }),
         onRemove: () =>
           setFilters((prev) => ({ ...prev, createdFrom: "", createdTo: "" })),
       });
     }
 
     return chips;
-  }, [debouncedSearch, filters]);
+  }, [debouncedSearch, filters, t]);
 
   const languageOptions = useMemo(() => {
     const unique = new Set(customers.map((customer) => customer.nationality).filter(Boolean));
@@ -291,16 +301,16 @@ export function ClientsPageV2({
 
   const exportCustomersToCsv = () => {
     const headers = [
-      "Nom",
-      "Type",
-      "Email",
-      "Telephone",
-      "Nationalite",
-      "Passeport/CIN",
-      "Reservations",
-      "Total depense",
-      "Solde",
-      "Date creation",
+      t("customers.csvName"),
+      t("customers.csvType"),
+      t("customers.csvEmail"),
+      t("customers.csvPhone"),
+      t("customers.csvNationality"),
+      t("customers.csvId"),
+      t("customers.csvBookings"),
+      t("customers.csvTotalSpent"),
+      t("customers.csvBalance"),
+      t("customers.csvCreated"),
     ];
 
     const escapeCsvValue = (value: string | number | null | undefined) => {
@@ -310,7 +320,9 @@ export function ClientsPageV2({
 
     const rows = filteredCustomers.map((customer) => [
       customer.name,
-      customer.customerType === "PERSONNE_MORALE" ? "Entreprise" : "Particulier",
+      customer.customerType === "PERSONNE_MORALE"
+        ? t("customers.companyType")
+        : t("customers.individualType"),
       customer.email ?? "",
       customer.phone,
       customer.nationality,
@@ -341,7 +353,7 @@ export function ClientsPageV2({
     <TooltipProvider delayDuration={250}>
       <div className="space-y-6 bg-slate-50/70 p-1">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <PageHeader
+          <ClientsPageHeader
             canManageCustomers={canManageCustomers}
             onExport={exportCustomersToCsv}
             canExport={filteredCustomers.length > 0}
@@ -397,17 +409,16 @@ export function ClientsPageV2({
 }
 
 function EmptyClientsState({ canManageCustomers }: { canManageCustomers: boolean }) {
+  const { t, locale } = useI18n();
   return (
     <div className="rounded-xl border border-dashed border-slate-300 px-6 py-14 text-center">
-      <h3 className="text-base font-semibold text-slate-900">Aucun client ne correspond</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Ajustez vos filtres ou ajoutez un nouveau client.
-      </p>
+      <h3 className="text-base font-semibold text-slate-900">{t("customers.emptyTitle")}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{t("customers.emptyHint")}</p>
       {canManageCustomers ? (
         <Button asChild className="mt-4">
-          <Link href="/customers/add">
+          <Link href={withLocalePath(locale, "/customers/add")}>
             <UserPlus className="h-4 w-4" />
-            Ajouter un client
+            {t("customers.addClient")}
           </Link>
         </Button>
       ) : null}
@@ -415,7 +426,7 @@ function EmptyClientsState({ canManageCustomers }: { canManageCustomers: boolean
   );
 }
 
-function PageHeader({
+function ClientsPageHeader({
   canManageCustomers,
   onExport,
   canExport,
@@ -424,29 +435,28 @@ function PageHeader({
   onExport: () => void;
   canExport: boolean;
 }) {
+  const { t, locale } = useI18n();
   return (
     <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-start">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Clients</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Gérez vos clients et leurs informations
-        </p>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{t("customers.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("customers.subtitle")}</p>
       </div>
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           className="h-10"
-          aria-label="Exporter les clients"
+          aria-label={t("customers.exportAria")}
           onClick={onExport}
           disabled={!canExport}
         >
-          Exporter
+          {t("customers.export")}
         </Button>
         {canManageCustomers ? (
-          <Button asChild className="h-10" aria-label="Ajouter un client">
-            <Link href="/customers/add">
+          <Button asChild className="h-10" aria-label={t("customers.addClientAria")}>
+            <Link href={withLocalePath(locale, "/customers/add")}>
               <UserPlus className="h-4 w-4" />
-              Ajouter un client
+              {t("customers.addClient")}
             </Link>
           </Button>
         ) : null}
@@ -464,27 +474,28 @@ function MetricsGrid({
   activeMetricFilter: "all" | "reservations" | "noDocuments" | "addedThisMonth";
   onMetricFilterChange: (metric: "all" | "reservations" | "noDocuments" | "addedThisMonth") => void;
 }) {
+  const { t } = useI18n();
   const cards = [
     {
-      label: "Total clients",
+      label: t("customers.metricTotal"),
       value: stats.totalClients,
       icon: Users,
       filterKey: "all" as const,
     },
     {
-      label: "Clients avec reservations",
+      label: t("customers.metricWithBookings"),
       value: stats.clientsWithReservations,
       icon: Calendar,
       filterKey: "reservations" as const,
     },
     {
-      label: "Sans documents",
+      label: t("customers.metricNoDocs"),
       value: stats.clientsWithoutDocuments,
       icon: FileText,
       filterKey: "noDocuments" as const,
     },
     {
-      label: "Ajoutes ce mois",
+      label: t("customers.metricAddedMonth"),
       value: stats.clientsAddedThisMonth,
       icon: UserPlus,
       filterKey: "addedThisMonth" as const,
@@ -509,7 +520,7 @@ function MetricsGrid({
                   : "border-border bg-card hover:border-slate-300 hover:bg-slate-50/50"
             }`}
             aria-pressed={isActive}
-            aria-label={`Filtrer: ${card.label}`}
+            aria-label={t("customers.filterAria", { label: card.label })}
           >
             <div className="mb-2 flex items-center justify-between">
               <p className="text-[11px] font-medium uppercase leading-snug tracking-wider text-muted-foreground sm:text-xs">
@@ -550,6 +561,7 @@ function ClientsToolbar({
   onExport: () => void;
   canExport: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <div className="mb-5 space-y-3">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -557,8 +569,8 @@ function ClientsToolbar({
           <div className="relative w-full sm:max-w-md md:max-w-lg">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              aria-label="Rechercher un client"
-              placeholder="Rechercher par nom, email, telephone..."
+              aria-label={t("customers.searchAria")}
+              placeholder={t("customers.searchPlaceholder")}
               className="pr-10 pl-9"
               value={searchInput}
               onChange={(event) => onSearchChange(event.target.value)}
@@ -568,7 +580,7 @@ function ClientsToolbar({
                 type="button"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                 onClick={() => onSearchChange("")}
-                aria-label="Effacer la recherche"
+                aria-label={t("customers.clearSearchAria")}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -579,13 +591,13 @@ function ClientsToolbar({
             <PopoverTrigger asChild>
               <Button variant="outline" className="h-10">
                 <SlidersHorizontal className="h-4 w-4" />
-                Filtres
+                {t("customers.filters")}
               </Button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-[340px] space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Langue
+                  {t("customers.nationality")}
                 </label>
                 <select
                   value={filters.language}
@@ -593,9 +605,9 @@ function ClientsToolbar({
                     onFiltersChange({ ...filters, language: event.target.value })
                   }
                   className="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm shadow-sm outline-none ring-0 transition focus:border-primary"
-                  aria-label="Filtrer par langue"
+                  aria-label={t("customers.nationality")}
                 >
-                  <option value="all">Toutes</option>
+                  <option value="all">{t("customers.allFeminine")}</option>
                   {languageOptions.map((language) => (
                     <option key={language} value={language}>
                       {language}
@@ -607,7 +619,7 @@ function ClientsToolbar({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    A des documents
+                    {t("customers.hasDocuments")}
                   </label>
                   <select
                     value={filters.hasDocuments}
@@ -618,16 +630,16 @@ function ClientsToolbar({
                       })
                     }
                     className="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm shadow-sm outline-none transition focus:border-primary"
-                    aria-label="Filtrer les documents"
+                    aria-label={t("customers.hasDocuments")}
                   >
-                    <option value="all">Tous</option>
-                    <option value="yes">Oui</option>
-                    <option value="no">Non</option>
+                    <option value="all">{t("customers.allMasculine")}</option>
+                    <option value="yes">{t("customers.yes")}</option>
+                    <option value="no">{t("customers.no")}</option>
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    A des reservations
+                    {t("customers.hasBookings")}
                   </label>
                   <select
                     value={filters.hasReservations}
@@ -638,11 +650,11 @@ function ClientsToolbar({
                       })
                     }
                     className="h-10 w-full rounded-xl border border-border bg-white px-3 text-sm shadow-sm outline-none transition focus:border-primary"
-                    aria-label="Filtrer les reservations"
+                    aria-label={t("customers.hasBookings")}
                   >
-                    <option value="all">Tous</option>
-                    <option value="yes">Oui</option>
-                    <option value="no">Non</option>
+                    <option value="all">{t("customers.allMasculine")}</option>
+                    <option value="yes">{t("customers.yes")}</option>
+                    <option value="no">{t("customers.no")}</option>
                   </select>
                 </div>
               </div>
@@ -650,7 +662,7 @@ function ClientsToolbar({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Date de debut
+                    {t("customers.dateStart")}
                   </label>
                   <Input
                     type="date"
@@ -658,12 +670,12 @@ function ClientsToolbar({
                     onChange={(event) =>
                       onFiltersChange({ ...filters, createdFrom: event.target.value })
                     }
-                    aria-label="Date de creation a partir de"
+                    aria-label={t("customers.dateFromAria")}
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Date de fin
+                    {t("customers.dateEnd")}
                   </label>
                   <Input
                     type="date"
@@ -671,7 +683,7 @@ function ClientsToolbar({
                     onChange={(event) =>
                       onFiltersChange({ ...filters, createdTo: event.target.value })
                     }
-                    aria-label="Date de creation jusqu'a"
+                    aria-label={t("customers.dateToAria")}
                   />
                 </div>
               </div>
@@ -682,7 +694,7 @@ function ClientsToolbar({
                   size="sm"
                   onClick={() => onFiltersChange(DEFAULT_FILTERS)}
                 >
-                  Reinitialiser
+                  {t("customers.resetFilters")}
                 </Button>
               </div>
             </PopoverContent>
@@ -696,7 +708,7 @@ function ClientsToolbar({
             aria-checked={showDeleted}
             onClick={() => onShowDeletedChange(!showDeleted)}
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            aria-label="Afficher les clients supprimes"
+            aria-label={t("customers.showDeletedAria")}
           >
             <span
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${
@@ -709,17 +721,17 @@ function ClientsToolbar({
                 }`}
               />
             </span>
-            Afficher supprimes
+            {t("customers.showDeleted")}
           </button>
           <Button
             variant="ghost"
             size="sm"
             className="h-9"
-            aria-label="Exporter les clients"
+            aria-label={t("customers.exportAria")}
             onClick={onExport}
             disabled={!canExport}
           >
-            Exporter
+            {t("customers.export")}
           </Button>
         </div>
       </div>
@@ -732,7 +744,7 @@ function ClientsToolbar({
               type="button"
               onClick={chip.onRemove}
               className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
-              aria-label={`Supprimer le filtre ${chip.label}`}
+              aria-label={t("customers.removeFilterAria", { label: chip.label })}
             >
               {chip.label}
               <X className="h-3 w-3" />
@@ -753,6 +765,9 @@ function PaginationRow({
   totalPages: number;
   searchQuery: string;
 }) {
+  const { t } = useI18n();
+  const pathname = usePathname();
+
   if (totalPages <= 1) {
     return null;
   }
@@ -769,29 +784,32 @@ function PaginationRow({
     nextParams.set("q", searchQuery);
   }
 
+  const prevHref = `${pathname}?${prevParams.toString()}`;
+  const nextHref = `${pathname}?${nextParams.toString()}`;
+
   return (
     <div className="mt-4 flex items-center justify-between">
       <p className="text-xs text-muted-foreground">
-        Page {currentPage} sur {totalPages}
+        {t("pagination.pageOf", { current: currentPage, total: totalPages })}
       </p>
       <div className="flex items-center gap-2">
         <Button
           asChild
           size="sm"
           variant="outline"
-          aria-label="Page precedente"
+          aria-label={t("pagination.prevAria")}
           disabled={currentPage <= 1}
         >
-          <Link href={`/customers?${prevParams.toString()}`}>Precedent</Link>
+          <Link href={prevHref}>{t("pagination.previous")}</Link>
         </Button>
         <Button
           asChild
           size="sm"
           variant="outline"
-          aria-label="Page suivante"
+          aria-label={t("pagination.nextAria")}
           disabled={currentPage >= totalPages}
         >
-          <Link href={`/customers?${nextParams.toString()}`}>Suivant</Link>
+          <Link href={nextHref}>{t("pagination.next")}</Link>
         </Button>
       </div>
     </div>

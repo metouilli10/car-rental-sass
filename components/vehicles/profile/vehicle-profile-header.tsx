@@ -28,6 +28,7 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { deleteVehicle } from "@/lib/actions/vehicles";
 import { toast } from "sonner";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 interface VehicleProfileHeaderProps {
   vehicle: {
@@ -58,11 +59,12 @@ export function VehicleProfileHeader({
   canManageVehicle,
   canDeleteVehicle = false,
 }: VehicleProfileHeaderProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const logoSrc = brandLogoSrc(vehicle.brandKey, vehicle.make);
-  const reminderHref = `/vehicles/${vehicle.id}?tab=maintenance&sheet=1`;
+  const reminderHref = lp(`/vehicles/${vehicle.id}?tab=maintenance&sheet=1`);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -74,7 +76,7 @@ export function VehicleProfileHeader({
       }
       toast.success("Véhicule supprimé");
       setConfirmDeleteOpen(false);
-      router.push("/vehicles");
+      router.push(lp("/vehicles"));
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -140,7 +142,7 @@ export function VehicleProfileHeader({
 
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end xl:max-w-[480px]">
           <Button asChild className="sm:min-w-[180px]">
-            <Link href={`/bookings/create?vehicleId=${vehicle.id}`}>
+            <Link href={lp(`/bookings/create?vehicleId=${vehicle.id}`)}>
               <CalendarPlus className="h-4 w-4" />
               Nouvelle réservation
             </Link>
@@ -149,13 +151,13 @@ export function VehicleProfileHeader({
           {currentOrNextBookingId ? (
             <>
               <Button variant="secondary" asChild>
-                <Link href={`/damage-reports/new?bookingId=${currentOrNextBookingId}`}>
+                <Link href={lp(`/damage-reports/new?bookingId=${currentOrNextBookingId}`)}>
                   <ClipboardCheck className="h-4 w-4" />
                   Inspection départ
                 </Link>
               </Button>
               <Button variant="secondary" asChild>
-                <Link href={`/damage-reports/new?bookingId=${currentOrNextBookingId}`}>
+                <Link href={lp(`/damage-reports/new?bookingId=${currentOrNextBookingId}`)}>
                   <CarFront className="h-4 w-4" />
                   Inspection retour
                 </Link>
@@ -183,7 +185,7 @@ export function VehicleProfileHeader({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 rounded-xl">
               {canManageVehicle ? (
-                <DropdownMenuItem onSelect={() => router.push(`/vehicles/${vehicle.id}/edit`)}>
+                <DropdownMenuItem onSelect={() => router.push(lp(`/vehicles/${vehicle.id}/edit`))}>
                   <FilePenLine className="mr-2 h-4 w-4" />
                   Modifier
                 </DropdownMenuItem>
@@ -193,7 +195,9 @@ export function VehicleProfileHeader({
                 Ajouter rappel
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => router.push(`/infractions/new?vehicleId=${vehicle.id}`)}>
+              <DropdownMenuItem
+                onSelect={() => router.push(lp(`/infractions/new?vehicleId=${vehicle.id}`))}
+              >
                 <ShieldAlert className="mr-2 h-4 w-4" />
                 Ajouter infraction
               </DropdownMenuItem>

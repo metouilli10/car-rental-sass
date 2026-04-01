@@ -6,6 +6,7 @@ import type { ClientListItem } from "@/components/customers/clients-page-v2";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { CustomerRowActions } from "@/components/customers/customer-row-actions";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 interface ClientCardProps {
   client: ClientListItem;
@@ -18,6 +19,7 @@ export function ClientCard({
   canManageCustomers,
   canDeleteCustomers,
 }: ClientCardProps) {
+  const lp = useLocalizedPath();
   const hasOutstandingBalance = client.balance > 0;
 
   return (
@@ -26,7 +28,7 @@ export function ClientCard({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <Link
-              href={`/clients/${client.id}`}
+              href={lp(`/clients/${client.id}`)}
               className="block truncate text-base font-semibold text-slate-900 hover:text-primary hover:underline"
             >
               {client.name}

@@ -12,7 +12,9 @@ import {
   ActionCenterSheetLoading,
 } from "@/components/dashboard/ActionCenterSheet";
 import { LibererCautionDialog } from "@/components/dashboard/LibererCautionDialog";
+import { useI18n } from "@/components/i18n/i18n-context";
 import { getDueDepositsForSheet } from "@/lib/actions/dashboard";
+import { withLocalePath } from "@/lib/i18n/config";
 import { formatCurrency } from "@/lib/utils";
 import type {
   DashboardV3DueDepositItem,
@@ -35,6 +37,7 @@ export function DepositsDueSheet({
   initialCount,
   initialTotalAmount,
 }: DepositsDueSheetProps) {
+  const { t, locale } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DashboardV3DueDepositsSheetDTO | null>(null);
@@ -47,11 +50,14 @@ export function DepositsDueSheet({
     setIsLoading(true);
     setError(null);
 
-    getDueDepositsForSheet({
-      period: period.key,
-      start: period.start,
-      end: period.end,
-    })
+    getDueDepositsForSheet(
+      {
+        period: period.key,
+        start: period.start,
+        end: period.end,
+      },
+      locale
+    )
       .then((result) => {
         if (!isCancelled) {
           setData(result);
@@ -59,7 +65,7 @@ export function DepositsDueSheet({
       })
       .catch(() => {
         if (!isCancelled) {
-          setError("Impossible de charger les cautions a rendre.");
+          setError(t("dashboard.sheets.deposits.loadError"));
         }
       })
       .finally(() => {
@@ -71,7 +77,7 @@ export function DepositsDueSheet({
     return () => {
       isCancelled = true;
     };
-  }, [open, period.end, period.key, period.start]);
+  }, [open, period.end, period.key, period.start, locale, t]);
 
   const summary = useMemo(() => {
     if (data) return { count: data.count, totalAmount: data.totalAmount };
@@ -97,12 +103,15 @@ export function DepositsDueSheet({
       <ActionCenterSheet
         open={open}
         onOpenChange={onOpenChange}
-        title="Cautions a rendre"
-        description={`${summary.count} cautions en attente pour ${formatCurrency(summary.totalAmount)}`}
+        title={t("dashboard.sheets.deposits.title")}
+        description={t("dashboard.sheets.deposits.description", {
+          count: summary.count,
+          amount: formatCurrency(summary.totalAmount),
+        })}
         tone="amber"
         summaryRows={[
-          { label: "Nombre", value: summary.count },
-          { label: "Montant total", value: formatCurrency(summary.totalAmount) },
+          { label: t("dashboard.sheets.deposits.summaryCount"), value: summary.count },
+          { label: t("dashboard.sheets.deposits.summaryTotal"), value: formatCurrency(summary.totalAmount) },
         ]}
       >
         {isLoading ? (
@@ -111,8 +120,8 @@ export function DepositsDueSheet({
           <ActionCenterSheetError message={error} />
         ) : data && data.items.length === 0 ? (
           <ActionCenterSheetEmpty
-            title="Aucune caution a rendre"
-            description="Tout est a jour pour le moment."
+            title={t("dashboard.sheets.deposits.emptyTitle")}
+            description={t("dashboard.sheets.common.allGoodDescription")}
           />
         ) : (
           data?.items.map((item) => (
@@ -124,7 +133,9 @@ export function DepositsDueSheet({
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-medium text-foreground">{item.customerName}</p>
-                    {item.isOverdue ? <Badge variant="destructive">En retard</Badge> : null}
+                    {item.isOverdue ? (
+                      <Badge variant="destructive">{t("dashboard.sheets.deposits.overdueBadge")}</Badge>
+                    ) : null}
                   </div>
                   <p className="truncate text-xs text-muted-foreground">
                     {item.vehicleLabel} - {item.plate}
@@ -147,7 +158,7 @@ export function DepositsDueSheet({
                       onClick={() => setSelectedDeposit(item)}
                       className="w-full sm:w-auto"
                     >
-                      Liberer
+                      {t("dashboard.sheets.deposits.release")}
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                     <Button
@@ -156,7 +167,9 @@ export function DepositsDueSheet({
                       variant="ghost"
                       className="w-full text-slate-700 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900 sm:w-auto"
                     >
-                      <Link href={item.primaryHref}>Voir dossier</Link>
+                      <Link href={withLocalePath(locale, item.primaryHref)}>
+                        {t("dashboard.sheets.deposits.viewBooking")}
+                      </Link>
                     </Button>
                   </div>
                 </div>

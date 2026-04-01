@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Circle, CircleDollarSign, CreditCard, CalendarClock, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/components/i18n/i18n-context";
 
 export interface WizardStepItem {
   id: 1 | 2 | 3 | 4;
@@ -24,6 +25,7 @@ const ICONS = {
 } as const;
 
 export function WizardStepper({ steps, currentStep, onStepClick }: WizardStepperProps) {
+  const { t } = useI18n();
   const completedCount = steps.filter((step) => step.isComplete).length;
   const progressPercent = Math.max(25, (currentStep / steps.length) * 100);
 
@@ -64,7 +66,7 @@ export function WizardStepper({ steps, currentStep, onStepClick }: WizardStepper
                     )}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-xs uppercase tracking-wide">Étape {step.id}</span>
+                    <span className="block text-xs uppercase tracking-wide">{t("reservationWizard.stepper.desktopStep", { n: step.id })}</span>
                     <span className="block truncate text-sm font-medium">{step.title}</span>
                   </span>
                 </button>
@@ -77,16 +79,16 @@ export function WizardStepper({ steps, currentStep, onStepClick }: WizardStepper
       <div className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(243,247,255,0.96)_100%)] p-5 shadow-sm md:hidden">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Progression</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{t("reservationWizard.stepper.progression")}</p>
             <p className="mt-2 text-[1.375rem] font-semibold leading-tight text-slate-950">
-              Étape {currentStep}/4
+              {t("reservationWizard.stepper.mobileStepOf", { current: currentStep, total: 4 })}
             </p>
             <p className="mt-1 text-sm font-medium text-slate-700">{steps[currentStep - 1].title}</p>
           </div>
           <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-blue-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-blue-700 shadow-sm">
             {completedCount}
             <Circle className="h-3 w-3 fill-current" />
-            complétées
+            {t("reservationWizard.stepper.completedSuffix")}
           </span>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
@@ -115,7 +117,7 @@ export function WizardStepper({ steps, currentStep, onStepClick }: WizardStepper
                 <span className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
                   {step.isComplete && !step.isActive ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
                 </span>
-                <span className="block text-[11px] font-medium leading-tight">Étape {step.id}</span>
+                <span className="block text-[11px] font-medium leading-tight">{t("reservationWizard.stepper.desktopStep", { n: step.id })}</span>
               </button>
             );
           })}

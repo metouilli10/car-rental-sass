@@ -4,8 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import type { VehicleProfileData } from "@/lib/vehicles/profile";
 import { getHealthBadgeClass } from "./presentation";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 
-export function VehicleSummaryCards({ data }: { data: VehicleProfileData }) {
+export function VehicleSummaryCards({
+  data,
+  locale = "fr",
+}: {
+  data: VehicleProfileData;
+  locale?: AppLocale;
+}) {
   const openInfractions = data.infractions.filter((item) => item.status !== "PAID");
 
   return (
@@ -27,7 +35,13 @@ export function VehicleSummaryCards({ data }: { data: VehicleProfileData }) {
                 {formatDate((data.currentReservation ?? data.nextReservation)!.startDate)} →{" "}
                 {formatDate((data.currentReservation ?? data.nextReservation)!.endDate)}
               </p>
-              <Link href={`/bookings/${(data.currentReservation ?? data.nextReservation)!.id}`} className="inline-flex text-xs font-medium text-blue-600 hover:text-blue-700">
+              <Link
+                href={withLocalePath(
+                  locale,
+                  `/bookings/${(data.currentReservation ?? data.nextReservation)!.id}`
+                )}
+                className="inline-flex text-xs font-medium text-blue-600 hover:text-blue-700"
+              >
                 Ouvrir la réservation
               </Link>
             </>

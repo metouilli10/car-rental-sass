@@ -26,6 +26,7 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 interface InfractionStatusActionsProps {
   infractionId: string;
@@ -38,6 +39,7 @@ export function InfractionStatusActions({
   currentStatus,
   canDeleteInfraction,
 }: InfractionStatusActionsProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export function InfractionStatusActions({
         setActiveAction(null);
       } else {
         toast.success("Infraction supprimée");
-        router.push("/infractions");
+        router.push(lp("/infractions"));
       }
     });
   };

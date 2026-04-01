@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 import type { SyntheticEvent } from "react";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -40,6 +41,7 @@ export function BookingActionsDropdown({
   paymentStatus,
   role,
 }: BookingActionsDropdownProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -103,12 +105,12 @@ export function BookingActionsDropdown({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuItem asChild>
-            <Link href={`/bookings/${bookingId}`}>Voir détails</Link>
+            <Link href={lp(`/bookings/${bookingId}`)}>Voir détails</Link>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
-              router.push(`/bookings/${bookingId}/edit`);
+              router.push(lp(`/bookings/${bookingId}/edit`));
             }}
           >
             Modifier

@@ -7,36 +7,14 @@ import { CollectionsSheet } from "@/components/dashboard/CollectionsSheet";
 import { DepositsDueSheet } from "@/components/dashboard/DepositsDueSheet";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { DashboardV3Pulse, DashboardV3ResolvedPeriod, DashboardV3TodayOperations } from "@/lib/dashboard/types";
+import { useI18n } from "@/components/i18n/i18n-context";
+import { withLocalePath } from "@/lib/i18n/config";
 
 interface PulseCardsProps {
   pulse: DashboardV3Pulse;
   operations: DashboardV3TodayOperations;
   period: DashboardV3ResolvedPeriod;
 }
-
-const CARD_META = [
-  {
-    key: "net",
-    title: "Net",
-    getMeta: (pulse: DashboardV3Pulse, _operations: DashboardV3TodayOperations) => pulse.net.subtitle,
-  },
-  {
-    key: "toCollect",
-    title: "A encaisser",
-    getMeta: (pulse: DashboardV3Pulse, _operations: DashboardV3TodayOperations) => pulse.toCollect.subtitle,
-  },
-  {
-    key: "occupancy",
-    title: "Occupation",
-    getMeta: (pulse: DashboardV3Pulse, operations: DashboardV3TodayOperations) =>
-      `${pulse.occupancy.rented}/${pulse.occupancy.total} loues • ${operations.availableVehicles} dispo`,
-  },
-  {
-    key: "deposits",
-    title: "Cautions a rendre",
-    getMeta: (pulse: DashboardV3Pulse, _operations: DashboardV3TodayOperations) => pulse.deposits.subtitle,
-  },
-] as const;
 
 function renderNetMeta(pulse: DashboardV3Pulse) {
   const trend = pulse.net.trend;
@@ -61,14 +39,42 @@ function renderNetMeta(pulse: DashboardV3Pulse) {
 }
 
 export function PulseCards({ pulse, operations, period }: PulseCardsProps) {
+  const { locale, t } = useI18n();
   const router = useRouter();
   const [collectionsSheetOpen, setCollectionsSheetOpen] = useState(false);
   const [depositsSheetOpen, setDepositsSheetOpen] = useState(false);
 
+  const cardMeta = [
+    {
+      key: "net" as const,
+      title: t("dashboard.pulse.net"),
+      getMeta: (p: DashboardV3Pulse, _o: DashboardV3TodayOperations) => p.net.subtitle,
+    },
+    {
+      key: "toCollect" as const,
+      title: t("dashboard.pulse.toCollect"),
+      getMeta: (p: DashboardV3Pulse, _o: DashboardV3TodayOperations) => p.toCollect.subtitle,
+    },
+    {
+      key: "occupancy" as const,
+      title: t("dashboard.pulse.occupancy"),
+      getMeta: (p: DashboardV3Pulse, ops: DashboardV3TodayOperations) =>
+        `${t("dashboard.pulse.rentedOfTotal", {
+          rented: p.occupancy.rented,
+          total: p.occupancy.total,
+        })} • ${t("dashboard.pulse.availableShort", { n: ops.availableVehicles })}`,
+    },
+    {
+      key: "deposits" as const,
+      title: t("dashboard.pulse.deposits"),
+      getMeta: (p: DashboardV3Pulse, _o: DashboardV3TodayOperations) => p.deposits.subtitle,
+    },
+  ];
+
   return (
     <>
       <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        {CARD_META.map((card) => {
+        {cardMeta.map((card) => {
           const value =
             card.key === "net"
               ? formatCurrency(pulse.net.amount)
@@ -97,7 +103,10 @@ export function PulseCards({ pulse, operations, period }: PulseCardsProps) {
                 card.key === "toCollect"
                   ? () => setCollectionsSheetOpen(true)
                   : card.key === "occupancy"
-                    ? () => router.push("/vehicles?status=AVAILABLE")
+                    ? () =>
+                        router.push(
+                          withLocalePath(locale, "/vehicles?status=AVAILABLE")
+                        )
                     : card.key === "deposits"
                       ? () => setDepositsSheetOpen(true)
                       : undefined

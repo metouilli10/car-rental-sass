@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 import { CalendarPlus, MoreVertical, Pencil, Eye, FileText, History, Trash2 } from "lucide-react";
 import { deleteCustomer } from "@/lib/actions/customers";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ export function CustomerRowActions({
   canManage = true,
   compact,
 }: CustomerRowActionsProps) {
+  const lp = useLocalizedPath();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export function CustomerRowActions({
         {compact ? (
           <>
             <Button asChild size="icon" variant="ghost" className="h-8 w-8" aria-label="Voir le client">
-              <Link href={`/clients/${customerId}`}>
+              <Link href={lp(`/clients/${customerId}`)}>
                 <Eye className="h-4 w-4" />
               </Link>
             </Button>
@@ -81,33 +83,33 @@ export function CustomerRowActions({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuItem asChild>
-                  <Link href={`/clients/${customerId}`}>
+                  <Link href={lp(`/clients/${customerId}`)}>
                     <Eye className="mr-2 h-4 w-4" />
                     Voir détails
                   </Link>
                 </DropdownMenuItem>
                 {canManage ? (
                   <DropdownMenuItem asChild>
-                    <Link href={`/customers/${customerId}/edit`}>
+                    <Link href={lp(`/customers/${customerId}/edit`)}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Modifier
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
                 <DropdownMenuItem asChild>
-                  <Link href={`/bookings/create?customerId=${customerId}`}>
+                  <Link href={lp(`/bookings/create?customerId=${customerId}`)}>
                     <CalendarPlus className="mr-2 h-4 w-4" />
                     Nouvelle réservation
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href={`/customers/${customerId}/edit?tab=documents`}>
+                  <Link href={lp(`/customers/${customerId}/edit?tab=documents`)}>
                     <FileText className="mr-2 h-4 w-4" />
                     Ajouter document
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href={`/reservations?clientId=${customerId}`}>
+                  <Link href={lp(`/reservations?clientId=${customerId}`)}>
                     <History className="mr-2 h-4 w-4" />
                     Historique réservations
                   </Link>
@@ -129,7 +131,7 @@ export function CustomerRowActions({
           <>
             {canManage ? (
               <Button asChild size="sm" variant="ghost" aria-label="Modifier le client">
-                <Link href={`/customers/${customerId}/edit`}>
+                <Link href={lp(`/customers/${customerId}/edit`)}>
                   <Pencil className="h-4 w-4" />
                   Modifier
                 </Link>
@@ -149,25 +151,25 @@ export function CustomerRowActions({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuItem asChild>
-              <Link href={`/clients/${customerId}`}>
+              <Link href={lp(`/clients/${customerId}`)}>
                 <Eye className="mr-2 h-4 w-4" />
                 Voir détails
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/bookings/create?customerId=${customerId}`}>
+              <Link href={lp(`/bookings/create?customerId=${customerId}`)}>
                 <CalendarPlus className="mr-2 h-4 w-4" />
                 Nouvelle réservation
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/customers/${customerId}/edit?tab=documents`}>
+              <Link href={lp(`/customers/${customerId}/edit?tab=documents`)}>
                 <FileText className="mr-2 h-4 w-4" />
                 Ajouter document
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/reservations?clientId=${customerId}`}>
+              <Link href={lp(`/reservations?clientId=${customerId}`)}>
                 <History className="mr-2 h-4 w-4" />
                 Historique réservations
               </Link>

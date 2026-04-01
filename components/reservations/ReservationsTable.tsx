@@ -19,6 +19,7 @@ import {
   getDayProgress,
   getActiveStatusHint,
 } from "@/lib/bookings/list-utils";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 interface ReservationsTableProps {
   bookings: BookingListItem[];
@@ -27,6 +28,7 @@ interface ReservationsTableProps {
 }
 
 export function ReservationsTable({ bookings, role, today }: ReservationsTableProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const stopPropagation = (event: SyntheticEvent) => {
     event.stopPropagation();
@@ -34,7 +36,7 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
   const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, bookingId: string) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      router.push(`/bookings/${bookingId}`);
+      router.push(lp(`/bookings/${bookingId}`));
     }
   };
 
@@ -93,7 +95,7 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
                   key={booking.id}
                   role="link"
                   tabIndex={0}
-                  onClick={() => router.push(`/bookings/${booking.id}`)}
+                  onClick={() => router.push(lp(`/bookings/${booking.id}`))}
                   onKeyDown={(event) => handleRowKeyDown(event, booking.id)}
                   className="cursor-pointer transition-colors duration-200 hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none"
                 >
@@ -106,7 +108,7 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
                   >
                     <div className="min-w-0 break-words">
                       <Link
-                        href={`/customers/${booking.customer.id}`}
+                        href={lp(`/customers/${booking.customer.id}`)}
                         onClick={stopPropagation}
                         className="font-semibold text-foreground underline-offset-4 hover:underline block truncate"
                       >
@@ -117,7 +119,7 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
                       </div>
                       <div className="font-medium text-foreground mt-0.5 truncate">
                         <Link
-                          href={`/vehicles/${booking.vehicle.id}/edit`}
+                          href={lp(`/vehicles/${booking.vehicle.id}/edit`)}
                           onClick={stopPropagation}
                           className="underline-offset-4 hover:underline"
                         >
@@ -207,7 +209,7 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
                         variant="ghost"
                         aria-label="Voir la réservation"
                       >
-                        <Link href={`/bookings/${booking.id}`} onClick={stopPropagation}>
+                        <Link href={lp(`/bookings/${booking.id}`)} onClick={stopPropagation}>
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>

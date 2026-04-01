@@ -5,12 +5,20 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { VehicleProfileData } from "@/lib/vehicles/profile";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 import { bookingStatusLabels, getHealthBadgeClass } from "./presentation";
 import { VehicleCompliancePanel } from "./vehicle-compliance-panel";
 import { VehicleInfractionsPanel } from "./vehicle-infractions-panel";
 import { VehicleRemindersPanel } from "./vehicle-reminders-panel";
 
-export function VehicleOverviewTab({ data }: { data: VehicleProfileData }) {
+export function VehicleOverviewTab({
+  data,
+  locale = "fr",
+}: {
+  data: VehicleProfileData;
+  locale?: AppLocale;
+}) {
   const reservation = data.currentReservation ?? data.nextReservation;
   const latestInspection = data.latestInspection;
 
@@ -44,7 +52,7 @@ export function VehicleOverviewTab({ data }: { data: VehicleProfileData }) {
             <CardTitle className="text-base">Réservation en cours / prochaine</CardTitle>
             {reservation ? (
               <Button variant="ghost" size="sm" asChild>
-                <Link href={`/bookings/${reservation.id}`}>Ouvrir</Link>
+                <Link href={withLocalePath(locale, `/bookings/${reservation.id}`)}>Ouvrir</Link>
               </Button>
             ) : null}
           </CardHeader>
@@ -71,7 +79,9 @@ export function VehicleOverviewTab({ data }: { data: VehicleProfileData }) {
               <CardTitle className="text-base">Dernière inspection</CardTitle>
               {latestInspection ? (
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href={`/damage-reports/${latestInspection.id}`}>Ouvrir</Link>
+                  <Link href={withLocalePath(locale, `/damage-reports/${latestInspection.id}`)}>
+                    Ouvrir
+                  </Link>
                 </Button>
               ) : null}
             </CardHeader>
@@ -101,6 +111,7 @@ export function VehicleOverviewTab({ data }: { data: VehicleProfileData }) {
             open={data.reminders.open}
             done={data.reminders.done}
             compact
+            locale={locale}
           />
         </div>
       </div>
@@ -128,7 +139,12 @@ export function VehicleOverviewTab({ data }: { data: VehicleProfileData }) {
         </Card>
 
         <VehicleCompliancePanel vehicleId={data.vehicle.id} items={data.compliance} compact />
-        <VehicleInfractionsPanel vehicleId={data.vehicle.id} infractions={data.infractions} compact />
+        <VehicleInfractionsPanel
+          vehicleId={data.vehicle.id}
+          infractions={data.infractions}
+          compact
+          locale={locale}
+        />
       </div>
     </div>
   );

@@ -32,6 +32,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MobileNavDrawer } from "@/components/shared/mobile-nav-drawer";
+import { LanguageSwitcher } from "@/components/locale/LanguageSwitcher";
+import { useI18n } from "@/components/i18n/i18n-context";
+import { withLocalePath } from "@/lib/i18n/config";
 
 const SearchOverlay = dynamic(
   () => import("@/components/shared/search-overlay").then((mod) => mod.SearchOverlay),
@@ -84,7 +87,9 @@ export function TopNavBar({
   notifCount = 0,
   topNotifs = [],
 }: TopNavBarProps) {
+  const { locale, t } = useI18n();
   const router = useRouter();
+  const lp = (path: string) => withLocalePath(locale, path);
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -132,8 +137,8 @@ export function TopNavBar({
               userName={userName}
             />
             <Link
-              href="/dashboard"
-              aria-label="Aller au tableau de bord"
+              href={lp("/dashboard")}
+              aria-label={t("shell.topNav.goToDashboard")}
               className="inline-flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-muted/50"
             >
               <Image
@@ -150,14 +155,17 @@ export function TopNavBar({
 
         {/* ── Zone C: Right — Search + Bell + Profile ───────────── */}
         <div className="flex-none flex items-center gap-2 sm:gap-2.5">
+          <LanguageSwitcher />
           {/* Search shell */}
           <button
             onClick={() => setSearchOpen(true)}
-            aria-label="Rechercher (Ctrl+K)"
+            aria-label={t("shell.topNav.searchAria")}
             className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-subtle bg-slate-50 px-3 text-sm text-slate-500 transition-colors duration-200 hover:bg-white hover:text-slate-900"
           >
             <Search className="h-4 w-4" />
-            <span className="hidden text-xs font-medium sm:inline">Recherche</span>
+            <span className="hidden text-xs font-medium sm:inline">
+              {t("shell.topNav.searchLabel")}
+            </span>
             <span className="sr-only">Ctrl+K</span>
           </button>
 
@@ -167,7 +175,7 @@ export function TopNavBar({
               onClick={() => {
                 setNotifOpen(!notifOpen);
               }}
-              aria-label={`Notifications${notifCount > 0 ? ` (${notifCount} actives)` : ""}`}
+              aria-label={`${t("shell.topNav.notificationsAria")}${notifCount > 0 ? ` (${notifCount} ${t("shell.topNav.notificationsActive")})` : ""}`}
               className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-subtle bg-slate-50 text-slate-500 transition-colors duration-200 hover:bg-white hover:text-slate-900"
             >
               <Bell className="h-[18px] w-[18px]" />
@@ -181,11 +189,14 @@ export function TopNavBar({
               <div className="fixed left-4 right-4 top-[calc(4.5rem+env(safe-area-inset-top,0px))] z-50 w-auto max-w-none origin-top-right overflow-hidden rounded-2xl border border-border bg-popover shadow-card-lg animate-scale-in sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 sm:max-w-sm">
                 <div className="flex items-center justify-between border-b border-border px-5 py-4">
                   <h3 className="text-sm font-semibold text-foreground">
-                    Rappels &amp; alertes
+                    {t("shell.topNav.remindersTitle")}
                   </h3>
                   {notifCount > 0 && (
                     <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                      {notifCount} active{notifCount > 1 ? "s" : ""}
+                      {notifCount}{" "}
+                      {notifCount > 1
+                        ? t("shell.topNav.reminderBadgeActives")
+                        : t("shell.topNav.reminderBadgeActive")}
                     </span>
                   )}
                 </div>
@@ -195,10 +206,10 @@ export function TopNavBar({
                     <div className="flex flex-col items-center justify-center py-10 text-center px-4">
                       <Bell className="h-8 w-8 text-muted-foreground/30 mb-2" />
                       <p className="text-sm text-muted-foreground">
-                        Aucun rappel urgent
+                        {t("shell.topNav.noUrgentReminders")}
                       </p>
                       <p className="text-xs text-muted-foreground/60 mt-0.5">
-                        Tout est à jour !
+                        {t("shell.topNav.allUpToDate")}
                       </p>
                     </div>
                   ) : (
@@ -210,7 +221,7 @@ export function TopNavBar({
                           key={notif.id}
                           onClick={() => {
                             setNotifOpen(false);
-                            router.push(`/notifications`);
+                            router.push(lp("/notifications"));
                           }}
                           className="flex w-full items-start gap-3.5 bg-transparent px-5 py-3.5 text-left transition-colors duration-150 hover:bg-muted/40"
                         >
@@ -246,11 +257,11 @@ export function TopNavBar({
                   <button
                     onClick={() => {
                       setNotifOpen(false);
-                      router.push("/notifications");
+                      router.push(lp("/notifications"));
                     }}
                     className="w-full text-center text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                   >
-                    Voir toutes les notifications
+                    {t("shell.topNav.seeAllNotifications")}
                   </button>
                 </div>
               </div>
@@ -270,7 +281,7 @@ export function TopNavBar({
           >
             <DropdownMenuTrigger asChild>
               <button
-                aria-label="Menu profil"
+                aria-label={t("shell.topNav.profileMenuAria")}
                 className="flex min-h-[36px] items-center gap-2 rounded-xl border border-transparent px-2 py-1 transition-colors duration-200 hover:bg-slate-50 sm:gap-2.5 sm:px-2.5"
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-950 text-xs font-semibold text-white">
@@ -309,32 +320,32 @@ export function TopNavBar({
               </DropdownMenuLabel>
               <div className="p-1.5">
                 <DropdownMenuItem
-                  onSelect={() => router.push("/settings/agency")}
+                  onSelect={() => router.push(lp("/settings/agency"))}
                   className="gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground/80"
                 >
                   <User className="h-4 w-4 text-muted-foreground" />
-                  Profil
+                  {t("shell.topNav.profile")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => router.push("/getting-started")}
+                  onSelect={() => router.push(lp("/getting-started"))}
                   className="gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground/80"
                 >
                   <Rocket className="h-4 w-4 text-muted-foreground" />
-                  Démarrage guidé
+                  {t("shell.topNav.gettingStarted")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => router.push("/settings/agency")}
+                  onSelect={() => router.push(lp("/settings/agency"))}
                   className="gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground/80"
                 >
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  Agence
+                  {t("shell.topNav.agency")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => router.push("/settings/notifications")}
+                  onSelect={() => router.push(lp("/settings/notifications"))}
                   className="gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground/80"
                 >
                   <Settings className="h-4 w-4 text-muted-foreground" />
-                  Paramètres
+                  {t("shell.topNav.settings")}
                 </DropdownMenuItem>
               </div>
               <DropdownMenuSeparator />
@@ -346,7 +357,7 @@ export function TopNavBar({
                   className="gap-3 rounded-xl px-3 py-2.5 text-sm text-red-500 focus:bg-red-50 focus:text-red-600"
                 >
                   <LogOut className="h-4 w-4" />
-                  Déconnexion
+                  {t("shell.topNav.signOut")}
                 </DropdownMenuItem>
               </div>
             </DropdownMenuContent>
@@ -355,7 +366,9 @@ export function TopNavBar({
       </header>
 
       {/* Search overlay — rendered outside header to avoid stacking context issues */}
-      {searchOpen ? <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} /> : null}
+      {searchOpen ? (
+        <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      ) : null}
     </>
   );
 }

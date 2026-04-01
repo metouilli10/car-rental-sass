@@ -7,19 +7,14 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { brandLogoSrc } from "@/lib/brands";
 import { VehicleActionsMenu } from "@/components/vehicles/vehicle-actions-menu";
 import type { VehicleListItem } from "@/components/vehicles/types";
+import { useI18n } from "@/components/i18n/i18n-context";
+import { withLocalePath } from "@/lib/i18n/config";
 
 const statusBadgeStyles: Record<string, string> = {
   AVAILABLE: "bg-emerald-100 text-emerald-700",
   RENTED: "bg-blue-100 text-blue-700",
   MAINTENANCE: "bg-amber-100 text-amber-700",
   UNAVAILABLE: "bg-gray-100 text-gray-600",
-};
-
-const statusLabels: Record<string, string> = {
-  AVAILABLE: "Disponible",
-  RENTED: "Loué",
-  MAINTENANCE: "Maintenance",
-  UNAVAILABLE: "Désactivé",
 };
 
 interface VehiclesListProps {
@@ -37,15 +32,35 @@ export function VehiclesList({
   canDeleteVehicles = false,
   statusFilter,
 }: VehiclesListProps) {
+  const { locale, t } = useI18n();
   const router = useRouter();
   const [rows, setRows] = useState<VehicleListItem[]>(vehicles);
+
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case "AVAILABLE":
+        return t("vehicles.statusAvailable");
+      case "RENTED":
+        return t("vehicles.statusRented");
+      case "MAINTENANCE":
+        return t("vehicles.statusMaintenance");
+      case "UNAVAILABLE":
+        return t("vehicles.statusUnavailable");
+      default:
+        return status;
+    }
+  };
+
+  const goVehicle = (id: string) => {
+    router.push(withLocalePath(locale, `/vehicles/${id}`));
+  };
 
   useEffect(() => {
     setRows(vehicles);
   }, [vehicles]);
 
   const handleEdit = (vehicleId: string) => {
-    router.push(`/vehicles/${vehicleId}/edit`);
+    router.push(withLocalePath(locale, `/vehicles/${vehicleId}/edit`));
   };
 
   const shouldKeepRowInCurrentView = (nextStatus: string) => {
@@ -65,32 +80,32 @@ export function VehiclesList({
             <thead>
               <tr className="border-b border-border">
                 <th className="px-6 py-4 md:px-8 md:py-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                  Véhicule
+                  {t("vehicles.colVehicle")}
                 </th>
                 <th className="px-6 py-4 md:px-8 md:py-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                  Plaque
+                  {t("vehicles.colPlate")}
                 </th>
                 <th className="px-6 py-4 md:px-8 md:py-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                  Année
+                  {t("vehicles.colYear")}
                 </th>
                 <th className="px-6 py-4 md:px-8 md:py-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                  Prix / Jour
+                  {t("vehicles.colPricePerDay")}
                 </th>
                 <th className="px-6 py-4 md:px-8 md:py-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                  Statut
+                  {t("vehicles.colStatus")}
                 </th>
                 {isRentedView ? (
                   <>
                     <th className="px-6 py-4 md:px-8 md:py-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                      Client
+                      {t("vehicles.colClient")}
                     </th>
                     <th className="px-6 py-4 md:px-8 md:py-5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                      Période
+                      {t("vehicles.colPeriod")}
                     </th>
                   </>
                 ) : null}
                 <th className="px-6 py-4 md:px-8 md:py-5 text-right text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                  Actions
+                  {t("vehicles.colActions")}
                 </th>
               </tr>
             </thead>
@@ -103,7 +118,7 @@ export function VehiclesList({
                   <tr
                     key={vehicle.id}
                     className="cursor-pointer transition-colors hover:bg-blue-50/40"
-                    onClick={() => router.push(`/vehicles/${vehicle.id}`)}
+                    onClick={() => goVehicle(vehicle.id)}
                   >
                     <td className="px-6 py-4.5 md:px-8 md:py-6">
                       <div className="flex items-center gap-3">
@@ -125,7 +140,7 @@ export function VehiclesList({
                           <div className="mt-0.5 text-xs text-gray-400">
                             {vehicle.color}
                             {" · "}
-                            {vehicle.gearbox === "AUTO" ? "Automatique" : "Manuelle"}
+                            {vehicle.gearbox === "AUTO" ? t("vehicles.gearAuto") : t("vehicles.gearManual")}
                           </div>
                         </div>
                       </div>
@@ -140,7 +155,7 @@ export function VehiclesList({
                       <span className="text-base font-semibold text-blue-600">
                         {formatCurrency(vehicle.pricePerDay)}
                       </span>
-                      <span className="ml-0.5 text-xs text-muted-foreground">/j</span>
+                      <span className="ml-0.5 text-xs text-muted-foreground">{t("vehicles.perDay")}</span>
                     </td>
                     <td className="px-6 py-4.5 md:px-8 md:py-6">
                       <span
@@ -148,7 +163,7 @@ export function VehiclesList({
                           statusBadgeStyles[vehicle.status] ?? "bg-gray-100 text-gray-500"
                         }`}
                       >
-                        {statusLabels[vehicle.status] ?? vehicle.status}
+                        {statusLabel(vehicle.status)}
                       </span>
                     </td>
                     {isRentedView ? (
@@ -222,7 +237,7 @@ export function VehiclesList({
               <div
                 key={vehicle.id}
                 className="flex cursor-pointer items-center gap-3 px-4 py-4 transition-colors hover:bg-blue-50/40"
-                onClick={() => router.push(`/vehicles/${vehicle.id}`)}
+                onClick={() => goVehicle(vehicle.id)}
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-100">
                   <div className="relative h-7 w-7">
@@ -246,7 +261,7 @@ export function VehiclesList({
                         statusBadgeStyles[vehicle.status] ?? "bg-gray-100 text-gray-600"
                       }`}
                     >
-                      {statusLabels[vehicle.status] ?? vehicle.status}
+                      {statusLabel(vehicle.status)}
                     </span>
                   </div>
                   <div className="mt-0.5 flex items-center gap-2">
@@ -255,7 +270,7 @@ export function VehiclesList({
                     <span className="text-base font-semibold text-blue-600">
                       {formatCurrency(vehicle.pricePerDay)}
                     </span>
-                    <span className="text-xs text-muted-foreground">/j</span>
+                    <span className="text-xs text-muted-foreground">{t("vehicles.perDay")}</span>
                   </div>
                 </div>
 

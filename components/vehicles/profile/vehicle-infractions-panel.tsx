@@ -4,16 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { VehicleInfractionItem } from "@/lib/vehicles/profile";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 import { getInfractionStatusClass, infractionStatusLabels, infractionTypeLabels } from "./presentation";
 
 export function VehicleInfractionsPanel({
   vehicleId,
   infractions,
   compact = false,
+  locale = "fr",
 }: {
   vehicleId: string;
   infractions: VehicleInfractionItem[];
   compact?: boolean;
+  locale?: AppLocale;
 }) {
   const items = compact ? infractions.slice(0, 3) : infractions;
 
@@ -22,7 +26,9 @@ export function VehicleInfractionsPanel({
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base">Infractions</CardTitle>
         <Button variant="secondary" size="sm" asChild>
-          <Link href={`/infractions/new?vehicleId=${vehicleId}`}>Ajouter infraction</Link>
+          <Link href={withLocalePath(locale, `/infractions/new?vehicleId=${vehicleId}`)}>
+            Ajouter infraction
+          </Link>
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -51,7 +57,10 @@ export function VehicleInfractionsPanel({
                   <p className="text-sm font-semibold text-slate-900">
                     {item.amount != null ? formatCurrency(item.amount) : "Montant non renseigné"}
                   </p>
-                  <Link href={`/infractions/${item.id}`} className="mt-1 inline-flex text-xs font-medium text-blue-600 hover:text-blue-700">
+                  <Link
+                    href={withLocalePath(locale, `/infractions/${item.id}`)}
+                    className="mt-1 inline-flex text-xs font-medium text-blue-600 hover:text-blue-700"
+                  >
                     Voir le détail
                   </Link>
                 </div>

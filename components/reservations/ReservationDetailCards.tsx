@@ -25,6 +25,8 @@ import type {
   ReservationAttentionAlert,
   ReservationCustomerHistorySummary,
 } from "@/lib/reservations/details";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 
 function getInitials(name: string): string {
   return (
@@ -186,9 +188,11 @@ export function ReservationProgressCard({
 export function ReservationAlertCard({
   bookingId,
   alert,
+  locale = "fr",
 }: {
   bookingId: string;
   alert: ReservationAttentionAlert | null;
+  locale?: AppLocale;
 }) {
   if (!alert) {
     return null;
@@ -223,7 +227,9 @@ export function ReservationAlertCard({
           </div>
         </div>
         <Button asChild size="sm" className="w-full shrink-0 sm:w-auto">
-          <Link href={`/damage-reports/new?bookingId=${bookingId}`}>Faire l&apos;inspection</Link>
+          <Link href={withLocalePath(locale, `/damage-reports/new?bookingId=${bookingId}`)}>
+            Faire l&apos;inspection
+          </Link>
         </Button>
       </CardContent>
     </Card>
@@ -236,12 +242,14 @@ export function ReservationClientCard({
   phone,
   whatsappLink,
   history,
+  locale = "fr",
 }: {
   customerId: string;
   name: string;
   phone: string | null;
   whatsappLink: string | null;
   history: ReservationCustomerHistorySummary;
+  locale?: AppLocale;
 }) {
   const callablePhone = getCallablePhone(phone);
 
@@ -250,7 +258,7 @@ export function ReservationClientCard({
       <CardHeader className="pb-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <Link
-            href={`/customers/${customerId}`}
+            href={withLocalePath(locale, `/customers/${customerId}`)}
             className="-m-2 flex min-w-0 items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-muted/20"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
@@ -302,6 +310,7 @@ export function ReservationVehicleCard({
   color,
   status,
   gearbox,
+  locale = "fr",
 }: {
   vehicleId: string;
   make: string;
@@ -310,13 +319,14 @@ export function ReservationVehicleCard({
   color: string;
   status: VehicleStatus;
   gearbox: Gearbox;
+  locale?: AppLocale;
 }) {
   return (
     <Card className="shadow-card">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-3">
           <Link
-            href={`/vehicles/${vehicleId}`}
+            href={withLocalePath(locale, `/vehicles/${vehicleId}`)}
             className="rounded-xl transition-colors hover:bg-muted/20 -m-2 p-2"
           >
             <CardTitle className="text-base transition-colors hover:text-primary">Véhicule</CardTitle>
@@ -326,7 +336,12 @@ export function ReservationVehicleCard({
         </div>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-3 pt-0">
-        <InfoPair label="Modèle" value={`${make} ${model}`} icon={CarFront} href={`/vehicles/${vehicleId}`} />
+        <InfoPair
+          label="Modèle"
+          value={`${make} ${model}`}
+          icon={CarFront}
+          href={withLocalePath(locale, `/vehicles/${vehicleId}`)}
+        />
         <InfoPair label="Plaque" value={plate} />
         <InfoPair label="Couleur" value={color || "—"} />
         <InfoPair
@@ -395,12 +410,14 @@ export function ReservationInspectionsCard({
   hasRetour,
   showCreateAction,
   isReturnPending,
+  locale = "fr",
 }: {
   bookingId: string;
   hasDepart: boolean;
   hasRetour: boolean;
   showCreateAction: boolean;
   isReturnPending: boolean;
+  locale?: AppLocale;
 }) {
   const rows = [
     {
@@ -424,7 +441,9 @@ export function ReservationInspectionsCard({
         </div>
         {showCreateAction ? (
           <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
-            <Link href={`/damage-reports/new?bookingId=${bookingId}`}>Nouvelle inspection</Link>
+            <Link href={withLocalePath(locale, `/damage-reports/new?bookingId=${bookingId}`)}>
+              Nouvelle inspection
+            </Link>
           </Button>
         ) : null}
       </CardHeader>

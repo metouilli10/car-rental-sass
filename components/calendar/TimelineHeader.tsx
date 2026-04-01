@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, CalendarDays, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 interface TimelineHeaderProps {
   weekStart: Date;
@@ -25,6 +26,7 @@ export function TimelineHeader({
   statusFilter,
   onStatusFilterChange,
 }: TimelineHeaderProps) {
+  const lp = useLocalizedPath();
   const dateRangeLabel = `${format(weekStart, "d", { locale: fr })} - ${format(
     weekEnd,
     "d MMMM yyyy",
@@ -45,7 +47,7 @@ export function TimelineHeader({
           </p>
         </div>
         <Button asChild className="w-full sm:w-auto">
-          <Link href="/bookings/create">
+          <Link href={lp("/bookings/create")}>
             <Plus className="h-4 w-4 mr-2" />
             Nouvelle Réservation
           </Link>

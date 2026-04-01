@@ -3,12 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { VehicleReservationHistoryItem } from "@/lib/vehicles/profile";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 import { bookingStatusLabels, depositStatusLabels, formatDurationDays, paymentStatusLabels } from "./presentation";
 
 export function VehicleReservationsPanel({
   reservations,
+  locale = "fr",
 }: {
   reservations: VehicleReservationHistoryItem[];
+  locale?: AppLocale;
 }) {
   return (
     <Card className="rounded-2xl border-slate-200/80 shadow-sm">
@@ -40,7 +44,9 @@ export function VehicleReservationsPanel({
                     <span>{paymentStatusLabels[reservation.paymentStatus]}</span>
                   </div>
                   <Button variant="ghost" size="sm" asChild className="mt-2 px-0 text-blue-600 hover:text-blue-700">
-                    <Link href={`/bookings/${reservation.id}`}>Voir la réservation</Link>
+                    <Link href={withLocalePath(locale, `/bookings/${reservation.id}`)}>
+                      Voir la réservation
+                    </Link>
                   </Button>
                 </div>
               ))}
@@ -75,7 +81,7 @@ export function VehicleReservationsPanel({
                       <td className="py-4 pr-4 text-sm text-slate-600">{bookingStatusLabels[reservation.status]}</td>
                       <td className="py-4 text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/bookings/${reservation.id}`}>Voir</Link>
+                          <Link href={withLocalePath(locale, `/bookings/${reservation.id}`)}>Voir</Link>
                         </Button>
                       </td>
                     </tr>

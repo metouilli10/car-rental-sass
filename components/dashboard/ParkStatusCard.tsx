@@ -1,14 +1,20 @@
+"use client";
+
 import Link from "next/link";
 import { CarFront } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ParkStatus } from "@/lib/dashboard/types";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
+import { useI18n } from "@/components/i18n/i18n-context";
 
 interface ParkStatusCardProps {
   status: ParkStatus;
 }
 
 export function ParkStatusCard({ status }: ParkStatusCardProps) {
+  const { t } = useI18n();
+  const lp = useLocalizedPath();
   const rentedPct = status.total > 0 ? Math.round((status.rented / status.total) * 100) : 0;
   const availablePct = status.total > 0 ? Math.round((status.available / status.total) * 100) : 0;
   const maintenancePct =
@@ -24,11 +30,13 @@ export function ParkStatusCard({ status }: ParkStatusCardProps) {
   };
 
   return (
-    <Link href="/vehicles" className="block h-full">
+    <Link href={lp("/vehicles")} className="block h-full">
       <Card className="h-full rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md cursor-pointer">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold text-slate-900">Etat du parc</CardTitle>
+            <CardTitle className="text-base font-semibold text-slate-900">
+              {t("dashboardWidgets.parkStatus.title")}
+            </CardTitle>
             <CarFront className="h-4 w-4 text-muted-foreground" />
           </div>
         </CardHeader>
@@ -37,7 +45,9 @@ export function ParkStatusCard({ status }: ParkStatusCardProps) {
           <div className="relative h-36 w-36 rounded-full p-3" style={donutStyle}>
             <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-white">
               <p className="text-3xl font-semibold text-slate-900">{status.occupationRate}%</p>
-              <p className="text-xs text-muted-foreground">Occupation</p>
+              <p className="text-xs text-muted-foreground">
+                {t("dashboardWidgets.parkStatus.occupation")}
+              </p>
             </div>
           </div>
         </div>

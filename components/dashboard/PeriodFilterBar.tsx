@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { DashboardPeriod } from "@/lib/dashboard/ranges";
 import type { PeriodStatsMap } from "@/lib/dashboard/types";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 
 const PERIOD_ITEMS: { id: DashboardPeriod; label: string }[] = [
   { id: "today", label: "Aujourd'hui" },
@@ -15,9 +17,10 @@ const PERIOD_ITEMS: { id: DashboardPeriod; label: string }[] = [
 interface PeriodFilterBarProps {
   selectedPeriod: DashboardPeriod;
   stats: PeriodStatsMap;
+  locale?: AppLocale;
 }
 
-export function PeriodFilterBar({ selectedPeriod, stats }: PeriodFilterBarProps) {
+export function PeriodFilterBar({ selectedPeriod, stats, locale = "fr" }: PeriodFilterBarProps) {
   const selectedStats = stats[selectedPeriod];
 
   return (
@@ -29,7 +32,7 @@ export function PeriodFilterBar({ selectedPeriod, stats }: PeriodFilterBarProps)
             return (
               <Link
                 key={item.id}
-                href={`/dashboard?period=${item.id}`}
+                href={withLocalePath(locale, `/dashboard?period=${item.id}`)}
                 className={cn(
                   "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
                   active
