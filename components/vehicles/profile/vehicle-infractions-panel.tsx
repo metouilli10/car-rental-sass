@@ -18,21 +18,36 @@ export function VehicleInfractionsPanel({
   const items = compact ? infractions.slice(0, 3) : infractions;
 
   return (
-    <Card className="rounded-2xl border-slate-200/80 shadow-sm">
+    <Card className="rounded-[24px] border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base">Infractions</CardTitle>
         <Button variant="secondary" size="sm" asChild>
-          <Link href={`/infractions/new?vehicleId=${vehicleId}`}>Ajouter infraction</Link>
+          <Link href={`/infractions/new?vehicleId=${vehicleId}`}>
+            Ajouter infraction
+          </Link>
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
         {items.length === 0 ? (
-          <div className="rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            Aucune infraction enregistrée.
+          <div className="rounded-[20px] border border-dashed border-slate-200 bg-slate-50/80 px-4 py-6">
+            <p className="text-sm font-semibold text-slate-950">Aucune infraction enregistrée</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Ajoutez une infraction dès qu’un événement doit être suivi ou assigné.
+            </p>
+            <Button variant="outline" size="sm" asChild className="mt-4">
+              <Link href={`/infractions/new?vehicleId=${vehicleId}`}>
+                Ajouter une infraction
+              </Link>
+            </Button>
           </div>
         ) : (
           items.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3">
+            <div
+              key={item.id}
+              className={`rounded-[20px] px-4 py-3 ${
+                compact ? "bg-slate-50/80" : "border border-slate-200/70 bg-white"
+              }`}
+            >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
@@ -51,7 +66,10 @@ export function VehicleInfractionsPanel({
                   <p className="text-sm font-semibold text-slate-900">
                     {item.amount != null ? formatCurrency(item.amount) : "Montant non renseigné"}
                   </p>
-                  <Link href={`/infractions/${item.id}`} className="mt-1 inline-flex text-xs font-medium text-blue-600 hover:text-blue-700">
+                  <Link
+                    href={`/infractions/${item.id}`}
+                    className="mt-1 inline-flex text-xs font-medium text-blue-600 hover:text-blue-700"
+                  >
                     Voir le détail
                   </Link>
                 </div>

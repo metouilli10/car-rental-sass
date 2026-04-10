@@ -7,8 +7,12 @@ import type { VehicleInspectionHistoryItem } from "@/lib/vehicles/profile";
 
 export function VehicleInspectionHistory({
   inspections,
+  createInspectionHref,
+  createInspectionDisabledReason,
 }: {
   inspections: VehicleInspectionHistoryItem[];
+  createInspectionHref?: string;
+  createInspectionDisabledReason?: string | null;
 }) {
   return (
     <Card className="rounded-2xl border-slate-200/80 shadow-sm">
@@ -17,14 +21,33 @@ export function VehicleInspectionHistory({
       </CardHeader>
       <CardContent>
         {inspections.length === 0 ? (
-          <div className="rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            Aucune inspection enregistrée pour ce véhicule.
+          <div className="rounded-[20px] border border-dashed border-slate-200 bg-slate-50/80 px-4 py-6">
+            <p className="text-sm font-semibold text-slate-950">Aucune inspection enregistrée</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Lancez une inspection pour cadrer le prochain départ ou retour.
+            </p>
+            {createInspectionHref ? (
+              <Button size="sm" className="mt-4" asChild>
+                <Link href={createInspectionHref}>Lancer une inspection</Link>
+              </Button>
+            ) : (
+              <Button size="sm" className="mt-4" disabled title={createInspectionDisabledReason ?? undefined}>
+                Lancer une inspection
+              </Button>
+            )}
+            {!createInspectionHref && createInspectionDisabledReason ? (
+              <p className="mt-2 text-xs text-slate-400">{createInspectionDisabledReason}</p>
+            ) : null}
           </div>
         ) : (
           <>
             <div className="space-y-3 md:hidden">
               {inspections.map((inspection) => (
-                <Link key={inspection.id} href={`/damage-reports/${inspection.id}`} className="block rounded-2xl border border-slate-200/70 bg-white px-4 py-3">
+                <Link
+                  key={inspection.id}
+                  href={`/damage-reports/${inspection.id}`}
+                  className="block rounded-2xl border border-slate-200/70 bg-white px-4 py-3"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium text-slate-900">

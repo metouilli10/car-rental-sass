@@ -6,8 +6,10 @@ import type { VehicleReservationHistoryItem } from "@/lib/vehicles/profile";
 import { bookingStatusLabels, depositStatusLabels, formatDurationDays, paymentStatusLabels } from "./presentation";
 
 export function VehicleReservationsPanel({
+  vehicleId,
   reservations,
 }: {
+  vehicleId: string;
   reservations: VehicleReservationHistoryItem[];
 }) {
   return (
@@ -17,8 +19,16 @@ export function VehicleReservationsPanel({
       </CardHeader>
       <CardContent>
         {reservations.length === 0 ? (
-          <div className="rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            Aucune réservation liée à ce véhicule.
+          <div className="rounded-[20px] border border-dashed border-slate-200 bg-slate-50/80 px-4 py-6">
+            <p className="text-sm font-semibold text-slate-950">Aucune réservation à venir</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Créez une réservation pour affecter ce véhicule à un nouveau client.
+            </p>
+            <Button size="sm" className="mt-4" asChild>
+              <Link href={`/bookings/create?vehicleId=${vehicleId}`}>
+                Créer une réservation
+              </Link>
+            </Button>
           </div>
         ) : (
           <>
@@ -40,7 +50,9 @@ export function VehicleReservationsPanel({
                     <span>{paymentStatusLabels[reservation.paymentStatus]}</span>
                   </div>
                   <Button variant="ghost" size="sm" asChild className="mt-2 px-0 text-blue-600 hover:text-blue-700">
-                    <Link href={`/bookings/${reservation.id}`}>Voir la réservation</Link>
+                    <Link href={`/bookings/${reservation.id}`}>
+                      Voir la réservation
+                    </Link>
                   </Button>
                 </div>
               ))}

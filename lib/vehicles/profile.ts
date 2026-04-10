@@ -11,20 +11,33 @@ import type {
 import { prisma } from "@/lib/prisma";
 import type { VehicleDocumentTypeValue } from "@/lib/validations/vehicle-document";
 import { getVehicleFuelType } from "@/lib/vehicle-fuel-type";
+import { getReminderSheetTypeFromReminderType } from "@/lib/vehicles/reminder-sheet";
 
-export const VEHICLE_PROFILE_TABS = [
-  "overview",
-  "reservations",
-  "inspections",
-  "maintenance",
-  "compliance",
-  "infractions",
-] as const;
+export const VEHICLE_PROFILE_TABS = ["overview", "reservations", "tracking", "documents"] as const;
 
 export type VehicleProfileTab = (typeof VEHICLE_PROFILE_TABS)[number];
 
 export function isVehicleProfileTab(value: string | undefined): value is VehicleProfileTab {
   return Boolean(value && VEHICLE_PROFILE_TABS.includes(value as VehicleProfileTab));
+}
+
+const LEGACY_VEHICLE_PROFILE_TAB_MAP: Record<string, VehicleProfileTab> = {
+  inspections: "tracking",
+  maintenance: "tracking",
+  infractions: "tracking",
+  compliance: "documents",
+};
+
+export function normalizeVehicleProfileTab(value: string | undefined): VehicleProfileTab | undefined {
+  if (isVehicleProfileTab(value)) {
+    return value;
+  }
+
+  if (!value) {
+    return undefined;
+  }
+
+  return LEGACY_VEHICLE_PROFILE_TAB_MAP[value];
 }
 
 export type ReminderHealth = "ok" | "soon" | "overdue" | "missing";
@@ -53,6 +66,60 @@ export interface VehicleReminderItem {
   severity: "info" | "warning" | "due";
   status: NotificationStatus;
   updatedAt: Date;
+}
+
+export interface VehicleWorkspaceActionItem {
+  id: string;
+  label: string;
+  tone: "danger" | "warning";
+  helperText: string;
+  actionLabel: string;
+  href: string;
+  group: "documents" | "vehicle" | "tracking";
+}
+
+export interface VehicleWorkspaceData {
+  vehicleAvailabilityStatus: {
+    status: VehicleStatus;
+    label: string;
+    tone: "success" | "info" | "warning" | "danger";
+    detail: string;
+  };
+  complianceSummary: {
+    status: ReminderHealth;
+    label: string;
+    blockedCount: number;
+    warningCount: number;
+    validCount: number;
+    totalCount: number;
+    summaryText: string;
+  };
+  missingCriticalItems: string[];
+  expiringSoonItems: string[];
+  documentIssueLabels: string[];
+  nextBooking: VehicleReservationHistoryItem | null;
+  lastInspection: VehicleInspectionHistoryItem | null;
+  currentKilometrageKnown: boolean;
+  openInfractionsCount: number;
+  canGoOutToday: {
+    value: boolean;
+    label: string;
+    helperText: string;
+  };
+  actionRequiredItems: VehicleWorkspaceActionItem[];
+  actionStrip: {
+    title: string;
+    description: string;
+    items: string[];
+    primaryAction: {
+      label: string;
+      href: string;
+    };
+    secondaryAction: {
+      label: string;
+      href: string;
+    } | null;
+  } | null;
 }
 
 export interface VehicleReservationHistoryItem {
@@ -157,6 +224,7 @@ export interface VehicleProfileData {
   compliance: VehicleComplianceItem[];
   infractions: VehicleInfractionItem[];
   activity: VehicleActivityItem[];
+  workspace: VehicleWorkspaceData;
 }
 
 const OPEN_BOOKING_STATUSES: BookingStatus[] = ["CONFIRMED", "ACTIVE"];
@@ -187,7 +255,7 @@ function getReminderHealth(date: Date | null, soonDays = 30): VehicleComplianceI
 function toHealthCopy(status: ReminderHealth): Pick<VehicleComplianceItem, "statusLabel" | "helperText"> {
   switch (status) {
     case "ok":
-      return { statusLabel: "Valide", helperText: "Aucune action immédiate" };
+      return { statusLabel: "Conforme", helperText: "Aucune action immédiate" };
     case "soon":
       return { statusLabel: "Expire bientôt", helperText: "À surveiller prochainement" };
     case "overdue":
@@ -223,6 +291,318 @@ function mapReservation(
     status: item.status,
     pickupLocation: item.pickupLocation,
     returnLocation: item.returnLocation,
+  };
+}
+
+function formatDateLabel(date: Date | null) {
+  if (!date) return null;
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+function getHealthPriority(status: ReminderHealth) {
+  switch (status) {
+    case "overdue":
+      return 4;
+    case "missing":
+      return 3;
+    case "soon":
+      return 2;
+    default:
+      return 1;
+  }
+}
+
+function getWorstHealthStatus(statuses: ReminderHealth[]): ReminderHealth {
+  return statuses.reduce<ReminderHealth>((worst, current) => {
+    return getHealthPriority(current) > getHealthPriority(worst) ? current : worst;
+  }, "ok");
+}
+
+function getComplianceSummaryCopy(status: ReminderHealth) {
+  switch (status) {
+    case "overdue":
+      return "Bloquant";
+    case "missing":
+      return "À renseigner";
+    case "soon":
+      return "À surveiller";
+    default:
+      return "Tout est à jour";
+  }
+}
+
+function formatCountLabel(count: number, singular: string, plural: string) {
+  return `${count} ${count > 1 ? plural : singular}`;
+}
+
+function buildComplianceSummaryText(blockedCount: number, warningCount: number) {
+  if (blockedCount > 0) {
+    return `${formatCountLabel(blockedCount, "élément à compléter", "éléments à compléter")}`;
+  }
+
+  if (warningCount > 0) {
+    return `${formatCountLabel(warningCount, "élément expire bientôt", "éléments expirent bientôt")}`;
+  }
+
+  return "Tous les éléments sont conformes";
+}
+
+function buildReminderSheetHref(vehicleId: string, reminderType?: ReminderType) {
+  if (!reminderType) {
+    return `/vehicles/${vehicleId}?tab=tracking&sheet=1`;
+  }
+
+  return `/vehicles/${vehicleId}?tab=tracking&sheet=1&reminder=${getReminderSheetTypeFromReminderType(reminderType)}`;
+}
+
+function getAvailabilityTone(status: VehicleStatus): VehicleWorkspaceData["vehicleAvailabilityStatus"]["tone"] {
+  switch (status) {
+    case "AVAILABLE":
+      return "success";
+    case "RENTED":
+      return "info";
+    case "MAINTENANCE":
+      return "warning";
+    default:
+      return "danger";
+  }
+}
+
+function buildAvailabilityDetail(
+  vehicleStatus: VehicleStatus,
+  currentReservation: VehicleReservationHistoryItem | null,
+  nextReservation: VehicleReservationHistoryItem | null,
+) {
+  if (vehicleStatus === "RENTED" && currentReservation) {
+    return `En location jusqu’au ${formatDateLabel(currentReservation.endDate)}`;
+  }
+
+  if (vehicleStatus === "AVAILABLE" && nextReservation) {
+    return `Prochaine réservation le ${formatDateLabel(nextReservation.startDate)}`;
+  }
+
+  if (vehicleStatus === "MAINTENANCE") {
+    return "Intervention en cours avant remise en service";
+  }
+
+  if (vehicleStatus === "UNAVAILABLE") {
+    return "Véhicule hors service";
+  }
+
+  return "Aucune contrainte opérationnelle immédiate";
+}
+
+export function deriveVehicleWorkspace(input: {
+  vehicle: VehicleProfileData["vehicle"];
+  currentReservation: VehicleReservationHistoryItem | null;
+  nextReservation: VehicleReservationHistoryItem | null;
+  latestInspection: VehicleInspectionHistoryItem | null;
+  reminders: VehicleProfileData["reminders"];
+  compliance: VehicleComplianceItem[];
+  infractions: VehicleInfractionItem[];
+}): VehicleWorkspaceData {
+  const { vehicle, currentReservation, nextReservation, latestInspection, reminders, compliance, infractions } = input;
+  const openInfractionsCount = infractions.filter((item) =>
+    INFRACTION_OPEN_STATUSES.includes(item.status),
+  ).length;
+  const currentKilometrageKnown = vehicle.currentKm != null;
+  const overdueComplianceItems = compliance.filter((item) => item.status === "overdue");
+  const missingComplianceItems = compliance.filter((item) => item.status === "missing");
+  const soonComplianceItems = compliance.filter((item) => item.status === "soon");
+  const overdueReminders = reminders.overdue;
+  const hasOverdueOilChange = reminders.nextOilChange.status === "overdue";
+  const hasSoonOilChange = reminders.nextOilChange.status === "soon";
+  const blockedItems = [
+    ...overdueComplianceItems.map((item) => `${item.label} expiré`),
+    ...missingComplianceItems.map((item) => `${item.label} à renseigner`),
+    ...(currentKilometrageKnown ? [] : ["Kilométrage non mis à jour"]),
+    ...(hasOverdueOilChange ? ["Vidange en retard"] : []),
+    ...overdueReminders.map((item) => item.title),
+  ];
+  const expiringSoonItems = [
+    ...soonComplianceItems.map((item) => `${item.label} expire bientôt`),
+    ...(hasSoonOilChange ? ["Vidange à planifier bientôt"] : []),
+  ];
+  const documentIssueLabels = [
+    ...missingComplianceItems.map((item) => item.label),
+    ...overdueComplianceItems.map((item) => item.label),
+    ...soonComplianceItems.map((item) => item.label),
+  ];
+  const complianceStatuses = compliance.map((item) => item.status);
+  const complianceSummaryStatus = getWorstHealthStatus(complianceStatuses);
+  const blockedCount = overdueComplianceItems.length + missingComplianceItems.length;
+  const warningCount = soonComplianceItems.length;
+  const complianceSummary = {
+    status: complianceSummaryStatus,
+    label: getComplianceSummaryCopy(complianceSummaryStatus),
+    blockedCount,
+    warningCount,
+    validCount: compliance.filter((item) => item.status === "ok").length,
+    totalCount: compliance.length,
+    summaryText: buildComplianceSummaryText(blockedCount, warningCount),
+  };
+  const primaryBlocker =
+    blockedItems[0] ??
+    (vehicle.status !== "AVAILABLE"
+      ? buildAvailabilityDetail(vehicle.status, currentReservation, nextReservation)
+      : null);
+  const canGoOutToday =
+    vehicle.status === "AVAILABLE" &&
+    currentReservation == null &&
+    blockedItems.length === 0;
+
+  const actionRequiredItems: VehicleWorkspaceActionItem[] = [
+    ...missingComplianceItems.map((item) => ({
+      id: `missing-${item.id}`,
+      label: item.label,
+      tone: "danger" as const,
+      helperText: item.helperText,
+      actionLabel: item.id === "insurance" ? "Ajouter assurance" : "Ajouter document",
+      href: `/vehicles/${vehicle.id}?tab=documents`,
+      group: "documents" as const,
+    })),
+    ...overdueComplianceItems.map((item) => ({
+      id: `overdue-${item.id}`,
+      label: item.label,
+      tone: "danger" as const,
+      helperText: item.expiryDate
+        ? `Échéance dépassée depuis le ${formatDateLabel(item.expiryDate)}`
+        : "Document expiré",
+      actionLabel: "Ajouter document",
+      href: `/vehicles/${vehicle.id}?tab=documents`,
+      group: "documents" as const,
+    })),
+    ...(!currentKilometrageKnown
+      ? [
+          {
+            id: "missing-current-km",
+            label: "Kilométrage non mis à jour",
+            tone: "danger" as const,
+            helperText: "Mettez à jour le kilométrage avant la prochaine sortie.",
+            actionLabel: "Mettre à jour kilométrage",
+            href: `/vehicles/${vehicle.id}/edit`,
+            group: "vehicle" as const,
+          },
+        ]
+      : []),
+    ...(hasOverdueOilChange
+      ? [
+          {
+            id: "overdue-oil-change",
+            label: "Vidange en retard",
+            tone: "danger" as const,
+            helperText: "La prochaine échéance de vidange est dépassée.",
+            actionLabel: "Ajouter un rappel",
+            href: buildReminderSheetHref(vehicle.id, "OIL_CHANGE"),
+            group: "tracking" as const,
+          },
+        ]
+      : []),
+    ...overdueReminders.map((item) => ({
+      id: `reminder-${item.id}`,
+      label: item.title,
+      tone: "danger" as const,
+      helperText: item.body,
+      actionLabel: "Voir les rappels",
+      href: buildReminderSheetHref(vehicle.id, item.type),
+      group: "tracking" as const,
+    })),
+    ...(blockedItems.length === 0
+      ? [
+          ...soonComplianceItems.map((item) => ({
+            id: `soon-${item.id}`,
+            label: item.label,
+            tone: "warning" as const,
+            helperText: item.expiryDate
+              ? `À renouveler avant le ${formatDateLabel(item.expiryDate)}`
+              : item.helperText,
+            actionLabel: "Voir documents",
+            href: `/vehicles/${vehicle.id}?tab=documents`,
+            group: "documents" as const,
+          })),
+          ...(hasSoonOilChange
+            ? [
+                {
+                  id: "soon-oil-change",
+                  label: "Vidange à planifier",
+                  tone: "warning" as const,
+                  helperText: "Préparez la prochaine échéance d’entretien.",
+                  actionLabel: "Ajouter un rappel",
+                  href: buildReminderSheetHref(vehicle.id, "OIL_CHANGE"),
+                  group: "tracking" as const,
+                },
+              ]
+            : []),
+        ]
+      : []),
+  ];
+  const hasDocumentIssues = documentIssueLabels.length > 0;
+  const hasNonDocumentIssues = actionRequiredItems.some((item) => item.group !== "documents");
+  const vehicleAction = actionRequiredItems.find((item) => item.group === "vehicle");
+  const trackingAction = actionRequiredItems.find((item) => item.group === "tracking");
+  const actionStrip =
+    actionRequiredItems.length > 0
+      ? {
+          title: blockedItems.length > 0 ? "Action requise" : "À surveiller",
+          description:
+            blockedItems.length > 0
+              ? "Des éléments bloquent la sortie ou demandent une action immédiate."
+              : "Anticipez les prochaines échéances avant qu’elles ne deviennent bloquantes.",
+          items: actionRequiredItems.slice(0, 4).map((item) => item.label),
+          primaryAction: {
+            label: "Compléter les informations",
+            href:
+              vehicleAction?.href ??
+              (hasNonDocumentIssues
+                ? trackingAction?.href ?? `/vehicles/${vehicle.id}/edit`
+                : `/vehicles/${vehicle.id}?tab=documents`),
+          },
+          secondaryAction:
+            hasDocumentIssues && hasNonDocumentIssues
+              ? {
+                  label: "Voir les documents",
+                  href: `/vehicles/${vehicle.id}?tab=documents`,
+                }
+              : null,
+        }
+      : null;
+
+  return {
+    vehicleAvailabilityStatus: {
+      status: vehicle.status,
+      label:
+        vehicle.status === "AVAILABLE"
+          ? "Disponible"
+          : vehicle.status === "RENTED"
+          ? "Loué"
+          : vehicle.status === "MAINTENANCE"
+          ? "Maintenance"
+          : "Indisponible",
+      tone: getAvailabilityTone(vehicle.status),
+      detail: buildAvailabilityDetail(vehicle.status, currentReservation, nextReservation),
+    },
+    complianceSummary,
+    missingCriticalItems: blockedItems,
+    expiringSoonItems,
+    documentIssueLabels,
+    nextBooking: nextReservation,
+    lastInspection: latestInspection,
+    currentKilometrageKnown,
+    openInfractionsCount,
+    canGoOutToday: {
+      value: canGoOutToday,
+      label: canGoOutToday ? "Prêt à sortir" : "À sécuriser avant départ",
+      helperText: canGoOutToday
+        ? "Aucun blocage opérationnel détecté aujourd’hui."
+        : primaryBlocker ?? "Une vérification manuelle est requise.",
+    },
+    actionRequiredItems,
+    actionStrip,
   };
 }
 
@@ -605,5 +985,52 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
     compliance,
     infractions,
     activity,
+    workspace: deriveVehicleWorkspace({
+      vehicle: {
+        id: vehicle.id,
+        make: vehicle.make,
+        model: vehicle.model,
+        brandKey: vehicle.brandKey,
+        year: vehicle.year,
+        plate: vehicle.plate,
+        color: vehicle.color,
+        status: vehicle.status,
+        pricePerDay: vehicle.pricePerDay,
+        depositAmount: vehicle.depositAmount,
+        gearbox: vehicle.gearbox,
+        fuelType,
+        seats: vehicle.seats,
+        hasAC: vehicle.hasAC,
+        category: vehicle.category,
+        photoUrl: vehicle.photoUrl,
+        mileage: vehicle.mileage,
+        currentKm: vehicle.currentKm,
+        maintenanceNotes: vehicle.maintenanceNotes,
+        insuranceProvider: vehicle.insuranceProvider,
+        insurancePolicyNumber: vehicle.insurancePolicyNumber,
+        insuranceStartDate: vehicle.insuranceStartDate,
+        insuranceExpiryDate: vehicle.insuranceExpiryDate,
+        lastTechnicalInspectionDate: vehicle.lastTechnicalInspectionDate,
+        nextTechnicalInspectionDate: vehicle.nextTechnicalInspectionDate,
+        vignetteExpiryDate: vehicle.vignetteExpiryDate,
+        lastOilChangeMileageKm: vehicle.lastOilChangeMileageKm,
+        lastOilChangeDate: vehicle.lastOilChangeDate,
+        nextOilChangeMileageKm: vehicle.nextOilChangeMileageKm,
+        nextOilChangeDate: vehicle.nextOilChangeDate,
+        createdAt: vehicle.createdAt,
+        updatedAt: vehicle.updatedAt,
+      },
+      currentReservation,
+      nextReservation,
+      latestInspection: inspections[0] ?? null,
+      reminders: {
+        overdue: overdueReminders,
+        open: openReminders,
+        done: reminders.filter((item) => item.status === "DONE"),
+        nextOilChange,
+      },
+      compliance,
+      infractions,
+    }),
   };
 }

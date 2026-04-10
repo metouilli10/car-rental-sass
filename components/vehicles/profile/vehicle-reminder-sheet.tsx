@@ -1,11 +1,21 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition, type ElementType, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { CalendarDays, Save } from "lucide-react";
+import {
+  CalendarDays,
+  ClipboardCheck,
+  FileText,
+  Save,
+  ShieldCheck,
+  Sticker,
+  Wrench,
+} from "lucide-react";
 import { updateVehicleReminderFields } from "@/lib/actions/vehicles";
 import type { VehicleProfileTab } from "@/lib/vehicles/profile";
+import { normalizeReminderSheetType, type ReminderSheetType } from "@/lib/vehicles/reminder-sheet";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +26,7 @@ interface VehicleReminderSheetProps {
   vehicleId: string;
   defaultOpen: boolean;
   currentTab: VehicleProfileTab;
+  defaultReminderType?: string;
   defaults: {
     nextOilChangeDate: string;
     nextOilChangeMileageKm: string;
@@ -30,6 +41,7 @@ export function VehicleReminderSheet({
   vehicleId,
   defaultOpen,
   currentTab,
+  defaultReminderType,
   defaults,
 }: VehicleReminderSheetProps) {
   const router = useRouter();
@@ -38,11 +50,27 @@ export function VehicleReminderSheet({
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(defaultOpen);
   const [form, setForm] = useState(defaults);
+  const [selectedType, setSelectedType] = useState<ReminderSheetType>(
+    normalizeReminderSheetType(defaultReminderType) ?? "oil",
+  );
+
+  useEffect(() => {
+    setOpen(defaultOpen);
+  }, [defaultOpen]);
+
+  useEffect(() => {
+    setForm(defaults);
+  }, [defaults]);
+
+  useEffect(() => {
+    setSelectedType(normalizeReminderSheetType(defaultReminderType) ?? "oil");
+  }, [defaultReminderType]);
 
   const nextUrl = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", currentTab);
     params.delete("sheet");
+    params.delete("reminder");
     const query = params.toString();
     return query ? `${pathname}?${query}` : pathname;
   }, [currentTab, pathname, searchParams]);
@@ -85,74 +113,147 @@ export function VehicleReminderSheet({
               }
               toast.success("Rappels mis à jour");
               setOpen(false);
-              router.replace(`${pathname}?tab=maintenance`, { scroll: false });
+              router.replace(`${pathname}?tab=tracking`, { scroll: false });
               router.refresh();
             });
           }}
         >
-          <ReminderField
-            label="Prochaine vidange"
-            description="Date prévisionnelle"
-            htmlFor="nextOilChangeDate"
-          >
-            <Input
-              id="nextOilChangeDate"
-              type="date"
-              value={form.nextOilChangeDate}
-              onChange={(event) => updateField("nextOilChangeDate", event.target.value)}
-            />
-          </ReminderField>
+          <div className="space-y-3 rounded-[22px] border border-slate-200/80 bg-slate-50/80 p-4">
+            <div>
+              <p className="text-sm font-semibold text-slate-950">Type de rappel</p>
+              <p className="mt-1 text-sm text-slate-500">
+                Choisissez d’abord le suivi à configurer, puis renseignez uniquement les champs utiles.
+              </p>
+            </div>
 
-          <ReminderField
-            label="Kilométrage de vidange"
-            description="Seuil kilométrique"
-            htmlFor="nextOilChangeMileageKm"
-          >
-            <Input
-              id="nextOilChangeMileageKm"
-              type="number"
-              min="0"
-              value={form.nextOilChangeMileageKm}
-              onChange={(event) => updateField("nextOilChangeMileageKm", event.target.value)}
-            />
-          </ReminderField>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {REMINDER_TYPE_OPTIONS.map((option) => {
+                const Icon = option.icon;
+                const isActive = selectedType === option.value;
 
-          <ReminderField label="Échéance assurance" htmlFor="insuranceExpiryDate">
-            <Input
-              id="insuranceExpiryDate"
-              type="date"
-              value={form.insuranceExpiryDate}
-              onChange={(event) => updateField("insuranceExpiryDate", event.target.value)}
-            />
-          </ReminderField>
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={cn(
+                      "flex items-start gap-3 rounded-[18px] border px-4 py-3 text-left transition-colors",
+                      isActive
+                        ? "border-blue-200 bg-blue-50 text-slate-950 shadow-sm"
+                        : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                    )}
+                    onClick={() => setSelectedType(option.value)}
+                  >
+                    <span
+                      className={cn(
+                        "mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                        isActive ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium">{option.label}</span>
+                      <span className="mt-1 block text-xs leading-5 text-slate-500">
+                        {option.description}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-          <ReminderField label="Échéance visite technique" htmlFor="nextTechnicalInspectionDate">
-            <Input
-              id="nextTechnicalInspectionDate"
-              type="date"
-              value={form.nextTechnicalInspectionDate}
-              onChange={(event) => updateField("nextTechnicalInspectionDate", event.target.value)}
-            />
-          </ReminderField>
+          {selectedType === "oil" ? (
+            <>
+              <ReminderField
+                label="Prochaine vidange"
+                description="Date prévisionnelle"
+                htmlFor="nextOilChangeDate"
+              >
+                <Input
+                  id="nextOilChangeDate"
+                  type="date"
+                  value={form.nextOilChangeDate}
+                  onChange={(event) => updateField("nextOilChangeDate", event.target.value)}
+                />
+              </ReminderField>
 
-          <ReminderField label="Échéance vignette" htmlFor="vignetteExpiryDate">
-            <Input
-              id="vignetteExpiryDate"
-              type="date"
-              value={form.vignetteExpiryDate}
-              onChange={(event) => updateField("vignetteExpiryDate", event.target.value)}
-            />
-          </ReminderField>
+              <ReminderField
+                label="Kilométrage de vidange"
+                description="Seuil kilométrique"
+                htmlFor="nextOilChangeMileageKm"
+              >
+                <Input
+                  id="nextOilChangeMileageKm"
+                  type="number"
+                  min="0"
+                  value={form.nextOilChangeMileageKm}
+                  onChange={(event) => updateField("nextOilChangeMileageKm", event.target.value)}
+                />
+              </ReminderField>
+            </>
+          ) : null}
 
-          <ReminderField label="Notes d’entretien" htmlFor="maintenanceNotes">
-            <Textarea
-              id="maintenanceNotes"
-              rows={5}
-              value={form.maintenanceNotes}
-              onChange={(event) => updateField("maintenanceNotes", event.target.value)}
-              placeholder="Ex: vidange à planifier après le retour du véhicule."
-            />
-          </ReminderField>
+          {selectedType === "insurance" ? (
+            <ReminderField
+              label="Échéance assurance"
+              description="Date limite à surveiller pour le renouvellement."
+              htmlFor="insuranceExpiryDate"
+            >
+              <Input
+                id="insuranceExpiryDate"
+                type="date"
+                value={form.insuranceExpiryDate}
+                onChange={(event) => updateField("insuranceExpiryDate", event.target.value)}
+              />
+            </ReminderField>
+          ) : null}
+
+          {selectedType === "inspection" ? (
+            <ReminderField
+              label="Échéance visite technique"
+              description="Date du prochain contrôle technique."
+              htmlFor="nextTechnicalInspectionDate"
+            >
+              <Input
+                id="nextTechnicalInspectionDate"
+                type="date"
+                value={form.nextTechnicalInspectionDate}
+                onChange={(event) => updateField("nextTechnicalInspectionDate", event.target.value)}
+              />
+            </ReminderField>
+          ) : null}
+
+          {selectedType === "vignette" ? (
+            <ReminderField
+              label="Échéance vignette"
+              description="Date prévue pour le prochain renouvellement."
+              htmlFor="vignetteExpiryDate"
+            >
+              <Input
+                id="vignetteExpiryDate"
+                type="date"
+                value={form.vignetteExpiryDate}
+                onChange={(event) => updateField("vignetteExpiryDate", event.target.value)}
+              />
+            </ReminderField>
+          ) : null}
+
+          {selectedType === "other" ? (
+            <ReminderField
+              label="Suivi libre"
+              description="Ajoutez un rappel opérationnel ou une note d’entretien personnalisée."
+              htmlFor="maintenanceNotes"
+            >
+              <Textarea
+                id="maintenanceNotes"
+                rows={5}
+                value={form.maintenanceNotes}
+                onChange={(event) => updateField("maintenanceNotes", event.target.value)}
+                placeholder="Ex: contrôle pneus après retour, suivi carrosserie, rendez-vous atelier."
+              />
+            </ReminderField>
+          ) : null}
 
           <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
             <Button type="button" variant="secondary" onClick={() => handleOpenChange(false)}>
@@ -169,6 +270,44 @@ export function VehicleReminderSheet({
   );
 }
 
+const REMINDER_TYPE_OPTIONS: Array<{
+  value: ReminderSheetType;
+  label: string;
+  description: string;
+  icon: ElementType;
+}> = [
+  {
+    value: "oil",
+    label: "Vidange",
+    description: "Planifier la prochaine échéance d’entretien et son seuil kilométrique.",
+    icon: Wrench,
+  },
+  {
+    value: "insurance",
+    label: "Assurance",
+    description: "Suivre la date de renouvellement de l’assurance du véhicule.",
+    icon: ShieldCheck,
+  },
+  {
+    value: "inspection",
+    label: "Visite technique",
+    description: "Renseigner la prochaine visite technique obligatoire.",
+    icon: ClipboardCheck,
+  },
+  {
+    value: "vignette",
+    label: "Vignette",
+    description: "Préparer la prochaine échéance de vignette.",
+    icon: Sticker,
+  },
+  {
+    value: "other",
+    label: "Autre suivi",
+    description: "Créer un rappel libre ou une note d’entretien spécifique.",
+    icon: FileText,
+  },
+];
+
 function ReminderField({
   label,
   htmlFor,
@@ -178,7 +317,7 @@ function ReminderField({
   label: string;
   htmlFor: string;
   description?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="space-y-2">
