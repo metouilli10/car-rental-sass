@@ -9,9 +9,13 @@ import { withLocalePath } from "@/lib/i18n/config";
 
 export function VehicleInspectionHistory({
   inspections,
+  createInspectionHref,
+  createInspectionDisabledReason,
   locale = "fr",
 }: {
   inspections: VehicleInspectionHistoryItem[];
+  createInspectionHref?: string;
+  createInspectionDisabledReason?: string | null;
   locale?: AppLocale;
 }) {
   return (
@@ -21,8 +25,23 @@ export function VehicleInspectionHistory({
       </CardHeader>
       <CardContent>
         {inspections.length === 0 ? (
-          <div className="rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            Aucune inspection enregistrée pour ce véhicule.
+          <div className="rounded-[20px] border border-dashed border-slate-200 bg-slate-50/80 px-4 py-6">
+            <p className="text-sm font-semibold text-slate-950">Aucune inspection enregistrée</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Lancez une inspection pour cadrer le prochain départ ou retour.
+            </p>
+            {createInspectionHref ? (
+              <Button size="sm" className="mt-4" asChild>
+                <Link href={createInspectionHref}>Lancer une inspection</Link>
+              </Button>
+            ) : (
+              <Button size="sm" className="mt-4" disabled title={createInspectionDisabledReason ?? undefined}>
+                Lancer une inspection
+              </Button>
+            )}
+            {!createInspectionHref && createInspectionDisabledReason ? (
+              <p className="mt-2 text-xs text-slate-400">{createInspectionDisabledReason}</p>
+            ) : null}
           </div>
         ) : (
           <>

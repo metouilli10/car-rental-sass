@@ -7,6 +7,7 @@ import type {
   NotificationStatus,
   ReminderType,
 } from "@prisma/client";
+import type { VehicleProfileData, VehicleWorkspaceActionItem, VehicleWorkspaceData } from "@/lib/vehicles/profile";
 
 export const reminderTypeLabels: Record<ReminderType, string> = {
   OIL_CHANGE: "Vidange",
@@ -93,6 +94,34 @@ export function getReminderSeverityClass(severity: "info" | "warning" | "due") {
       return "bg-amber-50 text-amber-700";
     default:
       return "bg-blue-50 text-blue-700";
+  }
+}
+
+export function getWorkspaceToneClass(
+  tone: VehicleWorkspaceData["vehicleAvailabilityStatus"]["tone"] | VehicleWorkspaceActionItem["tone"],
+) {
+  switch (tone) {
+    case "success":
+      return "bg-emerald-50 text-emerald-700";
+    case "info":
+      return "bg-blue-50 text-blue-700";
+    case "warning":
+      return "bg-amber-50 text-amber-700";
+    default:
+      return "bg-red-50 text-red-700";
+  }
+}
+
+export function formatFuelType(fuelType: VehicleProfileData["vehicle"]["fuelType"]) {
+  switch (fuelType) {
+    case "DIESEL":
+      return "Diesel";
+    case "HYBRID":
+      return "Hybride";
+    case "ELECTRIC":
+      return "Électrique";
+    default:
+      return "Essence";
   }
 }
 
