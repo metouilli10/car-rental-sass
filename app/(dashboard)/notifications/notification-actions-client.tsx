@@ -12,8 +12,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useI18n } from "@/components/i18n/i18n-context";
-import { type AppLocale, withLocalePath } from "@/lib/i18n/config";
 import {
   dismissNotification,
   markNotificationDone,
@@ -36,10 +34,6 @@ const SNOOZE_OPTIONS = [
   { label: "7 jours", days: 7 },
 ];
 
-function getVehiclePath(locale: AppLocale, vehicleId: string) {
-  return withLocalePath(locale, `/vehicles/${vehicleId}`);
-}
-
 export function NotificationActions({
   id,
   vehicleId,
@@ -47,7 +41,6 @@ export function NotificationActions({
   primaryLabel = "Voir le véhicule",
 }: NotificationActionsProps) {
   const router = useRouter();
-  const { locale } = useI18n();
   const [isPending, startTransition] = useTransition();
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [customDate, setCustomDate] = useState("");
@@ -112,7 +105,7 @@ export function NotificationActions({
       return;
     }
 
-    router.push(getVehiclePath(locale, vehicleId));
+    router.push(`/vehicles/${vehicleId}`);
   };
 
   return (

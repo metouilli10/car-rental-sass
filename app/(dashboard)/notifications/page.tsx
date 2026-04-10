@@ -23,7 +23,6 @@ import type {
 } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { authOptions } from "@/lib/auth";
-import { type AppLocale, isValidLocale, withLocalePath } from "@/lib/i18n/config";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
 import { NotificationActions } from "./notification-actions-client";
@@ -167,10 +166,6 @@ type PageSearchParams = Promise<{
 type PageStatusFilter = "ALL" | NotificationStatus;
 type PageSeverityFilter = "ALL" | NotificationSeverity;
 type PageTypeFilter = "ALL" | ReminderType;
-
-type PageParams = Promise<{
-  locale: string;
-}>;
 
 type RawNotification = Awaited<ReturnType<typeof fetchNotifications>>[number];
 
@@ -680,10 +675,8 @@ function EmptyState({
 }
 
 export default async function NotificationsPage({
-  params,
   searchParams,
 }: {
-  params: PageParams;
   searchParams: PageSearchParams;
 }) {
   const session = await getServerSession(authOptions);
@@ -691,8 +684,7 @@ export default async function NotificationsPage({
 
   if (!session.user.agencyId) redirect("/setup");
 
-  const [{ locale: localeParam }, rawParams] = await Promise.all([params, searchParams]);
-  const locale: AppLocale = isValidLocale(localeParam) ? localeParam : "fr";
+  const rawParams = await searchParams;
   const status = parseStatus(rawParams.status);
   const severity = parseSeverity(rawParams.severity);
   const type = parseType(rawParams.type);
@@ -721,8 +713,8 @@ export default async function NotificationsPage({
   ]);
 
   const groupedNotifications = groupNotifications(notifications);
-  const notificationsHref = withLocalePath(locale, "/notifications");
-  const settingsHref = withLocalePath(locale, "/settings/notifications");
+  const notificationsHref = "/notifications";
+  const settingsHref = "/settings/notifications";
   const hasActiveFilters =
     status !== "ALL" || severity !== "ALL" || type !== "ALL" || query.length > 0;
 
