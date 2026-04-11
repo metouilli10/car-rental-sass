@@ -18,10 +18,10 @@ const authMiddleware = withAuth(
   }
 );
 
-export default function middleware(
+export default async function middleware(
   request: NextRequest,
   event: NextFetchEvent
-) {
+): Promise<Response | NextResponse> {
   const pathname = request.nextUrl.pathname;
 
   if (shouldSkipLocaleAndAuth(pathname)) {
@@ -34,11 +34,14 @@ export default function middleware(
   }
 
   if (requiresAuthForPath(pathname)) {
-    const response = authMiddleware(
+    const authResult = await authMiddleware(
       request as Parameters<typeof authMiddleware>[0],
       event
-    ) as NextResponse;
-    return syncLocaleCookieOnResponse(request, response);
+    );
+    return syncLocaleCookieOnResponse(
+      request,
+      (authResult ?? NextResponse.next()) as Response | NextResponse
+    );
   }
 
   return syncLocaleCookieOnResponse(request, NextResponse.next());
