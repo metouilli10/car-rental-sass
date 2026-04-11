@@ -310,7 +310,7 @@ function toViewModel(
     typeLabel: getNotificationTypeLabel(locale, notification.type),
     groupKey: getGroupKey(notification),
     primaryActionLabel: getNotificationPrimaryActionLabel(locale, notification.type),
-    actionUrl: notification.actionUrl,
+    actionUrl: `/vehicles/${notification.vehicle.id}/edit`,
     vehicleName,
     plate: notification.vehicle.plate,
     dueLabel,
