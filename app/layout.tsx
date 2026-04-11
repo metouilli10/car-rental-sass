@@ -1,7 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import { LocaleHtmlAttributes } from "@/components/locale/LocaleHtmlAttributes";
 import { PwaBootstrap } from "@/components/pwa/PwaBootstrap";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_COOKIE_NAME,
+  localeDirection,
+  isValidLocale,
+} from "@/lib/i18n/config";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -46,14 +53,19 @@ export const viewport: Viewport = {
   themeColor: "#002e5d",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const rawLocale = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
+  const locale = isValidLocale(rawLocale) ? rawLocale : DEFAULT_LOCALE;
+
   return (
     <html
-      lang="fr"
+      lang={locale === "ar" ? "ar" : "fr"}
+      dir={localeDirection(locale)}
       className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >

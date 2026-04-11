@@ -22,7 +22,11 @@ import {
 } from "lucide-react";
 import type { UserRole } from "@prisma/client";
 import type { EffectivePermissions } from "@/lib/permissions";
-import type { ReminderType, NotificationSeverity } from "@prisma/client";
+import type {
+  NotificationSeverity,
+  NotificationStatus,
+  ReminderType,
+} from "@prisma/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +39,7 @@ import { MobileNavDrawer } from "@/components/shared/mobile-nav-drawer";
 import { LanguageSwitcher } from "@/components/locale/LanguageSwitcher";
 import { useI18n } from "@/components/i18n/i18n-context";
 import { withLocalePath } from "@/lib/i18n/config";
+import { getNotificationDisplayCopy } from "@/lib/notifications/presentation";
 
 const SearchOverlay = dynamic(
   () => import("@/components/shared/search-overlay").then((mod) => mod.SearchOverlay),
@@ -47,6 +52,11 @@ interface NotifItem {
   title: string;
   body: string;
   severity: NotificationSeverity;
+  status: NotificationStatus;
+  dueAt: Date | string | null;
+  dueMileageKm: number | null;
+  snoozedUntil: Date | string | null;
+  updatedAt: Date | string;
   vehicle: { id: string; make: string; model: string; plate: string };
 }
 
@@ -216,6 +226,19 @@ export function TopNavBar({
                     topNotifs.map((notif) => {
                       const Icon = TYPE_ICONS[notif.type];
                       const colors = SEVERITY_COLORS[notif.severity];
+                      const localized = getNotificationDisplayCopy({
+                        locale,
+                        type: notif.type,
+                        severity: notif.severity,
+                        status: notif.status,
+                        title: notif.title,
+                        body: notif.body,
+                        dueAt: notif.dueAt,
+                        dueMileageKm: notif.dueMileageKm,
+                        snoozedUntil: notif.snoozedUntil,
+                        updatedAt: notif.updatedAt,
+                        vehicle: notif.vehicle,
+                      });
                       return (
                         <button
                           key={notif.id}
@@ -233,7 +256,7 @@ export function TopNavBar({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-semibold text-foreground truncate">
-                                {notif.title}
+                                {localized.title}
                               </p>
                               <span
                                 className={`h-1.5 w-1.5 rounded-full shrink-0 ${colors.dot}`}
@@ -244,7 +267,7 @@ export function TopNavBar({
                               {notif.vehicle.plate}
                             </p>
                             <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">
-                              {notif.body}
+                              {localized.body}
                             </p>
                           </div>
                         </button>

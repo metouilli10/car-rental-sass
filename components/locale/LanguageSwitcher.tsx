@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { LOCALE_COOKIE_NAME, type AppLocale } from "@/lib/i18n/config";
 import { useI18n } from "@/components/i18n/i18n-context";
@@ -27,11 +27,18 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
   const { locale, t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   function go(target: AppLocale) {
     if (target === locale) return;
     setSessionLocaleCookie(target);
-    router.push(pathWithLocale(pathname, target));
+
+    const basePath = pathWithLocale(pathname, target);
+    const query = searchParams.toString();
+    const hash = window.location.hash;
+    const nextUrl = `${basePath}${query ? `?${query}` : ""}${hash}`;
+
+    router.push(nextUrl);
   }
 
   return (

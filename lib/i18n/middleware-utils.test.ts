@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   isPrintInvoicePath,
+  localeFromPathPrefix,
   requiresAuthForPath,
 } from "./middleware-utils";
 
@@ -21,4 +22,10 @@ test("requiresAuthForPath for locale-prefixed dashboard roots", () => {
 
 test("requiresAuthForPath for print invoices without locale", () => {
   assert.equal(requiresAuthForPath("/bookings/x/invoice"), true);
+});
+
+test("localeFromPathPrefix resolves /fr and /ar prefixes", () => {
+  assert.equal(localeFromPathPrefix("/fr/dashboard"), "fr");
+  assert.equal(localeFromPathPrefix("/ar/vehicles"), "ar");
+  assert.equal(localeFromPathPrefix("/dashboard"), null);
 });

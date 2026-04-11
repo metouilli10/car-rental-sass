@@ -5,6 +5,7 @@ import { withAuth } from "next-auth/middleware";
 import {
   requiresAuthForPath,
   shouldSkipLocaleAndAuth,
+  syncLocaleCookieOnResponse,
   tryDashboardLocaleRedirect,
 } from "@/lib/i18n/middleware-utils";
 
@@ -33,10 +34,14 @@ export default function middleware(
   }
 
   if (requiresAuthForPath(pathname)) {
-    return authMiddleware(request as Parameters<typeof authMiddleware>[0], event);
+    const response = authMiddleware(
+      request as Parameters<typeof authMiddleware>[0],
+      event
+    ) as NextResponse;
+    return syncLocaleCookieOnResponse(request, response);
   }
 
-  return NextResponse.next();
+  return syncLocaleCookieOnResponse(request, NextResponse.next());
 }
 
 export const config = {

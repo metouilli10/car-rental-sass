@@ -2,8 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { format, addDays } from "date-fns";
-import { fr } from "date-fns/locale";
+import { addDays, format } from "date-fns";
 import { Check, ChevronRight, Clock3, Ellipsis, ExternalLink, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/popover";
 import { useI18n } from "@/components/i18n/i18n-context";
 import { type AppLocale, withLocalePath } from "@/lib/i18n/config";
+import { formatNotificationDate } from "@/lib/notifications/presentation";
 import {
   dismissNotification,
   markNotificationDone,
@@ -25,29 +25,61 @@ import type { NotificationStatus } from "@prisma/client";
 
 interface NotificationActionsProps {
   id: string;
-  vehicleId?: string | null;
+  actionUrl?: string | null;
   status: NotificationStatus;
   primaryLabel?: string;
 }
 
-const SNOOZE_OPTIONS = [
-  { label: "1 jour", days: 1 },
-  { label: "3 jours", days: 3 },
-  { label: "7 jours", days: 7 },
-];
+const SNOOZE_OPTIONS = [{ days: 1 }, { days: 3 }, { days: 7 }];
 
-function getVehiclePath(locale: AppLocale, vehicleId: string) {
-  return withLocalePath(locale, `/vehicles/${vehicleId}`);
+function getPrimaryPath(locale: AppLocale, actionUrl: string) {
+  return withLocalePath(locale, actionUrl);
 }
 
 export function NotificationActions({
   id,
-  vehicleId,
+  actionUrl,
   status,
-  primaryLabel = "Voir le véhicule",
+  primaryLabel = "Voir le vehicule",
 }: NotificationActionsProps) {
   const router = useRouter();
   const { locale } = useI18n();
+  const copy =
+    locale === "ar"
+      ? {
+          doneToast: "تم وضع الإشعار كمكتمل",
+          snoozedUntil: "تم تأجيل التذكير حتى",
+          dismissedToast: "تم تجاهل الإشعار",
+          reopenedToast: "تمت إعادة فتح الإشعار",
+          missingLinkToast: "الرابط غير متاح لهذا الإشعار.",
+          doneButton: "وضع كمكتمل",
+          reopenButton: "إعادة الفتح",
+          moreActions: "مزيد من الإجراءات",
+          quickActions: "إجراءات سريعة",
+          snoozeUntil: "تأجيل حتى",
+          customDate: "تاريخ مخصص",
+          dismiss: "تجاهل",
+          snoozeOneDay: "يوم واحد",
+          snoozeThreeDays: "3 أيام",
+          snoozeSevenDays: "7 أيام",
+        }
+      : {
+          doneToast: "Marque comme terminee",
+          snoozedUntil: "Rappel snooze jusqu'au",
+          dismissedToast: "Notification ignoree",
+          reopenedToast: "Notification rouverte",
+          missingLinkToast: "Lien indisponible pour cette notification.",
+          doneButton: "Marquer comme fait",
+          reopenButton: "Rouvrir",
+          moreActions: "Plus d'actions",
+          quickActions: "Actions rapides",
+          snoozeUntil: "Snoozer jusqu'a",
+          customDate: "Date personnalisee",
+          dismiss: "Ignorer",
+          snoozeOneDay: "1 jour",
+          snoozeThreeDays: "3 jours",
+          snoozeSevenDays: "7 jours",
+        };
   const [isPending, startTransition] = useTransition();
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [customDate, setCustomDate] = useState("");
@@ -57,7 +89,7 @@ export function NotificationActions({
   const handleDone = () => {
     startTransition(async () => {
       await markNotificationDone(id);
-      toast.success("Marqué comme terminé");
+      toast.success(copy.doneToast);
       router.refresh();
     });
   };
@@ -66,9 +98,7 @@ export function NotificationActions({
     const until = addDays(new Date(), days);
     startTransition(async () => {
       await snoozeNotification(id, days);
-      toast.success(
-        `Rappel snoozé jusqu'au ${format(until, "d MMM yyyy", { locale: fr })}`,
-      );
+      toast.success(`${copy.snoozedUntil} ${formatNotificationDate(locale, until)}`);
       setOverflowOpen(false);
       router.refresh();
     });
@@ -80,9 +110,7 @@ export function NotificationActions({
     const until = new Date(customDate);
     startTransition(async () => {
       await snoozeNotificationUntil(id, until);
-      toast.success(
-        `Rappel snoozé jusqu'au ${format(until, "d MMM yyyy", { locale: fr })}`,
-      );
+      toast.success(`${copy.snoozedUntil} ${formatNotificationDate(locale, until)}`);
       setOverflowOpen(false);
       setCustomDate("");
       router.refresh();
@@ -92,7 +120,7 @@ export function NotificationActions({
   const handleDismiss = () => {
     startTransition(async () => {
       await dismissNotification(id);
-      toast("Notification ignorée");
+      toast(copy.dismissedToast);
       setOverflowOpen(false);
       router.refresh();
     });
@@ -101,18 +129,18 @@ export function NotificationActions({
   const handleReopen = () => {
     startTransition(async () => {
       await reopenNotification(id);
-      toast.success("Notification rouverte");
+      toast.success(copy.reopenedToast);
       router.refresh();
     });
   };
 
   const handleOpenVehicle = () => {
-    if (!vehicleId) {
-      toast.error("Véhicule introuvable pour cette notification.");
+    if (!actionUrl) {
+      toast.error(copy.missingLinkToast);
       return;
     }
 
-    router.push(getVehiclePath(locale, vehicleId));
+    router.push(getPrimaryPath(locale, actionUrl));
   };
 
   return (
@@ -121,7 +149,7 @@ export function NotificationActions({
         <Button
           size="sm"
           onClick={handleOpenVehicle}
-          disabled={isPending || !vehicleId}
+          disabled={isPending || !actionUrl}
           className="h-9 rounded-xl px-3.5 text-sm"
         >
           <ExternalLink className="h-4 w-4" />
@@ -137,7 +165,7 @@ export function NotificationActions({
             disabled={isPending}
           >
             <Check className="h-4 w-4" />
-            Marquer comme fait
+            {copy.doneButton}
           </Button>
         ) : (
           <Button
@@ -148,7 +176,7 @@ export function NotificationActions({
             disabled={isPending}
           >
             <RotateCcw className="h-4 w-4" />
-            Rouvrir
+            {copy.reopenButton}
           </Button>
         )}
 
@@ -160,7 +188,7 @@ export function NotificationActions({
                 variant="ghost"
                 className="h-9 w-9 rounded-xl border border-subtle bg-white p-0 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 disabled={isPending}
-                aria-label="Plus d'actions"
+                aria-label={copy.moreActions}
               >
                 <Ellipsis className="h-4 w-4" />
               </Button>
@@ -168,13 +196,13 @@ export function NotificationActions({
             <PopoverContent align="end" className="w-72 rounded-2xl border border-subtle p-2 shadow-card-lg">
               <div className="px-2 py-1.5">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  Actions rapides
+                  {copy.quickActions}
                 </p>
               </div>
 
               <div className="space-y-1 px-1 pb-2">
                 <p className="px-2 pt-1 text-[11px] font-medium text-slate-500">
-                  Snoozer jusqu&apos;à
+                  {copy.snoozeUntil}
                 </p>
                 {SNOOZE_OPTIONS.map((opt) => (
                   <button
@@ -185,10 +213,14 @@ export function NotificationActions({
                   >
                     <span className="inline-flex items-center gap-2">
                       <Clock3 className="h-4 w-4 text-amber-500" />
-                      {opt.label}
+                      {opt.days === 1
+                        ? copy.snoozeOneDay
+                        : opt.days === 3
+                        ? copy.snoozeThreeDays
+                        : copy.snoozeSevenDays}
                     </span>
                     <span className="text-xs text-slate-500">
-                      {format(addDays(new Date(), opt.days), "d MMM", { locale: fr })}
+                      {formatNotificationDate(locale, addDays(new Date(), opt.days), false)}
                     </span>
                   </button>
                 ))}
@@ -196,7 +228,7 @@ export function NotificationActions({
 
               <div className="border-t border-subtle px-3 py-3">
                 <p className="mb-2 text-[11px] font-medium text-slate-500">
-                  Date personnalisée
+                  {copy.customDate}
                 </p>
                 <div className="flex items-center gap-2">
                   <input
@@ -224,7 +256,7 @@ export function NotificationActions({
                   className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
                 >
                   <X className="h-4 w-4" />
-                  Ignorer
+                  {copy.dismiss}
                 </button>
               </div>
             </PopoverContent>

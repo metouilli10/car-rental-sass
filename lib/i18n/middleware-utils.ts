@@ -30,6 +30,29 @@ function cookieLocale(request: NextRequest): AppLocale {
   return raw === "ar" || raw === "fr" ? raw : DEFAULT_LOCALE;
 }
 
+export function localeFromPathPrefix(pathname: string): AppLocale | null {
+  const match = pathname.match(/^\/(fr|ar)(?:\/|$)/);
+  if (!match) return null;
+  return match[1] === "ar" ? "ar" : "fr";
+}
+
+export function syncLocaleCookieOnResponse(
+  request: NextRequest,
+  response: NextResponse
+): NextResponse {
+  const locale = localeFromPathPrefix(request.nextUrl.pathname);
+  if (!locale) return response;
+
+  const current = request.cookies.get(LOCALE_COOKIE_NAME)?.value;
+  if (current === locale) return response;
+
+  response.cookies.set(LOCALE_COOKIE_NAME, locale, {
+    path: "/",
+    sameSite: "lax",
+  });
+  return response;
+}
+
 /**
  * If the path is a dashboard route without /fr or /ar prefix, redirect to /{locale}/...
  */

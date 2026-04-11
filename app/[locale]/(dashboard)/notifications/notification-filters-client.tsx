@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { type AppLocale } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
 
 type NotificationStatusFilter = "ALL" | "OPEN" | "SNOOZED" | "DONE" | "DISMISSED";
@@ -24,6 +25,7 @@ type NotificationTypeFilter =
   | "VIGNETTE";
 
 interface NotificationFiltersClientProps {
+  locale: AppLocale;
   activeStatus: NotificationStatusFilter;
   search: string;
   severity: NotificationSeverityFilter;
@@ -31,21 +33,61 @@ interface NotificationFiltersClientProps {
   counts: Record<NotificationStatusFilter, number>;
 }
 
-const statusItems: Array<{ value: NotificationStatusFilter; label: string }> = [
-  { value: "ALL", label: "Tous" },
-  { value: "OPEN", label: "À faire" },
-  { value: "SNOOZED", label: "Snoozées" },
-  { value: "DONE", label: "Terminées" },
-  { value: "DISMISSED", label: "Ignorées" },
-];
-
 export function NotificationFiltersClient({
+  locale,
   activeStatus,
   search,
   severity,
   type,
   counts,
 }: NotificationFiltersClientProps) {
+  const copy =
+    locale === "ar"
+      ? {
+          statuses: [
+            { value: "ALL" as const, label: "الكل" },
+            { value: "OPEN" as const, label: "مطلوب" },
+            { value: "SNOOZED" as const, label: "مؤجلة" },
+            { value: "DONE" as const, label: "مكتملة" },
+            { value: "DISMISSED" as const, label: "متجاهلة" },
+          ],
+          searchPlaceholder: "ابحث عن تنبيه او مركبة او لوحة...",
+          severityPlaceholder: "الحدة",
+          severityAll: "كل الدرجات",
+          severityInfo: "معلومة",
+          severityWarning: "تنبيه",
+          severityDue: "عاجل",
+          typePlaceholder: "النوع",
+          typeAll: "كل الأنواع",
+          typeOil: "تغيير الزيت",
+          typeInsurance: "التأمين",
+          typeInspection: "الفحص التقني",
+          typeVignette: "الضريبة",
+          reset: "إعادة التعيين",
+        }
+      : {
+          statuses: [
+            { value: "ALL" as const, label: "Tous" },
+            { value: "OPEN" as const, label: "A faire" },
+            { value: "SNOOZED" as const, label: "Snoozees" },
+            { value: "DONE" as const, label: "Terminees" },
+            { value: "DISMISSED" as const, label: "Ignorees" },
+          ],
+          searchPlaceholder: "Rechercher une alerte, un vehicule ou une plaque...",
+          severityPlaceholder: "Severite",
+          severityAll: "Toutes severites",
+          severityInfo: "Info",
+          severityWarning: "Attention",
+          severityDue: "Urgent",
+          typePlaceholder: "Type",
+          typeAll: "Tous les types",
+          typeOil: "Vidange",
+          typeInsurance: "Assurance",
+          typeInspection: "Visite technique",
+          typeVignette: "Vignette",
+          reset: "Reinitialiser",
+        };
+
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -107,7 +149,7 @@ export function NotificationFiltersClient({
       <div className="flex flex-col gap-4">
         <div className="-mx-1 overflow-x-auto pb-1">
           <div className="inline-flex min-w-full items-center gap-1 rounded-xl border border-subtle bg-slate-50/90 p-1 sm:min-w-0">
-            {statusItems.map((item) => {
+            {copy.statuses.map((item) => {
               const isActive = activeStatus === item.value;
 
               return (
@@ -147,7 +189,7 @@ export function NotificationFiltersClient({
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Rechercher une alerte, un véhicule ou une plaque..."
+              placeholder={copy.searchPlaceholder}
               className="h-11 rounded-xl border-subtle bg-slate-50/60 pl-9 shadow-none placeholder:text-slate-400 focus-visible:ring-primary/20"
             />
           </div>
@@ -159,13 +201,13 @@ export function NotificationFiltersClient({
             }
           >
             <SelectTrigger className="h-11 rounded-xl border-subtle bg-white shadow-none">
-              <SelectValue placeholder="Sévérité" />
+              <SelectValue placeholder={copy.severityPlaceholder} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">Toutes sévérités</SelectItem>
-              <SelectItem value="INFO">Info</SelectItem>
-              <SelectItem value="WARNING">Attention</SelectItem>
-              <SelectItem value="DUE">Urgent</SelectItem>
+              <SelectItem value="ALL">{copy.severityAll}</SelectItem>
+              <SelectItem value="INFO">{copy.severityInfo}</SelectItem>
+              <SelectItem value="WARNING">{copy.severityWarning}</SelectItem>
+              <SelectItem value="DUE">{copy.severityDue}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -176,14 +218,14 @@ export function NotificationFiltersClient({
             }
           >
             <SelectTrigger className="h-11 rounded-xl border-subtle bg-white shadow-none">
-              <SelectValue placeholder="Type" />
+              <SelectValue placeholder={copy.typePlaceholder} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">Tous les types</SelectItem>
-              <SelectItem value="OIL_CHANGE">Vidange</SelectItem>
-              <SelectItem value="INSURANCE_EXPIRY">Assurance</SelectItem>
-              <SelectItem value="TECH_INSPECTION">Visite technique</SelectItem>
-              <SelectItem value="VIGNETTE">Vignette</SelectItem>
+              <SelectItem value="ALL">{copy.typeAll}</SelectItem>
+              <SelectItem value="OIL_CHANGE">{copy.typeOil}</SelectItem>
+              <SelectItem value="INSURANCE_EXPIRY">{copy.typeInsurance}</SelectItem>
+              <SelectItem value="TECH_INSPECTION">{copy.typeInspection}</SelectItem>
+              <SelectItem value="VIGNETTE">{copy.typeVignette}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -197,7 +239,7 @@ export function NotificationFiltersClient({
               className="h-10 rounded-xl px-3 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
             >
               <FilterX className="h-4 w-4" />
-              Réinitialiser
+              {copy.reset}
             </Button>
           </div>
         </div>

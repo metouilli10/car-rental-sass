@@ -2,8 +2,6 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import type { ElementType } from "react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import {
   AlertTriangle,
   Bell,
@@ -24,17 +22,18 @@ import type {
 import { Button } from "@/components/ui/button";
 import { authOptions } from "@/lib/auth";
 import { type AppLocale, isValidLocale, withLocalePath } from "@/lib/i18n/config";
+import {
+  getNotificationDisplayCopy,
+  getNotificationPrimaryActionLabel,
+  getNotificationSeverityLabel,
+  getNotificationStatusContextLabel,
+  getNotificationStatusLabel,
+  getNotificationTypeLabel,
+} from "@/lib/notifications/presentation";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
 import { NotificationActions } from "./notification-actions-client";
 import { NotificationFiltersClient } from "./notification-filters-client";
-
-const TYPE_LABELS: Record<ReminderType, string> = {
-  OIL_CHANGE: "Vidange",
-  INSURANCE_EXPIRY: "Assurance",
-  TECH_INSPECTION: "Visite technique",
-  VIGNETTE: "Vignette",
-};
 
 const TYPE_ICONS: Record<ReminderType, ElementType> = {
   OIL_CHANGE: Wrench,
@@ -52,20 +51,17 @@ const TYPE_TONES: Record<ReminderType, string> = {
 
 const SEVERITY_CONFIG: Record<
   NotificationSeverity,
-  { label: string; badgeClassName: string; accentClassName: string }
+  { badgeClassName: string; accentClassName: string }
 > = {
   INFO: {
-    label: "Info",
     badgeClassName: "border-blue-200 bg-blue-50 text-blue-700",
     accentClassName: "bg-blue-500",
   },
   WARNING: {
-    label: "Attention",
     badgeClassName: "border-amber-200 bg-amber-50 text-amber-700",
     accentClassName: "bg-amber-500",
   },
   DUE: {
-    label: "Urgent",
     badgeClassName: "border-red-200 bg-red-50 text-red-700",
     accentClassName: "bg-red-500",
   },
@@ -73,25 +69,21 @@ const SEVERITY_CONFIG: Record<
 
 const STATUS_CONFIG: Record<
   NotificationStatus,
-  { label: string; badgeClassName: string; accentClassName: string }
+  { badgeClassName: string; accentClassName: string }
 > = {
   OPEN: {
-    label: "À faire",
     badgeClassName: "border-slate-200 bg-slate-100 text-slate-700",
     accentClassName: "bg-slate-900",
   },
   SNOOZED: {
-    label: "Snoozée",
     badgeClassName: "border-amber-200 bg-amber-50 text-amber-700",
     accentClassName: "bg-amber-400",
   },
   DONE: {
-    label: "Terminée",
     badgeClassName: "border-emerald-200 bg-emerald-50 text-emerald-700",
     accentClassName: "bg-emerald-500",
   },
   DISMISSED: {
-    label: "Ignorée",
     badgeClassName: "border-slate-200 bg-slate-100 text-slate-500",
     accentClassName: "bg-slate-300",
   },
@@ -100,62 +92,93 @@ const STATUS_CONFIG: Record<
 const GROUP_ORDER = ["URGENT", "TODO", "SNOOZED", "DONE", "DISMISSED"] as const;
 type NotificationGroupKey = (typeof GROUP_ORDER)[number];
 
-const GROUP_CONFIG: Record<
-  NotificationGroupKey,
-  { label: string; subtitle: string }
-> = {
-  URGENT: {
-    label: "Urgent",
-    subtitle: "À traiter en priorité",
-  },
-  TODO: {
-    label: "À faire",
-    subtitle: "Actions à suivre rapidement",
-  },
-  SNOOZED: {
-    label: "Snoozées",
-    subtitle: "Replanifiées pour plus tard",
-  },
-  DONE: {
-    label: "Terminées",
-    subtitle: "Actions déjà traitées",
-  },
-  DISMISSED: {
-    label: "Ignorées",
-    subtitle: "Éléments masqués de la file active",
-  },
-};
+function getGroupConfig(
+  locale: AppLocale
+): Record<NotificationGroupKey, { label: string; subtitle: string }> {
+  if (locale === "ar") {
+    return {
+      URGENT: { label: "عاجل", subtitle: "الأولوية القصوى" },
+      TODO: { label: "مطلوب", subtitle: "إجراءات قريبة" },
+      SNOOZED: { label: "مؤجلة", subtitle: "مؤجلة لوقت لاحق" },
+      DONE: { label: "مكتملة", subtitle: "تمت المعالجة" },
+      DISMISSED: { label: "متجاهلة", subtitle: "مخفية من القائمة النشطة" },
+    };
+  }
 
-const SUMMARY_ITEMS = [
-  {
-    key: "urgent",
-    label: "Urgentes",
-    subtitle: "Priorité immédiate",
-    icon: AlertTriangle,
-    tone: "bg-red-50 text-red-700",
-  },
-  {
-    key: "open",
-    label: "Ouvertes",
-    subtitle: "Total à traiter",
-    icon: Bell,
-    tone: "bg-slate-100 text-slate-700",
-  },
-  {
-    key: "snoozed",
-    label: "Snoozées",
-    subtitle: "Reportées",
-    icon: Clock3,
-    tone: "bg-amber-50 text-amber-700",
-  },
-  {
-    key: "done",
-    label: "Terminées",
-    subtitle: "Déjà traitées",
-    icon: CheckCheck,
-    tone: "bg-emerald-50 text-emerald-700",
-  },
-] as const;
+  return {
+    URGENT: { label: "Urgent", subtitle: "A traiter en priorite" },
+    TODO: { label: "A faire", subtitle: "Actions a suivre rapidement" },
+    SNOOZED: { label: "Snoozees", subtitle: "Replanifiees pour plus tard" },
+    DONE: { label: "Terminees", subtitle: "Actions deja traitees" },
+    DISMISSED: { label: "Ignorees", subtitle: "Elements masques de la file active" },
+  };
+}
+
+function getSummaryItems(locale: AppLocale) {
+  if (locale === "ar") {
+    return [
+      {
+        key: "urgent",
+        label: "عاجلة",
+        subtitle: "أولوية فورية",
+        icon: AlertTriangle,
+        tone: "bg-red-50 text-red-700",
+      },
+      {
+        key: "open",
+        label: "مفتوحة",
+        subtitle: "إجمالي المطلوب",
+        icon: Bell,
+        tone: "bg-slate-100 text-slate-700",
+      },
+      {
+        key: "snoozed",
+        label: "مؤجلة",
+        subtitle: "تم تأجيلها",
+        icon: Clock3,
+        tone: "bg-amber-50 text-amber-700",
+      },
+      {
+        key: "done",
+        label: "مكتملة",
+        subtitle: "تمت المعالجة",
+        icon: CheckCheck,
+        tone: "bg-emerald-50 text-emerald-700",
+      },
+    ] as const;
+  }
+
+  return [
+    {
+      key: "urgent",
+      label: "Urgentes",
+      subtitle: "Priorite immediate",
+      icon: AlertTriangle,
+      tone: "bg-red-50 text-red-700",
+    },
+    {
+      key: "open",
+      label: "Ouvertes",
+      subtitle: "Total a traiter",
+      icon: Bell,
+      tone: "bg-slate-100 text-slate-700",
+    },
+    {
+      key: "snoozed",
+      label: "Snoozees",
+      subtitle: "Reportees",
+      icon: Clock3,
+      tone: "bg-amber-50 text-amber-700",
+    },
+    {
+      key: "done",
+      label: "Terminees",
+      subtitle: "Deja traitees",
+      icon: CheckCheck,
+      tone: "bg-emerald-50 text-emerald-700",
+    },
+  ] as const;
+}
 
 type PageSearchParams = Promise<{
   status?: string;
@@ -186,6 +209,7 @@ type NotificationViewModel = {
   typeLabel: string;
   groupKey: NotificationGroupKey;
   primaryActionLabel: string;
+  actionUrl: string | null;
   vehicleName: string;
   plate: string;
   dueLabel: string | null;
@@ -239,44 +263,31 @@ function getGroupKey(notification: RawNotification): NotificationGroupKey {
   return "DISMISSED";
 }
 
-function formatShortDate(date: Date) {
-  return format(date, "d MMM yyyy", { locale: fr });
-}
-
-function formatDateOrKm(notification: RawNotification) {
-  if (notification.dueAt) {
-    return `Échéance le ${formatShortDate(notification.dueAt)}`;
-  }
-
-  if (notification.dueMileageKm) {
-    return `À ${notification.dueMileageKm.toLocaleString("fr-FR")} km`;
-  }
-
-  return null;
-}
-
-function getStatusContext(notification: RawNotification) {
-  if (notification.status === "SNOOZED") {
-    return notification.snoozedUntil
-      ? `Reprise le ${formatShortDate(notification.snoozedUntil)}`
-      : "Action reportée";
-  }
-
-  if (notification.status === "DONE") {
-    return `Traité le ${formatShortDate(notification.updatedAt)}`;
-  }
-
-  if (notification.status === "DISMISSED") {
-    return `Ignorée le ${formatShortDate(notification.updatedAt)}`;
-  }
-
-  return "À suivre";
-}
-
-function toViewModel(notification: RawNotification): NotificationViewModel {
+function toViewModel(
+  locale: AppLocale,
+  notification: RawNotification
+): NotificationViewModel {
   const vehicleName = `${notification.vehicle.make} ${notification.vehicle.model}`;
-  const dueLabel = formatDateOrKm(notification);
-  const statusContextLabel = getStatusContext(notification);
+  const displayCopy = getNotificationDisplayCopy({
+    locale,
+    type: notification.type,
+    severity: notification.severity,
+    status: notification.status,
+    title: notification.title,
+    body: notification.body,
+    dueAt: notification.dueAt,
+    dueMileageKm: notification.dueMileageKm,
+    snoozedUntil: notification.snoozedUntil,
+    updatedAt: notification.updatedAt,
+    vehicle: notification.vehicle,
+  });
+  const dueLabel = displayCopy.dueLabel;
+  const statusContextLabel = getNotificationStatusContextLabel(
+    locale,
+    notification.status,
+    notification.snoozedUntil,
+    notification.updatedAt
+  );
   const metaLines = [vehicleName, notification.vehicle.plate];
 
   if (dueLabel) {
@@ -290,15 +301,16 @@ function toViewModel(notification: RawNotification): NotificationViewModel {
   return {
     id: notification.id,
     vehicleId: notification.vehicle.id,
-    title: notification.title,
-    body: notification.body,
+    title: displayCopy.title,
+    body: displayCopy.body,
     severity: notification.severity,
-    severityLabel: SEVERITY_CONFIG[notification.severity].label,
+    severityLabel: getNotificationSeverityLabel(locale, notification.severity),
     status: notification.status,
-    stateLabel: STATUS_CONFIG[notification.status].label,
-    typeLabel: TYPE_LABELS[notification.type],
+    stateLabel: getNotificationStatusLabel(locale, notification.status),
+    typeLabel: getNotificationTypeLabel(locale, notification.type),
     groupKey: getGroupKey(notification),
-    primaryActionLabel: "Voir le véhicule",
+    primaryActionLabel: getNotificationPrimaryActionLabel(locale, notification.type),
+    actionUrl: notification.actionUrl,
     vehicleName,
     plate: notification.vehicle.plate,
     dueLabel,
@@ -355,7 +367,8 @@ function sortWithinGroup(a: NotificationViewModel, b: NotificationViewModel) {
   return b.updatedAt.getTime() - a.updatedAt.getTime();
 }
 
-function groupNotifications(notifications: RawNotification[]) {
+function groupNotifications(locale: AppLocale, notifications: RawNotification[]) {
+  const groupConfig = getGroupConfig(locale);
   const buckets = new Map<NotificationGroupKey, NotificationViewModel[]>();
 
   for (const key of GROUP_ORDER) {
@@ -363,13 +376,13 @@ function groupNotifications(notifications: RawNotification[]) {
   }
 
   for (const notification of notifications) {
-    const model = toViewModel(notification);
+    const model = toViewModel(locale, notification);
     buckets.get(model.groupKey)?.push(model);
   }
 
   return GROUP_ORDER.map((key) => ({
     key,
-    ...GROUP_CONFIG[key],
+    ...groupConfig[key],
     items: (buckets.get(key) ?? []).sort(sortWithinGroup),
   })).filter((group) => group.items.length > 0);
 }
@@ -383,9 +396,10 @@ async function fetchNotifications(input: {
 }) {
   const normalizedQuery = input.query.trim();
 
-  return prisma.notification.findMany({
+  const notifications = await prisma.notification.findMany({
     where: {
       agencyId: input.agencyId,
+      vehicleId: { not: null },
       ...(input.status !== "ALL" ? { status: input.status } : {}),
       ...(input.severity !== "ALL" ? { severity: input.severity } : {}),
       ...(input.type !== "ALL" ? { type: input.type } : {}),
@@ -406,6 +420,14 @@ async function fetchNotifications(input: {
     },
     orderBy: [{ severity: "desc" }, { updatedAt: "desc" }],
   });
+
+  return notifications.filter(
+    (
+      notification,
+    ): notification is typeof notification & {
+      vehicle: NonNullable<typeof notification.vehicle>;
+    } => notification.vehicle !== null,
+  );
 }
 
 function buildBaseWhere(input: {
@@ -418,6 +440,7 @@ function buildBaseWhere(input: {
 
   return {
     agencyId: input.agencyId,
+    vehicleId: { not: null },
     ...(input.severity !== "ALL" ? { severity: input.severity } : {}),
     ...(input.type !== "ALL" ? { type: input.type } : {}),
     ...(normalizedQuery
@@ -473,7 +496,13 @@ async function fetchCounts(input: {
   return counts;
 }
 
-function SeverityBadge({ severity }: { severity: NotificationSeverity }) {
+function SeverityBadge({
+  locale,
+  severity,
+}: {
+  locale: AppLocale;
+  severity: NotificationSeverity;
+}) {
   const cfg = SEVERITY_CONFIG[severity];
 
   return (
@@ -483,12 +512,18 @@ function SeverityBadge({ severity }: { severity: NotificationSeverity }) {
         cfg.badgeClassName,
       )}
     >
-      {cfg.label}
+      {getNotificationSeverityLabel(locale, severity)}
     </span>
   );
 }
 
-function StatusBadge({ status }: { status: NotificationStatus }) {
+function StatusBadge({
+  locale,
+  status,
+}: {
+  locale: AppLocale;
+  status: NotificationStatus;
+}) {
   const cfg = STATUS_CONFIG[status];
 
   return (
@@ -498,20 +533,26 @@ function StatusBadge({ status }: { status: NotificationStatus }) {
         cfg.badgeClassName,
       )}
     >
-      {cfg.label}
+      {getNotificationStatusLabel(locale, status)}
     </span>
   );
 }
 
-function TypeBadge({ type }: { type: ReminderType }) {
+function TypeBadge({ locale, type }: { locale: AppLocale; type: ReminderType }) {
   return (
     <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-500">
-      {TYPE_LABELS[type]}
+      {getNotificationTypeLabel(locale, type)}
     </span>
   );
 }
 
-function NotificationCard({ notification }: { notification: NotificationViewModel }) {
+function NotificationCard({
+  locale,
+  notification,
+}: {
+  locale: AppLocale;
+  notification: NotificationViewModel;
+}) {
   const Icon = TYPE_ICONS[notification.raw.type];
   const isQuiet = notification.status === "DONE" || notification.status === "DISMISSED";
 
@@ -539,9 +580,9 @@ function NotificationCard({ notification }: { notification: NotificationViewMode
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <SeverityBadge severity={notification.severity} />
-              <StatusBadge status={notification.status} />
-              <TypeBadge type={notification.raw.type} />
+              <SeverityBadge locale={locale} severity={notification.severity} />
+              <StatusBadge locale={locale} status={notification.status} />
+              <TypeBadge locale={locale} type={notification.raw.type} />
             </div>
 
             <div className="mt-3 space-y-1.5">
@@ -593,7 +634,7 @@ function NotificationCard({ notification }: { notification: NotificationViewMode
 
         <NotificationActions
           id={notification.id}
-          vehicleId={notification.vehicleId}
+          actionUrl={notification.actionUrl}
           status={notification.status}
           primaryLabel={notification.primaryActionLabel}
         />
@@ -603,16 +644,19 @@ function NotificationCard({ notification }: { notification: NotificationViewMode
 }
 
 function SummaryStrip({
+  locale,
   urgentCount,
   openCount,
   snoozedCount,
   doneCount,
 }: {
+  locale: AppLocale;
   urgentCount: number;
   openCount: number;
   snoozedCount: number;
   doneCount: number;
 }) {
+  const summaryItems = getSummaryItems(locale);
   const values = {
     urgent: urgentCount,
     open: openCount,
@@ -622,7 +666,7 @@ function SummaryStrip({
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {SUMMARY_ITEMS.map((item) => {
+      {summaryItems.map((item) => {
         const Icon = item.icon;
 
         return (
@@ -655,10 +699,12 @@ function EmptyState({
   label,
   description,
   resetHref,
+  resetLabel,
 }: {
   label: string;
   description: string;
   resetHref?: string;
+  resetLabel: string;
 }) {
   return (
     <div className="rounded-2xl border border-dashed border-subtle bg-white px-6 py-14 text-center shadow-card">
@@ -670,7 +716,7 @@ function EmptyState({
       {resetHref ? (
         <Button asChild variant="ghost" size="sm" className="mt-5 rounded-xl text-slate-600">
           <Link href={resetHref}>
-            Revenir à toutes les actions
+            {resetLabel}
             <ChevronRight className="h-4 w-4" />
           </Link>
         </Button>
@@ -720,52 +766,87 @@ export default async function NotificationsPage({
     }),
   ]);
 
-  const groupedNotifications = groupNotifications(notifications);
+  const groupedNotifications = groupNotifications(locale, notifications);
   const notificationsHref = withLocalePath(locale, "/notifications");
   const settingsHref = withLocalePath(locale, "/settings/notifications");
   const hasActiveFilters =
     status !== "ALL" || severity !== "ALL" || type !== "ALL" || query.length > 0;
+  const pageText =
+    locale === "ar"
+      ? {
+          emptySnoozed: "لا توجد إشعارات مؤجلة.",
+          emptyDone: "كل شيء محدّث في هذا العرض.",
+          emptyDismissed: "لا توجد إشعارات متجاهلة.",
+          emptyUrgent: "لا توجد إجراءات عاجلة حالياً.",
+          emptyDefault: "كل شيء محدّث في هذا العرض.",
+          emptyFiltered:
+            "لا توجد عناصر مطابقة للفلاتر الحالية. وسّع العرض لإظهار جميع التنبيهات.",
+          emptyUnfiltered:
+            "لا حاجة لتدخل فوري حالياً. ستظهر التنبيهات الجديدة هنا تلقائياً.",
+          title: "مركز الإجراءات",
+          subtitle: "تابع التنبيهات والمواعيد والإجراءات الخاصة بأسطولك",
+          settings: "إعدادات الإشعارات",
+          reset: "إعادة التعيين",
+          resetEmpty: "العودة إلى كل الإجراءات",
+        }
+      : {
+          emptySnoozed: "Aucune notification snoozee.",
+          emptyDone: "Tout est a jour dans cette vue.",
+          emptyDismissed: "Aucune notification ignoree.",
+          emptyUrgent: "Aucune action urgente pour le moment.",
+          emptyDefault: "Tout est a jour dans cette vue.",
+          emptyFiltered:
+            "Aucune action ne correspond aux filtres actifs. Elargissez la vue pour retrouver l'ensemble des alertes.",
+          emptyUnfiltered:
+            "Cette vue ne demande aucune intervention immediate. Les prochaines alertes apparaitront ici automatiquement.",
+          title: "Centre d'actions",
+          subtitle: "Suivez les alertes, echeances et actions a traiter pour votre parc",
+          settings: "Parametres de notifications",
+          reset: "Reinitialiser",
+          resetEmpty: "Revenir a toutes les actions",
+        };
 
   const emptyLabel =
     status === "SNOOZED"
-      ? "Aucune notification snoozée."
+      ? pageText.emptySnoozed
       : status === "DONE"
-      ? "Tout est à jour dans cette vue."
+      ? pageText.emptyDone
       : status === "DISMISSED"
-      ? "Aucune notification ignorée."
+      ? pageText.emptyDismissed
       : severity === "DUE" || status === "OPEN"
-      ? "Aucune action urgente pour le moment."
-      : "Tout est à jour dans cette vue.";
+      ? pageText.emptyUrgent
+      : pageText.emptyDefault;
 
   const emptyDescription = hasActiveFilters
-    ? "Aucune action ne correspond aux filtres actifs. Élargissez la vue pour retrouver l’ensemble des alertes."
-    : "Cette vue ne demande aucune intervention immédiate. Les prochaines alertes apparaîtront ici automatiquement.";
+    ? pageText.emptyFiltered
+    : pageText.emptyUnfiltered;
 
   return (
     <div className="space-y-6">
       <section className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
-            Centre d&apos;actions
+            {pageText.title}
           </h1>
           <p className="text-sm text-slate-500">
-            Suivez les alertes, échéances et actions à traiter pour votre parc
+            {pageText.subtitle}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild variant="secondary" size="sm" className="rounded-xl border-subtle">
-            <Link href={settingsHref}>Paramètres de notifications</Link>
+            <Link href={settingsHref}>{pageText.settings}</Link>
           </Button>
           {hasActiveFilters ? (
             <Button asChild variant="ghost" size="sm" className="rounded-xl text-slate-600">
-              <Link href={notificationsHref}>Réinitialiser</Link>
+              <Link href={notificationsHref}>{pageText.reset}</Link>
             </Button>
           ) : null}
         </div>
       </section>
 
       <SummaryStrip
+        locale={locale}
         urgentCount={summaryCounts.urgentCount}
         openCount={summaryCounts.OPEN}
         snoozedCount={summaryCounts.SNOOZED}
@@ -773,6 +854,7 @@ export default async function NotificationsPage({
       />
 
       <NotificationFiltersClient
+        locale={locale}
         activeStatus={status}
         search={query}
         severity={severity}
@@ -791,6 +873,7 @@ export default async function NotificationsPage({
           label={emptyLabel}
           description={emptyDescription}
           resetHref={hasActiveFilters ? notificationsHref : undefined}
+          resetLabel={pageText.resetEmpty}
         />
       ) : (
         <div className="space-y-6">
@@ -810,7 +893,11 @@ export default async function NotificationsPage({
 
               <div className="space-y-3">
                 {group.items.map((notification) => (
-                  <NotificationCard key={notification.id} notification={notification} />
+                  <NotificationCard
+                    key={notification.id}
+                    locale={locale}
+                    notification={notification}
+                  />
                 ))}
               </div>
             </section>
