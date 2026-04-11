@@ -25,6 +25,7 @@ import {
 import type { BookingRiskSummary } from "@/lib/bookings/risk";
 import { ReservationCardList } from "@/components/reservations/ReservationCardList";
 import { ReservationsTable } from "@/components/reservations/ReservationsTable";
+import { useI18n } from "@/components/i18n/i18n-context";
 
 type DatePreset = "ALL" | "TODAY" | "THIS_WEEK" | "THIS_MONTH" | "CUSTOM";
 type StatusFilter =
@@ -82,6 +83,7 @@ export function BookingsControlCenter({
   defaultStatusFilter = "ALL",
   defaultVehicleFilter = "ALL",
 }: BookingsControlCenterProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -95,6 +97,19 @@ export function BookingsControlCenter({
   const [customEndDate, setCustomEndDate] = useState("");
 
   const today = useMemo(() => startOfDay(new Date()), []);
+
+  const statusOptions = useMemo(
+    () =>
+      [
+        { value: "ALL" as const, label: t("bookingsControl.statusAll") },
+        { value: "CONFIRMED" as const, label: t("bookingsControl.statusConfirmed") },
+        { value: "ACTIVE" as const, label: t("bookingsControl.statusActive") },
+        { value: "COMPLETED" as const, label: t("bookingsControl.statusCompleted") },
+        { value: "CANCELED" as const, label: t("bookingsControl.statusCanceled") },
+        { value: "OVERDUE" as const, label: t("bookingsControl.statusOverdue") },
+      ] as const,
+    [t]
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -327,7 +342,7 @@ export function BookingsControlCenter({
           className="rounded-xl border bg-white p-3 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md sm:p-4"
         >
           <p className="text-[11px] font-medium uppercase leading-snug tracking-wide text-muted-foreground sm:text-xs">
-            Actives
+            {t("bookingsControl.statsActive")}
           </p>
           <p className="mt-1 text-xl font-semibold sm:text-2xl">{stats.active}</p>
         </button>
@@ -340,7 +355,7 @@ export function BookingsControlCenter({
           className="rounded-xl border bg-white p-3 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md sm:p-4"
         >
           <p className="text-[11px] font-medium uppercase leading-snug tracking-wide text-muted-foreground sm:text-xs">
-            Départs aujourd&apos;hui
+            {t("bookingsControl.departuresToday")}
           </p>
           <p className="mt-1 text-xl font-semibold sm:text-2xl">{stats.departuresToday}</p>
         </button>
@@ -353,7 +368,7 @@ export function BookingsControlCenter({
           className="rounded-xl border bg-white p-3 text-left shadow-sm transition hover:border-primary/30 hover:shadow-md sm:p-4"
         >
           <p className="text-[11px] font-medium uppercase leading-snug tracking-wide text-muted-foreground sm:text-xs">
-            Retours aujourd&apos;hui
+            {t("bookingsControl.returnsToday")}
           </p>
           <p className="mt-1 text-xl font-semibold sm:text-2xl">{stats.returnsToday}</p>
         </button>
@@ -366,7 +381,7 @@ export function BookingsControlCenter({
           className="rounded-xl border bg-white p-3 text-left shadow-sm transition hover:border-red-300 hover:shadow-md sm:p-4"
         >
           <p className="text-[11px] font-medium uppercase leading-snug tracking-wide text-muted-foreground sm:text-xs">
-            En retard
+            {t("bookingsControl.overdue")}
           </p>
           <p className="mt-1 text-xl font-semibold text-red-600 sm:text-2xl">{stats.overdue}</p>
         </button>
@@ -379,20 +394,13 @@ export function BookingsControlCenter({
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Rechercher client, téléphone, véhicule, plaque…"
+              placeholder={t("bookingsControl.searchPlaceholder")}
               className="pl-9"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {([
-              { value: "ALL", label: "Tous" },
-              { value: "CONFIRMED", label: "Confirmées" },
-              { value: "ACTIVE", label: "En cours" },
-              { value: "COMPLETED", label: "Terminées" },
-              { value: "CANCELED", label: "Annulées" },
-              { value: "OVERDUE", label: "En retard" },
-            ] as const).map((item) => (
+            {statusOptions.map((item) => (
               <Button
                 key={item.value}
                 type="button"
@@ -419,14 +427,14 @@ export function BookingsControlCenter({
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Filtrer par date" />
+                <SelectValue placeholder={t("bookingsControl.dateFilterPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Toutes dates</SelectItem>
-                <SelectItem value="TODAY">Aujourd&apos;hui</SelectItem>
-                <SelectItem value="THIS_WEEK">Cette semaine</SelectItem>
-                <SelectItem value="THIS_MONTH">Ce mois</SelectItem>
-                <SelectItem value="CUSTOM">Personnalisé</SelectItem>
+                <SelectItem value="ALL">{t("bookingsControl.dateAll")}</SelectItem>
+                <SelectItem value="TODAY">{t("bookingsControl.dateToday")}</SelectItem>
+                <SelectItem value="THIS_WEEK">{t("bookingsControl.dateThisWeek")}</SelectItem>
+                <SelectItem value="THIS_MONTH">{t("bookingsControl.dateThisMonth")}</SelectItem>
+                <SelectItem value="CUSTOM">{t("bookingsControl.dateCustom")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -452,10 +460,10 @@ export function BookingsControlCenter({
             <div className="w-full xl:w-72">
               <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filtrer par véhicule" />
+                  <SelectValue placeholder={t("bookingsControl.vehicleFilterPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">Tous les véhicules</SelectItem>
+                  <SelectItem value="ALL">{t("bookingsControl.allVehicles")}</SelectItem>
                   {vehicleOptions.map((vehicle) => (
                     <SelectItem key={vehicle.id} value={vehicle.id}>
                       {vehicle.label}
@@ -469,7 +477,7 @@ export function BookingsControlCenter({
           {hasFiltersApplied ? (
             <Button type="button" variant="ghost" size="sm" onClick={resetFilters}>
               <X className="mr-1 h-4 w-4" />
-              Réinitialiser filtres
+              {t("bookingsControl.resetFilters")}
             </Button>
           ) : null}
         </div>
@@ -480,22 +488,21 @@ export function BookingsControlCenter({
           variant="destructive"
           className="border-destructive/40 bg-red-50 text-red-700 [&>svg]:text-red-600"
         >
-          <AlertTitle>Conflits de reservation detectes</AlertTitle>
+          <AlertTitle>{t("bookingsControl.overlapTitle")}</AlertTitle>
           <AlertDescription>
-            {overlapConflictCount} reservation(s) affichee(s) ont un chevauchement sur le
-            meme vehicule.
+            {t("bookingsControl.overlapDescription", { n: overlapConflictCount })}
           </AlertDescription>
         </Alert>
       ) : null}
 
       {filteredBookings.length === 0 ? (
         <div className="rounded-2xl border bg-white px-6 py-14 text-center shadow-card">
-          <p className="text-lg font-semibold">Aucun résultat</p>
+          <p className="text-lg font-semibold">{t("bookingsControl.noResultsTitle")}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Ajustez vos filtres ou revenez à la vue complète.
+            {t("bookingsControl.noResultsHint")}
           </p>
           <Button className="mt-4" variant="outline" onClick={resetFilters}>
-            Réinitialiser filtres
+            {t("bookingsControl.resetFilters")}
           </Button>
         </div>
       ) : (

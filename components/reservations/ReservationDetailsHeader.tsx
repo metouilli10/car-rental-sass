@@ -41,6 +41,7 @@ import { cancelBooking, deleteBooking } from "@/lib/actions/bookings";
 import { toast } from "sonner";
 import type { BookingStatus } from "@prisma/client";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 type Vehicle = { id: string; make: string; model: string; plate?: string };
 type Customer = { id: string; name: string };
@@ -86,6 +87,7 @@ export function ReservationDetailsHeader({
   endDateForExtend,
   pricePerDay,
 }: ReservationDetailsHeaderProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -126,7 +128,7 @@ export function ReservationDetailsHeader({
       }
       toast.success("Réservation supprimée");
       setDeleteDialogOpen(false);
-      router.push("/bookings");
+      router.push(lp("/bookings"));
       router.refresh();
     } catch (err) {
       console.error(err);
@@ -196,13 +198,13 @@ export function ReservationDetailsHeader({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link href={`/bookings/${bookingId}/edit`}>
+                    <Link href={lp(`/bookings/${bookingId}/edit`)}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Modifier
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={`/bookings/${bookingId}/invoice`} aria-label="Générer facture">
+                    <Link href={lp(`/bookings/${bookingId}/invoice`)} aria-label="Générer facture">
                       <FileText className="mr-2 h-4 w-4" />
                       Générer facture
                     </Link>

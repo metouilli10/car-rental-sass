@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { updateDepositStatus } from "@/lib/actions/payments";
 import { formatCurrency } from "@/lib/utils";
+import { useI18n } from "@/components/i18n/i18n-context";
+import { interpolate } from "@/lib/i18n/messages";
 
 interface LibererCautionDialogProps {
   open: boolean;
@@ -39,6 +41,7 @@ export function LibererCautionDialog({
   amount,
   onSuccess,
 }: LibererCautionDialogProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -50,12 +53,12 @@ export function LibererCautionDialog({
         toast.error(result.error);
         return;
       }
-      toast.success("Caution libérée");
+      toast.success(t("dialogs.releaseDeposit.toastSuccess"));
       onOpenChange(false);
       router.refresh();
       onSuccess?.();
     } catch {
-      toast.error("Erreur lors de la libération de la caution");
+      toast.error(t("dialogs.releaseDeposit.toastError"));
     } finally {
       setIsLoading(false);
     }
@@ -65,17 +68,20 @@ export function LibererCautionDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmer la libération de caution</AlertDialogTitle>
+          <AlertDialogTitle>{t("dialogs.releaseDeposit.title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            La caution de{" "}
-            <span className="font-medium text-foreground">{customerName}</span> pour{" "}
-            <span className="font-medium text-foreground">{vehicleLabel}</span> (
-            <span className="font-mono text-foreground">{plate}</span>) –{" "}
-            {formatCurrency(amount)} – sera marquée comme restituée.
+            {interpolate(t("dialogs.releaseDeposit.description"), {
+              customerName,
+              vehicleLabel,
+              plate,
+              amount: formatCurrency(amount),
+            })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>
+            {t("dialogs.releaseDeposit.cancel")}
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
@@ -86,10 +92,10 @@ export function LibererCautionDialog({
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Enregistrement...
+                {t("dialogs.releaseDeposit.saving")}
               </>
             ) : (
-              "Confirmer"
+              t("dialogs.releaseDeposit.confirm")
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

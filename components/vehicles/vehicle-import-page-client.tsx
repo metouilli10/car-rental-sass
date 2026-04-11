@@ -31,6 +31,7 @@ import {
   type VehicleImportPreview,
   type VehicleImportPreviewRow,
 } from "@/lib/vehicles/import-types";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 type PreviewBootstrapResponse = {
   headers: string[];
@@ -63,6 +64,7 @@ function actionLabel(action: VehicleImportPreviewRow["action"]) {
 }
 
 export function VehicleImportPageClient() {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -188,7 +190,7 @@ export function VehicleImportPageClient() {
       toast.success(
         `${data.created} cree(s), ${data.updated} mis a jour, ${data.skipped} ignore(s)`,
       );
-      router.push("/vehicles");
+      router.push(lp("/vehicles"));
       router.refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erreur lors de l'import";
@@ -202,7 +204,7 @@ export function VehicleImportPageClient() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         <Button asChild variant="outline">
-          <Link href="/vehicles">
+          <Link href={lp("/vehicles")}>
             <ArrowLeft className="h-4 w-4" />
             Retour aux vehicules
           </Link>

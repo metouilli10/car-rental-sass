@@ -13,7 +13,12 @@ import {
 import { vehicleReminderSchema, type VehicleReminderFormData } from "@/lib/validations/vehicle-reminder";
 import { computeVehicleReminders } from "@/lib/reminders/engine";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
-import { persistVehicleFuelType, updateVehicleStatusCompat } from "@/lib/vehicle-fuel-type";
+import {
+  createVehicleCompat,
+  persistVehicleFuelType,
+  updateVehicleCompat,
+  updateVehicleStatusCompat,
+} from "@/lib/vehicle-fuel-type";
 import { buildVehiclePayload } from "@/lib/vehicles/payload";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -39,8 +44,8 @@ export async function createVehicle(data: VehicleFormData) {
     const validatedData = vehicleSchema.parse(data);
 
     // Check if plate already exists
-    const existingVehicle = await prisma.vehicle.findUnique({
-      where: { plate: validatedData.plate },
+    const existingVehicle = await prisma.vehicle.findFirst({
+      where: { agencyId: currentUser.agencyId, plate: validatedData.plate },
       select: { id: true },
     });
 
@@ -48,8 +53,8 @@ export async function createVehicle(data: VehicleFormData) {
       return { error: "Cette plaque d'immatriculation existe déjà" };
     }
 
-    const vehicle = await prisma.vehicle.create({
-      data: {
+    const vehicle = await createVehicleCompat<{ id: string }>(
+      {
         ...buildVehiclePayload({
           ...validatedData,
           depositAmount: validatedData.depositAmount ?? null,
@@ -80,8 +85,8 @@ export async function createVehicle(data: VehicleFormData) {
         }),
         agencyId: currentUser.agencyId,
       },
-      select: { id: true },
-    });
+      { id: true },
+    );
 
     vehicleId = vehicle.id;
     await persistVehicleFuelType(vehicle.id, validatedData.fuelType);
@@ -135,8 +140,8 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
 
     // Check if plate already exists for another vehicle
     if (validatedData.plate !== vehicle.plate) {
-      const existingVehicle = await prisma.vehicle.findUnique({
-        where: { plate: validatedData.plate },
+      const existingVehicle = await prisma.vehicle.findFirst({
+        where: { agencyId: currentUser.agencyId, plate: validatedData.plate },
         select: { id: true },
       });
 
@@ -145,9 +150,9 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
       }
     }
 
-    await prisma.vehicle.update({
-      where: { id },
-      data: {
+    await updateVehicleCompat(
+      id,
+      {
         ...buildVehiclePayload({
           ...validatedData,
           depositAmount: validatedData.depositAmount ?? null,
@@ -178,8 +183,8 @@ export async function updateVehicle(id: string, data: VehicleFormData) {
         }),
         mileage: validatedData.mileage ?? vehicle.mileage,
       },
-      select: { id: true },
-    });
+      { id: true },
+    );
     await persistVehicleFuelType(id, validatedData.fuelType);
 
     revalidatePath("/vehicles");
@@ -330,9 +335,9 @@ export async function updateVehicleReminderFields(
       return { error: "Véhicule non trouvé" };
     }
 
-    await prisma.vehicle.update({
-      where: { id },
-      data: {
+    await updateVehicleCompat(
+      id,
+      {
         nextOilChangeDate: toDateOrNull(validated.nextOilChangeDate),
         nextOilChangeMileageKm: validated.nextOilChangeMileageKm ?? null,
         insuranceExpiryDate: toDateOrNull(validated.insuranceExpiryDate),
@@ -340,8 +345,8 @@ export async function updateVehicleReminderFields(
         vignetteExpiryDate: toDateOrNull(validated.vignetteExpiryDate),
         maintenanceNotes: validated.maintenanceNotes?.trim() || null,
       },
-      select: { id: true },
-    });
+      { id: true },
+    );
 
     try {
       await computeVehicleReminders(id, currentUser.agencyId);
@@ -444,11 +449,7 @@ export async function upsertVehicleDocument(
     }
 
     if (Object.keys(vehicleUpdateData).length > 0) {
-      await prisma.vehicle.update({
-        where: { id },
-        data: vehicleUpdateData,
-        select: { id: true },
-      });
+      await updateVehicleCompat(id, vehicleUpdateData, { id: true });
     }
 
     try {

@@ -12,19 +12,14 @@ import { getReservationTone } from "@/lib/reservations/presentation";
 import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useI18n } from "@/components/i18n/i18n-context";
+import { withLocalePath } from "@/lib/i18n/config";
 
 interface ActiveBookingsTabsProps {
   activeBookings: DashboardV3ActiveBookingsDTO;
 }
 
 const MAX_ITEMS_PER_TAB = 3;
-
-const EMPTY_MESSAGES: Record<DashboardV3BookingTabKey, string> = {
-  active: "Aucune réservation en cours.",
-  start_today: "Aucun départ prévu aujourd'hui.",
-  end_today: "Aucun retour prévu aujourd'hui.",
-  overdue: "Aucun retour en retard.",
-};
 
 const TAB_HREFS: Record<DashboardV3BookingTabKey, string> = {
   active: "/bookings",
@@ -33,31 +28,49 @@ const TAB_HREFS: Record<DashboardV3BookingTabKey, string> = {
   overdue: "/bookings?filter=late",
 };
 
-function renderDateContext(tabKey: DashboardV3BookingTabKey, item: DashboardV3BookingTabItem) {
+const EMPTY_PATH: Record<DashboardV3BookingTabKey, string> = {
+  active: "dashboard.bookingTabs.emptyActive",
+  start_today: "dashboard.bookingTabs.emptyStartToday",
+  end_today: "dashboard.bookingTabs.emptyEndToday",
+  overdue: "dashboard.bookingTabs.emptyOverdue",
+};
+
+const TAB_LABEL_PATH: Record<DashboardV3BookingTabKey, string> = {
+  active: "dashboard.bookingTabs.active",
+  start_today: "dashboard.bookingTabs.startToday",
+  end_today: "dashboard.bookingTabs.endToday",
+  overdue: "dashboard.bookingTabs.overdue",
+};
+
+function renderDateContext(
+  t: (path: string, vars?: Record<string, string | number>) => string,
+  tabKey: DashboardV3BookingTabKey,
+  item: DashboardV3BookingTabItem
+) {
   const startDate = item.startDate ? new Date(item.startDate) : null;
   const endDate = item.endDate ? new Date(item.endDate) : null;
 
   if (tabKey === "start_today" && startDate) {
-    return `Départ à ${formatTime(startDate)}`;
+    return t("dashboard.bookingTabs.departAt", { time: formatTime(startDate) });
   }
 
   if (tabKey === "end_today" && endDate) {
-    return `Retour à ${formatTime(endDate)}`;
+    return t("dashboard.bookingTabs.returnAt", { time: formatTime(endDate) });
   }
 
   if (tabKey === "overdue" && endDate) {
-    return `Retour prévu le ${formatDate(endDate)}`;
+    return t("dashboard.bookingTabs.returnExpectedOn", { date: formatDate(endDate) });
   }
 
   if (item.isOverdue && endDate) {
-    return `En retard depuis le ${formatDate(endDate)}`;
+    return t("dashboard.bookingTabs.lateSince", { date: formatDate(endDate) });
   }
 
   if (endDate) {
-    return `Retour le ${formatDate(endDate)}`;
+    return t("dashboard.bookingTabs.returnOn", { date: formatDate(endDate) });
   }
 
-  return "En cours";
+  return t("dashboard.bookingTabs.inProgress");
 }
 
 function BookingRow({
@@ -67,11 +80,12 @@ function BookingRow({
   item: DashboardV3BookingTabItem;
   tabKey: DashboardV3BookingTabKey;
 }) {
+  const { locale, t } = useI18n();
   const statusTone = getReservationTone(item.status);
 
   return (
     <Link
-      href={item.detailsHref}
+      href={withLocalePath(locale, item.detailsHref)}
       className="group flex flex-col gap-3 rounded-xl border border-subtle bg-[hsl(var(--surface-muted))] p-3 transition-all duration-150 hover:border-default hover:bg-white"
     >
       <div className="flex items-start justify-between gap-3">
@@ -92,29 +106,33 @@ function BookingRow({
       <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
         <span className="inline-flex items-center gap-1.5">
           <CalendarClock className="h-3.5 w-3.5" />
-          {renderDateContext(tabKey, item)}
+          {renderDateContext(t, tabKey, item)}
         </span>
         {item.isOverdue && (
           <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 font-medium text-red-700">
             <TriangleAlert className="h-3 w-3" />
-            En retard
+            {t("dashboard.bookingTabs.late")}
           </span>
         )}
         {item.remainingAmount > 0 && (
-            <span className="rounded-full bg-amber-50 px-2 py-1 font-medium text-amber-700">
-              Reste {formatCurrency(item.remainingAmount)}
-            </span>
-          )}
+          <span className="rounded-full bg-amber-50 px-2 py-1 font-medium text-amber-700">
+            {t("dashboard.bookingTabs.remainingAmount", {
+              amount: formatCurrency(item.remainingAmount),
+            })}
+          </span>
+        )}
       </div>
     </Link>
   );
 }
 
 function TabPanel({ tab }: { tab: DashboardV3BookingTab }) {
+  const { locale, t } = useI18n();
+
   if (tab.items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-8 text-center text-sm text-slate-500">
-        {EMPTY_MESSAGES[tab.key]}
+        {t(EMPTY_PATH[tab.key])}
       </div>
     );
   }
@@ -130,13 +148,16 @@ function TabPanel({ tab }: { tab: DashboardV3BookingTab }) {
       {isTruncated && (
         <div className="flex items-center justify-between rounded-xl border border-subtle bg-white px-4 py-3">
           <p className="text-xs text-slate-500">
-            {visibleItems.length} sur {tab.count} affichés
+            {t("dashboard.bookingTabs.showingCount", {
+              shown: visibleItems.length,
+              total: tab.count,
+            })}
           </p>
           <Link
-            href={TAB_HREFS[tab.key]}
+            href={withLocalePath(locale, TAB_HREFS[tab.key])}
             className="inline-flex items-center gap-1 rounded-lg border border-subtle bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-[#0f172a] transition hover:bg-white"
           >
-            Voir plus
+            {t("dashboard.bookingTabs.seeMore")}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -146,13 +167,14 @@ function TabPanel({ tab }: { tab: DashboardV3BookingTab }) {
 }
 
 export function ActiveBookingsTabs({ activeBookings }: ActiveBookingsTabsProps) {
+  const { t } = useI18n();
   const defaultTab = activeBookings.defaultTab ?? "active";
 
   return (
     <section className="dashboard-panel">
       <div className="border-b border-subtle px-4 py-4">
-        <h3 className="section-title">Réservations actives</h3>
-        <p className="meta-text mt-1">Vue rapide des dossiers à suivre aujourd&apos;hui</p>
+        <h3 className="section-title">{t("dashboard.bookingTabs.sectionTitle")}</h3>
+        <p className="meta-text mt-1">{t("dashboard.bookingTabs.sectionSubtitle")}</p>
       </div>
 
       <div className="px-4 py-4">
@@ -164,7 +186,7 @@ export function ActiveBookingsTabs({ activeBookings }: ActiveBookingsTabsProps) 
                 value={tab.key}
                 className="rounded-lg px-3 py-2 text-xs font-medium text-slate-600 data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-none"
               >
-                {tab.label}
+                {t(TAB_LABEL_PATH[tab.key])}
                 <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] tabular-nums text-slate-500">
                   {tab.count}
                 </span>

@@ -9,6 +9,8 @@ import type { EffectivePermissions } from "@/lib/permissions";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarSection } from "./SidebarSection";
 import { SidebarItem } from "./SidebarItem";
+import { withLocalePath } from "@/lib/i18n/config";
+import { useI18n } from "@/components/i18n/i18n-context";
 
 const SIDEBAR_STORAGE_KEY = "locapro-sidebar-collapsed";
 const EXPANDED_WIDTH = 240;
@@ -26,7 +28,14 @@ export interface SidebarProps {
   };
 }
 
-export function Sidebar({ agencyName, role, permissions, onboarding }: SidebarProps) {
+export function Sidebar({
+  agencyName,
+  role,
+  permissions,
+  onboarding,
+}: SidebarProps) {
+  const { locale, t } = useI18n();
+  const p = (path: string) => withLocalePath(locale, path);
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -110,7 +119,9 @@ export function Sidebar({ agencyName, role, permissions, onboarding }: SidebarPr
             "shrink-0 rounded-md p-1.5 text-slate-500 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900",
             isCollapsed && "mt-0"
           )}
-          aria-label={isCollapsed ? "Développer le menu" : "Réduire le menu"}
+          aria-label={
+            isCollapsed ? t("shell.sidebar.expandMenu") : t("shell.sidebar.collapseMenu")
+          }
         >
           {isCollapsed ? (
             <PanelLeft className="size-4" />
@@ -129,18 +140,18 @@ export function Sidebar({ agencyName, role, permissions, onboarding }: SidebarPr
           )}
         >
           {/* MENU PRINCIPAL */}
-          <SidebarSection label="Menu principal" collapsed={isCollapsed}>
+          <SidebarSection label={t("shell.sidebar.mainMenu")} collapsed={isCollapsed}>
             <SidebarItem
-              href="/dashboard"
+              href={p("/dashboard")}
               iconName="LayoutDashboard"
-              label="Tableau de bord"
+              label={t("shell.sidebar.dashboard")}
               collapsed={isCollapsed}
             />
             {onboarding?.eligible && !onboarding.completed ? (
               <SidebarItem
-                href="/getting-started"
+                href={p("/getting-started")}
                 iconName="Rocket"
-                label="Démarrage guidé"
+                label={t("shell.sidebar.gettingStarted")}
                 collapsed={isCollapsed}
                 emphasized={!onboarding.completed}
                 badge={!onboarding.completed ? `${onboarding.completedCount}/${onboarding.totalCount}` : undefined}
@@ -150,57 +161,57 @@ export function Sidebar({ agencyName, role, permissions, onboarding }: SidebarPr
 
           {/* OPÉRATIONS */}
           {showOperations ? (
-            <SidebarSection label="Opérations" collapsed={isCollapsed}>
+            <SidebarSection label={t("shell.sidebar.operations")} collapsed={isCollapsed}>
               {permissions["bookings.view"] ? (
-                <SidebarItem href="/bookings" iconName="CalendarCheck" label="Réservations" collapsed={isCollapsed} />
+                <SidebarItem href={p("/bookings")} iconName="CalendarCheck" label={t("shell.sidebar.bookings")} collapsed={isCollapsed} />
               ) : null}
               {permissions["calendar.view"] ? (
-                <SidebarItem href="/calendrier" iconName="Calendar" label="Calendrier" collapsed={isCollapsed} />
+                <SidebarItem href={p("/calendrier")} iconName="Calendar" label={t("shell.sidebar.calendar")} collapsed={isCollapsed} />
               ) : null}
               {permissions["customers.view"] ? (
-                <SidebarItem href="/customers" iconName="Users" label="Clients" collapsed={isCollapsed} />
+                <SidebarItem href={p("/customers")} iconName="Users" label={t("shell.sidebar.customers")} collapsed={isCollapsed} />
               ) : null}
               {permissions["vehicles.view"] ? (
-                <SidebarItem href="/vehicles" iconName="Car" label="Véhicules" collapsed={isCollapsed} />
+                <SidebarItem href={p("/vehicles")} iconName="Car" label={t("shell.sidebar.vehicles")} collapsed={isCollapsed} />
               ) : null}
               {permissions["catalogue.view"] ? (
-                <SidebarItem href="/catalogue" iconName="Grid2x2" label="Catalogue" collapsed={isCollapsed} />
+                <SidebarItem href={p("/catalogue")} iconName="Grid2x2" label={t("shell.sidebar.catalogue")} collapsed={isCollapsed} />
               ) : null}
             </SidebarSection>
           ) : null}
 
           {/* FINANCE */}
           {showFinance ? (
-            <SidebarSection label="Finance" collapsed={isCollapsed}>
+            <SidebarSection label={t("shell.sidebar.finance")} collapsed={isCollapsed}>
               {permissions["caisse.view"] ? (
-                <SidebarItem href="/caisse" iconName="Wallet" label="Caisse" collapsed={isCollapsed} />
+                <SidebarItem href={p("/caisse")} iconName="Wallet" label={t("shell.sidebar.cashRegister")} collapsed={isCollapsed} />
               ) : null}
               {permissions["finance.view"] ? (
-                <SidebarItem href="/finance" iconName="BarChart3" label="Finance" collapsed={isCollapsed} />
+                <SidebarItem href={p("/finance")} iconName="BarChart3" label={t("shell.sidebar.financeCenter")} collapsed={isCollapsed} />
               ) : null}
             </SidebarSection>
           ) : null}
 
           {/* CONTRÔLE */}
           {showControl ? (
-            <SidebarSection label="Contrôle" collapsed={isCollapsed}>
+            <SidebarSection label={t("shell.sidebar.control")} collapsed={isCollapsed}>
               {permissions["inspections.view"] ? (
-                <SidebarItem href="/damage-reports" iconName="ClipboardCheck" label="Inspections" collapsed={isCollapsed} />
+                <SidebarItem href={p("/damage-reports")} iconName="ClipboardCheck" label={t("shell.sidebar.inspections")} collapsed={isCollapsed} />
               ) : null}
               {permissions["infractions.view"] ? (
-                <SidebarItem href="/infractions" iconName="ShieldAlert" label="Infractions" collapsed={isCollapsed} />
+                <SidebarItem href={p("/infractions")} iconName="ShieldAlert" label={t("shell.sidebar.infractions")} collapsed={isCollapsed} />
               ) : null}
             </SidebarSection>
           ) : null}
 
           {/* SYSTÈME */}
           {showSystem ? (
-            <SidebarSection label="Système" collapsed={isCollapsed}>
+            <SidebarSection label={t("shell.sidebar.system")} collapsed={isCollapsed}>
               {permissions["notifications.view"] ? (
-                <SidebarItem href="/notifications" iconName="Bell" label="Notifications" collapsed={isCollapsed} />
+                <SidebarItem href={p("/notifications")} iconName="Bell" label={t("shell.sidebar.notifications")} collapsed={isCollapsed} />
               ) : null}
               {role === "OWNER" && (
-                <SidebarItem href="/users" iconName="UserCog" label="Utilisateurs" collapsed={isCollapsed} />
+                <SidebarItem href={p("/users")} iconName="UserCog" label={t("shell.sidebar.users")} collapsed={isCollapsed} />
               )}
             </SidebarSection>
           ) : null}

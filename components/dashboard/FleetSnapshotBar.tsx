@@ -1,31 +1,57 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { DashboardV3FleetSnapshot } from "@/lib/dashboard/types";
+import { useI18n } from "@/components/i18n/i18n-context";
+import { withLocalePath } from "@/lib/i18n/config";
 
 interface FleetSnapshotBarProps {
   snapshot: DashboardV3FleetSnapshot;
 }
 
-const STATUS_ITEMS = [
-  { key: "rented", label: "Louées", color: "#3B82F6", href: "/vehicles?status=RENTED" },
-  { key: "available", label: "Disponibles", color: "#10B981", href: "/vehicles?status=AVAILABLE" },
-  { key: "maintenance", label: "Maintenance", color: "#F59E0B", href: "/vehicles?status=MAINTENANCE" },
-  { key: "inactive", label: "Inactifs", color: "#EF4444", href: "/vehicles?status=UNAVAILABLE" },
-] as const satisfies ReadonlyArray<{
-  key: keyof DashboardV3FleetSnapshot;
-  label: string;
-  color: string;
-  href: string;
-}>;
-
 export function FleetSnapshotBar({ snapshot }: FleetSnapshotBarProps) {
+  const { locale, t } = useI18n();
+
+  const statusItems = useMemo(
+    () =>
+      [
+        {
+          key: "rented" as const,
+          label: t("dashboard.fleet.rented"),
+          color: "#3B82F6",
+          href: withLocalePath(locale, "/vehicles?status=RENTED"),
+        },
+        {
+          key: "available" as const,
+          label: t("dashboard.fleet.available"),
+          color: "#10B981",
+          href: withLocalePath(locale, "/vehicles?status=AVAILABLE"),
+        },
+        {
+          key: "maintenance" as const,
+          label: t("dashboard.fleet.maintenance"),
+          color: "#F59E0B",
+          href: withLocalePath(locale, "/vehicles?status=MAINTENANCE"),
+        },
+        {
+          key: "inactive" as const,
+          label: t("dashboard.fleet.inactive"),
+          color: "#EF4444",
+          href: withLocalePath(locale, "/vehicles?status=UNAVAILABLE"),
+        },
+      ] as const,
+    [locale, t]
+  );
+
   const totalFleet = snapshot.totalActive + snapshot.inactive;
   const safeTotalFleet = totalFleet || 1;
   const activeFleet = snapshot.totalActive;
   const rentalRate = totalFleet > 0 ? Math.round((snapshot.rented / totalFleet) * 100) : 0;
-  const numberFormatter = new Intl.NumberFormat("fr-FR");
+  const numberFormatter = new Intl.NumberFormat(locale === "ar" ? "ar-MA" : "fr-FR");
 
-  const rows = STATUS_ITEMS.map((item) => {
+  const rows = statusItems.map((item) => {
     const value = snapshot[item.key];
     const percent = totalFleet > 0 ? Math.round((value / safeTotalFleet) * 100) : 0;
     return {
@@ -40,15 +66,15 @@ export function FleetSnapshotBar({ snapshot }: FleetSnapshotBarProps) {
       <CardContent className="flex flex-col p-4">
         <div className="mb-4">
           <div>
-            <h3 className="section-title">État du parc</h3>
-            <p className="meta-text mt-1">Répartition instantanée de la flotte</p>
+            <h3 className="section-title">{t("dashboard.fleet.title")}</h3>
+            <p className="meta-text mt-1">{t("dashboard.fleet.subtitle")}</p>
           </div>
         </div>
 
         <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <div className="rounded-xl border border-subtle bg-[hsl(var(--surface-muted))] px-3 py-3">
             <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">
-              Flotte totale
+              {t("dashboard.fleet.totalFleet")}
             </p>
             <p className="mt-2 text-[24px] font-semibold leading-none tracking-tight tabular-nums text-slate-950">
               {numberFormatter.format(totalFleet)}
@@ -56,7 +82,7 @@ export function FleetSnapshotBar({ snapshot }: FleetSnapshotBarProps) {
           </div>
           <div className="rounded-xl border border-subtle bg-[hsl(var(--surface-muted))] px-3 py-3">
             <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">
-              Actifs
+              {t("dashboard.fleet.active")}
             </p>
             <p className="mt-2 text-[24px] font-semibold leading-none tracking-tight tabular-nums text-slate-950">
               {numberFormatter.format(activeFleet)}
@@ -64,7 +90,7 @@ export function FleetSnapshotBar({ snapshot }: FleetSnapshotBarProps) {
           </div>
           <div className="rounded-xl border border-subtle bg-[hsl(var(--surface-muted))] px-3 py-3">
             <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">
-              Taux de location
+              {t("dashboard.fleet.rentalRate")}
             </p>
             <p className="mt-2 text-[24px] font-semibold leading-none tracking-tight tabular-nums text-slate-950">
               {rentalRate}%

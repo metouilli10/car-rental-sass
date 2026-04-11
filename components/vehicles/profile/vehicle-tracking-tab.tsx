@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ClipboardCheck, Gauge, Wrench } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 import { formatDate } from "@/lib/utils";
 import type { VehicleProfileData } from "@/lib/vehicles/profile";
 import { getHealthBadgeClass } from "./presentation";
@@ -14,12 +16,14 @@ interface VehicleTrackingTabProps {
   data: VehicleProfileData;
   currentOrNextBookingId: string | null;
   inspectionLabel: string | null;
+  locale?: AppLocale;
 }
 
 export function VehicleTrackingTab({
   data,
   currentOrNextBookingId,
   inspectionLabel,
+  locale = "fr",
 }: VehicleTrackingTabProps) {
   return (
     <div className="space-y-6">
@@ -72,7 +76,7 @@ export function VehicleTrackingTab({
               </div>
               {currentOrNextBookingId ? (
                 <Button size="sm" asChild>
-                  <Link href={`/damage-reports/new?bookingId=${currentOrNextBookingId}`}>
+                  <Link href={withLocalePath(locale, `/damage-reports/new?bookingId=${currentOrNextBookingId}`)}>
                     Lancer une inspection
                   </Link>
                 </Button>
@@ -89,8 +93,11 @@ export function VehicleTrackingTab({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,1fr)]">
         <VehicleInspectionHistory
           inspections={data.inspections}
+          locale={locale}
           createInspectionHref={
-            currentOrNextBookingId ? `/damage-reports/new?bookingId=${currentOrNextBookingId}` : undefined
+            currentOrNextBookingId
+              ? withLocalePath(locale, `/damage-reports/new?bookingId=${currentOrNextBookingId}`)
+              : undefined
           }
           createInspectionDisabledReason={inspectionLabel}
         />
@@ -101,8 +108,13 @@ export function VehicleTrackingTab({
             overdue={data.reminders.overdue}
             open={data.reminders.open}
             done={data.reminders.done}
+            locale={locale}
           />
-          <VehicleInfractionsPanel vehicleId={data.vehicle.id} infractions={data.infractions} />
+          <VehicleInfractionsPanel
+            vehicleId={data.vehicle.id}
+            infractions={data.infractions}
+            locale={locale}
+          />
         </div>
       </div>
     </div>

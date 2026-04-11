@@ -18,6 +18,7 @@ import { LibererCautionDialog } from "@/components/dashboard/LibererCautionDialo
 import { EncaisserDialog } from "@/components/dashboard/EncaisserDialog";
 import type { DepositStatus } from "@prisma/client";
 import type { BookingDepositStatus } from "@prisma/client";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 const badgeVariantMap: Record<
   ReservationToneVariant,
@@ -62,6 +63,7 @@ export function ReservationSummarySticky({
   vehicleLabel,
   plate,
 }: ReservationSummaryStickyProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [libererCautionOpen, setLibererCautionOpen] = useState(false);
   const [encaisserOpen, setEncaisserOpen] = useState(false);
@@ -132,7 +134,7 @@ export function ReservationSummarySticky({
               </Button>
             ) : (
               <Button asChild variant="outline" size="sm" className="w-full">
-                <Link href="/finance?tab=cautions">
+                <Link href={lp("/finance?tab=cautions")}>
                   <Banknote className="mr-2 h-4 w-4" />
                   Restituer caution
                 </Link>
@@ -175,7 +177,7 @@ export function ReservationSummarySticky({
               </Button>
             ) : (
               <Button asChild size="sm" variant="outline">
-                <Link href="/finance?tab=cautions">
+                <Link href={lp("/finance?tab=cautions")}>
                   <Banknote className="h-4 w-4 sm:mr-1" />
                   <span className="hidden sm:inline">Caution</span>
                 </Link>

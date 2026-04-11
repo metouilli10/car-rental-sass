@@ -160,21 +160,68 @@ export async function getInspection(id: string) {
 
   const report = await prisma.damageReport.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      bookingId: true,
+      inspectionType: true,
+      fuelLevel: true,
+      cleanliness: true,
+      notes: true,
+      depositAction: true,
+      totalDamageCost: true,
+      deductFromDeposit: true,
+      deductedAmount: true,
+      reportedAt: true,
       booking: {
-        include: {
-          customer: true,
-          vehicle: true,
-          deposit: true,
+        select: {
+          id: true,
+          agencyId: true,
+          customer: {
+            select: {
+              name: true,
+            },
+          },
+          vehicle: {
+            select: {
+              make: true,
+              model: true,
+              plate: true,
+            },
+          },
+          deposit: {
+            select: {
+              id: true,
+              amount: true,
+              status: true,
+            },
+          },
         },
       },
       sections: {
-        include: {
-          photos: true,
+        select: {
+          id: true,
+          sectionType: true,
+          status: true,
+          notes: true,
+          damageCost: true,
+          photos: {
+            select: {
+              id: true,
+              photoUrl: true,
+              description: true,
+            },
+          },
         },
         orderBy: { sectionType: "asc" },
       },
-      damagePhotos: true,
+      damagePhotos: {
+        select: {
+          id: true,
+          photoUrl: true,
+          description: true,
+          sectionId: true,
+        },
+      },
     },
   });
 

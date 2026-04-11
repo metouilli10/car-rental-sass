@@ -11,7 +11,9 @@ import {
   ActionCenterSheetError,
   ActionCenterSheetLoading,
 } from "@/components/dashboard/ActionCenterSheet";
+import { useI18n } from "@/components/i18n/i18n-context";
 import { getLateReturnsForSheet } from "@/lib/actions/dashboard";
+import { withLocalePath } from "@/lib/i18n/config";
 import { formatCurrency } from "@/lib/utils";
 import type {
   DashboardV3LateReturnsSheetDTO,
@@ -35,6 +37,7 @@ export function LateReturnsSheet({
   initialExposedCount,
   initialTotalAmount,
 }: LateReturnsSheetProps) {
+  const { t, locale } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DashboardV3LateReturnsSheetDTO | null>(null);
@@ -46,16 +49,19 @@ export function LateReturnsSheet({
     setIsLoading(true);
     setError(null);
 
-    getLateReturnsForSheet({
-      period: period.key,
-      start: period.start,
-      end: period.end,
-    })
+    getLateReturnsForSheet(
+      {
+        period: period.key,
+        start: period.start,
+        end: period.end,
+      },
+      locale
+    )
       .then((result) => {
         if (!isCancelled) setData(result);
       })
       .catch(() => {
-        if (!isCancelled) setError("Impossible de charger les retours en retard.");
+        if (!isCancelled) setError(t("dashboard.sheets.lateReturns.loadError"));
       })
       .finally(() => {
         if (!isCancelled) setIsLoading(false);
@@ -64,7 +70,7 @@ export function LateReturnsSheet({
     return () => {
       isCancelled = true;
     };
-  }, [open, period.end, period.key, period.start]);
+  }, [open, period.end, period.key, period.start, locale, t]);
 
   const summary = useMemo(() => {
     if (data) {
@@ -85,13 +91,16 @@ export function LateReturnsSheet({
     <ActionCenterSheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Retours en retard"
-      description={`${summary.count} retours a traiter, ${summary.exposedCount} avec exposition`}
+      title={t("dashboard.sheets.lateReturns.title")}
+      description={t("dashboard.sheets.lateReturns.description", {
+        count: summary.count,
+        exposed: summary.exposedCount,
+      })}
       tone="red"
       summaryRows={[
-        { label: "Retours", value: summary.count },
-        { label: "Avec exposition", value: summary.exposedCount },
-        { label: "Montant expose", value: formatCurrency(summary.totalAmount) },
+        { label: t("dashboard.sheets.lateReturns.summaryReturns"), value: summary.count },
+        { label: t("dashboard.sheets.lateReturns.summaryExposed"), value: summary.exposedCount },
+        { label: t("dashboard.sheets.lateReturns.summaryAmount"), value: formatCurrency(summary.totalAmount) },
       ]}
     >
       {isLoading ? (
@@ -100,8 +109,8 @@ export function LateReturnsSheet({
         <ActionCenterSheetError message={error} />
       ) : data && data.items.length === 0 ? (
         <ActionCenterSheetEmpty
-          title="Aucun retour en retard"
-          description="Tout est a jour pour le moment."
+          title={t("dashboard.sheets.lateReturns.emptyTitle")}
+          description={t("dashboard.sheets.common.allGoodDescription")}
         />
       ) : (
         data?.items.map((item) => (
@@ -113,7 +122,7 @@ export function LateReturnsSheet({
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="truncate text-sm font-medium text-foreground">{item.customerName}</p>
-                  <Badge variant="destructive">En retard</Badge>
+                  <Badge variant="destructive">{t("dashboard.sheets.collections.overdueBadge")}</Badge>
                 </div>
                 <p className="truncate text-xs text-muted-foreground">
                   {item.vehicleLabel} - {item.plate}
@@ -132,8 +141,8 @@ export function LateReturnsSheet({
                   variant="outline"
                   className="w-full border-border bg-background text-foreground transition-colors duration-150 hover:bg-slate-50 hover:text-foreground active:text-foreground sm:w-auto"
                 >
-                  <Link href={item.primaryHref}>
-                    Voir dossier
+                  <Link href={withLocalePath(locale, item.primaryHref)}>
+                    {t("dashboard.sheets.collections.viewBooking")}
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </Button>

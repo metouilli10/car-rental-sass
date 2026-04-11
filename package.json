@@ -14,7 +14,9 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "i18n:audit": "bash scripts/i18n-audit.sh",
+    "i18n:parity": "node --import tsx --test lib/i18n/messages-parity.test.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

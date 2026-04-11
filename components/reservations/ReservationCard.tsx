@@ -20,6 +20,7 @@ import {
   getDayProgress,
   getActiveStatusHint,
 } from "@/lib/bookings/list-utils";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 interface ReservationCardProps {
   booking: BookingListItem;
@@ -28,6 +29,7 @@ interface ReservationCardProps {
 }
 
 export function ReservationCard({ booking, role, today }: ReservationCardProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const startDate = toDate(booking.startDate);
   const endDate = toDate(booking.endDate);
@@ -43,7 +45,7 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
     event.stopPropagation();
   };
   const navigateToBooking = () => {
-    router.push(`/bookings/${booking.id}`);
+    router.push(lp(`/bookings/${booking.id}`));
   };
 
   return (
@@ -72,7 +74,7 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
           {/* Top row: client name + status pill */}
           <div className="flex items-start justify-between gap-2">
             <Link
-              href={`/customers/${booking.customer.id}`}
+              href={lp(`/customers/${booking.customer.id}`)}
               onClick={(e) => e.stopPropagation()}
               className="font-semibold text-foreground underline-offset-4 hover:underline min-w-0 truncate"
             >
@@ -91,7 +93,7 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
           {/* Second line: vehicle name + plate */}
           <div className="text-sm text-muted-foreground">
             <Link
-              href={`/vehicles/${booking.vehicle.id}/edit`}
+              href={lp(`/vehicles/${booking.vehicle.id}/edit`)}
               onClick={(e) => e.stopPropagation()}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
@@ -159,7 +161,7 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
             onClick={stopPropagation}
           >
             <Button asChild size="icon" variant="ghost" aria-label="Voir la réservation" className="h-10 w-10">
-              <Link href={`/bookings/${booking.id}`} onClick={stopPropagation}>
+              <Link href={lp(`/bookings/${booking.id}`)} onClick={stopPropagation}>
                 <Eye className="h-4 w-4" />
               </Link>
             </Button>

@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import type { NotificationType, Prisma } from "@prisma/client";
 import { addDays } from "date-fns";
 import { getNotificationsSummary } from "@/lib/notifications/queries";
 
@@ -22,11 +22,11 @@ export async function getAllNotifications(
   agencyId: string,
   params?: {
     status?: "OPEN" | "SNOOZED" | "DONE" | "DISMISSED";
-    type?: "OIL_CHANGE" | "INSURANCE_EXPIRY" | "TECH_INSPECTION" | "VIGNETTE";
+    type?: NotificationType;
     severity?: "INFO" | "WARNING" | "DUE";
   }
 ): Promise<NotificationWithVehicle[]> {
-  return prisma.notification.findMany({
+  const notifications = await prisma.notification.findMany({
     where: {
       agencyId,
       ...(params?.status ? { status: params.status } : {}),
@@ -38,6 +38,14 @@ export async function getAllNotifications(
     },
     orderBy: [{ severity: "desc" }, { updatedAt: "asc" }],
   });
+
+  return notifications.filter(
+    (
+      notification,
+    ): notification is NotificationWithVehicle & {
+      vehicle: NonNullable<NotificationWithVehicle["vehicle"]>;
+    } => notification.vehicle !== null,
+  );
 }
 
 // ─── Mutations ─────────────────────────────────────────────────────────────

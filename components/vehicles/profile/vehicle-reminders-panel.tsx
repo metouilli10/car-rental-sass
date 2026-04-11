@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import type { VehicleReminderItem } from "@/lib/vehicles/profile";
 import { getReminderSheetTypeFromReminderType } from "@/lib/vehicles/reminder-sheet";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 import { getReminderSeverityClass, notificationStatusLabels, reminderTypeLabels } from "./presentation";
 
 export function VehicleRemindersPanel({
@@ -13,22 +15,26 @@ export function VehicleRemindersPanel({
   open,
   done,
   compact = false,
+  locale = "fr",
 }: {
   vehicleId: string;
   overdue: VehicleReminderItem[];
   open: VehicleReminderItem[];
   done: VehicleReminderItem[];
   compact?: boolean;
+  locale?: AppLocale;
 }) {
   const items = compact ? [...overdue, ...open].slice(0, 3) : [...overdue, ...open, ...done];
-  const createReminderHref = `/vehicles/${vehicleId}?tab=tracking&sheet=1`;
+  const createReminderHref = withLocalePath(locale, `/vehicles/${vehicleId}?tab=tracking&sheet=1`);
 
   return (
     <Card className="rounded-[24px] border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base">Entretien & rappels</CardTitle>
         <Button variant="secondary" size="sm" asChild>
-          <Link href={createReminderHref}>Ajouter rappel</Link>
+          <Link href={createReminderHref}>
+            Ajouter rappel
+          </Link>
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -39,14 +45,18 @@ export function VehicleRemindersPanel({
               Ajoutez un rappel pour suivre l’entretien ou une échéance à venir.
             </p>
             <Button variant="outline" size="sm" asChild className="mt-4">
-              <Link href={createReminderHref}>Ajouter un rappel</Link>
+              <Link href={createReminderHref}>
+                Ajouter un rappel
+              </Link>
             </Button>
           </div>
         ) : (
           items.map((item) => (
             <div
               key={item.id}
-              className={`rounded-[20px] px-4 py-3 ${compact ? "bg-slate-50/80" : "border border-slate-200/70 bg-white"}`}
+              className={`rounded-[20px] px-4 py-3 ${
+                compact ? "bg-slate-50/80" : "border border-slate-200/70 bg-white"
+              }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
@@ -66,7 +76,10 @@ export function VehicleRemindersPanel({
                   {item.dueMileageKm != null ? <span>À {item.dueMileageKm.toLocaleString("fr-FR")} km</span> : null}
                 </div>
                 <Link
-                  href={`/vehicles/${vehicleId}?tab=tracking&sheet=1&reminder=${getReminderSheetTypeFromReminderType(item.type)}`}
+                  href={withLocalePath(
+                    locale,
+                    `/vehicles/${vehicleId}?tab=tracking&sheet=1&reminder=${getReminderSheetTypeFromReminderType(item.type)}`,
+                  )}
                   className="text-xs font-medium text-blue-600 hover:text-blue-700"
                 >
                   Configurer
@@ -87,7 +100,10 @@ export function VehicleRemindersPanel({
               <BellRing className="h-4 w-4" />
               <span>{done.length} rappel(s) terminés dans l’historique.</span>
             </div>
-            <Link href={`/vehicles/${vehicleId}?tab=tracking`} className="font-medium text-blue-600 hover:text-blue-700">
+            <Link
+              href={withLocalePath(locale, `/vehicles/${vehicleId}?tab=tracking`)}
+              className="font-medium text-blue-600 hover:text-blue-700"
+            >
               Voir tous les rappels
             </Link>
           </div>

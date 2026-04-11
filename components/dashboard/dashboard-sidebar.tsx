@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { NavLink } from "@/components/shared/nav-link";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 const SIDEBAR_STORAGE_KEY = "locapro-sidebar-collapsed";
 const EXPANDED_WIDTH = 240;
@@ -19,6 +20,7 @@ export interface DashboardSidebarProps {
 }
 
 export function DashboardSidebar({ agencyName, role }: DashboardSidebarProps) {
+  const lp = useLocalizedPath();
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -117,23 +119,23 @@ export function DashboardSidebar({ agencyName, role }: DashboardSidebarProps) {
             </p>
           )}
           <NavLink
-            href="/dashboard"
+            href={lp("/dashboard")}
             iconName="LayoutDashboard"
             label="Tableau de bord"
             collapsed={isCollapsed}
           />
-          <NavLink href="/vehicles" iconName="Car" label="Véhicules" collapsed={isCollapsed} />
-          <NavLink href="/catalogue" iconName="BookOpen" label="Catalogue" collapsed={isCollapsed} />
-          <NavLink href="/customers" iconName="Users" label="Clients" collapsed={isCollapsed} />
-          <NavLink href="/bookings" iconName="Calendar" label="Réservations" collapsed={isCollapsed} />
-          <NavLink href="/calendrier" iconName="CalendarRange" label="Calendrier" collapsed={isCollapsed} />
-          <NavLink href="/finance" iconName="CreditCard" label="Finance" collapsed={isCollapsed} />
-          <NavLink href="/caisse" iconName="Wallet" label="Caisse" collapsed={isCollapsed} />
-          <NavLink href="/damage-reports" iconName="ClipboardCheck" label="Inspections" collapsed={isCollapsed} />
-          <NavLink href="/infractions" iconName="ShieldAlert" label="Infractions" collapsed={isCollapsed} />
-          <NavLink href="/notifications" iconName="Bell" label="Notifications" collapsed={isCollapsed} />
+          <NavLink href={lp("/vehicles")} iconName="Car" label="Véhicules" collapsed={isCollapsed} />
+          <NavLink href={lp("/catalogue")} iconName="BookOpen" label="Catalogue" collapsed={isCollapsed} />
+          <NavLink href={lp("/customers")} iconName="Users" label="Clients" collapsed={isCollapsed} />
+          <NavLink href={lp("/bookings")} iconName="Calendar" label="Réservations" collapsed={isCollapsed} />
+          <NavLink href={lp("/calendrier")} iconName="CalendarRange" label="Calendrier" collapsed={isCollapsed} />
+          <NavLink href={lp("/finance")} iconName="CreditCard" label="Finance" collapsed={isCollapsed} />
+          <NavLink href={lp("/caisse")} iconName="Wallet" label="Caisse" collapsed={isCollapsed} />
+          <NavLink href={lp("/damage-reports")} iconName="ClipboardCheck" label="Inspections" collapsed={isCollapsed} />
+          <NavLink href={lp("/infractions")} iconName="ShieldAlert" label="Infractions" collapsed={isCollapsed} />
+          <NavLink href={lp("/notifications")} iconName="Bell" label="Notifications" collapsed={isCollapsed} />
           {role === "OWNER" ? (
-            <NavLink href="/users" iconName="Users" label="Utilisateurs" collapsed={isCollapsed} />
+            <NavLink href={lp("/users")} iconName="Users" label="Utilisateurs" collapsed={isCollapsed} />
           ) : null}
         </nav>
       </TooltipProvider>

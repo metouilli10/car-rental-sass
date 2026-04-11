@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ClipboardCheck, FileQuestion } from "lucide-react";
 import type { InspectionType } from "@prisma/client";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 
 export interface DamageReportItem {
   id: string;
@@ -13,6 +15,7 @@ export interface InspectionsPanelProps {
   bookingId: string;
   damageReports: DamageReportItem[];
   compact?: boolean;
+  locale?: AppLocale;
 }
 
 const DEPART: InspectionType = "DEPART";
@@ -22,7 +25,9 @@ export function InspectionsPanel({
   bookingId,
   damageReports,
   compact = false,
+  locale = "fr",
 }: InspectionsPanelProps) {
+  const newInspectionHref = withLocalePath(locale, `/damage-reports/new?bookingId=${bookingId}`);
   const hasDepart = damageReports.some((r) => r.inspectionType === DEPART);
   const hasRetour = damageReports.some((r) => r.inspectionType === RETOUR);
 
@@ -39,9 +44,7 @@ export function InspectionsPanel({
           <CardTitle className="text-base">Inspections</CardTitle>
           {!compact && (
             <Button asChild size="sm">
-              <Link href={`/damage-reports/new?bookingId=${bookingId}`}>
-                Nouvelle inspection
-              </Link>
+              <Link href={newInspectionHref}>Nouvelle inspection</Link>
             </Button>
           )}
         </CardHeader>
@@ -51,9 +54,7 @@ export function InspectionsPanel({
               Aucune inspection. Créez une inspection avant départ.
             </p>
             <Button asChild size="sm" variant="outline" className="mt-2">
-              <Link href={`/damage-reports/new?bookingId=${bookingId}`}>
-                Nouvelle inspection
-              </Link>
+              <Link href={newInspectionHref}>Nouvelle inspection</Link>
             </Button>
           </CardContent>
         ) : (
@@ -84,9 +85,7 @@ export function InspectionsPanel({
       >
         <CardTitle className="text-base">Inspections</CardTitle>
         <Button asChild size="sm">
-          <Link href={`/damage-reports/new?bookingId=${bookingId}`}>
-            Nouvelle inspection
-          </Link>
+          <Link href={newInspectionHref}>Nouvelle inspection</Link>
         </Button>
       </CardHeader>
       <CardContent className={compact ? "pt-0" : undefined}>

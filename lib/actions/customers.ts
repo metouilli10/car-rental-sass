@@ -10,6 +10,7 @@ import { customerSchema, CustomerFormData } from "@/lib/validations/customer";
 
 export async function createCustomer(data: CustomerFormData) {
   const currentUser = await getCurrentUserAccessOrThrow();
+  const hasDocumentBacks = await supportsCustomerDocumentBacks();
 
   if (!canManageCustomers(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de creer un client" };
@@ -29,7 +30,7 @@ export async function createCustomer(data: CustomerFormData) {
         passportOrCINExpiry: validatedData.passportOrCINExpiry ?? null,
         passportPhotoUrl: validatedData.passportPhotoUrl || null,
         licensePhotoUrl: validatedData.licensePhotoUrl || null,
-        ...(supportsCustomerDocumentBacks
+        ...(hasDocumentBacks
           ? {
               passportPhotoBackUrl: validatedData.passportPhotoBackUrl || null,
               licensePhotoBackUrl: validatedData.licensePhotoBackUrl || null,
@@ -55,6 +56,7 @@ export async function createCustomer(data: CustomerFormData) {
 /** Creates a customer and returns { id, name, phone } for use in booking form (no redirect). */
 export async function createCustomerForBooking(data: CustomerFormData) {
   const currentUser = await getCurrentUserAccessOrThrow();
+  const hasDocumentBacks = await supportsCustomerDocumentBacks();
 
   if (!canManageCustomers(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de creer un client" };
@@ -74,7 +76,7 @@ export async function createCustomerForBooking(data: CustomerFormData) {
         passportOrCINExpiry: validatedData.passportOrCINExpiry ?? null,
         passportPhotoUrl: validatedData.passportPhotoUrl || null,
         licensePhotoUrl: validatedData.licensePhotoUrl || null,
-        ...(supportsCustomerDocumentBacks
+        ...(hasDocumentBacks
           ? {
               passportPhotoBackUrl: validatedData.passportPhotoBackUrl || null,
               licensePhotoBackUrl: validatedData.licensePhotoBackUrl || null,
@@ -100,6 +102,7 @@ export async function createCustomerForBooking(data: CustomerFormData) {
 
 export async function updateCustomer(id: string, data: CustomerFormData) {
   const currentUser = await getCurrentUserAccessOrThrow();
+  const hasDocumentBacks = await supportsCustomerDocumentBacks();
 
   if (!canManageCustomers(currentUser.role, currentUser.permissions)) {
     return { error: "Vous n'avez pas l'autorisation de modifier un client" };
@@ -130,7 +133,7 @@ export async function updateCustomer(id: string, data: CustomerFormData) {
         passportOrCINExpiry: validatedData.passportOrCINExpiry ?? null,
         passportPhotoUrl: validatedData.passportPhotoUrl || null,
         licensePhotoUrl: validatedData.licensePhotoUrl || null,
-        ...(supportsCustomerDocumentBacks
+        ...(hasDocumentBacks
           ? {
               passportPhotoBackUrl: validatedData.passportPhotoBackUrl || null,
               licensePhotoBackUrl: validatedData.licensePhotoBackUrl || null,

@@ -1,13 +1,23 @@
 import { unstable_cache } from "next/cache";
-import type { NotificationSeverity, Prisma, ReminderType } from "@prisma/client";
+import type {
+  NotificationSeverity,
+  NotificationStatus,
+  NotificationType,
+  Prisma,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type NotificationSummaryItem = {
   id: string;
-  type: ReminderType;
+  type: NotificationType;
   title: string;
   body: string;
   severity: NotificationSeverity;
+  status: NotificationStatus;
+  dueAt: Date | null;
+  dueMileageKm: number | null;
+  snoozedUntil: Date | null;
+  updatedAt: Date;
   vehicle: {
     id: string;
     make: string;
@@ -34,7 +44,7 @@ async function getNotificationsSummaryUncached(
 }> {
   const where = buildSummaryWhere(agencyId);
 
-  const [items, count] = await Promise.all([
+  const [rawItems, count] = await Promise.all([
     prisma.notification.findMany({
       where,
       select: {
@@ -43,7 +53,19 @@ async function getNotificationsSummaryUncached(
         title: true,
         body: true,
         severity: true,
-        vehicle: { select: { id: true, make: true, model: true, plate: true } },
+        status: true,
+        dueAt: true,
+        dueMileageKm: true,
+        snoozedUntil: true,
+        updatedAt: true,
+        vehicle: {
+          select: {
+            id: true,
+            make: true,
+            model: true,
+            plate: true,
+          },
+        },
       },
       orderBy: [{ severity: "desc" }, { updatedAt: "asc" }],
       take: 5,
@@ -51,12 +73,20 @@ async function getNotificationsSummaryUncached(
     prisma.notification.count({ where }),
   ]);
 
+  const items = rawItems.filter(
+    (
+      item,
+    ): item is typeof item & {
+      vehicle: NonNullable<typeof item.vehicle>;
+    } => item.vehicle !== null,
+  );
+
   return { count, items };
 }
 
 const getNotificationsSummaryCached = unstable_cache(
   async (agencyId: string) => getNotificationsSummaryUncached(agencyId),
-  ["notifications-summary-v1"],
+  ["notifications-summary-v2"],
   { revalidate: NOTIFICATIONS_SUMMARY_CACHE_SECONDS }
 );
 

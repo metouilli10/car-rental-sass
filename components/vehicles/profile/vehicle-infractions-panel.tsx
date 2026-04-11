@@ -4,16 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { VehicleInfractionItem } from "@/lib/vehicles/profile";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 import { getInfractionStatusClass, infractionStatusLabels, infractionTypeLabels } from "./presentation";
 
 export function VehicleInfractionsPanel({
   vehicleId,
   infractions,
   compact = false,
+  locale = "fr",
 }: {
   vehicleId: string;
   infractions: VehicleInfractionItem[];
   compact?: boolean;
+  locale?: AppLocale;
 }) {
   const items = compact ? infractions.slice(0, 3) : infractions;
 
@@ -22,7 +26,7 @@ export function VehicleInfractionsPanel({
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base">Infractions</CardTitle>
         <Button variant="secondary" size="sm" asChild>
-          <Link href={`/infractions/new?vehicleId=${vehicleId}`}>
+          <Link href={withLocalePath(locale, `/infractions/new?vehicleId=${vehicleId}`)}>
             Ajouter infraction
           </Link>
         </Button>
@@ -35,7 +39,7 @@ export function VehicleInfractionsPanel({
               Ajoutez une infraction dès qu’un événement doit être suivi ou assigné.
             </p>
             <Button variant="outline" size="sm" asChild className="mt-4">
-              <Link href={`/infractions/new?vehicleId=${vehicleId}`}>
+              <Link href={withLocalePath(locale, `/infractions/new?vehicleId=${vehicleId}`)}>
                 Ajouter une infraction
               </Link>
             </Button>
@@ -67,7 +71,7 @@ export function VehicleInfractionsPanel({
                     {item.amount != null ? formatCurrency(item.amount) : "Montant non renseigné"}
                   </p>
                   <Link
-                    href={`/infractions/${item.id}`}
+                    href={withLocalePath(locale, `/infractions/${item.id}`)}
                     className="mt-1 inline-flex text-xs font-medium text-blue-600 hover:text-blue-700"
                   >
                     Voir le détail

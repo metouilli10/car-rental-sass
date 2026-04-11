@@ -25,6 +25,9 @@ import { SummaryCard } from "@/components/bookings/summary-card";
 import { NewClientWizardModal } from "@/components/bookings/new-client-wizard-modal";
 import { MobileSummarySheet } from "@/components/bookings/mobile-summary-sheet";
 import type { ActiveBookingSlot, BookingCustomerOption, BookingVehicleOption } from "@/components/bookings/types";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
+import { useI18n } from "@/components/i18n/i18n-context";
+import { interpolate } from "@/lib/i18n/messages";
 
 interface ReservationWizardPageProps {
   customers: BookingCustomerOption[];
@@ -104,6 +107,8 @@ export function ReservationWizardPage({
   prefilledEndAt,
   onSubmit,
 }: ReservationWizardPageProps) {
+  const { t } = useI18n();
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [draft, setDraft] = useState<ReservationDraft>(INITIAL_DRAFT);
   const [errors, setErrors] = useState<StepErrors>({});
@@ -141,7 +146,8 @@ export function ReservationWizardPage({
 
     return vehicles.map((vehicle) => {
       let tone: "green" | "red" | "yellow" = "green";
-      let label = "Disponible";
+      let label = t("reservationWizard.availability.available");
+      let bookingOverlap = false;
       const isBlockedByStatus =
         vehicle.status === "MAINTENANCE" || vehicle.status === "UNAVAILABLE";
 
@@ -155,20 +161,27 @@ export function ReservationWizardPage({
 
         if (isBlockedByStatus) {
           tone = "yellow";
-          label = vehicle.status === "MAINTENANCE" ? "En maintenance" : "Indisponible";
+          label =
+            vehicle.status === "MAINTENANCE"
+              ? t("reservationWizard.availability.maintenance")
+              : t("reservationWizard.availability.unavailable");
         } else if (overlap) {
           tone = "red";
-          label = "Loué sur ces dates";
+          bookingOverlap = true;
+          label = t("reservationWizard.availability.rentedOnDates");
         } else if (vehicle.status === "RENTED") {
           tone = "green";
-          label = "Libre sur ces dates";
+          label = t("reservationWizard.availability.freeOnDates");
         }
       } else if (isBlockedByStatus) {
         tone = "yellow";
-        label = vehicle.status === "MAINTENANCE" ? "En maintenance" : "Indisponible";
+        label =
+          vehicle.status === "MAINTENANCE"
+            ? t("reservationWizard.availability.maintenance")
+            : t("reservationWizard.availability.unavailable");
       } else if (vehicle.status === "RENTED") {
         tone = "red";
-        label = "Sélectionnez des dates pour vérifier la disponibilité";
+        label = t("reservationWizard.availability.pickDatesToCheck");
       }
 
       return {
@@ -176,9 +189,10 @@ export function ReservationWizardPage({
         tone,
         label,
         selectable: tone === "green",
+        bookingOverlap,
       };
     });
-  }, [activeBookings, draft.endAt, draft.startAt, vehicles]);
+  }, [activeBookings, draft.endAt, draft.startAt, t, vehicles]);
 
   const selectedVehicleAvailability = useMemo(
     () => vehicleAvailability.find((entry) => entry.vehicle.id === draft.vehicleId),
@@ -187,9 +201,7 @@ export function ReservationWizardPage({
   const vehicleConflictByStatus = selectedVehicleAvailability
     ? !selectedVehicleAvailability.selectable
     : false;
-  const vehicleOverlapConflict = selectedVehicleAvailability
-    ? selectedVehicleAvailability.label === "Loué sur ces dates"
-    : false;
+  const vehicleOverlapConflict = selectedVehicleAvailability?.bookingOverlap === true;
 
   const derived = useMemo(() => {
     const start = draft.startAt ? new Date(draft.startAt) : null;
@@ -198,7 +210,14 @@ export function ReservationWizardPage({
     const durationHoursFloat = hasDates ? (end.getTime() - start.getTime()) / (1000 * 60 * 60) : 0;
     const durationDays = hasDates ? Math.max(1, Math.ceil(durationHoursFloat / 24)) : 0;
     const durationHours = hasDates ? Math.max(0, Math.round(durationHoursFloat % 24)) : 0;
-    const durationLabel = hasDates ? `${durationDays} j${durationHours ? ` et ${durationHours} h` : ""}` : "--";
+    const durationLabel = hasDates
+      ? durationHours > 0
+        ? interpolate(t("reservationWizard.duration.daysAndHours"), {
+            days: durationDays,
+            hours: durationHours,
+          })
+        : interpolate(t("reservationWizard.duration.daysOnly"), { days: durationDays })
+      : "--";
 
     const baseTotal = durationDays * Number(draft.pricePerDay || 0);
     const addonsTotal = draft.addons.reduce((sum, addon) => sum + addon.qty * addon.price, 0);
@@ -226,7 +245,7 @@ export function ReservationWizardPage({
       totalTTC,
       remaining,
     };
-  }, [draft]);
+  }, [draft, t]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -319,10 +338,11 @@ export function ReservationWizardPage({
 
   const warnings = useMemo(() => {
     const list: string[] = [];
-    if (vehicleConflictByStatus || vehicleOverlapConflict) list.push("Conflit véhicule");
-    if (selectedClient?.unpaidCount && selectedClient.unpaidCount > 0) list.push("Risque: impayé");
+    if (vehicleConflictByStatus || vehicleOverlapConflict) list.push(t("reservationWizard.warnings.vehicleConflict"));
+    if (selectedClient?.unpaidCount && selectedClient.unpaidCount > 0)
+      list.push(t("reservationWizard.warnings.unpaidRisk"));
     return list;
-  }, [selectedClient, vehicleConflictByStatus, vehicleOverlapConflict]);
+  }, [selectedClient, t, vehicleConflictByStatus, vehicleOverlapConflict]);
 
   const filteredClients = useMemo(() => {
     const term = clientSearch.trim().toLowerCase();
@@ -331,13 +351,14 @@ export function ReservationWizardPage({
   }, [clientSearch, customers, recentClients]);
 
   const steps = useMemo(() => {
+    const ctx = { vehicleConflictByStatus, vehicleOverlapConflict };
     return [
-      { id: 1 as const, title: "Détails location", isComplete: validateStep(1, draft, { vehicleConflictByStatus, vehicleOverlapConflict }).ok, isActive: draft.step === 1 },
-      { id: 2 as const, title: "Client", isComplete: validateStep(2, draft, { vehicleConflictByStatus, vehicleOverlapConflict }).ok, isActive: draft.step === 2 },
-      { id: 3 as const, title: "Add-ons & Tarification", isComplete: validateStep(3, draft, { vehicleConflictByStatus, vehicleOverlapConflict }).ok, isActive: draft.step === 3 },
-      { id: 4 as const, title: "Paiement & Validation", isComplete: validateStep(4, draft, { vehicleConflictByStatus, vehicleOverlapConflict }).ok, isActive: draft.step === 4 },
+      { id: 1 as const, title: t("reservationWizard.steps.details"), isComplete: validateStep(1, draft, ctx, t).ok, isActive: draft.step === 1 },
+      { id: 2 as const, title: t("reservationWizard.steps.client"), isComplete: validateStep(2, draft, ctx, t).ok, isActive: draft.step === 2 },
+      { id: 3 as const, title: t("reservationWizard.steps.addonsPricing"), isComplete: validateStep(3, draft, ctx, t).ok, isActive: draft.step === 3 },
+      { id: 4 as const, title: t("reservationWizard.steps.payment"), isComplete: validateStep(4, draft, ctx, t).ok, isActive: draft.step === 4 },
     ];
-  }, [draft, vehicleConflictByStatus, vehicleOverlapConflict]);
+  }, [draft, t, vehicleConflictByStatus, vehicleOverlapConflict]);
 
   const handleQuickDuration = (days: number) => {
     if (!draft.startAt) return;
@@ -349,7 +370,7 @@ export function ReservationWizardPage({
   };
 
   const onNext = () => {
-    const validation = validateStep(draft.step, draft, { vehicleConflictByStatus, vehicleOverlapConflict });
+    const validation = validateStep(draft.step, draft, { vehicleConflictByStatus, vehicleOverlapConflict }, t);
     if (!validation.ok) {
       setErrors(validation.errors);
       return;
@@ -368,7 +389,7 @@ export function ReservationWizardPage({
       setDraft((prev) => ({ ...prev, step }));
       return;
     }
-    const validation = validateStep(draft.step, draft, { vehicleConflictByStatus, vehicleOverlapConflict });
+    const validation = validateStep(draft.step, draft, { vehicleConflictByStatus, vehicleOverlapConflict }, t);
     if (validation.ok) {
       setErrors({});
       setDraft((prev) => ({ ...prev, step }));
@@ -381,22 +402,25 @@ export function ReservationWizardPage({
     if (typeof window !== "undefined") {
       window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     }
-    toast.success("Brouillon enregistré");
+    toast.success(t("reservationWizard.toasts.draftSaved"));
   };
 
   const canCreate = useMemo(() => {
+    const ctx = { vehicleConflictByStatus, vehicleOverlapConflict };
     return [1, 2, 3, 4].every((step) =>
-      validateStep(step as 1 | 2 | 3 | 4, draft, { vehicleConflictByStatus, vehicleOverlapConflict }).ok,
+      validateStep(step as 1 | 2 | 3 | 4, draft, ctx, t).ok,
     );
-  }, [draft, vehicleConflictByStatus, vehicleOverlapConflict]);
+  }, [draft, t, vehicleConflictByStatus, vehicleOverlapConflict]);
 
   const handleCreate = async () => {
-    const allOk = validateStep(1, draft, { vehicleConflictByStatus, vehicleOverlapConflict }).ok &&
-      validateStep(2, draft, { vehicleConflictByStatus, vehicleOverlapConflict }).ok &&
-      validateStep(3, draft, { vehicleConflictByStatus, vehicleOverlapConflict }).ok &&
-      validateStep(4, draft, { vehicleConflictByStatus, vehicleOverlapConflict }).ok;
+    const ctx = { vehicleConflictByStatus, vehicleOverlapConflict };
+    const allOk =
+      validateStep(1, draft, ctx, t).ok &&
+      validateStep(2, draft, ctx, t).ok &&
+      validateStep(3, draft, ctx, t).ok &&
+      validateStep(4, draft, ctx, t).ok;
     if (!allOk) {
-      setFormError("Veuillez compléter correctement toutes les étapes.");
+      setFormError(t("reservationWizard.formErrors.completeAllSteps"));
       return;
     }
 
@@ -442,16 +466,16 @@ export function ReservationWizardPage({
         setFormError(result.error);
         return;
       }
-      toast.success("Réservation créée avec succès");
+      toast.success(t("reservationWizard.toasts.bookingCreated"));
       if (typeof window !== "undefined") window.localStorage.removeItem(DRAFT_KEY);
       if (result && "bookingId" in result) {
-        router.push(`/bookings/${result.bookingId}`);
+        router.push(lp(`/bookings/${result.bookingId}`));
       } else {
-        router.push("/bookings");
+        router.push(lp("/bookings"));
       }
     } catch (err) {
       unstable_rethrow(err);
-      setFormError("Une erreur est survenue pendant la création.");
+      setFormError(t("reservationWizard.formErrors.createFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -481,7 +505,7 @@ export function ReservationWizardPage({
           remaining={derived.remaining}
           warnings={warnings}
           compactTrigger
-          triggerLabel="Vue d'ensemble"
+          triggerLabel={t("reservationWizard.mobile.overviewTrigger")}
         />
       </div>
 
@@ -492,28 +516,28 @@ export function ReservationWizardPage({
               <div className="flex items-start justify-between gap-3 md:block">
                 <div className="min-w-0">
                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 md:hidden">
-                    Assistant réservation
+                    {t("reservationWizard.header.assistantBadge")}
                   </p>
                   <CardTitle className="text-[1.625rem] leading-tight md:text-xl">
-                    {draft.step === 1 && "1) Détails location"}
-                    {draft.step === 2 && "2) Client"}
-                    {draft.step === 3 && "3) Add-ons & Tarification"}
-                    {draft.step === 4 && "4) Paiement & Validation"}
+                    {draft.step === 1 && t("reservationWizard.header.stepTitle1")}
+                    {draft.step === 2 && t("reservationWizard.header.stepTitle2")}
+                    {draft.step === 3 && t("reservationWizard.header.stepTitle3")}
+                    {draft.step === 4 && t("reservationWizard.header.stepTitle4")}
                   </CardTitle>
                 </div>
                 <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 md:hidden">
-                  Étape {draft.step}/4
+                  {t("reservationWizard.header.stepOf", { current: draft.step, total: 4 })}
                 </span>
               </div>
               <p className="text-sm leading-6 text-muted-foreground">
-                {draft.step === 1 && "Renseignez la période et choisissez le véhicule."}
-                {draft.step === 2 && "Sélectionnez le client et vérifiez son historique."}
-                {draft.step === 3 && "Ajustez le tarif de façon opérationnelle."}
-                {draft.step === 4 && "Confirmez le paiement et créez la réservation."}
+                {draft.step === 1 && t("reservationWizard.header.hint1")}
+                {draft.step === 2 && t("reservationWizard.header.hint2")}
+                {draft.step === 3 && t("reservationWizard.header.hint3")}
+                {draft.step === 4 && t("reservationWizard.header.hint4")}
               </p>
               <div className="grid grid-cols-2 gap-2 md:hidden">
-                <WizardInsight label="Durée" value={derived.durationLabel} tone="blue" />
-                <WizardInsight label="TTC" value={formatCurrency(derived.totalTTC)} tone="slate" />
+                <WizardInsight label={t("reservationWizard.insights.duration")} value={derived.durationLabel} tone="blue" />
+                <WizardInsight label={t("reservationWizard.insights.ttc")} value={formatCurrency(derived.totalTTC)} tone="slate" />
               </div>
             </CardHeader>
             <CardContent className="space-y-5 px-5 pb-5 pt-5 md:px-6 md:pb-6">
@@ -530,6 +554,7 @@ export function ReservationWizardPage({
                   vehicleConflictByStatus={vehicleConflictByStatus}
                   vehicleOverlapConflict={vehicleOverlapConflict}
                   errors={errors}
+                  t={t}
                 />
               ) : null}
 
@@ -543,6 +568,7 @@ export function ReservationWizardPage({
                   onChange={setDraft}
                   onOpenNewClient={() => setNewClientOpen(true)}
                   errors={errors}
+                  t={t}
                 />
               ) : null}
 
@@ -552,6 +578,7 @@ export function ReservationWizardPage({
                   derived={derived}
                   onChange={setDraft}
                   errors={errors}
+                  t={t}
                 />
               ) : null}
 
@@ -561,12 +588,13 @@ export function ReservationWizardPage({
                   derived={derived}
                   onChange={setDraft}
                   errors={errors}
+                  t={t}
                 />
               ) : null}
 
               <div className="hidden items-center justify-between border-t pt-4 md:flex">
                 <Button type="button" variant="outline" onClick={onBack} disabled={draft.step === 1}>
-                  Retour
+                  {t("reservationWizard.buttons.back")}
                 </Button>
 
                 {draft.step < 4 ? (
@@ -575,12 +603,12 @@ export function ReservationWizardPage({
                     className="bg-blue-600 hover:bg-blue-700"
                     onClick={onNext}
                   >
-                    Suivant
+                    {t("reservationWizard.buttons.next")}
                   </Button>
                 ) : (
                   <div className="flex items-center gap-2">
                     <Button type="button" variant="outline" onClick={handleSaveDraft}>
-                      Enregistrer brouillon
+                      {t("reservationWizard.buttons.saveDraft")}
                     </Button>
                     <Button
                       type="button"
@@ -588,7 +616,7 @@ export function ReservationWizardPage({
                       onClick={handleCreate}
                       disabled={!canCreate || isSubmitting}
                     >
-                      {isSubmitting ? "Création..." : "Créer la réservation"}
+                      {isSubmitting ? t("reservationWizard.buttons.creating") : t("reservationWizard.buttons.createBooking")}
                     </Button>
                   </div>
                 )}
@@ -597,13 +625,13 @@ export function ReservationWizardPage({
               <div className="mt-6 rounded-[24px] border border-border/80 bg-white p-3 shadow-[0_12px_32px_rgba(15,23,42,0.08)] md:hidden">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Réservation</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">{t("reservationWizard.mobileCard.reservation")}</p>
                     <p className="truncate text-sm font-semibold text-slate-950">
-                      {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : "À compléter"}
+                      {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : t("reservationWizard.mobileCard.toComplete")}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Total TTC</p>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">{t("reservationWizard.mobileCard.totalTtc")}</p>
                     <p className="text-sm font-semibold text-blue-700">{formatCurrency(derived.totalTTC)}</p>
                   </div>
                 </div>
@@ -624,7 +652,7 @@ export function ReservationWizardPage({
                       remaining={derived.remaining}
                       warnings={warnings}
                       compactTrigger
-                      triggerLabel="Résumé"
+                      triggerLabel={t("reservationWizard.mobile.summaryTrigger")}
                       triggerClassName="min-h-12 w-full"
                     />
                   ) : (
@@ -634,12 +662,12 @@ export function ReservationWizardPage({
                       onClick={onBack}
                       className="min-h-12 w-full rounded-2xl"
                     >
-                      Retour
+                      {t("reservationWizard.buttons.back")}
                     </Button>
                   )}
                   {draft.step < 4 ? (
                     <Button type="button" onClick={onNext} className="min-h-12 w-full rounded-2xl bg-blue-600 text-base hover:bg-blue-700">
-                      Suivant
+                      {t("reservationWizard.buttons.next")}
                     </Button>
                   ) : (
                     <Button
@@ -648,7 +676,7 @@ export function ReservationWizardPage({
                       disabled={!canCreate || isSubmitting}
                       className="min-h-12 w-full rounded-2xl bg-blue-600 text-base hover:bg-blue-700"
                     >
-                      {isSubmitting ? "Création..." : "Créer"}
+                      {isSubmitting ? t("reservationWizard.buttons.creating") : t("reservationWizard.buttons.create")}
                     </Button>
                   )}
                 </div>
@@ -702,6 +730,7 @@ function StepLocation({
   vehicleConflictByStatus,
   vehicleOverlapConflict,
   errors,
+  t,
 }: {
   draft: ReservationDraft;
   locationOptions: string[];
@@ -710,6 +739,7 @@ function StepLocation({
     tone: "green" | "red" | "yellow";
     label: string;
     selectable: boolean;
+    bookingOverlap: boolean;
   }>;
   selectedVehicle?: BookingVehicleOption;
   selectedVehicleAvailability?: {
@@ -717,6 +747,7 @@ function StepLocation({
     tone: "green" | "red" | "yellow";
     label: string;
     selectable: boolean;
+    bookingOverlap: boolean;
   };
   onChange: React.Dispatch<React.SetStateAction<ReservationDraft>>;
   onQuickDuration: (days: number) => void;
@@ -724,6 +755,7 @@ function StepLocation({
   vehicleConflictByStatus: boolean;
   vehicleOverlapConflict: boolean;
   errors: StepErrors;
+  t: (path: string, vars?: Record<string, string | number>) => string;
 }) {
   const selectedTone = selectedVehicleAvailability ? availabilityToneClasses[selectedVehicleAvailability.tone] : availabilityToneClasses.slate;
 
@@ -731,11 +763,11 @@ function StepLocation({
     <div className="space-y-5">
       <WizardSection
         icon={Clock3}
-        eyebrow="Période"
-        title="Planifiez le départ et le retour"
+        eyebrow={t("reservationWizard.stepLocation.periodEyebrow")}
+        title={t("reservationWizard.stepLocation.planTitle")}
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <FieldError label="Date/Heure de départ *" error={errors.startAt}>
+          <FieldError label={t("reservationWizard.stepLocation.startLabel")} error={errors.startAt}>
             <Input
               type="datetime-local"
               value={draft.startAt}
@@ -743,7 +775,7 @@ function StepLocation({
               onChange={(event) => onChange((prev) => ({ ...prev, startAt: event.target.value }))}
             />
           </FieldError>
-          <FieldError label="Date/Heure de retour *" error={errors.endAt}>
+          <FieldError label={t("reservationWizard.stepLocation.endLabel")} error={errors.endAt}>
             <Input
               type="datetime-local"
               value={draft.endAt}
@@ -756,8 +788,8 @@ function StepLocation({
         <div className="rounded-[22px] border border-blue-100 bg-[linear-gradient(180deg,rgba(239,245,255,0.98)_0%,rgba(255,255,255,0.98)_100%)] p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">Durée rapide</p>
-              <p className="mt-1 text-sm text-slate-600">Préremplissez le retour en un geste.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">{t("reservationWizard.stepLocation.quickDurationTitle")}</p>
+              <p className="mt-1 text-sm text-slate-600">{t("reservationWizard.stepLocation.quickDurationHint")}</p>
             </div>
             <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white px-3 py-1 text-sm font-semibold text-blue-800 shadow-sm">
               <Clock3 className="h-4 w-4" />
@@ -773,7 +805,7 @@ function StepLocation({
                 className="min-h-11 rounded-2xl border-blue-200 bg-white px-4 text-blue-800 hover:bg-blue-50"
                 onClick={() => onQuickDuration(day)}
               >
-                {day}j
+                {t("reservationWizard.stepLocation.dayShort", { n: day })}
               </Button>
             ))}
           </div>
@@ -782,18 +814,18 @@ function StepLocation({
 
       <WizardSection
         icon={CarFront}
-        eyebrow="Sélection"
-        title="Choisissez le véhicule opérationnel"
+        eyebrow={t("reservationWizard.stepLocation.selectionEyebrow")}
+        title={t("reservationWizard.stepLocation.vehicleTitle")}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Lieu départ</Label>
+            <Label>{t("reservationWizard.stepLocation.pickupLabel")}</Label>
             <Select
               value={draft.pickupLocation || ""}
               onValueChange={(value) => onChange((prev) => ({ ...prev, pickupLocation: value }))}
             >
               <SelectTrigger className="min-h-12 rounded-2xl border-border/70">
-                <SelectValue placeholder="Sélectionner un lieu" />
+                <SelectValue placeholder={t("reservationWizard.stepLocation.placeholderLocation")} />
               </SelectTrigger>
               <SelectContent>
                 {locationOptions.map((location) => (
@@ -806,13 +838,13 @@ function StepLocation({
           </div>
 
           <div className="space-y-2">
-            <Label>Lieu retour</Label>
+            <Label>{t("reservationWizard.stepLocation.returnLabel")}</Label>
             <Select
               value={draft.returnLocation || ""}
               onValueChange={(value) => onChange((prev) => ({ ...prev, returnLocation: value }))}
             >
               <SelectTrigger className="min-h-12 rounded-2xl border-border/70">
-                <SelectValue placeholder="Sélectionner un lieu" />
+                <SelectValue placeholder={t("reservationWizard.stepLocation.placeholderLocation")} />
               </SelectTrigger>
               <SelectContent>
                 {locationOptions.map((location) => (
@@ -825,13 +857,13 @@ function StepLocation({
           </div>
         </div>
 
-        <FieldError label="Véhicule *" error={errors.vehicleId}>
+        <FieldError label={t("reservationWizard.stepLocation.vehicleFieldLabel")} error={errors.vehicleId}>
           <Select
             value={draft.vehicleId}
             onValueChange={(value) => onChange((prev) => ({ ...prev, vehicleId: value }))}
           >
             <SelectTrigger className="min-h-12 rounded-2xl border-border/70">
-              <SelectValue placeholder="Sélectionner un véhicule" />
+              <SelectValue placeholder={t("reservationWizard.stepLocation.placeholderVehicle")} />
             </SelectTrigger>
             <SelectContent className="max-h-80">
               {vehicleAvailability.map(({ vehicle, tone, label }) => (
@@ -846,7 +878,8 @@ function StepLocation({
                         {vehicle.make} {vehicle.model}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {vehicle.plate} • {vehicle.gearbox === "AUTO" ? "Automatique" : "Manuelle"}
+                        {vehicle.plate} •{" "}
+                        {vehicle.gearbox === "AUTO" ? t("vehicles.gearAuto") : t("vehicles.gearManual")}
                       </p>
                     </div>
                     <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", availabilityToneClasses[tone].badge)}>
@@ -863,24 +896,26 @@ function StepLocation({
           <div className={cn("rounded-[22px] border p-4", selectedTone.card)}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Véhicule sélectionné</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t("reservationWizard.stepLocation.vehicleSelected")}</p>
                 <p className="mt-2 text-base font-semibold text-slate-950">
                   {selectedVehicle.make} {selectedVehicle.model}
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
-                  {selectedVehicle.plate} • {selectedVehicle.gearbox === "AUTO" ? "Automatique" : "Manuelle"}
+                  {selectedVehicle.plate} •{" "}
+                  {selectedVehicle.gearbox === "AUTO" ? t("vehicles.gearAuto") : t("vehicles.gearManual")}
                 </p>
                 <p className="mt-3 text-sm font-medium text-slate-700">
-                  {formatCurrency(selectedVehicle.pricePerDay)}/jour
+                  {formatCurrency(selectedVehicle.pricePerDay)}
+                  {t("reservationWizard.stepLocation.perDaySuffix")}
                 </p>
               </div>
               <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", selectedTone.badge)}>
-                {selectedVehicleAvailability?.label ?? "Sélectionné"}
+                {selectedVehicleAvailability?.label ?? t("reservationWizard.stepLocation.selectedBadge")}
               </span>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-              <WizardInsight label="Départ" value={draft.startAt ? formatDateTime(draft.startAt) : "--"} tone="slate" compact />
-              <WizardInsight label="Retour" value={draft.endAt ? formatDateTime(draft.endAt) : "--"} tone="slate" compact />
+              <WizardInsight label={t("reservationWizard.insights.departure")} value={draft.startAt ? formatDateTime(draft.startAt) : "--"} tone="slate" compact />
+              <WizardInsight label={t("reservationWizard.insights.return")} value={draft.endAt ? formatDateTime(draft.endAt) : "--"} tone="slate" compact />
             </div>
           </div>
         ) : null}
@@ -889,7 +924,9 @@ function StepLocation({
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             <p className="flex items-center gap-2 font-medium">
               <AlertTriangle className="h-4 w-4" />
-              Véhicule en état {selectedVehicle?.status}. Veuillez choisir un autre véhicule.
+              {t("reservationWizard.stepLocation.vehicleStatusConflict", {
+                status: selectedVehicle?.status ?? "",
+              })}
             </p>
           </div>
         ) : null}
@@ -898,7 +935,7 @@ function StepLocation({
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             <p className="flex items-center gap-2 font-medium">
               <AlertTriangle className="h-4 w-4" />
-              Un chevauchement de réservation a été détecté pour cette période.
+              {t("reservationWizard.stepLocation.overlapDetected")}
             </p>
           </div>
         ) : null}
@@ -916,6 +953,7 @@ function StepClient({
   onChange,
   onOpenNewClient,
   errors,
+  t,
 }: {
   draft: ReservationDraft;
   clients: BookingCustomerOption[];
@@ -925,34 +963,35 @@ function StepClient({
   onChange: React.Dispatch<React.SetStateAction<ReservationDraft>>;
   onOpenNewClient: () => void;
   errors: StepErrors;
+  t: (path: string, vars?: Record<string, string | number>) => string;
 }) {
   return (
     <div className="space-y-5">
       <WizardSection
         icon={UserRound}
-        eyebrow="Client"
-        title="Sélectionnez le conducteur ou la société"
+        eyebrow={t("reservationWizard.stepClient.eyebrow")}
+        title={t("reservationWizard.stepClient.title")}
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Label>Client *</Label>
+          <Label>{t("reservationWizard.stepClient.clientLabel")}</Label>
           <Button type="button" variant="outline" onClick={onOpenNewClient} className="min-h-11 rounded-2xl sm:w-auto">
-            + Nouveau client
+            {t("reservationWizard.stepClient.newClient")}
           </Button>
         </div>
 
         <div className="relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
-            placeholder="Rechercher nom/téléphone..."
+            placeholder={t("reservationWizard.stepClient.searchPlaceholder")}
             value={searchValue}
-            className="min-h-12 rounded-2xl border-border/70 pl-11"
+            className="min-h-12 rounded-2xl border-border/70 ps-11"
             onChange={(event) => onSearch(event.target.value)}
           />
         </div>
         {errors.clientId ? <p className="text-sm text-red-600">{errors.clientId}</p> : null}
 
         <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-500">
-          <span>{searchValue ? "Résultats" : "Clients récents"}</span>
+          <span>{searchValue ? t("reservationWizard.stepClient.results") : t("reservationWizard.stepClient.recentClients")}</span>
           <span>{clients.length}</span>
         </div>
 
@@ -974,38 +1013,42 @@ function StepClient({
                   <p className="font-medium text-slate-950">{client.name}</p>
                   <p className="mt-1 text-sm text-slate-500">{client.phone}</p>
                   <p className="mt-2 text-xs text-slate-500">
-                    {client.bookingCount} réservation(s)
-                    {client.lastBookingAt ? ` • Dernière le ${formatDateTime(client.lastBookingAt)}` : ""}
+                    {t("reservationWizard.stepClient.bookingCount", { count: client.bookingCount })}
+                    {client.lastBookingAt
+                      ? ` ${t("reservationWizard.stepClient.lastBooking", { date: formatDateTime(client.lastBookingAt) })}`
+                      : ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap justify-end gap-1">
-                  {client.unpaidCount > 0 ? <Badge variant="warning">Impayé</Badge> : null}
-                  {client.isVip ? <Badge variant="info">VIP</Badge> : null}
+                  {client.unpaidCount > 0 ? <Badge variant="warning">{t("reservationWizard.stepClient.unpaid")}</Badge> : null}
+                  {client.isVip ? <Badge variant="info">{t("reservationWizard.stepClient.vip")}</Badge> : null}
                 </div>
               </div>
             </button>
           )) : (
             <div className="rounded-2xl border border-dashed border-border/70 bg-white/80 p-5 text-center text-sm text-slate-500">
-              Aucun client trouvé pour cette recherche.
+              {t("reservationWizard.stepClient.emptySearch")}
             </div>
           )}
         </div>
 
         {selectedClient ? (
           <div className="rounded-[22px] border border-blue-100 bg-[linear-gradient(180deg,rgba(239,245,255,0.98)_0%,rgba(255,255,255,1)_100%)] p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">Client sélectionné</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">{t("reservationWizard.stepClient.selectedClient")}</p>
             <div className="mt-3 flex items-start justify-between gap-3">
               <div>
                 <p className="text-base font-semibold text-slate-950">{selectedClient.name}</p>
                 <p className="mt-1 text-sm text-slate-600">{selectedClient.phone}</p>
                 <p className="mt-3 text-sm text-slate-600">
-                  Historique: {selectedClient.bookingCount} location(s)
-                  {selectedClient.lastBookingAt ? ` • Dernière le ${formatDateTime(selectedClient.lastBookingAt)}` : ""}
+                  {t("reservationWizard.stepClient.history", { count: selectedClient.bookingCount })}
+                  {selectedClient.lastBookingAt
+                    ? ` ${t("reservationWizard.stepClient.lastBookingHistory", { date: formatDateTime(selectedClient.lastBookingAt) })}`
+                    : ""}
                 </p>
               </div>
               <div className="flex flex-wrap justify-end gap-1">
-                {selectedClient.unpaidCount > 0 ? <Badge variant="warning">Impayé</Badge> : null}
-                {selectedClient.isVip ? <Badge variant="info">VIP</Badge> : null}
+                {selectedClient.unpaidCount > 0 ? <Badge variant="warning">{t("reservationWizard.stepClient.unpaid")}</Badge> : null}
+                {selectedClient.isVip ? <Badge variant="info">{t("reservationWizard.stepClient.vip")}</Badge> : null}
               </div>
             </div>
           </div>
@@ -1020,6 +1063,7 @@ function StepPricing({
   derived,
   onChange,
   errors,
+  t,
 }: {
   draft: ReservationDraft;
   derived: {
@@ -1032,6 +1076,7 @@ function StepPricing({
   };
   onChange: React.Dispatch<React.SetStateAction<ReservationDraft>>;
   errors: StepErrors;
+  t: (path: string, vars?: Record<string, string | number>) => string;
 }) {
   const updateAddon = (addonId: string, patch: Partial<DraftAddon>) => {
     onChange((prev) => ({
@@ -1050,17 +1095,17 @@ function StepPricing({
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-2 md:hidden">
-        <WizardInsight label="Base" value={formatCurrency(derived.baseTotal)} tone="slate" />
-        <WizardInsight label="Total TTC" value={formatCurrency(derived.totalTTC)} tone="blue" />
+        <WizardInsight label={t("reservationWizard.stepPricing.base")} value={formatCurrency(derived.baseTotal)} tone="slate" />
+        <WizardInsight label={t("reservationWizard.stepPricing.totalTtc")} value={formatCurrency(derived.totalTTC)} tone="blue" />
       </div>
 
       <WizardSection
         icon={ShieldCheck}
-        eyebrow="Tarification"
-        title="Ajustez la base opérationnelle"
+        eyebrow={t("reservationWizard.stepPricing.tariffEyebrow")}
+        title={t("reservationWizard.stepPricing.adjustBaseTitle")}
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <FieldError label="Prix/jour (MAD) *" error={errors.pricePerDay}>
+          <FieldError label={t("reservationWizard.stepPricing.pricePerDayLabel")} error={errors.pricePerDay}>
             <Input
               type="number"
               min={0}
@@ -1069,7 +1114,7 @@ function StepPricing({
               onChange={(event) => onChange((prev) => ({ ...prev, pricePerDay: Number(event.target.value) || 0 }))}
             />
           </FieldError>
-          <FieldError label="Caution (MAD) *" error={errors.deposit}>
+          <FieldError label={t("reservationWizard.stepPricing.depositLabel")} error={errors.deposit}>
             <Input
               type="number"
               min={0}
@@ -1083,11 +1128,11 @@ function StepPricing({
 
       <WizardSection
         icon={CarFront}
-        eyebrow="Add-ons"
-        title="Composez les options facturées"
+        eyebrow={t("reservationWizard.stepPricing.addonsEyebrow")}
+        title={t("reservationWizard.stepPricing.composeTitle")}
       >
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-slate-500">GPS, siège bébé, assurance ou options manuelles.</p>
+          <p className="text-sm text-slate-500">{t("reservationWizard.stepPricing.addonsHint")}</p>
           <Button
             type="button"
             variant="outline"
@@ -1100,13 +1145,13 @@ function StepPricing({
               }))
             }
           >
-            Ajouter
+            {t("reservationWizard.stepPricing.add")}
           </Button>
         </div>
         <div className="space-y-3">
           {draft.addons.length === 0 ? (
             <div className="rounded-[22px] border border-dashed border-border/70 bg-slate-50/70 p-5 text-center text-sm text-slate-500">
-              Aucun add-on ajouté pour le moment.
+              {t("reservationWizard.stepPricing.noAddons")}
             </div>
           ) : null}
           {draft.addons.map((addon, index) => (
@@ -1114,15 +1159,15 @@ function StepPricing({
               <div className="space-y-3 rounded-[22px] border border-border/70 bg-slate-50/80 p-4 md:hidden">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Add-on {index + 1}</p>
-                    <p className="mt-1 text-sm text-slate-600">Complétez le libellé, la quantité et le prix unitaire.</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t("reservationWizard.stepPricing.addonN", { n: index + 1 })}</p>
+                    <p className="mt-1 text-sm text-slate-600">{t("reservationWizard.stepPricing.addonHint")}</p>
                   </div>
                   <Button type="button" variant="ghost" className="rounded-xl px-3 text-slate-500" onClick={() => removeAddon(addon.id)}>
-                    Retirer
+                    {t("reservationWizard.stepPricing.remove")}
                   </Button>
                 </div>
                 <Input
-                  placeholder="Nom add-on"
+                  placeholder={t("reservationWizard.stepPricing.addonNamePh")}
                   className="min-h-11 rounded-2xl border-border/70 bg-white"
                   value={addon.name}
                   onChange={(event) => updateAddon(addon.id, { name: event.target.value })}
@@ -1147,7 +1192,7 @@ function StepPricing({
               <div className="hidden gap-2 md:grid md:grid-cols-12">
                 <Input
                   className="md:col-span-5"
-                  placeholder="Nom add-on"
+                  placeholder={t("reservationWizard.stepPricing.addonNamePh")}
                   value={addon.name}
                   onChange={(event) => updateAddon(addon.id, { name: event.target.value })}
                 />
@@ -1166,7 +1211,7 @@ function StepPricing({
                   onChange={(event) => updateAddon(addon.id, { price: Number(event.target.value) || 0 })}
                 />
                 <Button type="button" variant="ghost" className="md:col-span-2" onClick={() => removeAddon(addon.id)}>
-                  Retirer
+                  {t("reservationWizard.stepPricing.remove")}
                 </Button>
               </div>
             </div>
@@ -1176,12 +1221,12 @@ function StepPricing({
 
       <WizardSection
         icon={WalletCards}
-        eyebrow="Ajustements"
-        title="Remise et TVA"
+        eyebrow={t("reservationWizard.stepPricing.adjustmentsEyebrow")}
+        title={t("reservationWizard.stepPricing.discountVatTitle")}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Remise</Label>
+            <Label>{t("reservationWizard.stepPricing.discountLabel")}</Label>
             <Select
               value={draft.discountType}
               onValueChange={(value) => onChange((prev) => ({ ...prev, discountType: value as ReservationDraft["discountType"] }))}
@@ -1190,14 +1235,14 @@ function StepPricing({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Aucune</SelectItem>
-                <SelectItem value="fixed">Fixe (MAD)</SelectItem>
-                <SelectItem value="percent">Pourcentage (%)</SelectItem>
+                <SelectItem value="none">{t("reservationWizard.stepPricing.discountNone")}</SelectItem>
+                <SelectItem value="fixed">{t("reservationWizard.stepPricing.discountFixed")}</SelectItem>
+                <SelectItem value="percent">{t("reservationWizard.stepPricing.discountPercent")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Valeur remise</Label>
+            <Label>{t("reservationWizard.stepPricing.discountValueLabel")}</Label>
             <Input
               type="number"
               min={0}
@@ -1210,18 +1255,18 @@ function StepPricing({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>TVA</Label>
+            <Label>{t("reservationWizard.stepPricing.vatLabel")}</Label>
             <Button
               type="button"
               variant={draft.vatEnabled ? "default" : "outline"}
               className={cn("min-h-12 w-full rounded-2xl", draft.vatEnabled ? "bg-blue-600 hover:bg-blue-700" : "")}
               onClick={() => onChange((prev) => ({ ...prev, vatEnabled: !prev.vatEnabled }))}
             >
-              {draft.vatEnabled ? "Activée" : "Désactivée"}
+              {draft.vatEnabled ? t("reservationWizard.stepPricing.vatOn") : t("reservationWizard.stepPricing.vatOff")}
             </Button>
           </div>
           <div className="space-y-2">
-            <Label>Taux TVA (%)</Label>
+            <Label>{t("reservationWizard.stepPricing.vatRateLabel")}</Label>
             <Input
               type="number"
               min={0}
@@ -1235,30 +1280,30 @@ function StepPricing({
       </WizardSection>
 
       <div className="rounded-[24px] border border-blue-100 bg-[linear-gradient(180deg,rgba(239,245,255,1)_0%,rgba(255,255,255,1)_100%)] p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">Résumé calcul</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">{t("reservationWizard.stepPricing.calcSummary")}</p>
         <div className="mt-3 grid gap-2 text-sm text-blue-900">
           <div className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-2">
-            <span>Durée facturée</span>
-            <span className="font-semibold">{derived.durationDays} jour(s)</span>
+            <span>{t("reservationWizard.stepPricing.billedDuration")}</span>
+            <span className="font-semibold">{t("reservationWizard.stepPricing.daysCount", { n: derived.durationDays })}</span>
           </div>
           <div className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-2">
-            <span>Base</span>
+            <span>{t("reservationWizard.stepPricing.base")}</span>
             <span className="font-semibold">{formatCurrency(derived.baseTotal)}</span>
           </div>
           <div className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-2">
-            <span>Add-ons</span>
+            <span>{t("reservationWizard.stepPricing.addons")}</span>
             <span className="font-semibold">{formatCurrency(derived.addonsTotal)}</span>
           </div>
           <div className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-2">
-            <span>Remise</span>
+            <span>{t("reservationWizard.stepPricing.discount")}</span>
             <span className="font-semibold">-{formatCurrency(derived.discountTotal)}</span>
           </div>
           <div className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-2">
-            <span>TVA</span>
+            <span>{t("reservationWizard.stepPricing.vat")}</span>
             <span className="font-semibold">{formatCurrency(derived.vatTotal)}</span>
           </div>
           <div className="flex items-center justify-between rounded-2xl bg-blue-700 px-4 py-3 text-white">
-            <span className="font-medium">Total TTC</span>
+            <span className="font-medium">{t("reservationWizard.stepPricing.totalTtc")}</span>
             <span className="text-lg font-semibold">{formatCurrency(derived.totalTTC)}</span>
           </div>
         </div>
@@ -1272,27 +1317,29 @@ function StepPayment({
   derived,
   onChange,
   errors,
+  t,
 }: {
   draft: ReservationDraft;
   derived: { remaining: number; totalTTC: number };
   onChange: React.Dispatch<React.SetStateAction<ReservationDraft>>;
   errors: StepErrors;
+  t: (path: string, vars?: Record<string, string | number>) => string;
 }) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-2 md:hidden">
-        <WizardInsight label="Payé" value={formatCurrency(draft.paidAmount)} tone="slate" />
-        <WizardInsight label="Restant" value={formatCurrency(derived.remaining)} tone="blue" />
+        <WizardInsight label={t("reservationWizard.stepPayment.paidMobile")} value={formatCurrency(draft.paidAmount)} tone="slate" />
+        <WizardInsight label={t("reservationWizard.stepPayment.remainingMobile")} value={formatCurrency(derived.remaining)} tone="blue" />
       </div>
 
       <WizardSection
         icon={WalletCards}
-        eyebrow="Validation"
-        title="Finalisez l’encaissement"
+        eyebrow={t("reservationWizard.stepPayment.validationEyebrow")}
+        title={t("reservationWizard.stepPayment.finalizeTitle")}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Mode de paiement</Label>
+            <Label>{t("reservationWizard.stepPayment.paymentMethod")}</Label>
             <Select
               value={draft.paymentMethod}
               onValueChange={(value) => onChange((prev) => ({ ...prev, paymentMethod: value as BookingFormData["paymentType"] }))}
@@ -1301,16 +1348,16 @@ function StepPayment({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="CASH">Espèces</SelectItem>
-                <SelectItem value="CARD">Carte</SelectItem>
-                <SelectItem value="TRANSFER">Virement</SelectItem>
-                <SelectItem value="CMI">CMI</SelectItem>
-                <SelectItem value="OTHER">Autre</SelectItem>
+                <SelectItem value="CASH">{t("reservationWizard.paymentMethods.CASH")}</SelectItem>
+                <SelectItem value="CARD">{t("reservationWizard.paymentMethods.CARD")}</SelectItem>
+                <SelectItem value="TRANSFER">{t("reservationWizard.paymentMethods.TRANSFER")}</SelectItem>
+                <SelectItem value="CMI">{t("reservationWizard.paymentMethods.CMI")}</SelectItem>
+                <SelectItem value="OTHER">{t("reservationWizard.paymentMethods.OTHER")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Statut</Label>
+            <Label>{t("reservationWizard.stepPayment.statusLabel")}</Label>
             <Select
               value={draft.status}
               onValueChange={(value) => onChange((prev) => ({ ...prev, status: value as "CONFIRMED" | "DRAFT" }))}
@@ -1319,14 +1366,14 @@ function StepPayment({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="CONFIRMED">Confirmé</SelectItem>
-                <SelectItem value="DRAFT">En attente</SelectItem>
+                <SelectItem value="CONFIRMED">{t("reservationWizard.bookingStatusUi.CONFIRMED")}</SelectItem>
+                <SelectItem value="DRAFT">{t("reservationWizard.bookingStatusUi.DRAFT")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        <FieldError label="Montant payé (MAD)" error={errors.paidAmount}>
+        <FieldError label={t("reservationWizard.stepPayment.paidAmountLabel")} error={errors.paidAmount}>
           <Input
             type="number"
             min={0}
@@ -1338,11 +1385,11 @@ function StepPayment({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-[22px] border border-border/70 bg-slate-50/80 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Total TTC</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t("reservationWizard.stepPayment.totalTtcShort")}</p>
             <p className="mt-2 text-xl font-semibold text-slate-950">{formatCurrency(derived.totalTTC)}</p>
           </div>
           <div className="rounded-[22px] border border-blue-100 bg-[linear-gradient(180deg,rgba(239,245,255,1)_0%,rgba(255,255,255,1)_100%)] p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">Reste à encaisser</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">{t("reservationWizard.stepPayment.toCollect")}</p>
             <p className="mt-2 text-xl font-semibold text-blue-800">{formatCurrency(derived.remaining)}</p>
           </div>
         </div>
@@ -1350,24 +1397,24 @@ function StepPayment({
 
       <WizardSection
         icon={ShieldCheck}
-        eyebrow="Notes"
-        title="Ajoutez le contexte opérationnel"
+        eyebrow={t("reservationWizard.stepPayment.notesEyebrow")}
+        title={t("reservationWizard.stepPayment.notesTitle")}
       >
         <div className="space-y-2">
-          <Label>Notes</Label>
+          <Label>{t("reservationWizard.stepPayment.notesLabel")}</Label>
           <Textarea
             rows={4}
             className="rounded-2xl border-border/70"
             value={draft.notes}
             onChange={(event) => onChange((prev) => ({ ...prev, notes: event.target.value }))}
-            placeholder="Notes opérationnelles..."
+            placeholder={t("reservationWizard.stepPayment.notesPlaceholder")}
           />
         </div>
       </WizardSection>
 
       {draft.paidAmount > derived.totalTTC ? (
         <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-          Le montant payé dépasse le total TTC.
+          {t("reservationWizard.stepPayment.paidExceedsTotal")}
         </p>
       ) : null}
     </div>
@@ -1474,32 +1521,33 @@ function validateStep(
   step: 1 | 2 | 3 | 4,
   draft: ReservationDraft,
   context: { vehicleConflictByStatus: boolean; vehicleOverlapConflict: boolean },
+  t: (path: string, vars?: Record<string, string | number>) => string,
 ): { ok: boolean; errors: StepErrors } {
   const errors: StepErrors = {};
 
   if (step === 1) {
-    if (!draft.startAt) errors.startAt = "Date de départ requise";
-    if (!draft.endAt) errors.endAt = "Date de retour requise";
+    if (!draft.startAt) errors.startAt = t("reservationWizard.validate.startRequired");
+    if (!draft.endAt) errors.endAt = t("reservationWizard.validate.endRequired");
     if (draft.startAt && draft.endAt && new Date(draft.endAt) <= new Date(draft.startAt)) {
-      errors.endAt = "La date de retour doit être après le départ";
+      errors.endAt = t("reservationWizard.validate.endAfterStart");
     }
-    if (!draft.vehicleId) errors.vehicleId = "Véhicule requis";
+    if (!draft.vehicleId) errors.vehicleId = t("reservationWizard.validate.vehicleRequired");
     if (context.vehicleConflictByStatus || context.vehicleOverlapConflict) {
-      errors.vehicleId = "Véhicule indisponible";
+      errors.vehicleId = t("reservationWizard.validate.vehicleUnavailable");
     }
   }
 
   if (step === 2) {
-    if (!draft.clientId) errors.clientId = "Client requis";
+    if (!draft.clientId) errors.clientId = t("reservationWizard.validate.clientRequired");
   }
 
   if (step === 3) {
-    if (!(Number(draft.pricePerDay) > 0)) errors.pricePerDay = "Prix/jour requis";
-    if (!(Number(draft.deposit) >= 0)) errors.deposit = "Caution invalide";
+    if (!(Number(draft.pricePerDay) > 0)) errors.pricePerDay = t("reservationWizard.validate.pricePerDayRequired");
+    if (!(Number(draft.deposit) >= 0)) errors.deposit = t("reservationWizard.validate.depositInvalid");
   }
 
   if (step === 4) {
-    if (Number(draft.paidAmount) < 0) errors.paidAmount = "Montant payé invalide";
+    if (Number(draft.paidAmount) < 0) errors.paidAmount = t("reservationWizard.validate.paidAmountInvalid");
   }
 
   return { ok: Object.keys(errors).length === 0, errors };

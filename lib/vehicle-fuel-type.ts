@@ -1,10 +1,74 @@
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
-import type { VehicleStatus } from "@prisma/client";
+import type { Prisma, VehicleStatus } from "@prisma/client";
 
 export type VehicleFuelType = "DIESEL" | "ESSENCE" | "HYBRID" | "ELECTRIC";
 type RawExecutor = Pick<typeof prisma, "$executeRaw" | "$executeRawUnsafe">;
+type VehicleCompatSelect = { id?: true; plate?: true };
+type VehicleCompatCreateData = Omit<Prisma.VehicleUncheckedCreateInput, "fuelType">;
+type VehicleCompatUpdateData = Omit<Prisma.VehicleUncheckedUpdateInput, "fuelType">;
+type VehicleWriteValue = string | number | boolean | Date | null | number[];
+
+function isPlainObject(value: unknown) {
+  return value !== null && typeof value === "object" && !Array.isArray(value) && !(value instanceof Date);
+}
 
 let cachedHasFuelTypeColumn: boolean | null = null;
+
+function vehicleColumnCast(column: string) {
+  switch (column) {
+    case "status":
+      return '::"VehicleStatus"';
+    case "gearbox":
+      return '::"Gearbox"';
+    case "insuranceReminderDays":
+    case "technicalInspectionReminderDays":
+    case "vignetteReminderDays":
+      return "::int[]";
+    default:
+      return "";
+  }
+}
+
+function buildReturningClause(select?: VehicleCompatSelect) {
+  const columns = Object.entries(select ?? { id: true })
+    .filter(([, enabled]) => enabled)
+    .map(([column]) => `"${column}"`);
+
+  return columns.length > 0 ? columns : ['"id"'];
+}
+
+function normalizeVehicleUpdateData(data: VehicleCompatUpdateData) {
+  const normalizedEntries = Object.entries(data).filter(([, value]) => {
+    if (value === undefined) {
+      return false;
+    }
+
+    if (value === null || value instanceof Date || Array.isArray(value)) {
+      return true;
+    }
+
+    return !isPlainObject(value);
+  });
+
+  return Object.fromEntries(normalizedEntries) as Record<string, VehicleWriteValue>;
+}
+
+function normalizeVehicleCreateData(data: VehicleCompatCreateData) {
+  const normalizedEntries = Object.entries(data).filter(([, value]) => {
+    if (value === undefined) {
+      return false;
+    }
+
+    if (value === null || value instanceof Date || Array.isArray(value)) {
+      return true;
+    }
+
+    return !isPlainObject(value);
+  });
+
+  return Object.fromEntries(normalizedEntries) as Record<string, VehicleWriteValue>;
+}
 
 export async function hasVehicleFuelTypeColumn() {
   if (cachedHasFuelTypeColumn != null) return cachedHasFuelTypeColumn;
@@ -48,6 +112,83 @@ export async function persistVehicleFuelType(vehicleId: string, fuelType: Vehicl
     SET "fuelType" = CAST(${fuelType} AS "FuelType")
     WHERE id = ${vehicleId}
   `;
+}
+
+export async function createVehicleCompat<T extends Record<string, unknown>>(
+  data: VehicleCompatCreateData,
+  select?: VehicleCompatSelect,
+) {
+  if (await hasVehicleFuelTypeColumn()) {
+    return prisma.vehicle.create({
+      data,
+      select: select ?? { id: true },
+    }) as unknown as Promise<T>;
+  }
+
+  const now = new Date();
+  const createData = {
+    ...normalizeVehicleCreateData(data),
+    id: data.id ?? randomUUID(),
+    createdAt: now,
+    updatedAt: now,
+  } satisfies Record<string, VehicleWriteValue>;
+
+  const columns = Object.keys(createData);
+  const values = Object.values(createData);
+  const placeholders = columns.map((column, index) => `$${index + 1}${vehicleColumnCast(column)}`);
+  const returningClause = buildReturningClause(select).join(", ");
+  const query = `
+    INSERT INTO "vehicles" (${columns.map((column) => `"${column}"`).join(", ")})
+    VALUES (${placeholders.join(", ")})
+    RETURNING ${returningClause}
+  `;
+
+  const rows = await prisma.$queryRawUnsafe<Array<T>>(query, ...values);
+  return rows[0];
+}
+
+export async function updateVehicleCompat<T extends Record<string, unknown>>(
+  vehicleId: string,
+  data: VehicleCompatUpdateData,
+  select?: VehicleCompatSelect,
+) {
+  if (await hasVehicleFuelTypeColumn()) {
+    return prisma.vehicle.update({
+      where: { id: vehicleId },
+      data,
+      select: select ?? { id: true },
+    }) as unknown as Promise<T>;
+  }
+
+  const updateData = {
+    ...normalizeVehicleUpdateData(data),
+    updatedAt: new Date(),
+  };
+  const columns = Object.keys(updateData);
+  const values = Object.values(updateData);
+
+  if (columns.length === 0) {
+    const returningClause = buildReturningClause(select).join(", ");
+    const rows = await prisma.$queryRawUnsafe<Array<T>>(
+      `SELECT ${returningClause} FROM "vehicles" WHERE "id" = $1 LIMIT 1`,
+      vehicleId,
+    );
+    return rows[0];
+  }
+
+  const assignments = columns.map(
+    (column, index) => `"${column}" = $${index + 1}${vehicleColumnCast(column)}`,
+  );
+  const returningClause = buildReturningClause(select).join(", ");
+  const query = `
+    UPDATE "vehicles"
+    SET ${assignments.join(", ")}
+    WHERE "id" = $${columns.length + 1}
+    RETURNING ${returningClause}
+  `;
+
+  const rows = await prisma.$queryRawUnsafe<Array<T>>(query, ...values, vehicleId);
+  return rows[0];
 }
 
 export async function updateVehicleStatusCompat(

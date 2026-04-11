@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 interface VehicleActionsMenuProps {
   vehicleId: string;
@@ -44,6 +45,7 @@ export function VehicleActionsMenu({
   onSetMaintenance,
   onDelete,
 }: VehicleActionsMenuProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [isToggling, setIsToggling] = useState(false);
   const [isSettingMaintenance, setIsSettingMaintenance] = useState(false);
@@ -106,7 +108,7 @@ export function VehicleActionsMenu({
       setConfirmDeleteOpen(false);
       onDelete?.(vehicleId);
       startTransition(() => {
-        router.push("/vehicles");
+        router.push(lp("/vehicles"));
         router.refresh();
       });
     } catch (error) {

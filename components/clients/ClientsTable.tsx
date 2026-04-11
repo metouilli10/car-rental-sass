@@ -8,6 +8,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CustomerRowActions } from "@/components/customers/customer-row-actions";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 interface ClientsTableProps {
   rows: ClientListItem[];
@@ -24,6 +25,7 @@ export function ClientsTable({
   selectedId,
   onSelect,
 }: ClientsTableProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
 
   if (rows.length === 0) {
@@ -35,7 +37,7 @@ export function ClientsTable({
         </p>
         {canManageCustomers ? (
           <Button asChild className="mt-4">
-            <Link href="/customers/add">
+            <Link href={lp("/customers/add")}>
               <UserPlus className="h-4 w-4" />
               Ajouter un client
             </Link>
@@ -96,7 +98,7 @@ export function ClientsTable({
                       </div>
                       <div className="min-w-0 flex-1">
                         <Link
-                          href={`/clients/${customer.id}`}
+                          href={lp(`/clients/${customer.id}`)}
                           className="block truncate text-sm font-semibold text-slate-900 hover:text-primary hover:underline"
                           onClick={(e) => e.stopPropagation()}
                         >

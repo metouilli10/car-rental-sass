@@ -4,15 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { VehicleInspectionHistoryItem } from "@/lib/vehicles/profile";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 
 export function VehicleInspectionHistory({
   inspections,
   createInspectionHref,
   createInspectionDisabledReason,
+  locale = "fr",
 }: {
   inspections: VehicleInspectionHistoryItem[];
   createInspectionHref?: string;
   createInspectionDisabledReason?: string | null;
+  locale?: AppLocale;
 }) {
   return (
     <Card className="rounded-2xl border-slate-200/80 shadow-sm">
@@ -45,7 +49,7 @@ export function VehicleInspectionHistory({
               {inspections.map((inspection) => (
                 <Link
                   key={inspection.id}
-                  href={`/damage-reports/${inspection.id}`}
+                  href={withLocalePath(locale, `/damage-reports/${inspection.id}`)}
                   className="block rounded-2xl border border-slate-200/70 bg-white px-4 py-3"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -91,7 +95,7 @@ export function VehicleInspectionHistory({
                       <td className="py-4 pr-4 text-sm text-slate-600">{inspection.photosCount}</td>
                       <td className="py-4 text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/damage-reports/${inspection.id}`}>
+                          <Link href={withLocalePath(locale, `/damage-reports/${inspection.id}`)}>
                             <ClipboardCheck className="h-4 w-4" />
                             Voir
                           </Link>

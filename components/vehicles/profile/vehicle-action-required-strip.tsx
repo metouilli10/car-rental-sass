@@ -1,15 +1,19 @@
 import Link from "next/link";
 import { AlertTriangle, Clock3 } from "lucide-react";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 import type { VehicleWorkspaceData } from "@/lib/vehicles/profile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface VehicleActionRequiredStripProps {
   workspace: VehicleWorkspaceData;
+  locale?: AppLocale;
 }
 
 export function VehicleActionRequiredStrip({
   workspace,
+  locale = "fr",
 }: VehicleActionRequiredStripProps) {
   if (!workspace.actionStrip) {
     return null;
@@ -56,14 +60,14 @@ export function VehicleActionRequiredStrip({
 
         <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end lg:self-center">
           <Button asChild>
-            <Link href={workspace.actionStrip.primaryAction.href}>
+            <Link href={withLocalePath(locale, workspace.actionStrip.primaryAction.href)}>
               {workspace.actionStrip.primaryAction.label}
             </Link>
           </Button>
 
           {workspace.actionStrip.secondaryAction ? (
             <Button variant="ghost" asChild>
-              <Link href={workspace.actionStrip.secondaryAction.href}>
+              <Link href={withLocalePath(locale, workspace.actionStrip.secondaryAction.href)}>
                 {workspace.actionStrip.secondaryAction.label}
               </Link>
             </Button>

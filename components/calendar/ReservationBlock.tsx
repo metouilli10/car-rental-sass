@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import type { CalendarBooking, CalendarVehicle } from "@/lib/actions/calendar";
 import { cancelBooking, completeBooking } from "@/lib/actions/bookings";
 import { getEffectiveStatus, statusStyles } from "./EventBlock";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 interface ReservationBlockProps {
   booking: CalendarBooking;
@@ -44,6 +45,7 @@ export function ReservationBlock({
   onDragPointerDown,
   onResizePointerDown,
 }: ReservationBlockProps) {
+  const lp = useLocalizedPath();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const effectiveStatus = getEffectiveStatus(booking);
@@ -189,10 +191,10 @@ export function ReservationBlock({
 
           <div className="space-y-2 border-t border-border pt-2">
             <Button asChild variant="ghost" size="sm" className="w-full justify-start">
-              <Link href={`/bookings/${booking.id}`}>Voir</Link>
+              <Link href={lp(`/bookings/${booking.id}`)}>Voir</Link>
             </Button>
             <Button asChild variant="ghost" size="sm" className="w-full justify-start">
-              <Link href={`/bookings/${booking.id}/edit`}>Modifier</Link>
+              <Link href={lp(`/bookings/${booking.id}/edit`)}>Modifier</Link>
             </Button>
             <Button
               variant="ghost"

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ArrowUpRight, ClipboardCheck, FileText, ShieldCheck, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import type { VehicleComplianceItem, VehicleProfileData } from "@/lib/vehicles/profile";
 import {
@@ -19,12 +21,14 @@ interface VehicleOverviewTabProps {
   data: VehicleProfileData;
   currentOrNextBookingId: string | null;
   inspectionLabel: string | null;
+  locale?: AppLocale;
 }
 
 export function VehicleOverviewTab({
   data,
   currentOrNextBookingId,
   inspectionLabel,
+  locale = "fr",
 }: VehicleOverviewTabProps) {
   const bookingFocus = data.currentReservation ?? data.workspace.nextBooking;
 
@@ -90,7 +94,7 @@ export function VehicleOverviewTab({
           <CardHeader className="flex flex-row items-center justify-between gap-3 pb-4">
             <CardTitle className="text-base">Réservation en cours / prochaine</CardTitle>
             <Button variant="secondary" size="sm" asChild>
-              <Link href={`/bookings/create?vehicleId=${data.vehicle.id}`}>
+              <Link href={withLocalePath(locale, `/bookings/create?vehicleId=${data.vehicle.id}`)}>
                 Nouvelle réservation
               </Link>
             </Button>
@@ -116,7 +120,7 @@ export function VehicleOverviewTab({
 
                 <div className="flex items-start justify-end">
                   <Button variant="outline" asChild>
-                    <Link href={`/bookings/${bookingFocus.id}`}>
+                    <Link href={withLocalePath(locale, `/bookings/${bookingFocus.id}`)}>
                       Ouvrir
                       <ArrowUpRight className="h-4 w-4" />
                     </Link>
@@ -128,7 +132,7 @@ export function VehicleOverviewTab({
                 title="Aucune réservation à venir"
                 description="Le véhicule n’a aucune réservation active ou planifiée."
                 ctaLabel="Créer une réservation"
-                href={`/bookings/create?vehicleId=${data.vehicle.id}`}
+                href={withLocalePath(locale, `/bookings/create?vehicleId=${data.vehicle.id}`)}
               />
             )}
           </CardContent>
@@ -150,7 +154,7 @@ export function VehicleOverviewTab({
                   </p>
                 </div>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={`/damage-reports/${data.workspace.lastInspection.id}`}>
+                  <Link href={withLocalePath(locale, `/damage-reports/${data.workspace.lastInspection.id}`)}>
                     Ouvrir
                   </Link>
                 </Button>
@@ -162,7 +166,7 @@ export function VehicleOverviewTab({
                 ctaLabel="Lancer une inspection"
                 href={
                   currentOrNextBookingId
-                    ? `/damage-reports/new?bookingId=${currentOrNextBookingId}`
+                    ? withLocalePath(locale, `/damage-reports/new?bookingId=${currentOrNextBookingId}`)
                     : undefined
                 }
                 disabledReason={inspectionLabel ?? "Une réservation active ou à venir est nécessaire."}
@@ -184,7 +188,7 @@ export function VehicleOverviewTab({
                         <p className="mt-1 text-sm text-slate-500">{item.description}</p>
                         {item.href ? (
                           <Link
-                            href={item.href}
+                            href={withLocalePath(locale, item.href)}
                             className="mt-1 inline-flex text-xs font-medium text-blue-600 hover:text-blue-700"
                           >
                             Ouvrir
@@ -204,12 +208,14 @@ export function VehicleOverviewTab({
           overdue={data.reminders.overdue}
           open={data.reminders.open}
           done={data.reminders.done}
+          locale={locale}
         />
 
         <VehicleInfractionsPanel
           vehicleId={data.vehicle.id}
           infractions={data.infractions}
           compact
+          locale={locale}
         />
       </div>
 
@@ -284,7 +290,7 @@ export function VehicleOverviewTab({
                       {item.statusLabel}
                     </span>
                     <Button variant="secondary" size="sm" asChild>
-                      <Link href={`/vehicles/${data.vehicle.id}?tab=documents`}>
+                      <Link href={withLocalePath(locale, `/vehicles/${data.vehicle.id}?tab=documents`)}>
                         {item.fileUrl ? "Remplacer" : "Ajouter"}
                       </Link>
                     </Button>

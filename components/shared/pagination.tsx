@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/components/i18n/i18n-context";
+import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
 interface PaginationProps {
   currentPage: number;
@@ -11,7 +15,12 @@ interface PaginationProps {
 }
 
 export function Pagination({ currentPage, totalPages, baseUrl, searchParams = {} }: PaginationProps) {
+  const { t } = useI18n();
+  const lp = useLocalizedPath();
   if (totalPages <= 1) return null;
+
+  const pathBase = baseUrl.startsWith("/") ? baseUrl : `/${baseUrl}`;
+  const localizedBase = lp(pathBase);
 
   const buildHref = (page: number) => {
     const params = new URLSearchParams();
@@ -19,7 +28,7 @@ export function Pagination({ currentPage, totalPages, baseUrl, searchParams = {}
       if (value) params.set(key, value);
     }
     params.set("page", String(page));
-    return `${baseUrl}?${params.toString()}`;
+    return `${localizedBase}?${params.toString()}`;
   };
 
   // Show at most 5 page numbers centered around current page
@@ -33,7 +42,7 @@ export function Pagination({ currentPage, totalPages, baseUrl, searchParams = {}
   return (
     <div className="flex items-center justify-between px-6 py-4">
       <div className="text-sm text-muted-foreground">
-        Page {currentPage} sur {totalPages}
+        {t("pagination.pageOf", { current: currentPage, total: totalPages })}
       </div>
       <div className="flex items-center gap-1">
         <Button

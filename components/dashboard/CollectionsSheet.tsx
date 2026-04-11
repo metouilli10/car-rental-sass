@@ -12,7 +12,9 @@ import {
   ActionCenterSheetLoading,
 } from "@/components/dashboard/ActionCenterSheet";
 import { EncaisserDialog } from "@/components/dashboard/EncaisserDialog";
+import { useI18n } from "@/components/i18n/i18n-context";
 import { getCollectionsForSheet } from "@/lib/actions/dashboard";
+import { withLocalePath } from "@/lib/i18n/config";
 import { formatCurrency } from "@/lib/utils";
 import type {
   DashboardV3CollectionSheetItem,
@@ -37,6 +39,7 @@ export function CollectionsSheet({
   initialOverdueCount,
   initialTotalAmount,
 }: CollectionsSheetProps) {
+  const { t, locale } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DashboardV3CollectionsSheetDTO | null>(null);
@@ -49,16 +52,19 @@ export function CollectionsSheet({
     setIsLoading(true);
     setError(null);
 
-    getCollectionsForSheet({
-      period: period.key,
-      start: period.start,
-      end: period.end,
-    })
+    getCollectionsForSheet(
+      {
+        period: period.key,
+        start: period.start,
+        end: period.end,
+      },
+      locale
+    )
       .then((result) => {
         if (!isCancelled) setData(result);
       })
       .catch(() => {
-        if (!isCancelled) setError("Impossible de charger les encaissements.");
+        if (!isCancelled) setError(t("dashboard.sheets.collections.loadError"));
       })
       .finally(() => {
         if (!isCancelled) setIsLoading(false);
@@ -67,7 +73,7 @@ export function CollectionsSheet({
     return () => {
       isCancelled = true;
     };
-  }, [open, period.end, period.key, period.start]);
+  }, [open, period.end, period.key, period.start, locale, t]);
 
   const summary = useMemo(() => {
     if (data) {
@@ -104,13 +110,16 @@ export function CollectionsSheet({
       <ActionCenterSheet
         open={open}
         onOpenChange={onOpenChange}
-        title="A encaisser"
-        description={`${summary.count} dossiers pour ${formatCurrency(summary.totalAmount)}`}
+        title={t("dashboard.sheets.collections.title")}
+        description={t("dashboard.sheets.collections.description", {
+          count: summary.count,
+          amount: formatCurrency(summary.totalAmount),
+        })}
         tone="green"
         summaryRows={[
-          { label: "Dossiers", value: summary.count },
-          { label: "En retard", value: summary.overdueCount },
-          { label: "Montant total", value: formatCurrency(summary.totalAmount) },
+          { label: t("dashboard.sheets.collections.summaryFiles"), value: summary.count },
+          { label: t("dashboard.sheets.collections.summaryOverdue"), value: summary.overdueCount },
+          { label: t("dashboard.sheets.collections.summaryTotal"), value: formatCurrency(summary.totalAmount) },
         ]}
       >
         {isLoading ? (
@@ -119,8 +128,8 @@ export function CollectionsSheet({
           <ActionCenterSheetError message={error} />
         ) : data && data.items.length === 0 ? (
           <ActionCenterSheetEmpty
-            title="Aucun encaissement en attente"
-            description="Tout est a jour pour le moment."
+            title={t("dashboard.sheets.collections.emptyTitle")}
+            description={t("dashboard.sheets.common.allGoodDescription")}
           />
         ) : (
           data?.items.map((item) => (
@@ -132,7 +141,9 @@ export function CollectionsSheet({
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-medium text-foreground">{item.customerName}</p>
-                    {item.isOverdue ? <Badge variant="destructive">En retard</Badge> : null}
+                    {item.isOverdue ? (
+                      <Badge variant="destructive">{t("dashboard.sheets.collections.overdueBadge")}</Badge>
+                    ) : null}
                   </div>
                   <p className="truncate text-xs text-muted-foreground">
                     {item.vehicleLabel} - {item.plate}
@@ -155,7 +166,7 @@ export function CollectionsSheet({
                       onClick={() => setSelectedItem(item)}
                       className="w-full sm:w-auto"
                     >
-                      Encaisser
+                      {t("dashboard.sheets.collections.collect")}
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                     <Button
@@ -164,7 +175,9 @@ export function CollectionsSheet({
                       variant="ghost"
                       className="w-full text-slate-700 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900 sm:w-auto"
                     >
-                      <Link href={item.primaryHref}>Voir dossier</Link>
+                      <Link href={withLocalePath(locale, item.primaryHref)}>
+                        {t("dashboard.sheets.collections.viewBooking")}
+                      </Link>
                     </Button>
                   </div>
                 </div>

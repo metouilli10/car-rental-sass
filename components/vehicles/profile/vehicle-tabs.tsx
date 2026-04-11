@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { VehicleProfileTab } from "@/lib/vehicles/profile";
+import type { AppLocale } from "@/lib/i18n/config";
+import { withLocalePath } from "@/lib/i18n/config";
 
 interface VehicleTabsProps {
   vehicleId: string;
   currentTab: VehicleProfileTab;
+  locale?: AppLocale;
 }
 
 const tabs: Array<{ value: VehicleProfileTab; label: string }> = [
@@ -14,7 +17,7 @@ const tabs: Array<{ value: VehicleProfileTab; label: string }> = [
   { value: "documents", label: "Documents" },
 ];
 
-export function VehicleTabs({ vehicleId, currentTab }: VehicleTabsProps) {
+export function VehicleTabs({ vehicleId, currentTab, locale = "fr" }: VehicleTabsProps) {
   return (
     <div className="overflow-x-auto">
       <div className="flex min-w-max gap-1">
@@ -22,7 +25,7 @@ export function VehicleTabs({ vehicleId, currentTab }: VehicleTabsProps) {
           {tabs.map((tab) => (
             <Link
               key={tab.value}
-              href={`/vehicles/${vehicleId}?tab=${tab.value}`}
+              href={withLocalePath(locale, `/vehicles/${vehicleId}?tab=${tab.value}`)}
               className={cn(
                 "inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition-colors",
                 currentTab === tab.value
