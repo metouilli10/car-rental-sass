@@ -3,11 +3,10 @@
 import { addDays } from "date-fns";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-import type { NotificationType } from "@prisma/client";
+import type { ReminderType } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { getPublicAppUrl } from "@/lib/auth-utils";
 import { sendNotificationReminderEmail } from "@/lib/mail";
-import { buildVehicleNotificationDedupeKey } from "@/lib/notifications/store";
 import { prisma } from "@/lib/prisma";
 
 const TEST_NOTIFICATION_TYPES = [
@@ -15,7 +14,7 @@ const TEST_NOTIFICATION_TYPES = [
   "INSURANCE_EXPIRY",
   "TECH_INSPECTION",
   "VIGNETTE",
-] as const satisfies readonly Exclude<NotificationType, "RESERVATION_STARTING_SOON">[];
+] as const satisfies readonly ReminderType[];
 
 type NotificationTestResult =
   | {
@@ -187,11 +186,9 @@ async function ensureTestableNotification(agencyId: string) {
       agencyId,
       vehicleId: vehicle.id,
       type: availableType,
-      dedupeKey: buildVehicleNotificationDedupeKey(vehicle.id, availableType),
       title: "Email de test Locaryx",
       body: `Ceci est un email de test pour ${vehicle.make} ${vehicle.model} (${vehicle.plate}).`,
       severity: "INFO",
-      actionUrl: `/vehicles/${vehicle.id}`,
       dueAt: addDays(new Date(), 1),
       status: "OPEN",
     },

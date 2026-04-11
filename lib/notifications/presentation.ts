@@ -1,7 +1,7 @@
 import type {
   NotificationSeverity,
   NotificationStatus,
-  NotificationType,
+  ReminderType,
 } from "@prisma/client";
 import type { AppLocale } from "@/lib/i18n/config";
 
@@ -15,7 +15,7 @@ type DateLike = Date | string;
 
 export type NotificationPresentationInput = {
   locale: AppLocale;
-  type: NotificationType;
+  type: ReminderType;
   severity: NotificationSeverity;
   status: NotificationStatus;
   title: string;
@@ -27,7 +27,7 @@ export type NotificationPresentationInput = {
   vehicle: NotificationVehicle;
 };
 
-const REMINDER_TYPES: NotificationType[] = [
+const REMINDER_TYPES: ReminderType[] = [
   "OIL_CHANGE",
   "INSURANCE_EXPIRY",
   "TECH_INSPECTION",
@@ -42,7 +42,7 @@ function localeTag(locale: AppLocale) {
   return isArabic(locale) ? "ar-MA" : "fr-FR";
 }
 
-function isReminderType(type: NotificationType) {
+function isReminderType(type: ReminderType) {
   return REMINDER_TYPES.includes(type);
 }
 
@@ -65,7 +65,7 @@ export function formatNotificationKm(locale: AppLocale, value: number) {
 
 export function getNotificationTypeLabel(
   locale: AppLocale,
-  type: NotificationType
+  type: ReminderType
 ) {
   if (isArabic(locale)) {
     if (type === "OIL_CHANGE") return "تغيير الزيت";
@@ -166,11 +166,8 @@ export function getNotificationStatusContextLabel(
 
 export function getNotificationPrimaryActionLabel(
   locale: AppLocale,
-  type: NotificationType
+  type: ReminderType
 ) {
-  if (type === "RESERVATION_STARTING_SOON") {
-    return isArabic(locale) ? "عرض الحجز" : "Voir la reservation";
-  }
   return isArabic(locale) ? "عرض المركبة" : "Voir le vehicule";
 }
 

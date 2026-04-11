@@ -15,7 +15,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type {
-  NotificationType,
+  ReminderType,
   NotificationSeverity,
   NotificationStatus,
 } from "@prisma/client";
@@ -35,20 +35,18 @@ import { cn } from "@/lib/utils";
 import { NotificationActions } from "./notification-actions-client";
 import { NotificationFiltersClient } from "./notification-filters-client";
 
-const TYPE_ICONS: Record<NotificationType, ElementType> = {
+const TYPE_ICONS: Record<ReminderType, ElementType> = {
   OIL_CHANGE: Wrench,
   INSURANCE_EXPIRY: Shield,
   TECH_INSPECTION: ClipboardCheck,
   VIGNETTE: Sticker,
-  RESERVATION_STARTING_SOON: Clock3,
 };
 
-const TYPE_TONES: Record<NotificationType, string> = {
+const TYPE_TONES: Record<ReminderType, string> = {
   OIL_CHANGE: "bg-amber-50 text-amber-700",
   INSURANCE_EXPIRY: "bg-blue-50 text-blue-700",
   TECH_INSPECTION: "bg-sky-50 text-sky-700",
   VIGNETTE: "bg-emerald-50 text-emerald-700",
-  RESERVATION_STARTING_SOON: "bg-violet-50 text-violet-700",
 };
 
 const SEVERITY_CONFIG: Record<
@@ -191,7 +189,7 @@ type PageSearchParams = Promise<{
 
 type PageStatusFilter = "ALL" | NotificationStatus;
 type PageSeverityFilter = "ALL" | NotificationSeverity;
-type PageTypeFilter = "ALL" | NotificationType;
+type PageTypeFilter = "ALL" | ReminderType;
 
 type PageParams = Promise<{
   locale: string;
@@ -240,8 +238,7 @@ function parseType(value?: string): PageTypeFilter {
   return value === "OIL_CHANGE" ||
     value === "INSURANCE_EXPIRY" ||
     value === "TECH_INSPECTION" ||
-    value === "VIGNETTE" ||
-    value === "RESERVATION_STARTING_SOON"
+    value === "VIGNETTE"
     ? value
     : "ALL";
 }
@@ -539,7 +536,7 @@ function StatusBadge({
   );
 }
 
-function TypeBadge({ locale, type }: { locale: AppLocale; type: NotificationType }) {
+function TypeBadge({ locale, type }: { locale: AppLocale; type: ReminderType }) {
   return (
     <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-500">
       {getNotificationTypeLabel(locale, type)}

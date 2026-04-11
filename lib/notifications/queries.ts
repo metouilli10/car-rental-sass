@@ -2,14 +2,14 @@ import { unstable_cache } from "next/cache";
 import type {
   NotificationSeverity,
   NotificationStatus,
-  NotificationType,
+  ReminderType,
   Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type NotificationSummaryItem = {
   id: string;
-  type: NotificationType;
+  type: ReminderType;
   title: string;
   body: string;
   severity: NotificationSeverity;
