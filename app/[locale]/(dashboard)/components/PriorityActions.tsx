@@ -149,7 +149,15 @@ export async function PriorityActions({ agencyId, period }: PriorityActionsProps
       dueLabel: `Retenue depuis le ${formatDate(deposit.heldAt)}`,
       stripeColor: "bg-blue-500",
     })),
-    ...reminderNotifications.map((notif) => ({
+    ...reminderNotifications
+      .filter(
+        (
+          notif,
+        ): notif is typeof notif & {
+          vehicle: NonNullable<typeof notif.vehicle>;
+        } => notif.vehicle !== null,
+      )
+      .map((notif) => ({
       id: `rappel-${notif.id}`,
       type: "rappel" as const,
       clientName: REMINDER_LABELS[notif.type] ?? notif.title,

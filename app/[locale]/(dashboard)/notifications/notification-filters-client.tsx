@@ -22,7 +22,8 @@ type NotificationTypeFilter =
   | "OIL_CHANGE"
   | "INSURANCE_EXPIRY"
   | "TECH_INSPECTION"
-  | "VIGNETTE";
+  | "VIGNETTE"
+  | "RESERVATION_STARTING_SOON";
 
 interface NotificationFiltersClientProps {
   locale: AppLocale;
@@ -63,6 +64,7 @@ export function NotificationFiltersClient({
           typeInsurance: "التأمين",
           typeInspection: "الفحص التقني",
           typeVignette: "الضريبة",
+          typeReservation: "انطلاق الحجز",
           reset: "إعادة التعيين",
         }
       : {
@@ -85,6 +87,7 @@ export function NotificationFiltersClient({
           typeInsurance: "Assurance",
           typeInspection: "Visite technique",
           typeVignette: "Vignette",
+          typeReservation: "Depart de reservation",
           reset: "Reinitialiser",
         };
 
@@ -226,6 +229,7 @@ export function NotificationFiltersClient({
               <SelectItem value="INSURANCE_EXPIRY">{copy.typeInsurance}</SelectItem>
               <SelectItem value="TECH_INSPECTION">{copy.typeInspection}</SelectItem>
               <SelectItem value="VIGNETTE">{copy.typeVignette}</SelectItem>
+              <SelectItem value="RESERVATION_STARTING_SOON">{copy.typeReservation}</SelectItem>
             </SelectContent>
           </Select>
 

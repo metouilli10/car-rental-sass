@@ -17,6 +17,7 @@ import {
   Shield,
   ClipboardCheck,
   Sticker,
+  Clock3,
   Rocket,
   Building2,
 } from "lucide-react";
@@ -25,7 +26,7 @@ import type { EffectivePermissions } from "@/lib/permissions";
 import type {
   NotificationSeverity,
   NotificationStatus,
-  ReminderType,
+  NotificationType,
 } from "@prisma/client";
 import {
   DropdownMenu,
@@ -48,7 +49,7 @@ const SearchOverlay = dynamic(
 
 interface NotifItem {
   id: string;
-  type: ReminderType;
+  type: NotificationType;
   title: string;
   body: string;
   severity: NotificationSeverity;
@@ -71,11 +72,12 @@ interface TopNavBarProps {
   topNotifs?: NotifItem[];
 }
 
-const TYPE_ICONS: Record<ReminderType, React.ElementType> = {
+const TYPE_ICONS: Record<NotificationType, React.ElementType> = {
   OIL_CHANGE: Wrench,
   INSURANCE_EXPIRY: Shield,
   TECH_INSPECTION: ClipboardCheck,
   VIGNETTE: Sticker,
+  RESERVATION_STARTING_SOON: Clock3,
 };
 
 const SEVERITY_COLORS: Record<

@@ -2,14 +2,14 @@ import { unstable_cache } from "next/cache";
 import type {
   NotificationSeverity,
   NotificationStatus,
+  NotificationType,
   Prisma,
-  ReminderType,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type NotificationSummaryItem = {
   id: string;
-  type: ReminderType;
+  type: NotificationType;
   title: string;
   body: string;
   severity: NotificationSeverity;
@@ -31,7 +31,6 @@ const NOTIFICATIONS_SUMMARY_CACHE_SECONDS = 60;
 function buildSummaryWhere(agencyId: string): Prisma.NotificationWhereInput {
   return {
     agencyId,
-    vehicleId: { not: null },
     status: "OPEN",
     severity: { in: ["WARNING", "DUE"] },
   };

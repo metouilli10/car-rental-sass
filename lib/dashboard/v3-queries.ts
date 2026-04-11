@@ -529,7 +529,7 @@ async function getDashboardLiveDataUncached(agencyId: string): Promise<Dashboard
     liveBookings,
     deposits,
     vehicles,
-    notifications,
+    rawNotifications,
     agency,
     historicalReservation,
     historicalPaidPayment,
@@ -655,7 +655,15 @@ async function getDashboardLiveDataUncached(agencyId: string): Promise<Dashboard
       select: { id: true },
     }),
   ]);
-  logPerf("live-query-batch", liveQueriesStartedAt, { agencyId });
+    logPerf("live-query-batch", liveQueriesStartedAt, { agencyId });
+
+  const notifications = rawNotifications.filter(
+    (
+      notification,
+    ): notification is typeof notification & {
+      vehicle: NonNullable<typeof notification.vehicle>;
+    } => notification.vehicle !== null,
+  );
 
   const liveDerivationsStartedAt = Date.now();
   const departuresToday = liveBookings.filter((booking) =>
@@ -1029,7 +1037,15 @@ async function getDashboardDataV3Uncached(input: {
         });
 
   const notificationItems = sortUrgentNotificationItems(
-    notifications.map((notification) => ({
+    notifications
+      .filter(
+        (
+          notification,
+        ): notification is typeof notification & {
+          vehicle: NonNullable<typeof notification.vehicle>;
+        } => notification.vehicle !== null,
+      )
+      .map((notification) => ({
       id: notification.id,
       label: `${notification.vehicle.make} ${notification.vehicle.model}`,
       sublabel: `${notification.title} - ${notification.vehicle.plate}`,

@@ -15,9 +15,9 @@ import {
   Wrench,
 } from "lucide-react";
 import type {
+  NotificationType,
   NotificationSeverity,
   NotificationStatus,
-  ReminderType,
 } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { authOptions } from "@/lib/auth";
@@ -35,18 +35,20 @@ import { cn } from "@/lib/utils";
 import { NotificationActions } from "./notification-actions-client";
 import { NotificationFiltersClient } from "./notification-filters-client";
 
-const TYPE_ICONS: Record<ReminderType, ElementType> = {
+const TYPE_ICONS: Record<NotificationType, ElementType> = {
   OIL_CHANGE: Wrench,
   INSURANCE_EXPIRY: Shield,
   TECH_INSPECTION: ClipboardCheck,
   VIGNETTE: Sticker,
+  RESERVATION_STARTING_SOON: Clock3,
 };
 
-const TYPE_TONES: Record<ReminderType, string> = {
+const TYPE_TONES: Record<NotificationType, string> = {
   OIL_CHANGE: "bg-amber-50 text-amber-700",
   INSURANCE_EXPIRY: "bg-blue-50 text-blue-700",
   TECH_INSPECTION: "bg-sky-50 text-sky-700",
   VIGNETTE: "bg-emerald-50 text-emerald-700",
+  RESERVATION_STARTING_SOON: "bg-violet-50 text-violet-700",
 };
 
 const SEVERITY_CONFIG: Record<
@@ -189,7 +191,7 @@ type PageSearchParams = Promise<{
 
 type PageStatusFilter = "ALL" | NotificationStatus;
 type PageSeverityFilter = "ALL" | NotificationSeverity;
-type PageTypeFilter = "ALL" | ReminderType;
+type PageTypeFilter = "ALL" | NotificationType;
 
 type PageParams = Promise<{
   locale: string;
@@ -238,7 +240,8 @@ function parseType(value?: string): PageTypeFilter {
   return value === "OIL_CHANGE" ||
     value === "INSURANCE_EXPIRY" ||
     value === "TECH_INSPECTION" ||
-    value === "VIGNETTE"
+    value === "VIGNETTE" ||
+    value === "RESERVATION_STARTING_SOON"
     ? value
     : "ALL";
 }
@@ -399,7 +402,6 @@ async function fetchNotifications(input: {
   const notifications = await prisma.notification.findMany({
     where: {
       agencyId: input.agencyId,
-      vehicleId: { not: null },
       ...(input.status !== "ALL" ? { status: input.status } : {}),
       ...(input.severity !== "ALL" ? { severity: input.severity } : {}),
       ...(input.type !== "ALL" ? { type: input.type } : {}),
@@ -440,7 +442,6 @@ function buildBaseWhere(input: {
 
   return {
     agencyId: input.agencyId,
-    vehicleId: { not: null },
     ...(input.severity !== "ALL" ? { severity: input.severity } : {}),
     ...(input.type !== "ALL" ? { type: input.type } : {}),
     ...(normalizedQuery
@@ -538,7 +539,7 @@ function StatusBadge({
   );
 }
 
-function TypeBadge({ locale, type }: { locale: AppLocale; type: ReminderType }) {
+function TypeBadge({ locale, type }: { locale: AppLocale; type: NotificationType }) {
   return (
     <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-500">
       {getNotificationTypeLabel(locale, type)}
