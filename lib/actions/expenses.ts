@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { ExpenseCategory, PaymentType } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
+import { getEffectivePermissions } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import {
   expenseSchema,
@@ -42,6 +43,11 @@ export async function createExpense(data: ExpenseFormData): Promise<ExpenseResul
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Non autorise");
+  }
+
+  const permissions = getEffectivePermissions(session.user.role, session.user.permissions);
+  if (!permissions["finance.view"] && !permissions["caisse.view"]) {
+    return { error: "Acces refuse: droits finance ou caisse requis" };
   }
 
   try {
@@ -92,6 +98,11 @@ export async function listExpenses(filters: ListExpensesFilters = {}): Promise<E
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Non autorise");
+  }
+
+  const permissions = getEffectivePermissions(session.user.role, session.user.permissions);
+  if (!permissions["finance.view"] && !permissions["caisse.view"]) {
+    return [];
   }
 
   const expenseDelegate = getExpenseDelegate();
@@ -151,6 +162,11 @@ export async function deleteExpense(id: string): Promise<DeleteExpenseResult> {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Non autorise");
+  }
+
+  const permissions = getEffectivePermissions(session.user.role, session.user.permissions);
+  if (!permissions["finance.view"] && !permissions["caisse.view"]) {
+    return { error: "Acces refuse: droits finance ou caisse requis" };
   }
 
   try {

@@ -2,9 +2,11 @@ import type {
   BookingDepositStatus,
   BookingPaymentStatus,
   BookingStatus,
+  ExpenseCategory,
   InfractionStatus,
   InspectionType,
   NotificationStatus,
+  PaymentType,
   ReminderType,
   VehicleStatus,
 } from "@prisma/client";
@@ -172,6 +174,15 @@ export interface VehicleActivityItem {
   tone: "neutral" | "info" | "warning" | "danger" | "success";
 }
 
+export interface VehicleExpenseItem {
+  id: string;
+  date: Date;
+  category: ExpenseCategory;
+  amount: number;
+  method: PaymentType;
+  note: string | null;
+}
+
 type ActivityTone = VehicleActivityItem["tone"];
 type ReminderSeverity = VehicleReminderItem["severity"];
 
@@ -223,6 +234,7 @@ export interface VehicleProfileData {
   };
   compliance: VehicleComplianceItem[];
   infractions: VehicleInfractionItem[];
+  vehicleExpenses: VehicleExpenseItem[];
   activity: VehicleActivityItem[];
   workspace: VehicleWorkspaceData;
 }
@@ -614,7 +626,16 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
     };
   }).vehicleDocument;
 
-  const [vehicle, reservationsRaw, inspectionsRaw, notificationsRaw, infractionsRaw, documentsRaw, fuelType] =
+  const [
+    vehicle,
+    reservationsRaw,
+    inspectionsRaw,
+    notificationsRaw,
+    infractionsRaw,
+    documentsRaw,
+    fuelType,
+    vehicleExpensesRaw,
+  ] =
     await Promise.all([
       prisma.vehicle.findFirst({
         where: { id: vehicleId, agencyId },
@@ -696,6 +717,9 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
         where: {
           agencyId,
           vehicleId,
+          type: {
+            in: ["OIL_CHANGE", "INSURANCE_EXPIRY", "TECH_INSPECTION", "VIGNETTE"],
+          },
         },
         orderBy: [
           { severity: "desc" },
@@ -721,6 +745,22 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
           })
         : Promise.resolve([]),
       getVehicleFuelType(vehicleId),
+      prisma.expense.findMany({
+        where: {
+          agencyId,
+          vehicleId,
+        },
+        select: {
+          id: true,
+          date: true,
+          category: true,
+          amount: true,
+          method: true,
+          note: true,
+        },
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+        take: 8,
+      }),
     ]);
 
   if (!vehicle) {
@@ -761,7 +801,7 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
 
   const reminders: VehicleReminderItem[] = notificationsRaw.map((notification) => ({
     id: notification.id,
-    type: notification.type,
+    type: notification.type as ReminderType,
     title: notification.title,
     body: notification.body,
     dueAt: notification.dueAt,
@@ -936,6 +976,15 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
     .slice(0, 10);
 
+  const vehicleExpenses: VehicleExpenseItem[] = vehicleExpensesRaw.map((expense) => ({
+    id: expense.id,
+    date: expense.date,
+    category: expense.category,
+    amount: Number(expense.amount),
+    method: expense.method,
+    note: expense.note,
+  }));
+
   return {
     vehicle: {
       id: vehicle.id,
@@ -984,6 +1033,7 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
     },
     compliance,
     infractions,
+    vehicleExpenses,
     activity,
     workspace: deriveVehicleWorkspace({
       vehicle: {

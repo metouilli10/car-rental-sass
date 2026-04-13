@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Loader2, Plus } from "lucide-react";
@@ -41,6 +41,10 @@ type AddExpenseDialogProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
+  defaultVehicleId?: string;
+  lockVehicle?: boolean;
+  hideVehicleSelect?: boolean;
+  defaultCategory?: (typeof categoryOptions)[number];
   onOptimisticCreate?: (row: ExpenseRow) => void;
   onOptimisticRevert?: (id: string) => void;
 };
@@ -68,6 +72,10 @@ export function AddExpenseDialog({
   open,
   onOpenChange,
   hideTrigger = false,
+  defaultVehicleId,
+  lockVehicle = false,
+  hideVehicleSelect = false,
+  defaultCategory = "MAINTENANCE",
   onOptimisticCreate,
   onOptimisticRevert,
 }: AddExpenseDialogProps) {
@@ -75,20 +83,33 @@ export function AddExpenseDialog({
   const [internalOpen, setInternalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const today = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
+  const resolvedDefaultVehicleId = useMemo(() => {
+    if (!defaultVehicleId) return "none";
+    const exists = vehicles.some((vehicle) => vehicle.id === defaultVehicleId);
+    return exists ? defaultVehicleId : "none";
+  }, [defaultVehicleId, vehicles]);
 
   const [date, setDate] = useState(today);
-  const [category, setCategory] = useState<(typeof categoryOptions)[number]>("MAINTENANCE");
+  const [category, setCategory] = useState<(typeof categoryOptions)[number]>(defaultCategory);
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<(typeof methodOptions)[number]["value"]>("CASH");
-  const [vehicleId, setVehicleId] = useState("none");
+  const [vehicleId, setVehicleId] = useState(resolvedDefaultVehicleId);
   const [note, setNote] = useState("");
+
+  useEffect(() => {
+    setCategory(defaultCategory);
+  }, [defaultCategory]);
+
+  useEffect(() => {
+    setVehicleId(resolvedDefaultVehicleId);
+  }, [resolvedDefaultVehicleId]);
 
   const reset = () => {
     setDate(today);
-    setCategory("MAINTENANCE");
+    setCategory(defaultCategory);
     setAmount("");
     setMethod("CASH");
-    setVehicleId("none");
+    setVehicleId(resolvedDefaultVehicleId);
     setNote("");
   };
 
@@ -234,22 +255,24 @@ export function AddExpenseDialog({
               </Select>
             </div>
 
-            <div className="grid gap-2">
-              <Label>Vehicule lie (optionnel)</Label>
-              <Select value={vehicleId} onValueChange={setVehicleId}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Aucun</SelectItem>
-                  {vehicles.map((vehicle) => (
-                    <SelectItem key={vehicle.id} value={vehicle.id}>
-                      {vehicle.make} {vehicle.model} ({vehicle.plate})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {!hideVehicleSelect ? (
+              <div className="grid gap-2">
+                <Label>Vehicule lie (optionnel)</Label>
+                <Select value={vehicleId} onValueChange={setVehicleId} disabled={lockVehicle}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Aucun</SelectItem>
+                    {vehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        {vehicle.make} {vehicle.model} ({vehicle.plate})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
           </div>
 
           <div className="grid gap-2">
