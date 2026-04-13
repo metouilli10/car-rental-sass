@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ClipboardCheck, Gauge, Wrench } from "lucide-react";
+import { AddExpenseDialog } from "@/components/finance/AddExpenseDialog";
+import { expenseCategoryLabel, paymentMethodLabel } from "@/components/finance/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { formatMAD } from "@/lib/format";
 import type { AppLocale } from "@/lib/i18n/config";
 import { withLocalePath } from "@/lib/i18n/config";
 import { formatDate } from "@/lib/utils";
@@ -16,6 +19,7 @@ interface VehicleTrackingTabProps {
   data: VehicleProfileData;
   currentOrNextBookingId: string | null;
   inspectionLabel: string | null;
+  canCreateVehicleExpense: boolean;
   locale?: AppLocale;
 }
 
@@ -23,6 +27,7 @@ export function VehicleTrackingTab({
   data,
   currentOrNextBookingId,
   inspectionLabel,
+  canCreateVehicleExpense,
   locale = "fr",
 }: VehicleTrackingTabProps) {
   return (
@@ -103,6 +108,75 @@ export function VehicleTrackingTab({
         />
 
         <div className="space-y-6">
+          <Card className="rounded-[24px] border-slate-200/80 bg-white shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-base">Charges véhicule</CardTitle>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Dépenses liées à ce véhicule, suivies dans Finance.
+                  </p>
+                </div>
+                {canCreateVehicleExpense ? (
+                  <AddExpenseDialog
+                    vehicles={[
+                      {
+                        id: data.vehicle.id,
+                        make: data.vehicle.make,
+                        model: data.vehicle.model,
+                        plate: data.vehicle.plate,
+                      },
+                    ]}
+                    defaultVehicleId={data.vehicle.id}
+                    defaultCategory="MAINTENANCE"
+                    lockVehicle
+                    hideVehicleSelect
+                  />
+                ) : (
+                  <Button size="sm" disabled title="Accès finance ou caisse requis">
+                    Ajouter une charge
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {data.vehicleExpenses.length > 0 ? (
+                data.vehicleExpenses.map((expense) => (
+                  <div
+                    key={expense.id}
+                    className="rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-slate-900">
+                        {expenseCategoryLabel[expense.category]}
+                      </p>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {formatMAD(expense.amount)}
+                      </p>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between gap-3 text-xs text-slate-500">
+                      <p>{formatDate(expense.date)}</p>
+                      <p>{paymentMethodLabel[expense.method]}</p>
+                    </div>
+                    {expense.note ? (
+                      <p className="mt-2 line-clamp-2 text-sm text-slate-600">{expense.note}</p>
+                    ) : null}
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-200 px-3 py-5 text-sm text-slate-500">
+                  Aucune charge enregistrée pour ce véhicule.
+                </div>
+              )}
+              <div className="pt-1">
+                <Button size="sm" variant="outline" asChild>
+                  <Link href={withLocalePath(locale, `/finance?tab=charges&vehicleId=${data.vehicle.id}`)}>
+                    Voir Finance
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
           <VehicleRemindersPanel
             vehicleId={data.vehicle.id}
             overdue={data.reminders.overdue}

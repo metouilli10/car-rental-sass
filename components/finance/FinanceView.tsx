@@ -110,6 +110,7 @@ export function FinanceView({
 
   const [expenseSearch, setExpenseSearch] = useState("");
   const [expenseMethod, setExpenseMethod] = useState<"ALL" | "CASH" | "CARD" | "TRANSFER">("ALL");
+  const [expenseVehicleId, setExpenseVehicleId] = useState<"ALL" | string>("ALL");
 
   useEffect(() => {
     if (defaultTab) setActiveTab(defaultTab);
@@ -141,9 +142,10 @@ export function FinanceView({
         row.note?.toLowerCase().includes(q) ||
         vehicleText.toLowerCase().includes(q);
       const matchesMethod = expenseMethod === "ALL" || row.method === expenseMethod;
-      return matchesSearch && matchesMethod;
+      const matchesVehicle = expenseVehicleId === "ALL" || row.vehicle?.id === expenseVehicleId;
+      return matchesSearch && matchesMethod && matchesVehicle;
     });
-  }, [expenseSearch, expenseMethod, expensesRows]);
+  }, [expenseSearch, expenseMethod, expenseVehicleId, expensesRows]);
 
   const recentIncomes = useMemo(() => incomes.slice(0, 6), [incomes]);
   const recentExpenses = useMemo(() => expensesRows.slice(0, 6), [expensesRows]);
@@ -302,7 +304,7 @@ export function FinanceView({
         </TabsContent>
 
         <TabsContent value="charges" className="space-y-4">
-          <div className="grid gap-3 rounded-xl border border-border/70 bg-card p-3 md:grid-cols-2">
+          <div className="grid gap-3 rounded-xl border border-border/70 bg-card p-3 md:grid-cols-3">
             <Input
               value={expenseSearch}
               onChange={(event) => setExpenseSearch(event.target.value)}
@@ -317,6 +319,19 @@ export function FinanceView({
                 <SelectItem value="CASH">{paymentMethodLabel.CASH}</SelectItem>
                 <SelectItem value="CARD">{paymentMethodLabel.CARD}</SelectItem>
                 <SelectItem value="TRANSFER">{paymentMethodLabel.TRANSFER}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={expenseVehicleId} onValueChange={setExpenseVehicleId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Vehicule" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Tous les vehicules</SelectItem>
+                {vehicles.map((vehicle) => (
+                  <SelectItem key={vehicle.id} value={vehicle.id}>
+                    {vehicle.make} {vehicle.model} ({vehicle.plate})
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getCurrentUserAccessForPage } from "@/lib/authz";
-import { canDeleteVehicles, canManageVehicles } from "@/lib/permissions";
+import { canDeleteVehicles, canManageVehicles, getEffectivePermissions } from "@/lib/permissions";
 import {
   getVehicleProfile,
   normalizeVehicleProfileTab,
@@ -58,6 +58,12 @@ export default async function VehicleProfilePage({
     currentUser.role,
     currentUser.permissions,
   );
+  const effectivePermissions = getEffectivePermissions(
+    currentUser.role,
+    currentUser.permissions,
+  );
+  const canCreateVehicleExpense =
+    effectivePermissions["finance.view"] || effectivePermissions["caisse.view"];
 
   const currentOrNextBookingId = profile.currentReservation?.id ?? profile.nextReservation?.id ?? null;
   const inspectionDisabledReason = currentOrNextBookingId
@@ -100,6 +106,7 @@ export default async function VehicleProfilePage({
           data={profile}
           currentOrNextBookingId={currentOrNextBookingId}
           inspectionLabel={inspectionDisabledReason}
+          canCreateVehicleExpense={canCreateVehicleExpense}
           locale={locale}
         />
       ) : null}
