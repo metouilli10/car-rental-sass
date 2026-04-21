@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import type { NotificationType, Prisma } from "@prisma/client";
+import type { ReminderType, Prisma } from "@prisma/client";
 import { addDays } from "date-fns";
 import { getNotificationsSummary } from "@/lib/notifications/queries";
 
@@ -22,7 +22,7 @@ export async function getAllNotifications(
   agencyId: string,
   params?: {
     status?: "OPEN" | "SNOOZED" | "DONE" | "DISMISSED";
-    type?: NotificationType;
+    type?: ReminderType;
     severity?: "INFO" | "WARNING" | "DUE";
   }
 ): Promise<NotificationWithVehicle[]> {

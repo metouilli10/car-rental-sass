@@ -38,15 +38,20 @@ export function localeFromPathPrefix(pathname: string): AppLocale | null {
 
 export function syncLocaleCookieOnResponse(
   request: NextRequest,
-  response: NextResponse
-): NextResponse {
+  response: Response | NextResponse
+): Response | NextResponse {
   const locale = localeFromPathPrefix(request.nextUrl.pathname);
   if (!locale) return response;
 
   const current = request.cookies.get(LOCALE_COOKIE_NAME)?.value;
   if (current === locale) return response;
 
-  response.cookies.set(LOCALE_COOKIE_NAME, locale, {
+  const cookieStore = (response as NextResponse).cookies;
+  if (!cookieStore || typeof cookieStore.set !== "function") {
+    return response;
+  }
+
+  cookieStore.set(LOCALE_COOKIE_NAME, locale, {
     path: "/",
     sameSite: "lax",
   });
