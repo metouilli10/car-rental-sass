@@ -73,13 +73,20 @@ export function ReservationCard({ booking, role, today }: ReservationCardProps) 
         <div className="flex flex-col gap-3">
           {/* Top row: client name + status pill */}
           <div className="flex items-start justify-between gap-2">
-            <Link
-              href={lp(`/customers/${booking.customer.id}`)}
-              onClick={(e) => e.stopPropagation()}
-              className="font-semibold text-foreground underline-offset-4 hover:underline min-w-0 truncate"
-            >
-              {booking.customer.name}
-            </Link>
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <Link
+                href={lp(`/customers/${booking.customer.id}`)}
+                onClick={(e) => e.stopPropagation()}
+                className="font-semibold text-foreground underline-offset-4 hover:underline min-w-0 truncate"
+              >
+                {booking.customer.name}
+              </Link>
+              {booking.bookingRequest ? (
+                <Badge variant="info" className="text-[11px]">
+                  Site web
+                </Badge>
+              ) : null}
+            </div>
             <div className="flex flex-col items-end gap-1">
               <StatusBadge status={booking.status} />
               {activeStatusHint ? (

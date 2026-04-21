@@ -12,6 +12,7 @@ import {
   ReservationDetailsCard,
   ReservationInspectionsCard,
   ReservationProgressCard,
+  ReservationSourceCard,
   ReservationVehicleCard,
 } from "@/components/reservations/ReservationDetailCards";
 import {
@@ -126,6 +127,10 @@ export default async function BookingDetailsPage({
       />
 
       <ReservationProgressCard status={booking.status} createdAt={booking.createdAt} />
+
+      {booking.bookingRequest ? (
+        <ReservationSourceCard bookingRequest={booking.bookingRequest} locale={locale} />
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.95fr)] xl:items-start xl:gap-5">
         <div className="space-y-4 xl:space-y-5">
@@ -304,6 +309,17 @@ async function getBookingDetailData(id: string, agencyId: string) {
         contractImageUrl: true,
         contractSignedAt: true,
         createdAt: true,
+        bookingRequest: {
+          select: {
+            id: true,
+            source: true,
+            status: true,
+            createdAt: true,
+            fullName: true,
+            email: true,
+            phone: true,
+          },
+        },
         customer: {
           select: {
             id: true,
@@ -423,6 +439,17 @@ async function getBookingDetailData(id: string, agencyId: string) {
       contractImageUrl: true,
       contractSignedAt: true,
       createdAt: true,
+      bookingRequest: {
+        select: {
+          id: true,
+          source: true,
+          status: true,
+          createdAt: true,
+          fullName: true,
+          email: true,
+          phone: true,
+        },
+      },
       customer: {
         select: {
           id: true,
@@ -482,6 +509,7 @@ async function getBookingDetailData(id: string, agencyId: string) {
     taxEnabled: false,
     discountAmount: 0,
     addons: [],
+    bookingRequest: fallback.bookingRequest,
     customer: {
       ...fallback.customer,
       bookings: [],

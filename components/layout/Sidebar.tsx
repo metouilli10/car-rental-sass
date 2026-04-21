@@ -12,7 +12,7 @@ import { SidebarItem } from "./SidebarItem";
 import { withLocalePath } from "@/lib/i18n/config";
 import { useI18n } from "@/components/i18n/i18n-context";
 
-const SIDEBAR_STORAGE_KEY = "locapro-sidebar-collapsed";
+const SIDEBAR_STORAGE_KEY = "locaryx-sidebar-collapsed";
 const EXPANDED_WIDTH = 240;
 const COLLAPSED_WIDTH = 64;
 
@@ -20,6 +20,7 @@ export interface SidebarProps {
   agencyName: string;
   role: UserRole;
   permissions: EffectivePermissions;
+  unreadBookingRequestCount?: number;
   onboarding?: {
     eligible: boolean;
     completed: boolean;
@@ -32,6 +33,7 @@ export function Sidebar({
   agencyName,
   role,
   permissions,
+  unreadBookingRequestCount = 0,
   onboarding,
 }: SidebarProps) {
   const { locale, t } = useI18n();
@@ -164,6 +166,15 @@ export function Sidebar({
             <SidebarSection label={t("shell.sidebar.operations")} collapsed={isCollapsed}>
               {permissions["bookings.view"] ? (
                 <SidebarItem href={p("/bookings")} iconName="CalendarCheck" label={t("shell.sidebar.bookings")} collapsed={isCollapsed} />
+              ) : null}
+              {permissions["bookings.view"] ? (
+                <SidebarItem
+                  href={p("/booking-requests")}
+                  iconName="ClipboardList"
+                  label={t("shell.sidebar.bookingRequests")}
+                  collapsed={isCollapsed}
+                  badge={unreadBookingRequestCount > 0 ? String(unreadBookingRequestCount) : undefined}
+                />
               ) : null}
               {permissions["calendar.view"] ? (
                 <SidebarItem href={p("/calendrier")} iconName="Calendar" label={t("shell.sidebar.calendar")} collapsed={isCollapsed} />

@@ -1,4 +1,4 @@
--- Locapro: Enable RLS and add agency-scoped policies
+-- Locaryx: Enable RLS and add agency-scoped policies
 -- Run this in Supabase SQL Editor (Dashboard → SQL Editor) or via Supabase CLI.
 -- Your app uses Prisma with the direct connection (often bypasses RLS). These
 -- policies apply when using roles that respect RLS (e.g. anon key from client).

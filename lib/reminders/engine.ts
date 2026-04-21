@@ -2,11 +2,15 @@ import { addMonths, differenceInDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import type {
   NotificationSeverity,
-  NotificationStatus,
   ReminderType,
 } from "@prisma/client";
 import { DEFAULT_LEAD_DAYS, DEFAULT_LEAD_KM } from "./types";
 import { sendEmailNotification } from "@/lib/notifications/channels";
+import {
+  buildVehicleNotificationDedupeKey,
+  clearAgencyNotificationIfOpen,
+  upsertAgencyNotification,
+} from "@/lib/notifications/store";
 
 type ReminderEmailEventType = "CREATED" | "ESCALATED_DUE";
 
@@ -36,60 +40,25 @@ async function upsertNotification(params: {
   dueAt?: Date | null;
   dueMileageKm?: number | null;
 }) {
-  const { agencyId, vehicleId, type, title, body, severity, dueAt, dueMileageKm } =
-    params;
+  const { agencyId, vehicleId, type, title, body, severity, dueAt, dueMileageKm } = params;
 
-  // Check for existing notification
-  const existing = await prisma.notification.findUnique({
-    where: { agencyId_vehicleId_type: { agencyId, vehicleId, type } },
+  const result = await upsertAgencyNotification({
+    agencyId,
+    vehicleId,
+    type,
+    dedupeKey: buildVehicleNotificationDedupeKey(vehicleId, type),
+    title,
+    body,
+    severity,
+    actionUrl: `/vehicles/${vehicleId}`,
+    dueAt,
+    dueMileageKm,
   });
 
-  if (existing) {
-    // Don't recreate if the user already marked it DONE or DISMISSED
-    if (existing.status === "DONE" || existing.status === "DISMISSED") {
-      // Update severity/body in case data changed significantly
-      const updated = await prisma.notification.update({
-        where: { id: existing.id },
-        data: { title, body, severity, dueAt, dueMileageKm, updatedAt: new Date() },
-      });
-      return { notificationId: updated.id, emailEventType: null };
-    }
-
-    // If snoozed and still within snooze period, preserve SNOOZED status
-    const now = new Date();
-    const status: NotificationStatus =
-      existing.status === "SNOOZED" &&
-      existing.snoozedUntil != null &&
-      existing.snoozedUntil > now
-        ? "SNOOZED"
-        : "OPEN";
-
-    const updated = await prisma.notification.update({
-      where: { id: existing.id },
-      data: { title, body, severity, dueAt, dueMileageKm, status, updatedAt: new Date() },
-    });
-    const severityEscalatedToDue =
-      existing.severity !== "DUE" && severity === "DUE" && status === "OPEN";
-    return {
-      notificationId: updated.id,
-      emailEventType: severityEscalatedToDue ? ("ESCALATED_DUE" as ReminderEmailEventType) : null,
-    };
-  } else {
-    const created = await prisma.notification.create({
-      data: {
-        agencyId,
-        vehicleId,
-        type,
-        title,
-        body,
-        severity,
-        dueAt: dueAt ?? null,
-        dueMileageKm: dueMileageKm ?? null,
-        status: "OPEN",
-      },
-    });
-    return { notificationId: created.id, emailEventType: "CREATED" as ReminderEmailEventType };
-  }
+  return {
+    notificationId: result.notificationId,
+    emailEventType: result.deliveryEventType as ReminderEmailEventType | null,
+  };
 }
 
 // ─── Delete notification if condition no longer applies ───────────────────────
@@ -99,12 +68,10 @@ async function clearNotificationIfOpen(
   vehicleId: string,
   type: ReminderType
 ) {
-  const existing = await prisma.notification.findUnique({
-    where: { agencyId_vehicleId_type: { agencyId, vehicleId, type } },
+  await clearAgencyNotificationIfOpen({
+    agencyId,
+    dedupeKey: buildVehicleNotificationDedupeKey(vehicleId, type),
   });
-  if (existing && existing.status === "OPEN") {
-    await prisma.notification.delete({ where: { id: existing.id } });
-  }
 }
 
 // ─── Per-type reminder checks ────────────────────────────────────────────────

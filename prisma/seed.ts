@@ -26,6 +26,36 @@ async function main() {
   });
   console.log("✅ Agency created:", agency.name);
 
+  await prisma.websiteSettings.upsert({
+    where: { agencyId: agency.id },
+    update: {
+      agencySlug: "auto-maroc-location",
+      siteTitle: agency.name,
+      heroTitle: "Votre prochaine location au Maroc",
+      heroSubtitle: "Choisissez un véhicule publié et envoyez une demande de réservation.",
+      contactPhone: agency.phone,
+      whatsappPhone: agency.phone,
+      contactEmail: agency.email,
+      address: agency.address,
+      pickupLocations: ["Agence Casablanca", "Aéroport Mohammed V"],
+      isWebsiteEnabled: false,
+    },
+    create: {
+      agencyId: agency.id,
+      agencySlug: "auto-maroc-location",
+      siteTitle: agency.name,
+      heroTitle: "Votre prochaine location au Maroc",
+      heroSubtitle: "Choisissez un véhicule publié et envoyez une demande de réservation.",
+      contactPhone: agency.phone,
+      whatsappPhone: agency.phone,
+      contactEmail: agency.email,
+      address: agency.address,
+      pickupLocations: ["Agence Casablanca", "Aéroport Mohammed V"],
+      isWebsiteEnabled: false,
+    },
+  });
+  console.log("✅ Website settings prepared (disabled by default)");
+
   // Create Owner User (update password on upsert so re-seeding fixes login)
   const hashedPassword = await hash("password123", 10);
   const owner = await prisma.user.upsert({

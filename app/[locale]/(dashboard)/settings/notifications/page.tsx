@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { ReminderType } from "@prisma/client";
 import { TestNotificationEmailButton } from "./test-notification-email-button";
+import { PushNotificationsCard } from "@/components/settings/push-notifications-card";
 
 const REMINDER_TYPES: { type: ReminderType; label: string; Icon: React.ElementType }[] = [
   { type: "OIL_CHANGE", label: "Vidange", Icon: Wrench },
@@ -81,13 +82,20 @@ export default async function NotificationSettingsPage() {
   const agencyId = session.user.agencyId;
 
   // Load existing reminder rules for this agency
-  const [rules, agency] = await Promise.all([
+  const [rules, agency, activePushSubscriptionsCount] = await Promise.all([
     prisma.reminderRule.findMany({
       where: { agencyId },
     }),
     prisma.agency.findUnique({
       where: { id: agencyId },
       select: { email: true },
+    }),
+    prisma.pushSubscription.count({
+      where: {
+        agencyId,
+        userId: session.user.id,
+        isActive: true,
+      },
     }),
   ]);
 
@@ -99,6 +107,11 @@ export default async function NotificationSettingsPage() {
       agency?.email?.trim()
   );
   const agencyEmail = agency?.email?.trim() || null;
+  const pushConfigured = Boolean(
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim() &&
+      process.env.VAPID_PRIVATE_KEY?.trim() &&
+      process.env.VAPID_SUBJECT?.trim(),
+  );
 
   return (
     <div className="space-y-8 max-w-2xl">
@@ -158,6 +171,11 @@ export default async function NotificationSettingsPage() {
           </p>
         </CardContent>
       </Card>
+
+      <PushNotificationsCard
+        activeSubscriptionsCount={activePushSubscriptionsCount}
+        pushConfigured={pushConfigured}
+      />
 
       {/* Email */}
       <Card>

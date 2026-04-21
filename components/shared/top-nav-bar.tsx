@@ -18,8 +18,10 @@ import {
   ClipboardCheck,
   Sticker,
   Clock3,
+  ClipboardList,
   Rocket,
   Building2,
+  Globe,
 } from "lucide-react";
 import type { UserRole } from "@prisma/client";
 import type { EffectivePermissions } from "@/lib/permissions";
@@ -48,17 +50,19 @@ const SearchOverlay = dynamic(
 );
 
 interface NotifItem {
+  kind: "reminder" | "booking-request";
   id: string;
   type: NotificationType;
   title: string;
   body: string;
+  href: string;
   severity: NotificationSeverity;
   status: NotificationStatus;
   dueAt: Date | string | null;
   dueMileageKm: number | null;
   snoozedUntil: Date | string | null;
   updatedAt: Date | string;
-  vehicle: { id: string; make: string; model: string; plate: string };
+  vehicle?: { id: string; make: string; model: string; plate: string };
 }
 
 interface TopNavBarProps {
@@ -78,6 +82,7 @@ const TYPE_ICONS: Record<NotificationType, React.ElementType> = {
   TECH_INSPECTION: ClipboardCheck,
   VIGNETTE: Sticker,
   RESERVATION_STARTING_SOON: Clock3,
+  BOOKING_REQUEST_CREATED: ClipboardList,
 };
 
 const SEVERITY_COLORS: Record<
@@ -151,14 +156,22 @@ export function TopNavBar({
             <Link
               href={lp("/dashboard")}
               aria-label={t("shell.topNav.goToDashboard")}
-              className="inline-flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-muted/50"
+              className="inline-flex items-center rounded-lg px-1 py-1 transition-colors hover:bg-muted/50 sm:px-1.5"
             >
+              <Image
+                src="/assets/locaryx-icon-dark.png"
+                alt="Locaryx"
+                width={32}
+                height={32}
+                className="h-7 w-7 object-contain sm:hidden"
+                priority
+              />
               <Image
                 src="/assets/locaryx-logo-dark.png"
                 alt="Locaryx"
                 width={120}
                 height={28}
-                className="h-6 w-auto object-contain"
+                className="hidden h-6 w-auto object-contain sm:block"
                 priority
               />
             </Link>
@@ -167,12 +180,12 @@ export function TopNavBar({
 
         {/* ── Zone C: Right — Search + Bell + Profile ───────────── */}
         <div className="flex-none flex items-center gap-2 sm:gap-2.5">
-          <LanguageSwitcher />
+          <LanguageSwitcher className="hidden sm:inline-flex" />
           {/* Search shell */}
           <button
             onClick={() => setSearchOpen(true)}
             aria-label={t("shell.topNav.searchAria")}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-subtle bg-slate-50 px-3 text-sm text-slate-500 transition-colors duration-200 hover:bg-white hover:text-slate-900"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-subtle bg-slate-50 px-2.5 text-sm text-slate-500 transition-colors duration-200 hover:bg-white hover:text-slate-900 sm:px-3"
           >
             <Search className="h-4 w-4" />
             <span className="hidden text-xs font-medium sm:inline">
@@ -246,7 +259,7 @@ export function TopNavBar({
                           key={notif.id}
                           onClick={() => {
                             setNotifOpen(false);
-                            router.push(lp("/notifications"));
+                            router.push(lp(notif.href));
                           }}
                           className="flex w-full items-start gap-3.5 bg-transparent px-5 py-3.5 text-left transition-colors duration-150 hover:bg-muted/40"
                         >
@@ -264,10 +277,20 @@ export function TopNavBar({
                                 className={`h-1.5 w-1.5 rounded-full shrink-0 ${colors.dot}`}
                               />
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                              {notif.vehicle.make} {notif.vehicle.model} ·{" "}
-                              {notif.vehicle.plate}
-                            </p>
+                            {notif.kind === "reminder" && notif.vehicle ? (
+                              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                                {notif.vehicle.make} {notif.vehicle.model} ·{" "}
+                                {notif.vehicle.plate}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                                {notif.type === "BOOKING_REQUEST_CREATED"
+                                  ? locale === "ar"
+                                    ? "طلب من الموقع"
+                                    : "Demande web"
+                                  : t("shell.topNav.notificationsAria")}
+                              </p>
+                            )}
                             <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">
                               {localized.body}
                             </p>
@@ -307,7 +330,7 @@ export function TopNavBar({
             <DropdownMenuTrigger asChild>
               <button
                 aria-label={t("shell.topNav.profileMenuAria")}
-                className="flex min-h-[36px] items-center gap-2 rounded-xl border border-transparent px-2 py-1 transition-colors duration-200 hover:bg-slate-50 sm:gap-2.5 sm:px-2.5"
+                className="flex min-h-[36px] items-center gap-0 rounded-xl border border-transparent px-1 py-1 transition-colors duration-200 hover:bg-slate-50 sm:gap-2.5 sm:px-2.5"
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-950 text-xs font-semibold text-white">
                   {agencyLogoUrl ? (
@@ -330,7 +353,7 @@ export function TopNavBar({
                     {agencyName}
                   </p>
                 </div>
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200" />
+                <ChevronDown className="hidden h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 sm:block" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -364,6 +387,13 @@ export function TopNavBar({
                 >
                   <Building2 className="h-4 w-4 text-muted-foreground" />
                   {t("shell.topNav.agency")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => router.push(lp("/settings/website"))}
+                  className="gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground/80"
+                >
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  Site web
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => router.push(lp("/settings/notifications"))}

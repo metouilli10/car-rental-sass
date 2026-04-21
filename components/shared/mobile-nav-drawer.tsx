@@ -11,6 +11,7 @@ import {
   CalendarCheck,
   Car,
   ClipboardCheck,
+  ClipboardList,
   Grid2x2,
   LayoutDashboard,
   LogOut,
@@ -25,6 +26,7 @@ import {
 import type { EffectivePermissions } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { LanguageSwitcher } from "@/components/locale/LanguageSwitcher";
 import { withLocalePath } from "@/lib/i18n/config";
 import { useI18n } from "@/components/i18n/i18n-context";
 
@@ -56,6 +58,7 @@ export function MobileNavDrawer({
   const mainItems: DrawerItem[] = [
     { href: p("/dashboard"), label: t("shell.sidebar.dashboard"), icon: LayoutDashboard, allowed: true },
     { href: p("/bookings"), label: t("shell.sidebar.bookings"), icon: CalendarCheck, allowed: permissions["bookings.view"] },
+    { href: p("/booking-requests"), label: t("shell.sidebar.bookingRequests"), icon: ClipboardList, allowed: permissions["bookings.view"] },
     { href: p("/calendrier"), label: t("shell.sidebar.calendar"), icon: Calendar, allowed: permissions["calendar.view"] },
     { href: p("/customers"), label: t("shell.sidebar.customers"), icon: Users, allowed: permissions["customers.view"] },
     { href: p("/vehicles"), label: t("shell.sidebar.vehicles"), icon: Car, allowed: permissions["vehicles.view"] },
@@ -71,6 +74,7 @@ export function MobileNavDrawer({
 
   const systemItems: DrawerItem[] = [
     { href: p("/settings/agency"), label: t("shell.mobileNav.agencySettings"), icon: Settings, allowed: true },
+    { href: p("/settings/website"), label: t("shell.mobileNav.websiteSettings"), icon: Settings, allowed: permissions["vehicles.manage"] || permissions["bookings.manage"] },
     { href: p("/settings/notifications"), label: t("shell.mobileNav.notificationSettings"), icon: Bell, allowed: permissions["notifications.view"] },
     { href: p("/users"), label: t("shell.sidebar.users"), icon: UserCog, allowed: role === "OWNER" },
   ];
@@ -123,6 +127,12 @@ export function MobileNavDrawer({
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 py-4">
+            <div className="mb-6 px-3">
+              <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
+                {t("shell.language.ariaLabel")}
+              </p>
+              <LanguageSwitcher className="w-full justify-center" />
+            </div>
             <DrawerSection label={t("shell.mobileNav.main")} items={visibleMainItems} isActive={isActive} onNavigate={() => setOpen(false)} />
             <DrawerSection label={t("shell.mobileNav.operations")} items={visibleOperationsItems} isActive={isActive} onNavigate={() => setOpen(false)} />
             <DrawerSection label={t("shell.mobileNav.system")} items={visibleSystemItems} isActive={isActive} onNavigate={() => setOpen(false)} />

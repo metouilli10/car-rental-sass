@@ -13,6 +13,7 @@ export const DASHBOARD_ROOT_SEGMENTS = new Set([
   "customers",
   "clients",
   "bookings",
+  "booking-requests",
   "reservations",
   "users",
   "finance",

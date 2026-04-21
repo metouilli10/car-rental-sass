@@ -32,7 +32,7 @@ interface OnboardingChecklistProps {
   forceVisible?: boolean;
 }
 
-const CELEBRATION_KEY = "locapro-onboarding-celebrated";
+const CELEBRATION_KEY = "locaryx-onboarding-celebrated";
 
 export function OnboardingChecklist({
   onboarding,

@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT" || exit 0
 
 echo "=========================================="
-echo "Locapro i18n audit — $(date -u +%Y-%m-%dT%H:%MZ)"
+echo "Locaryx i18n audit — $(date -u +%Y-%m-%dT%H:%MZ)"
 echo "=========================================="
 
 echo ""

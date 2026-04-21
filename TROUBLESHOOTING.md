@@ -1,5 +1,31 @@
 # Dépannage
 
+## Erreur : une page marche en local mais casse en production
+
+Commencez par vérifier un décalage entre le code déployé et le schéma de base de données.
+
+Commandes utiles :
+
+```bash
+npm run deploy:check
+npx prisma migrate status
+npx prisma migrate deploy
+```
+
+Ordre recommandé :
+
+1. Chargez les variables d'environnement de production.
+2. Lancez `npm run deploy:check`.
+3. Si des migrations manquent, lancez `npx prisma migrate deploy`.
+4. Redéployez l'application.
+5. Re-testez la route cassée.
+
+Ce scénario est particulièrement probable si l'erreur:
+
+- apparaît seulement en production
+- touche une page serveur Next.js
+- arrive juste après une évolution Prisma ou une nouvelle colonne
+
 ## Erreur : « Can't reach database server » (Supabase)
 
 Si vous voyez :

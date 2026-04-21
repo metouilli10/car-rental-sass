@@ -10,6 +10,7 @@ type VehiclePayloadInput = {
   pricePerDay: number;
   mileage?: number | null;
   photoUrl?: string | null;
+  publishedToWebsite?: boolean | null;
   currentKm?: number | null;
   lastOilChangeMileageKm?: number | null;
   lastOilChangeDate?: Date | null;
@@ -53,6 +54,7 @@ export function buildVehiclePayload(input: VehiclePayloadInput) {
     category: input.category ?? "Citadine",
     mileage: input.mileage ?? null,
     photoUrl: input.photoUrl ?? null,
+    publishedToWebsite: input.publishedToWebsite ?? false,
     currentKm: input.currentKm ?? null,
     lastOilChangeMileageKm: input.lastOilChangeMileageKm ?? null,
     lastOilChangeDate: input.lastOilChangeDate ?? null,

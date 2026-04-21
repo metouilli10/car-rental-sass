@@ -8,6 +8,8 @@ import {
   syncLocaleCookieOnResponse,
   tryDashboardLocaleRedirect,
 } from "@/lib/i18n/middleware-utils";
+import { isReservedStorefrontSlug, normalizeAgencySlug } from "@/lib/storefront/constants";
+import { getStorefrontPath } from "@/lib/storefront/routes";
 
 const authMiddleware = withAuth(
   function authMiddlewareInner() {
@@ -24,8 +26,28 @@ export default function middleware(
 ) {
   const pathname = request.nextUrl.pathname;
 
+  const legacyStorefrontMatch = pathname.match(/^\/storefront\/([^/]+)\/?$/);
+  if (legacyStorefrontMatch) {
+    const slug = normalizeAgencySlug(legacyStorefrontMatch[1] || "");
+    if (!isReservedStorefrontSlug(slug)) {
+      const url = request.nextUrl.clone();
+      url.pathname = getStorefrontPath(slug);
+      return NextResponse.redirect(url, 308);
+    }
+  }
+
   if (shouldSkipLocaleAndAuth(pathname)) {
     return NextResponse.next();
+  }
+
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length === 1) {
+    const slug = normalizeAgencySlug(segments[0] || "");
+    if (!isReservedStorefrontSlug(slug)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/storefront/${slug}`;
+      return NextResponse.rewrite(url);
+    }
   }
 
   const localeRedirect = tryDashboardLocaleRedirect(request);

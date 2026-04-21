@@ -12,6 +12,7 @@ import { canDeleteBookings } from "@/lib/permissions";
 import { hasVehicleFuelTypeColumn, updateVehicleStatusCompat } from "@/lib/vehicle-fuel-type";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
 import { createPerfLogger } from "@/lib/perf";
+import { markBookingRequestAsRead } from "@/lib/notifications/booking-requests";
 
 export type BookingStatusActionResult =
   | { success: true }
@@ -119,72 +120,120 @@ export async function createBooking(data: BookingFormData) {
         ? PaymentType.TRANSFER
         : validatedData.paymentType;
 
-    const createdBooking = await prisma.booking.create({
-      data: {
-        agencyId: session.user.agencyId,
-        customerId: validatedData.customerId,
-        vehicleId: validatedData.vehicleId,
-        startDate,
-        endDate,
-        pickupLocation: validatedData.pickupLocation || null,
-        returnLocation: validatedData.returnLocation || null,
-        pricePerDay: validatedData.pricePerDay,
-        totalPrice: validatedData.totalTtc,
-        pricingDays: validatedData.pricingDays,
-        pricingHours: validatedData.pricingHours,
-        addonsTotal: validatedData.addonsTotal,
-        discountType: validatedData.discountType ?? null,
-        discountValue: validatedData.discountValue,
-        discountAmount: validatedData.discountAmount,
-        taxEnabled: validatedData.taxEnabled,
-        taxRate: validatedData.taxRate,
-        totalHt: validatedData.totalHt,
-        totalTva: validatedData.totalTva,
-        totalTtc: validatedData.totalTtc,
-        paidNow: validatedData.paidNow,
-        remainingAmount: validatedData.remainingAmount,
-        flowVersion: "reservation_flow_v2",
-        depositAmount: validatedData.depositAmount,
-        status: validatedData.status,
-        depositStatus: "RECEIVED",
-        paymentStatus,
-        notes: validatedData.notes || null,
-        payments: {
-          create:
-            validatedData.paidNow > 0
-              ? {
-                  amount: validatedData.paidNow,
-                  type: normalizedPaymentType,
-                  status: "PAID",
-                  paidAt: new Date(),
-                }
-              : {
-                  amount: 0,
-                  type: normalizedPaymentType,
-                  status: "PENDING",
-                },
-        },
-        deposit: {
-          create: {
-            amount: validatedData.depositAmount,
-            status: "HELD",
+    const createdBooking = await prisma.$transaction(async (tx) => {
+      if (validatedData.bookingRequestId) {
+        const bookingRequest = await tx.bookingRequest.findFirst({
+          where: {
+            id: validatedData.bookingRequestId,
+            agencyId: session.user.agencyId,
+          },
+          select: {
+            id: true,
+            status: true,
+            bookingId: true,
+            vehicleId: true,
+          },
+        });
+
+        if (!bookingRequest) {
+          throw new Error("Demande de réservation introuvable pour cette agence");
+        }
+
+        if (bookingRequest.bookingId) {
+          throw new Error("Cette demande est déjà liée à une réservation");
+        }
+
+        if (bookingRequest.status !== "APPROVED") {
+          throw new Error("La demande doit être approuvée avant conversion");
+        }
+      }
+
+      const booking = await tx.booking.create({
+        data: {
+          agencyId: session.user.agencyId,
+          customerId: validatedData.customerId,
+          vehicleId: validatedData.vehicleId,
+          startDate,
+          endDate,
+          pickupLocation: validatedData.pickupLocation || null,
+          returnLocation: validatedData.returnLocation || null,
+          pricePerDay: validatedData.pricePerDay,
+          totalPrice: validatedData.totalTtc,
+          pricingDays: validatedData.pricingDays,
+          pricingHours: validatedData.pricingHours,
+          addonsTotal: validatedData.addonsTotal,
+          discountType: validatedData.discountType ?? null,
+          discountValue: validatedData.discountValue,
+          discountAmount: validatedData.discountAmount,
+          taxEnabled: validatedData.taxEnabled,
+          taxRate: validatedData.taxRate,
+          totalHt: validatedData.totalHt,
+          totalTva: validatedData.totalTva,
+          totalTtc: validatedData.totalTtc,
+          paidNow: validatedData.paidNow,
+          remainingAmount: validatedData.remainingAmount,
+          flowVersion: "reservation_flow_v2",
+          depositAmount: validatedData.depositAmount,
+          status: validatedData.status,
+          depositStatus: "RECEIVED",
+          paymentStatus,
+          notes: validatedData.notes || null,
+          payments: {
+            create:
+              validatedData.paidNow > 0
+                ? {
+                    amount: validatedData.paidNow,
+                    type: normalizedPaymentType,
+                    status: "PAID",
+                    paidAt: new Date(),
+                  }
+                : {
+                    amount: 0,
+                    type: normalizedPaymentType,
+                    status: "PENDING",
+                  },
+          },
+          deposit: {
+            create: {
+              amount: validatedData.depositAmount,
+              status: "HELD",
+            },
+          },
+          addons: {
+            create: validatedData.addons.map((addon) => ({
+              label: addon.label,
+              quantity: addon.quantity,
+              unitAmount: addon.unitAmount,
+              totalAmount: addon.quantity * addon.unitAmount,
+              isDefault: addon.isDefault ?? false,
+            })),
           },
         },
-        addons: {
-          create: validatedData.addons.map((addon) => ({
-            label: addon.label,
-            quantity: addon.quantity,
-            unitAmount: addon.unitAmount,
-            totalAmount: addon.quantity * addon.unitAmount,
-            isDefault: addon.isDefault ?? false,
-          })),
-        },
-      },
-      select: { id: true },
+        select: { id: true },
+      });
+
+      if (validatedData.bookingRequestId) {
+        await markBookingRequestAsRead(
+          validatedData.bookingRequestId,
+          session.user.agencyId,
+          tx,
+        );
+
+        await tx.bookingRequest.update({
+          where: { id: validatedData.bookingRequestId },
+          data: {
+            status: "CONVERTED",
+            bookingId: booking.id,
+          },
+        });
+      }
+
+      return booking;
     });
     perf.step("booking-created", { bookingId: createdBooking.id });
 
     revalidatePath("/bookings");
+    revalidatePath("/booking-requests");
     void syncAgencyOnboardingState(session.user.agencyId).catch((syncError) => {
       console.error("syncAgencyOnboardingState error:", syncError);
     });

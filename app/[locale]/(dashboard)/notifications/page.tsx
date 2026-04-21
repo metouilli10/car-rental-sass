@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardCheck,
+  ClipboardList,
   Clock3,
   Shield,
   Sticker,
@@ -41,6 +42,7 @@ const TYPE_ICONS: Record<NotificationType, ElementType> = {
   TECH_INSPECTION: ClipboardCheck,
   VIGNETTE: Sticker,
   RESERVATION_STARTING_SOON: Clock3,
+  BOOKING_REQUEST_CREATED: ClipboardList,
 };
 
 const TYPE_TONES: Record<NotificationType, string> = {
@@ -49,6 +51,7 @@ const TYPE_TONES: Record<NotificationType, string> = {
   TECH_INSPECTION: "bg-sky-50 text-sky-700",
   VIGNETTE: "bg-emerald-50 text-emerald-700",
   RESERVATION_STARTING_SOON: "bg-violet-50 text-violet-700",
+  BOOKING_REQUEST_CREATED: "bg-emerald-50 text-emerald-700",
 };
 
 const SEVERITY_CONFIG: Record<
@@ -191,7 +194,13 @@ type PageSearchParams = Promise<{
 
 type PageStatusFilter = "ALL" | NotificationStatus;
 type PageSeverityFilter = "ALL" | NotificationSeverity;
-type PageTypeFilter = "ALL" | NotificationType;
+type PageTypeFilter =
+  | "ALL"
+  | "OIL_CHANGE"
+  | "INSURANCE_EXPIRY"
+  | "TECH_INSPECTION"
+  | "VIGNETTE"
+  | "RESERVATION_STARTING_SOON";
 
 type PageParams = Promise<{
   locale: string;

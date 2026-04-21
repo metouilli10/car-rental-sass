@@ -38,6 +38,10 @@ interface ReservationWizardPageProps {
   prefilledCustomerId?: string;
   prefilledStartAt?: string;
   prefilledEndAt?: string;
+  prefilledPickupLocation?: string;
+  prefilledReturnLocation?: string;
+  prefilledNotes?: string;
+  prefilledBookingRequestId?: string;
   onSubmit: (
     data: BookingFormData,
   ) => Promise<{ error: string } | { success: boolean; bookingId: string } | void>;
@@ -51,6 +55,7 @@ interface DraftAddon {
 }
 
 interface ReservationDraft {
+  bookingRequestId?: string;
   step: 1 | 2 | 3 | 4;
   startAt: string;
   endAt: string;
@@ -73,7 +78,7 @@ interface ReservationDraft {
 
 type StepErrors = Partial<Record<string, string>>;
 
-const DRAFT_KEY = "locapro-reservation-wizard-draft-v1";
+const DRAFT_KEY = "locaryx-reservation-wizard-draft-v1";
 
 const INITIAL_DRAFT: ReservationDraft = {
   step: 1,
@@ -105,6 +110,10 @@ export function ReservationWizardPage({
   prefilledCustomerId,
   prefilledStartAt,
   prefilledEndAt,
+  prefilledPickupLocation,
+  prefilledReturnLocation,
+  prefilledNotes,
+  prefilledBookingRequestId,
   onSubmit,
 }: ReservationWizardPageProps) {
   const { t } = useI18n();
@@ -336,6 +345,23 @@ export function ReservationWizardPage({
     });
   }, [prefilledEndAt, prefilledStartAt]);
 
+  useEffect(() => {
+    if (
+      !prefilledPickupLocation &&
+      !prefilledReturnLocation &&
+      !prefilledNotes &&
+      !prefilledBookingRequestId
+    ) return;
+
+    setDraft((prev) => ({
+      ...prev,
+      bookingRequestId: prev.bookingRequestId || prefilledBookingRequestId || prev.bookingRequestId,
+      pickupLocation: prev.pickupLocation || prefilledPickupLocation || prev.pickupLocation,
+      returnLocation: prev.returnLocation || prefilledReturnLocation || prev.returnLocation,
+      notes: prev.notes || prefilledNotes || prev.notes,
+    }));
+  }, [prefilledBookingRequestId, prefilledNotes, prefilledPickupLocation, prefilledReturnLocation]);
+
   const warnings = useMemo(() => {
     const list: string[] = [];
     if (vehicleConflictByStatus || vehicleOverlapConflict) list.push(t("reservationWizard.warnings.vehicleConflict"));
@@ -427,6 +453,7 @@ export function ReservationWizardPage({
     setIsSubmitting(true);
     setFormError(null);
     const payload: BookingFormData = {
+      bookingRequestId: draft.bookingRequestId,
       customerId: draft.clientId,
       vehicleId: draft.vehicleId,
       startDate: draft.startAt,

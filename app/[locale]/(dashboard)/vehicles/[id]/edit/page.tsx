@@ -45,6 +45,7 @@ export default async function EditVehiclePage({
         currentKm: true,
         status: true,
         photoUrl: true,
+        publishedToWebsite: true,
       },
     }),
     getVehicleFuelType(id),
@@ -81,6 +82,7 @@ export default async function EditVehiclePage({
           currentKm: vehicle.currentKm ?? undefined,
           status: vehicle.status,
           photoUrl: vehicle.photoUrl ?? undefined,
+          publishedToWebsite: vehicle.publishedToWebsite,
         }}
         onSubmit={handleUpdate}
         submitLabel={pv.editSubmit}

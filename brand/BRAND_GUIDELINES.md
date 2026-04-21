@@ -1,4 +1,4 @@
-# LOCAPRO - Brand Guidelines & Design System
+# LOCARYX - Brand Guidelines & Design System
 
 **Brand name:** LocaPro  
 **Primary tagline:** *Votre agence, sous controle*  

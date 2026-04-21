@@ -65,6 +65,10 @@ export interface BookingListItem {
   deposit: {
     status: "HELD" | "PARTIAL_RETURNED" | "RETURNED" | "FORFEITED";
   } | null;
+  bookingRequest: {
+    id: string;
+    source: "WEBSITE";
+  } | null;
   risk: BookingRiskSummary;
 }
 

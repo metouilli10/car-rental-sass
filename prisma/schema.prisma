@@ -38,6 +38,17 @@ enum BookingStatus {
   CANCELED
 }
 
+enum BookingRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CONVERTED
+}
+
+enum BookingRequestSource {
+  WEBSITE
+}
+
 enum PaymentType {
   CASH
   CARD
@@ -140,6 +151,15 @@ enum ReminderType {
   VIGNETTE
 }
 
+enum NotificationType {
+  OIL_CHANGE
+  INSURANCE_EXPIRY
+  TECH_INSPECTION
+  VIGNETTE
+  RESERVATION_STARTING_SOON
+  BOOKING_REQUEST_CREATED
+}
+
 enum NotificationSeverity {
   INFO
   WARNING
@@ -156,6 +176,7 @@ enum NotificationStatus {
 enum NotificationChannel {
   IN_APP
   EMAIL
+  PUSH
   WHATSAPP
 }
 
@@ -178,65 +199,70 @@ enum VehicleDocumentType {
 }
 
 model Agency {
-  id       String @id @default(cuid())
-  name     String
-  address  String?
-  phone    String?
-  email    String?
-  city     String
-  rcNumber String?
-  logoUrl  String?
-  country  String @default("Morocco")
-  currency String @default("MAD")
+  id                 String    @id @default(cuid())
+  name               String
+  address            String?
+  phone              String?
+  email              String?
+  city               String
+  rcNumber           String?
+  logoUrl            String?
+  country            String    @default("Morocco")
+  currency           String    @default("MAD")
   subscriptionPaid   Boolean   @default(false)
   subscriptionEndsAt DateTime?
-  setupCompletedAt DateTime?
+  setupCompletedAt   DateTime?
 
-  onboardingVehicleAdded        Boolean @default(false)
-  onboardingReservationCreated  Boolean @default(false)
-  onboardingPaymentRecorded     Boolean @default(false)
-  onboardingDashboardExplored   Boolean @default(false)
-  onboardingCompleted           Boolean @default(false)
-  onboardingDismissed           Boolean @default(false)
+  onboardingVehicleAdded       Boolean @default(false)
+  onboardingReservationCreated Boolean @default(false)
+  onboardingPaymentRecorded    Boolean @default(false)
+  onboardingDashboardExplored  Boolean @default(false)
+  onboardingCompleted          Boolean @default(false)
+  onboardingDismissed          Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users            User[]
-  vehicles         Vehicle[]
-  customers        Customer[]
-  bookings         Booking[]
-  bookingComments  BookingComment[]
-  expenses         Expense[]
-  reminderRules    ReminderRule[]
-  notifications    Notification[]
-  vehicleDocuments VehicleDocument[]
-  infractions      Infraction[]
+  users             User[]
+  vehicles          Vehicle[]
+  customers         Customer[]
+  bookings          Booking[]
+  bookingRequests   BookingRequest[]
+  bookingComments   BookingComment[]
+  expenses          Expense[]
+  reminderRules     ReminderRule[]
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
+  vehicleDocuments  VehicleDocument[]
+  infractions       Infraction[]
+  websiteSettings   WebsiteSettings?
 
   @@map("agencies")
 }
 
 model User {
-  id                 String         @id @default(cuid())
-  email              String         @unique
-  password           String
-  name               String
-  role               UserRole       @default(EMPLOYEE)
-  isActive           Boolean        @default(true)
-  invitedAt          DateTime?
-  invitedById        String?
-  lastLoginAt        DateTime?
-  emailVerifiedAt    DateTime?
-  approvalStatus     ApprovalStatus @default(APPROVED)
+  id                  String         @id @default(cuid())
+  email               String         @unique
+  password            String
+  name                String
+  role                UserRole       @default(EMPLOYEE)
+  isActive            Boolean        @default(true)
+  invitedAt           DateTime?
+  invitedById         String?
+  lastLoginAt         DateTime?
+  emailVerifiedAt     DateTime?
+  approvalStatus      ApprovalStatus @default(APPROVED)
   permissionOverrides Json?
-  agencyId           String
+  agencyId            String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  agency              Agency                  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-  bookingComments     BookingComment[]
+  agency                  Agency                   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  bookingComments         BookingComment[]
   emailVerificationTokens EmailVerificationToken[]
+  pushSubscriptions       PushSubscription[]
+  notificationEvents      NotificationEvent[]
 
   @@index([agencyId])
   @@index([agencyId, role])
@@ -244,12 +270,12 @@ model User {
 }
 
 model EmailVerificationToken {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   userId     String
-  tokenHash  String   @unique
+  tokenHash  String    @unique
   expiresAt  DateTime
   consumedAt DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -259,14 +285,14 @@ model EmailVerificationToken {
 }
 
 model RateLimitBucket {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   scope         String
   key           String
-  count         Int      @default(0)
+  count         Int       @default(0)
   windowStartAt DateTime
   lockedUntil   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@unique([scope, key])
   @@index([scope, windowStartAt])
@@ -304,17 +330,18 @@ model Vehicle {
   hasAC             Boolean       @default(true)
   category          String        @default("Citadine")
   photoUrl          String?
+  publishedToWebsite Boolean      @default(false)
   mileage           Int?
   currentKm         Int?
   nextMaintenanceKm Int?
 
   // Maintenance — oil change
-  lastOilChangeMileageKm Int?
-  lastOilChangeDate      DateTime?
-  oilChangeIntervalKm    Int?
+  lastOilChangeMileageKm  Int?
+  lastOilChangeDate       DateTime?
+  oilChangeIntervalKm     Int?
   oilChangeIntervalMonths Int?
-  nextOilChangeMileageKm Int?
-  nextOilChangeDate      DateTime?
+  nextOilChangeMileageKm  Int?
+  nextOilChangeDate       DateTime?
 
   // Insurance
   insuranceProvider     String?
@@ -329,8 +356,8 @@ model Vehicle {
   technicalInspectionReminderDays Int[]
 
   // Vignette
-  vignetteExpiryDate    DateTime?
-  vignetteReminderDays  Int[]
+  vignetteExpiryDate   DateTime?
+  vignetteReminderDays Int[]
 
   // General
   maintenanceNotes String?
@@ -338,17 +365,19 @@ model Vehicle {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  agency        Agency         @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  agency        Agency            @relation(fields: [agencyId], references: [id], onDelete: Cascade)
   bookings      Booking[]
+  bookingRequests BookingRequest[]
   expenses      Expense[]
   notifications Notification[]
   documents     VehicleDocument[]
   infractions   Infraction[]
 
+  @@unique([agencyId, plate])
   @@index([agencyId])
   @@index([status])
   @@index([agencyId, status], map: "vehicles_agency_status_idx")
-  @@unique([agencyId, plate])
+  @@index([agencyId, publishedToWebsite], map: "vehicles_agency_published_to_website_idx")
   @@map("vehicles")
 }
 
@@ -358,27 +387,27 @@ enum CustomerType {
 }
 
 model Customer {
-  id                  String       @id @default(cuid())
-  agencyId            String
-  customerType        CustomerType @default(PERSONNE_PHYSIQUE)
-  name                String
-  email               String?
-  phone               String
-  passportOrCIN       String?
-  passportOrCINExpiry DateTime?
-  passportPhotoUrl    String?
+  id                   String       @id @default(cuid())
+  agencyId             String
+  customerType         CustomerType @default(PERSONNE_PHYSIQUE)
+  name                 String
+  email                String?
+  phone                String
+  passportOrCIN        String?
+  passportOrCINExpiry  DateTime?
+  passportPhotoUrl     String?
   passportPhotoBackUrl String?
-  address             String?
-  dateOfBirth         DateTime?
-  nationality         String       @default("Marocaine")
-  licenseNumber       String?
-  licenseExpiry       DateTime?
-  licensePhotoUrl     String?
-  licensePhotoBackUrl String?
+  address              String?
+  dateOfBirth          DateTime?
+  nationality          String       @default("Marocaine")
+  licenseNumber        String?
+  licenseExpiry        DateTime?
+  licensePhotoUrl      String?
+  licensePhotoBackUrl  String?
   // Personne morale
-  ice                 String?
-  rc                  String?
-  representativeName String?
+  ice                  String?
+  rc                   String?
+  representativeName   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -392,7 +421,7 @@ model Customer {
 }
 
 model Booking {
-  id               String                 @id @default(cuid())
+  id               String               @id @default(cuid())
   agencyId         String
   vehicleId        String
   customerId       String
@@ -402,26 +431,26 @@ model Booking {
   pricePerDay      Float
   totalPrice       Float
   depositAmount    Float
-  status           BookingStatus          @default(CONFIRMED)
-  paymentStatus    BookingPaymentStatus   @default(PENDING)
-  depositStatus    BookingDepositStatus   @default(PENDING)
+  status           BookingStatus        @default(CONFIRMED)
+  paymentStatus    BookingPaymentStatus @default(PENDING)
+  depositStatus    BookingDepositStatus @default(PENDING)
   notes            String?
   pickupLocation   String?
   returnLocation   String?
-  hasFullInsurance Boolean                @default(false)
-  pricingDays      Float                  @default(0)
-  pricingHours     Int                    @default(0)
-  addonsTotal      Float                  @default(0)
+  hasFullInsurance Boolean              @default(false)
+  pricingDays      Float                @default(0)
+  pricingHours     Int                  @default(0)
+  addonsTotal      Float                @default(0)
   discountType     DiscountType?
-  discountValue    Float                  @default(0)
-  discountAmount   Float                  @default(0)
-  taxEnabled       Boolean                @default(false)
-  taxRate          Float                  @default(20)
-  totalHt          Float                  @default(0)
-  totalTva         Float                  @default(0)
-  totalTtc         Float                  @default(0)
-  paidNow          Float                  @default(0)
-  remainingAmount  Float                  @default(0)
+  discountValue    Float                @default(0)
+  discountAmount   Float                @default(0)
+  taxEnabled       Boolean              @default(false)
+  taxRate          Float                @default(20)
+  totalHt          Float                @default(0)
+  totalTva         Float                @default(0)
+  totalTtc         Float                @default(0)
+  paidNow          Float                @default(0)
+  remainingAmount  Float                @default(0)
   flowVersion      String?
   contractImageUrl String?
   contractSignedAt DateTime?
@@ -437,8 +466,10 @@ model Booking {
   deposit       Deposit?
   addons        BookingAddon[]
   comments      BookingComment[]
+  bookingRequest BookingRequest?
   damageReports DamageReport[]
   infractions   Infraction[]
+  notifications Notification[]
 
   @@index([agencyId])
   @@index([vehicleId])
@@ -452,6 +483,59 @@ model Booking {
   @@index([agencyId, status, startDate, endDate], map: "bookings_agency_status_start_end_idx")
   @@index([agencyId, status, endDate], map: "bookings_agency_status_end_idx")
   @@map("bookings")
+}
+
+model WebsiteSettings {
+  id               String   @id @default(cuid())
+  agencyId         String   @unique
+  agencySlug       String   @unique
+  siteTitle        String?
+  heroTitle        String?
+  heroSubtitle     String?
+  heroImageUrl     String?
+  contactPhone     String?
+  whatsappPhone    String?
+  contactEmail     String?
+  address          String?
+  pickupLocations  String[] @default([])
+  isWebsiteEnabled Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+
+  @@map("website_settings")
+}
+
+model BookingRequest {
+  id             String               @id @default(cuid())
+  agencyId       String
+  vehicleId      String
+  bookingId      String?              @unique
+  fullName       String
+  email          String
+  phone          String
+  pickupDate     DateTime
+  returnDate     DateTime
+  pickupLocation String
+  returnLocation String
+  note           String?
+  status         BookingRequestStatus @default(PENDING)
+  source         BookingRequestSource @default(WEBSITE)
+  isRead         Boolean              @default(false)
+  readAt         DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  agency  Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  vehicle Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([agencyId])
+  @@index([vehicleId])
+  @@index([agencyId, status, createdAt], map: "booking_requests_agency_status_created_at_idx")
+  @@index([agencyId, isRead, createdAt], map: "booking_requests_agency_is_read_created_at_idx")
+  @@map("booking_requests")
 }
 
 model BookingComment {
@@ -548,7 +632,7 @@ model Expense {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  agency  Agency  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  agency  Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
   vehicle Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
 
   @@index([agencyId, date])
@@ -574,7 +658,7 @@ model DamageReport {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  booking      Booking              @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking      Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   damagePhotos DamagePhoto[]
   sections     InspectionSection[]
 
@@ -583,11 +667,11 @@ model DamageReport {
 }
 
 model DamagePhoto {
-  id              String  @id @default(cuid())
-  damageReportId  String
-  sectionId       String?
-  photoUrl        String
-  description     String?
+  id             String  @id @default(cuid())
+  damageReportId String
+  sectionId      String?
+  photoUrl       String
+  description    String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -601,12 +685,12 @@ model DamagePhoto {
 }
 
 model InspectionSection {
-  id              String                @id @default(cuid())
-  damageReportId  String
-  sectionType     InspectionSectionType
-  status          InspectionStatus      @default(OK)
-  notes           String?
-  damageCost      Float                 @default(0)
+  id             String                @id @default(cuid())
+  damageReportId String
+  sectionType    InspectionSectionType
+  status         InspectionStatus      @default(OK)
+  notes          String?
+  damageCost     Float                 @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -639,60 +723,97 @@ model ReminderRule {
 }
 
 model Notification {
-  id           String               @id @default(cuid())
-  agencyId     String
-  vehicleId    String
-  type         ReminderType
-  title        String
-  body         String
-  severity     NotificationSeverity
-  dueAt        DateTime?
-  dueMileageKm Int?
-  status       NotificationStatus   @default(OPEN)
-  snoozedUntil DateTime?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
+  id              String               @id @default(cuid())
+  agencyId        String
+  vehicleId       String?
+  bookingId       String?
+  type            NotificationType
+  dedupeKey       String
+  title           String
+  body            String
+  severity        NotificationSeverity
+  actionUrl       String?
+  dueAt           DateTime?
+  dueMileageKm    Int?
+  sentPushAt      DateTime?
+  lastEvaluatedAt DateTime?
+  status          NotificationStatus   @default(OPEN)
+  snoozedUntil    DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
   agency  Agency              @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-  vehicle Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicle Vehicle?            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  booking Booking?            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   events  NotificationEvent[]
 
-  @@unique([agencyId, vehicleId, type])
+  @@unique([agencyId, dedupeKey])
   @@index([agencyId])
   @@index([vehicleId])
+  @@index([bookingId])
   @@index([status])
+  @@index([agencyId, status, severity, dueAt], map: "notifications_agency_status_severity_due_at_idx")
   @@index([agencyId, status, severity, updatedAt], map: "notifications_agency_status_severity_updated_at_idx")
   @@map("notifications")
 }
 
 model NotificationEvent {
-  id                String                  @id @default(cuid())
-  notificationId    String
-  channel           NotificationChannel
-  eventType         NotificationEventType   @default(CREATED)
-  status            NotificationEventStatus @default(PENDING)
-  providerMessageId String?
-  lastError         String?
-  createdAt         DateTime                @default(now())
+  id                 String                  @id @default(cuid())
+  notificationId     String
+  userId             String?
+  pushSubscriptionId String?
+  channel            NotificationChannel
+  eventType          NotificationEventType   @default(CREATED)
+  status             NotificationEventStatus @default(PENDING)
+  providerMessageId  String?
+  lastError          String?
+  createdAt          DateTime                @default(now())
 
-  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  notification     Notification      @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user             User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  pushSubscription PushSubscription? @relation(fields: [pushSubscriptionId], references: [id], onDelete: SetNull)
 
   @@index([notificationId])
+  @@index([userId])
+  @@index([pushSubscriptionId])
   @@index([notificationId, channel, eventType, status])
   @@map("notification_events")
 }
 
+model PushSubscription {
+  id          String   @id @default(cuid())
+  agencyId    String
+  userId      String
+  endpoint    String   @unique
+  p256dh      String
+  auth        String
+  userAgent   String?
+  deviceLabel String?
+  platform    String?
+  isActive    Boolean  @default(true)
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agency Agency              @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  user   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events NotificationEvent[]
+
+  @@index([agencyId, userId, isActive])
+  @@map("push_subscriptions")
+}
+
 model VehicleDocument {
-  id        String              @id @default(cuid())
-  agencyId  String
-  vehicleId String
-  type      VehicleDocumentType
-  reference String?
-  startDate DateTime?
+  id         String              @id @default(cuid())
+  agencyId   String
+  vehicleId  String
+  type       VehicleDocumentType
+  reference  String?
+  startDate  DateTime?
   expiryDate DateTime?
-  fileUrl   String?
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
+  fileUrl    String?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
 
   agency  Agency  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
   vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
@@ -704,17 +825,17 @@ model VehicleDocument {
 }
 
 model Infraction {
-  id          String           @id @default(cuid())
-  agencyId    String
-  vehicleId   String
-  bookingId   String?
-  customerId  String?
-  date        DateTime
-  time        String?
-  type        InfractionType   @default(OTHER)
-  status      InfractionStatus @default(PENDING)
-  amount      Float?
-  notes       String?
+  id         String           @id @default(cuid())
+  agencyId   String
+  vehicleId  String
+  bookingId  String?
+  customerId String?
+  date       DateTime
+  time       String?
+  type       InfractionType   @default(OTHER)
+  status     InfractionStatus @default(PENDING)
+  amount     Float?
+  notes      String?
 
   // Snapshot fields (frozen at assignment)
   clientName  String?

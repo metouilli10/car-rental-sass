@@ -24,7 +24,7 @@ export type NotificationPresentationInput = {
   dueMileageKm: number | null;
   snoozedUntil: DateLike | null;
   updatedAt: DateLike;
-  vehicle: NotificationVehicle;
+  vehicle?: NotificationVehicle | null;
 };
 
 const REMINDER_TYPES: NotificationType[] = [
@@ -72,6 +72,7 @@ export function getNotificationTypeLabel(
     if (type === "INSURANCE_EXPIRY") return "التأمين";
     if (type === "TECH_INSPECTION") return "الفحص التقني";
     if (type === "VIGNETTE") return "الضريبة";
+    if (type === "BOOKING_REQUEST_CREATED") return "طلب حجز";
     return "انطلاق الحجز";
   }
 
@@ -79,6 +80,7 @@ export function getNotificationTypeLabel(
   if (type === "INSURANCE_EXPIRY") return "Assurance";
   if (type === "TECH_INSPECTION") return "Visite technique";
   if (type === "VIGNETTE") return "Vignette";
+  if (type === "BOOKING_REQUEST_CREATED") return "Demande de réservation";
   return "Depart de reservation";
 }
 
@@ -168,6 +170,9 @@ export function getNotificationPrimaryActionLabel(
   locale: AppLocale,
   type: NotificationType
 ) {
+  if (type === "BOOKING_REQUEST_CREATED") {
+    return isArabic(locale) ? "عرض الطلب" : "Voir la demande";
+  }
   if (type === "RESERVATION_STARTING_SOON") {
     return isArabic(locale) ? "عرض الحجز" : "Voir la reservation";
   }
@@ -191,7 +196,9 @@ export function getNotificationDisplayCopy(
     };
   }
 
-  const vehicleLabel = `${input.vehicle.make} ${input.vehicle.model} (${input.vehicle.plate})`;
+  const vehicleLabel = input.vehicle
+    ? `${input.vehicle.make} ${input.vehicle.model} (${input.vehicle.plate})`
+    : null;
   const reminderTitle = isArabic(input.locale)
     ? (() => {
         if (input.type === "OIL_CHANGE") return "تذكير تغيير الزيت";
@@ -207,7 +214,9 @@ export function getNotificationDisplayCopy(
       })();
 
   const fallbackBody = isArabic(input.locale) ? "إجراء مطلوب" : "Action requise";
-  const reminderBody = `${vehicleLabel} - ${dueLabel ?? fallbackBody}`;
+  const reminderBody = vehicleLabel
+    ? `${vehicleLabel} - ${dueLabel ?? fallbackBody}`
+    : dueLabel ?? fallbackBody;
 
   return {
     title: reminderTitle,

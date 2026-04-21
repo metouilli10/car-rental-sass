@@ -107,13 +107,20 @@ export function ReservationsTable({ bookings, role, today }: ReservationsTablePr
                     )}
                   >
                     <div className="min-w-0 break-words">
-                      <Link
-                        href={lp(`/customers/${booking.customer.id}`)}
-                        onClick={stopPropagation}
-                        className="font-semibold text-foreground underline-offset-4 hover:underline block truncate"
-                      >
-                        {booking.customer.name}
-                      </Link>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          href={lp(`/customers/${booking.customer.id}`)}
+                          onClick={stopPropagation}
+                          className="font-semibold text-foreground underline-offset-4 hover:underline block truncate"
+                        >
+                          {booking.customer.name}
+                        </Link>
+                        {booking.bookingRequest ? (
+                          <Badge variant="info" className="text-[11px]">
+                            Site web
+                          </Badge>
+                        ) : null}
+                      </div>
                       <div className="text-muted-foreground text-xs truncate">
                         {booking.customer.phone}
                       </div>

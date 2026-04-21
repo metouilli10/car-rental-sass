@@ -7,6 +7,7 @@ import {
   getNotificationsSummary,
   type NotificationSummaryItem,
 } from "@/lib/notifications/queries";
+import { getUnreadBookingRequestCount } from "@/lib/notifications/booking-requests";
 import { prisma } from "@/lib/prisma";
 import { getEffectivePermissions } from "@/lib/permissions";
 import { AuthzError, getCurrentUserOrThrow } from "@/lib/authz";
@@ -81,6 +82,7 @@ export default async function DashboardLayout({
     count: 0,
     items: [],
   };
+  let unreadBookingRequestCount = 0;
   let onboardingNav: {
     eligible: boolean;
     completed: boolean;
@@ -89,7 +91,7 @@ export default async function DashboardLayout({
   } | undefined;
 
   try {
-    const [agencyResult, notifResult] = await Promise.all([
+    const [agencyResult, notifResult, unreadBookingRequestResult] = await Promise.all([
       prisma.agency.findUnique({
         where: { id: agencyId },
         select: {
@@ -110,9 +112,11 @@ export default async function DashboardLayout({
           items: [],
         })
       ),
+      getUnreadBookingRequestCount(agencyId).catch(() => 0),
     ]);
     agency = agencyResult;
     notifSummary = notifResult;
+    unreadBookingRequestCount = unreadBookingRequestResult;
 
     if (agency?.setupCompletedAt == null) {
       redirect("/setup");
@@ -157,6 +161,7 @@ export default async function DashboardLayout({
           role={currentUser.role}
           permissions={permissions}
           onboarding={onboardingNav}
+          unreadBookingRequestCount={unreadBookingRequestCount}
         />
 
         <Toaster richColors position="top-right" />
