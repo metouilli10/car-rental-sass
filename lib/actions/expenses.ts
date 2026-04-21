@@ -1,9 +1,8 @@
 "use server";
 
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { ExpenseCategory, PaymentType } from "@prisma/client";
-import { authOptions } from "@/lib/auth";
+import { getCurrentUserAccessOrThrow } from "@/lib/authz";
 import { getEffectivePermissions } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import {
@@ -40,12 +39,9 @@ function toDateOrThrow(value: string, field: string) {
 }
 
 export async function createExpense(data: ExpenseFormData): Promise<ExpenseResult> {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new Error("Non autorise");
-  }
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  const permissions = getEffectivePermissions(session.user.role, session.user.permissions);
+  const permissions = getEffectivePermissions(currentUser.role, currentUser.permissions);
   if (!permissions["finance.view"] && !permissions["caisse.view"]) {
     return { error: "Acces refuse: droits finance ou caisse requis" };
   }
@@ -60,7 +56,7 @@ export async function createExpense(data: ExpenseFormData): Promise<ExpenseResul
 
     if (validated.vehicleId) {
       const vehicle = await prisma.vehicle.findFirst({
-        where: { id: validated.vehicleId, agencyId: session.user.agencyId },
+        where: { id: validated.vehicleId, agencyId: currentUser.agencyId },
         select: { id: true },
       });
 
@@ -71,7 +67,7 @@ export async function createExpense(data: ExpenseFormData): Promise<ExpenseResul
 
     const created = await expenseDelegate.create({
       data: {
-        agencyId: session.user.agencyId,
+        agencyId: currentUser.agencyId,
         date: toDateOrThrow(validated.date, "date"),
         category: validated.category,
         amount: validated.amount,
@@ -95,12 +91,9 @@ export async function createExpense(data: ExpenseFormData): Promise<ExpenseResul
 }
 
 export async function listExpenses(filters: ListExpensesFilters = {}): Promise<ExpenseListItem[]> {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new Error("Non autorise");
-  }
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  const permissions = getEffectivePermissions(session.user.role, session.user.permissions);
+  const permissions = getEffectivePermissions(currentUser.role, currentUser.permissions);
   if (!permissions["finance.view"] && !permissions["caisse.view"]) {
     return [];
   }
@@ -115,7 +108,7 @@ export async function listExpenses(filters: ListExpensesFilters = {}): Promise<E
   const toDate = validated.to ? toDateOrThrow(validated.to, "to") : undefined;
 
   const where = {
-    agencyId: session.user.agencyId,
+    agencyId: currentUser.agencyId,
     ...(validated.category ? { category: validated.category } : {}),
     ...(validated.vehicleId ? { vehicleId: validated.vehicleId } : {}),
     ...(validated.method ? { method: validated.method } : {}),
@@ -159,12 +152,9 @@ export async function listExpenses(filters: ListExpensesFilters = {}): Promise<E
 }
 
 export async function deleteExpense(id: string): Promise<DeleteExpenseResult> {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new Error("Non autorise");
-  }
+  const currentUser = await getCurrentUserAccessOrThrow();
 
-  const permissions = getEffectivePermissions(session.user.role, session.user.permissions);
+  const permissions = getEffectivePermissions(currentUser.role, currentUser.permissions);
   if (!permissions["finance.view"] && !permissions["caisse.view"]) {
     return { error: "Acces refuse: droits finance ou caisse requis" };
   }
@@ -176,7 +166,7 @@ export async function deleteExpense(id: string): Promise<DeleteExpenseResult> {
     }
 
     const target = await expenseDelegate.findFirst({
-      where: { id, agencyId: session.user.agencyId },
+      where: { id, agencyId: currentUser.agencyId },
       select: { id: true },
     });
 
