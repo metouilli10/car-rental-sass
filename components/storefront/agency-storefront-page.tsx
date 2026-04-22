@@ -20,10 +20,26 @@ interface AgencyStorefrontPageProps {
 
 export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPageProps) {
   const siteTitle = settings.siteTitle || settings.agency.name;
+  const city = settings.agency.city;
+  const heroTitle = settings.heroTitle || `Location de voitures à ${city}`;
+  const heroSubtitle =
+    settings.heroSubtitle ||
+    `Découvrez notre sélection exclusive de véhicules à ${city} et profitez d'un accompagnement humain, rapide et rassurant à chaque étape.`;
   const contactPhone = settings.contactPhone || settings.agency.phone;
+  const whatsappPhone = settings.whatsappPhone || settings.contactPhone || settings.agency.phone;
   const contactEmail = settings.contactEmail || settings.agency.email;
-  const address = settings.address || settings.agency.address || settings.agency.city;
-  const heroContactHref = contactPhone ? `tel:${contactPhone}` : contactEmail ? `mailto:${contactEmail}` : null;
+  const address = settings.address || settings.agency.address || city;
+  const heroContactHref = whatsappPhone
+    ? getWhatsAppHref(whatsappPhone)
+    : contactPhone
+      ? `tel:${contactPhone}`
+      : contactEmail
+        ? `mailto:${contactEmail}`
+        : null;
+  const pickupLocationSummary =
+    settings.pickupLocations.length > 0
+      ? settings.pickupLocations.slice(0, 2).join(" • ")
+      : `Retrait à ${city}`;
   const currentYear = new Date().getFullYear();
 
   return (
@@ -45,7 +61,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
             )}
             <div>
               <p className="text-lg font-extrabold tracking-[-0.04em]">{siteTitle}</p>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">{settings.agency.city}</p>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">{city}</p>
             </div>
           </a>
 
@@ -97,13 +113,11 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
                 id="storefront-hero-title"
                 className="max-w-none text-[2.85rem] font-extrabold leading-[1.05] tracking-[-0.068em] text-[#07152f] sm:text-[3.75rem] lg:text-[4.6rem]"
               >
-                <span className="block whitespace-nowrap">Louez une voiture en</span>
-                <span className="block">toute simplicité.</span>
+                {heroTitle}
               </h1>
 
               <p className="mt-6 max-w-2xl text-[1.02rem] leading-[1.5] text-[#24364d] sm:text-[1.12rem] lg:text-[1.18rem]">
-                Découvrez notre sélection exclusive de véhicules à Casablanca et profitez d&apos;un accompagnement
-                humain, rapide et rassurant à chaque étape.
+                {heroSubtitle}
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -143,7 +157,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
                 <div className="relative z-10 w-full max-w-[42.5rem] translate-y-6 lg:max-w-[45rem] lg:translate-x-5 lg:translate-y-6">
                   <Image
                     src="/assets/touaareg.png"
-                    alt="Volkswagen Touareg bleu - ALGCAR Casablanca"
+                    alt={`Volkswagen Touareg bleu - ${siteTitle}`}
                     width={1411}
                     height={850}
                     priority
@@ -199,7 +213,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <p className="text-sm font-bold uppercase tracking-[0.24em] text-[#1a365d]">
-              LOCATION DE VOITURES À CASABLANCA
+              LOCATION DE VOITURES À {city.toUpperCase()}
             </p>
             <h2 className="mt-3 text-4xl font-extrabold tracking-[-0.05em] text-[#002045] sm:text-5xl">
               Notre flotte premium
@@ -256,7 +270,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
         </div>
       </section>
 
-      <ClosingCta contactHref={heroContactHref || "#contact"} />
+      <ClosingCta contactHref={heroContactHref || "#contact"} pickupLocationSummary={pickupLocationSummary} />
 
       <footer className="border-t border-white/10 bg-[linear-gradient(135deg,#4f9cff_0%,#256fd3_100%)] text-white">
         <div
@@ -264,9 +278,9 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
           className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.35fr_0.8fr_0.95fr_1fr] lg:px-8"
         >
           <div className="max-w-sm">
-            <p className="text-2xl font-extrabold tracking-[-0.05em]">ALG CAR</p>
+            <p className="text-2xl font-extrabold tracking-[-0.05em]">{siteTitle}</p>
             <p className="mt-4 text-sm leading-7 text-white/82">
-              Location de voitures premium à Casablanca. Réservation simple côté client, validation humaine côté agence.
+              {heroSubtitle}
             </p>
           </div>
 
@@ -291,10 +305,15 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/70">Contact</p>
             <div className="mt-4 space-y-3 text-sm font-medium text-white/86">
-              <p>Casablanca</p>
+              <p>{address}</p>
               {contactPhone ? (
                 <a href={`tel:${contactPhone}`} className="block transition hover:text-white">
                   {contactPhone}
+                </a>
+              ) : null}
+              {whatsappPhone ? (
+                <a href={getWhatsAppHref(whatsappPhone)} className="block transition hover:text-white">
+                  WhatsApp {whatsappPhone}
                 </a>
               ) : null}
               {contactEmail ? (
@@ -310,6 +329,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
             <p className="mt-4 max-w-xs text-sm leading-7 text-white/82">
               Choisissez un véhicule et envoyez une demande claire en quelques instants.
             </p>
+            <p className="mt-3 max-w-xs text-xs font-medium leading-5 text-white/70">{pickupLocationSummary}</p>
             <a
               href="#fleet"
               className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-bold text-[#256fd3] shadow-[0_14px_24px_rgba(11,27,43,0.14)] transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-[0_18px_28px_rgba(11,27,43,0.18)]"
@@ -321,7 +341,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
 
         <div className="border-t border-white/10">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs font-medium text-white/70 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-            <p>© ALG CAR {currentYear}</p>
+            <p>© {siteTitle} {currentYear}</p>
             <div className="flex flex-wrap gap-4">
               <a href="#contact" className="transition hover:text-white">
                 Mentions légales
@@ -337,7 +357,13 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
   );
 }
 
-function ClosingCta({ contactHref }: { contactHref: string }) {
+function ClosingCta({
+  contactHref,
+  pickupLocationSummary,
+}: {
+  contactHref: string;
+  pickupLocationSummary: string;
+}) {
   return (
     <section aria-labelledby="storefront-closing-cta-title" className="px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
       <div className="mx-auto max-w-6xl">
@@ -373,7 +399,7 @@ function ClosingCta({ contactHref }: { contactHref: string }) {
                 Contacter l’agence
               </a>
               <p className="pt-1 text-center text-xs font-medium leading-5 text-slate-500 sm:basis-full lg:text-left">
-                Confirmation humaine • Réponse rapide • Retrait à Casablanca
+                Confirmation humaine • Réponse rapide • {pickupLocationSummary}
               </p>
             </div>
           </div>
@@ -381,6 +407,11 @@ function ClosingCta({ contactHref }: { contactHref: string }) {
       </div>
     </section>
   );
+}
+
+function getWhatsAppHref(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  return digits ? `https://wa.me/${digits}` : `tel:${phone}`;
 }
 
 function HeroTrustItem({

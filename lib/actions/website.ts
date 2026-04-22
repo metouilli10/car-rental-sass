@@ -17,11 +17,19 @@ export async function saveWebsiteSettings(data: WebsiteSettingsFormData) {
 
   try {
     const validated = websiteSettingsSchema.parse(data);
+    const previousSettings = await prisma.websiteSettings.findUnique({
+      where: { agencyId: currentUser.agencyId },
+      select: { agencySlug: true },
+    });
+
     await upsertWebsiteSettingsForAgency(currentUser.agencyId, validated);
 
     revalidatePath("/settings/website");
     revalidatePath("/vehicles");
     revalidatePath(getStorefrontPath(validated.agencySlug));
+    if (previousSettings?.agencySlug && previousSettings.agencySlug !== validated.agencySlug) {
+      revalidatePath(getStorefrontPath(previousSettings.agencySlug));
+    }
     return { success: true as const };
   } catch (error) {
     console.error("saveWebsiteSettings error:", error);

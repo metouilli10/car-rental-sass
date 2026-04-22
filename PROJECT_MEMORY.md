@@ -31,6 +31,20 @@ This is the canonical shared memory for the repository.
 
 ## Recent Changes Log
 
+### 2026-04-22 - Storefront settings now render on public site
+
+- `Change:` Wired public storefront hero, footer, contact, city/address, WhatsApp, and pickup-location copy to saved WebsiteSettings values instead of hard-coded demo text; revalidates the previous public slug when the slug changes.
+- `Impact:` Changes made in the dashboard Site web form now visibly update the public storefront while keeping the fixed Touareg hero image treatment.
+- `Touched:` `components/storefront/agency-storefront-page.tsx`, `lib/actions/website.ts`
+- `Follow-up:` none
+
+### 2026-04-22 - Storefront settings form aligned to public design
+
+- `Change:` Reorganized the dashboard Site web form into publication, identity, welcome message, contact, pickup/return, and public-info preview sections; removed the visible hero image field while preserving its stored value.
+- `Impact:` Agencies now configure coherent storefront information that matches the current Touareg-led public design without being prompted for unused hero imagery.
+- `Touched:` `components/settings/website-settings-form.tsx`
+- `Follow-up:` none
+
 ### 2026-04-22 - Storefront hero car rendering stabilized
 
 - `Change:` Marked the static Touareg hero image as unoptimized so it is served directly instead of through the Next image optimizer.
