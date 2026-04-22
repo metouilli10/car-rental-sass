@@ -31,6 +31,13 @@ This is the canonical shared memory for the repository.
 
 ## Recent Changes Log
 
+### 2026-04-22 - Storefront hero car rendering stabilized
+
+- `Change:` Marked the static Touareg hero image as unoptimized so it is served directly instead of through the Next image optimizer.
+- `Impact:` The public storefront hero reliably shows the car visual alongside the blue blob instead of rendering an empty optimized image response.
+- `Touched:` `components/storefront/agency-storefront-page.tsx`
+- `Follow-up:` none
+
 ### 2026-04-20 - Storefront hero rebuilt to match Stitch split layout
 
 - `Change:` Replaced the storefront’s dark full-bleed hero with a bright Stitch-style 2-column composition using the detached Touareg visual, organic blue blob backdrop, pill CTAs, compact trust row, and a softer header-to-hero transition.
