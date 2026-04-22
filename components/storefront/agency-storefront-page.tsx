@@ -156,7 +156,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
                 <div className="absolute bottom-[5%] left-1/2 h-12 w-[74%] -translate-x-1/2 rounded-[999px] bg-[radial-gradient(ellipse_at_center,rgba(17,24,39,0.32)_0%,rgba(17,24,39,0.18)_34%,rgba(17,24,39,0.06)_60%,rgba(17,24,39,0)_78%)] blur-md lg:bottom-[2.5%] lg:h-14 lg:w-[78%]" />
                 <div className="relative z-10 w-full max-w-[42.5rem] translate-y-6 lg:max-w-[45rem] lg:translate-x-5 lg:translate-y-6">
                   <Image
-                    src="/assets/touaareg.png"
+                    src="/assets/touaareg.webp"
                     alt={`Volkswagen Touareg bleu - ${siteTitle}`}
                     width={1411}
                     height={850}
