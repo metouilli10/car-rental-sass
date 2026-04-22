@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   AlertCircle,
   AlertTriangle,
+  ArrowUpRight,
   Calendar,
   CarFront,
   Check,
@@ -229,6 +230,78 @@ export function ReservationAlertCard({
         <Button asChild size="sm" className="w-full shrink-0 sm:w-auto">
           <Link href={withLocalePath(locale, `/damage-reports/new?bookingId=${bookingId}`)}>
             Faire l&apos;inspection
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function ReservationSourceCard({
+  bookingRequest,
+  locale = "fr",
+}: {
+  bookingRequest: {
+    id: string;
+    source: string;
+    status: string;
+    createdAt: Date;
+    fullName: string;
+    email: string;
+    phone: string;
+  };
+  locale?: AppLocale;
+}) {
+  const requestStatusLabel =
+    bookingRequest.status === "APPROVED"
+      ? "Approuvée"
+      : bookingRequest.status === "REJECTED"
+        ? "Rejetée"
+        : bookingRequest.status === "CONVERTED"
+          ? "Convertie"
+          : "En attente";
+  const requestStatusVariant =
+    bookingRequest.status === "APPROVED"
+      ? "success"
+      : bookingRequest.status === "REJECTED"
+        ? "destructive"
+        : bookingRequest.status === "CONVERTED"
+          ? "secondary"
+          : "warning";
+
+  return (
+    <Card className="border-primary/15 bg-primary/[0.03] shadow-card">
+      <CardContent className="flex flex-col gap-4 px-card-padding pb-card-padding pt-[1.15rem] sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/10">
+              {bookingRequest.source === "WEBSITE" ? "Site web" : bookingRequest.source}
+            </Badge>
+            <Badge variant={requestStatusVariant}>{requestStatusLabel}</Badge>
+          </div>
+
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">
+              Réservation issue d&apos;une demande web
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Reçue le {formatDateTime(bookingRequest.createdAt)} pour {bookingRequest.fullName}.
+            </p>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-3">
+            <InfoPair label="Référence demande" value={`#${bookingRequest.id.slice(0, 8)}`} icon={ClipboardCheck} />
+            <InfoPair label="Téléphone" value={bookingRequest.phone} icon={Phone} />
+            <InfoPair label="Email" value={bookingRequest.email} icon={MessageCircle} href={`mailto:${bookingRequest.email}`} />
+          </div>
+        </div>
+
+        <Button asChild variant="outline" className="shrink-0">
+          <Link
+            href={`${withLocalePath(locale, "/booking-requests")}?requestId=${bookingRequest.id}#request-${bookingRequest.id}`}
+          >
+            Voir la demande
+            <ArrowUpRight className="h-4 w-4" />
           </Link>
         </Button>
       </CardContent>

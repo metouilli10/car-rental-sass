@@ -308,7 +308,7 @@ export function ReservationCreatePage({
       addons,
       savedAt: new Date().toISOString(),
     };
-    window.localStorage.setItem("locapro-booking-draft", JSON.stringify(payload));
+    window.localStorage.setItem("locaryx-booking-draft", JSON.stringify(payload));
     toast.success("Brouillon enregistré localement");
   };
 

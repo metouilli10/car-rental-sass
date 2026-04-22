@@ -10,7 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { NavLink } from "@/components/shared/nav-link";
 import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 
-const SIDEBAR_STORAGE_KEY = "locapro-sidebar-collapsed";
+const SIDEBAR_STORAGE_KEY = "locaryx-sidebar-collapsed";
 const EXPANDED_WIDTH = 240;
 const COLLAPSED_WIDTH = 76;
 

@@ -31,7 +31,7 @@ interface GettingStartedExperienceProps {
   onboarding: DashboardV3Onboarding;
 }
 
-const CELEBRATION_KEY = "locapro-onboarding-celebrated";
+const CELEBRATION_KEY = "locaryx-onboarding-celebrated";
 
 export function GettingStartedExperience({
   agencyName,

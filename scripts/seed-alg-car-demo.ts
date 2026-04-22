@@ -1,4 +1,4 @@
-import { PrismaClient, ReminderType, VehicleDocumentType } from "@prisma/client";
+import { NotificationType, PrismaClient, ReminderType, VehicleDocumentType } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -810,10 +810,12 @@ async function main() {
     {
       agencyId,
       vehicleId: mercedes.id,
-      type: ReminderType.OIL_CHANGE,
+      type: NotificationType.OIL_CHANGE,
+      dedupeKey: `vehicle:${mercedes.id}:OIL_CHANGE`,
       title: "Vidange a prevoir",
       body: "La Mercedes depasse bientot le prochain seuil de vidange.",
       severity: "DUE" as const,
+      actionUrl: `/vehicles/${mercedes.id}`,
       dueAt: null,
       dueMileageKm: 60000,
       status: "OPEN" as const,
@@ -822,10 +824,12 @@ async function main() {
     {
       agencyId,
       vehicleId: mercedes.id,
-      type: ReminderType.INSURANCE_EXPIRY,
+      type: NotificationType.INSURANCE_EXPIRY,
+      dedupeKey: `vehicle:${mercedes.id}:INSURANCE_EXPIRY`,
       title: "Assurance a renouveler",
       body: "Le contrat premium arrive a echeance dans 12 jours.",
       severity: "WARNING" as const,
+      actionUrl: `/vehicles/${mercedes.id}`,
       dueAt: addDays(today, 12),
       dueMileageKm: null,
       status: "OPEN" as const,
@@ -834,10 +838,12 @@ async function main() {
     {
       agencyId,
       vehicleId: mercedes.id,
-      type: ReminderType.TECH_INSPECTION,
+      type: NotificationType.TECH_INSPECTION,
+      dedupeKey: `vehicle:${mercedes.id}:TECH_INSPECTION`,
       title: "Visite technique planifiee",
       body: "Controle technique deja programme, rappel differe pour les captures.",
       severity: "INFO" as const,
+      actionUrl: `/vehicles/${mercedes.id}`,
       dueAt: addDays(today, 18),
       dueMileageKm: null,
       status: "SNOOZED" as const,
@@ -846,10 +852,12 @@ async function main() {
     {
       agencyId,
       vehicleId: duster.id,
-      type: ReminderType.VIGNETTE,
+      type: NotificationType.VIGNETTE,
+      dedupeKey: `vehicle:${duster.id}:VIGNETTE`,
       title: "Vignette a payer",
       body: "La vignette du Duster est quasiment echue.",
       severity: "DUE" as const,
+      actionUrl: `/vehicles/${duster.id}`,
       dueAt: addDays(today, 5),
       dueMileageKm: null,
       status: "OPEN" as const,
@@ -860,10 +868,9 @@ async function main() {
   for (const notification of notifications) {
     await prisma.notification.upsert({
       where: {
-        agencyId_vehicleId_type: {
+        agencyId_dedupeKey: {
           agencyId,
-          vehicleId: notification.vehicleId,
-          type: notification.type,
+          dedupeKey: notification.dedupeKey,
         },
       },
       update: notification,

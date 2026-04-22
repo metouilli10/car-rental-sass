@@ -9,13 +9,14 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardCheck,
+  ClipboardList,
   Clock3,
   Shield,
   Sticker,
   Wrench,
 } from "lucide-react";
 import type {
-  ReminderType,
+  NotificationType,
   NotificationSeverity,
   NotificationStatus,
 } from "@prisma/client";
@@ -35,18 +36,22 @@ import { cn } from "@/lib/utils";
 import { NotificationActions } from "./notification-actions-client";
 import { NotificationFiltersClient } from "./notification-filters-client";
 
-const TYPE_ICONS: Record<ReminderType, ElementType> = {
+const TYPE_ICONS: Record<NotificationType, ElementType> = {
   OIL_CHANGE: Wrench,
   INSURANCE_EXPIRY: Shield,
   TECH_INSPECTION: ClipboardCheck,
   VIGNETTE: Sticker,
+  RESERVATION_STARTING_SOON: Clock3,
+  BOOKING_REQUEST_CREATED: ClipboardList,
 };
 
-const TYPE_TONES: Record<ReminderType, string> = {
+const TYPE_TONES: Record<NotificationType, string> = {
   OIL_CHANGE: "bg-amber-50 text-amber-700",
   INSURANCE_EXPIRY: "bg-blue-50 text-blue-700",
   TECH_INSPECTION: "bg-sky-50 text-sky-700",
   VIGNETTE: "bg-emerald-50 text-emerald-700",
+  RESERVATION_STARTING_SOON: "bg-violet-50 text-violet-700",
+  BOOKING_REQUEST_CREATED: "bg-emerald-50 text-emerald-700",
 };
 
 const SEVERITY_CONFIG: Record<
@@ -189,7 +194,13 @@ type PageSearchParams = Promise<{
 
 type PageStatusFilter = "ALL" | NotificationStatus;
 type PageSeverityFilter = "ALL" | NotificationSeverity;
-type PageTypeFilter = "ALL" | ReminderType;
+type PageTypeFilter =
+  | "ALL"
+  | "OIL_CHANGE"
+  | "INSURANCE_EXPIRY"
+  | "TECH_INSPECTION"
+  | "VIGNETTE"
+  | "RESERVATION_STARTING_SOON";
 
 type PageParams = Promise<{
   locale: string;
@@ -238,7 +249,8 @@ function parseType(value?: string): PageTypeFilter {
   return value === "OIL_CHANGE" ||
     value === "INSURANCE_EXPIRY" ||
     value === "TECH_INSPECTION" ||
-    value === "VIGNETTE"
+    value === "VIGNETTE" ||
+    value === "RESERVATION_STARTING_SOON"
     ? value
     : "ALL";
 }
@@ -536,7 +548,7 @@ function StatusBadge({
   );
 }
 
-function TypeBadge({ locale, type }: { locale: AppLocale; type: ReminderType }) {
+function TypeBadge({ locale, type }: { locale: AppLocale; type: NotificationType }) {
   return (
     <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-500">
       {getNotificationTypeLabel(locale, type)}

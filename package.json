@@ -8,6 +8,7 @@
     "dev:safe": "next dev --hostname localhost",
     "build": "prisma generate && next build",
     "build:db": "prisma db push && prisma generate && next build",
+    "deploy:check": "bash scripts/deploy-check.sh",
     "start": "next start --hostname localhost",
     "lint": "next lint",
     "test": "node --import tsx --test \"lib/**/*.test.ts\"",
@@ -60,6 +61,7 @@
     "sonner": "^1.7.1",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "web-push": "^3.6.7",
     "xlsx": "^0.18.5",
     "zod": "^3.24.1"
   },

@@ -1,4 +1,4 @@
-# Locapro - Copy Instructions (Landing Page)
+# Locaryx - Copy Instructions (Landing Page)
 
 ## Brand Voice
 - **Tone:** Professional, reliable, calm urgency, operations-first
@@ -17,7 +17,7 @@ La manière la plus simple de gérer votre agence de location
 Sans erreurs. Sans stress. Sans Excel.
 
 ### Description
-Locapro est une application web conçue pour les petites agences de location au Maroc.
+Locaryx est une application web conçue pour les petites agences de location au Maroc.
 Gérez vos véhicules, réservations, clients, contrats et cautions depuis un seul tableau de bord clair et intuitif.
 
 ### CTA Buttons
@@ -42,7 +42,7 @@ Vous reconnaissez ces situations ?
 - ❌ Trop de temps perdu à chercher des infos
 
 ### Solution Statement
-**Locapro règle tout ça.**
+**Locaryx règle tout ça.**
 
 ---
 
@@ -52,7 +52,7 @@ Vous reconnaissez ces situations ?
 Tout ce dont votre agence a besoin, au même endroit
 
 ### Section Subtitle
-Locapro centralise l'opérationnel quotidien de votre agence, sans complexité.
+Locaryx centralise l'opérationnel quotidien de votre agence, sans complexité.
 
 ### Features
 
@@ -88,7 +88,7 @@ Prenez de meilleures décisions
 Pensé pour les agences marocaines 🇲🇦
 
 ### Section Subtitle
-Locapro n'est pas un logiciel étranger adapté.
+Locaryx n'est pas un logiciel étranger adapté.
 Il a été conçu pour votre réalité.
 
 ### Key Differentiators
@@ -103,13 +103,13 @@ Il a été conçu pour votre réalité.
 ## SCREENSHOT / ACTION SECTION
 
 ### Section Title
-Ce que Locapro surveille pour vous, automatiquement
+Ce que Locaryx surveille pour vous, automatiquement
 
 ### Monitoring Features
 
 #### 🔴 Actions requises
 Retours en retard, paiements en attente, cautions à gérer.
-Locapro vous montre ce qui peut vous coûter de l'argent aujourd'hui.
+Locaryx vous montre ce qui peut vous coûter de l'argent aujourd'hui.
 
 #### ⚡ Opérations du jour
 Départs et retours à venir, en un coup d'œil.
@@ -134,7 +134,7 @@ Des résultats visibles dès les premières semaines
 - 💰 Jusqu'à 95% de cautions mieux suivies
 
 ### Testimonial
-"Locapro a changé notre façon de travailler.
+"Locaryx a changé notre façon de travailler.
 On perd moins de temps et on oublie plus rien."
 — Gérant d'agence de location
 
@@ -143,7 +143,7 @@ On perd moins de temps et on oublie plus rien."
 ## HOW IT WORKS
 
 ### Section Title
-Démarrer avec Locapro, c'est simple
+Démarrer avec Locaryx, c'est simple
 
 ### Steps
 1️⃣ Demandez une démo
@@ -207,24 +207,24 @@ Sans engagement — annulable à tout moment
 
 ### Questions & Answers
 
-**Q1:** Est-ce que Locapro est compliqué à utiliser ?
-**A1:** Non. Locapro est conçu pour être utilisé sans formation technique.
+**Q1:** Est-ce que Locaryx est compliqué à utiliser ?
+**A1:** Non. Locaryx est conçu pour être utilisé sans formation technique.
 
 **Q2:** Puis-je l'utiliser sur mon téléphone ?
-**A2:** Oui. Locapro fonctionne sur ordinateur, tablette et mobile.
+**A2:** Oui. Locaryx fonctionne sur ordinateur, tablette et mobile.
 
 **Q3:** Mes données sont-elles sécurisées ?
 **A3:** Oui. Vos données sont hébergées de manière sécurisée.
 
 **Q4:** Est-ce adapté aux petites agences ?
-**A4:** C'est précisément pour elles que Locapro a été créé.
+**A4:** C'est précisément pour elles que Locaryx a été créé.
 
 ---
 
 ## FINAL CTA
 
 ### Headline
-Essayez Locapro gratuitement pendant 14 jours
+Essayez Locaryx gratuitement pendant 14 jours
 
 ### Subheadline
 Découvrez comment une bonne organisation peut

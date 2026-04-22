@@ -80,6 +80,20 @@ export async function sendEmailNotification(
     return { success: false, error };
   }
 
+  if (!notification.vehicle) {
+    const error = "VEHICLE_CONTEXT_MISSING";
+    await prisma.notificationEvent.create({
+      data: {
+        notificationId,
+        channel: "EMAIL",
+        eventType,
+        status: "FAILED",
+        lastError: error,
+      },
+    });
+    return { success: false, error };
+  }
+
   const dueLabel = notification.dueAt
     ? `Échéance : ${new Intl.DateTimeFormat("fr-MA", {
         day: "2-digit",

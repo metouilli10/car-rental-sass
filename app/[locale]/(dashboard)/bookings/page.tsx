@@ -192,6 +192,12 @@ export default async function BookingsPage({ searchParams, params }: BookingsPag
           depositAmount: true,
           depositStatus: true,
           status: true,
+          bookingRequest: {
+            select: {
+              id: true,
+              source: true,
+            },
+          },
           customer: { select: { id: true, name: true, phone: true } },
           vehicle: { select: { id: true, make: true, model: true, plate: true } },
           deposit: { select: { status: true } },

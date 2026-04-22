@@ -17,6 +17,10 @@ export default async function CreateBookingPage({
     vehicleId?: string;
     start?: string;
     end?: string;
+    pickupLocation?: string;
+    returnLocation?: string;
+    notes?: string;
+    bookingRequestId?: string;
   }>;
 }) {
   const perf = createPerfLogger("booking-create-page");
@@ -32,6 +36,14 @@ export default async function CreateBookingPage({
   const prefilledVehicleId = params.vehicleId;
   const prefilledStartAt = parseDayKeyToDatetimeLocal(params.start, 9);
   const prefilledEndAt = parseDayKeyToDatetimeLocal(params.end, 9);
+  const prefilledPickupLocation = params.pickupLocation;
+  const prefilledReturnLocation = params.returnLocation;
+  const prefilledNotes =
+    params.bookingRequestId && params.notes
+      ? `[Demande web ${params.bookingRequestId}] ${params.notes}`
+      : params.bookingRequestId
+        ? `[Demande web ${params.bookingRequestId}]`
+        : params.notes;
   const { customers, vehicles, locationOptions, activeBookings } = await getBookingFormOptions({
     agencyId: session.user.agencyId,
   });
@@ -57,6 +69,10 @@ export default async function CreateBookingPage({
         prefilledCustomerId={prefilledCustomerId}
         prefilledStartAt={prefilledStartAt}
         prefilledEndAt={prefilledEndAt}
+        prefilledPickupLocation={prefilledPickupLocation}
+        prefilledReturnLocation={prefilledReturnLocation}
+        prefilledNotes={prefilledNotes}
+        prefilledBookingRequestId={params.bookingRequestId}
         onSubmit={createBooking}
       />
     </div>

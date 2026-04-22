@@ -1,4 +1,4 @@
-# LOCAPRO - Brand Guidelines & Design System
+# LOCARYX - Brand Guidelines & Design System
 
 This file mirrors the canonical guide in `brand/BRAND_GUIDELINES.md`.
 

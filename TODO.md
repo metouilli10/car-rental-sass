@@ -1,4 +1,4 @@
-# Locapro - Performance TODO
+# Locaryx - Performance TODO
 
 ## 1. Add pagination to data-heavy pages
 - **Pages:** Vehicles, Bookings, Customers, Payments

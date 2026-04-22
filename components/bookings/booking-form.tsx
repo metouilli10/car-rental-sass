@@ -15,6 +15,10 @@ interface BookingFormProps {
   prefilledCustomerId?: string;
   prefilledStartAt?: string;
   prefilledEndAt?: string;
+  prefilledPickupLocation?: string;
+  prefilledReturnLocation?: string;
+  prefilledNotes?: string;
+  prefilledBookingRequestId?: string;
   onSubmit: (
     data: BookingFormData,
   ) => Promise<{ error: string } | { success: boolean; bookingId: string } | void>;

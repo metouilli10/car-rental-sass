@@ -1,4 +1,4 @@
-# Locapro — App Review Report
+# Locaryx — App Review Report
 **Date:** 4 mars 2025  
 **Scope:** Bugs, fonctionnalités, mobile
 

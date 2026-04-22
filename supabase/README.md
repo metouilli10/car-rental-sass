@@ -1,4 +1,4 @@
-# Supabase – Locapro
+# Supabase – Locaryx
 
 ## What’s in this folder
 

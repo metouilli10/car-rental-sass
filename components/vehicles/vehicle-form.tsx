@@ -8,6 +8,7 @@ import { vehicleSchema, VehicleFormData } from "@/lib/validations/vehicle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -368,6 +369,7 @@ export function VehicleForm({
       fuelType: "ESSENCE",
       depositAmount: 2000,
       photoUrl: defaultValues?.photoUrl ?? "",
+      publishedToWebsite: defaultValues?.publishedToWebsite ?? false,
       insuranceReminderDays: [30, 15, 7],
       technicalInspectionReminderDays: [30, 15, 7],
       vignetteReminderDays: [30, 15, 7],
@@ -388,6 +390,7 @@ export function VehicleForm({
   const photoUrl = watch("photoUrl");
   const gearbox = watch("gearbox");
   const fuelType = watch("fuelType");
+  const publishedToWebsite = watch("publishedToWebsite");
 
   /* ── Photo handlers ──────────────────────────────────────────────── */
 
@@ -761,6 +764,25 @@ export function VehicleForm({
                     {STATUS_DESCRIPTIONS[status] || "Sélectionnez un statut"}
                   </p>
                 )}
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="publishedToWebsite">Publier sur le site web</Label>
+                    <p className="text-xs text-slate-500">
+                      Si activé, ce véhicule pourra apparaître sur votre storefront public.
+                    </p>
+                  </div>
+                  <Switch
+                    id="publishedToWebsite"
+                    checked={Boolean(publishedToWebsite)}
+                    onCheckedChange={(checked) =>
+                      setValue("publishedToWebsite", checked, { shouldValidate: true })
+                    }
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
             </div>
 

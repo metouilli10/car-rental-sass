@@ -29,6 +29,17 @@ type NotificationTestResult =
       error: string;
     };
 
+type TestableNotification = {
+  id: string;
+  title: string;
+  body: string;
+  vehicle: {
+    make: string;
+    model: string;
+    plate: string;
+  } | null;
+};
+
 export async function sendTestNotificationEmail(): Promise<NotificationTestResult> {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -131,7 +142,7 @@ export async function sendTestNotificationEmail(): Promise<NotificationTestResul
   }
 }
 
-async function ensureTestableNotification(agencyId: string) {
+async function ensureTestableNotification(agencyId: string): Promise<TestableNotification | null> {
   const existing = await prisma.notification.findFirst({
     where: { agencyId },
     select: {
@@ -186,6 +197,8 @@ async function ensureTestableNotification(agencyId: string) {
       agencyId,
       vehicleId: vehicle.id,
       type: availableType,
+      dedupeKey: `test-email:${vehicle.id}:${availableType}:${Date.now()}`,
+      actionUrl: `/vehicles/${vehicle.id}/edit`,
       title: "Email de test Locaryx",
       body: `Ceci est un email de test pour ${vehicle.make} ${vehicle.model} (${vehicle.plate}).`,
       severity: "INFO",

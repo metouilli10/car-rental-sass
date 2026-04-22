@@ -8,6 +8,7 @@ const addonSchema = z.object({
 });
 
 export const bookingSchema = z.object({
+  bookingRequestId: z.string().optional(),
   customerId: z.string().min(1, "Le client est requis"),
   vehicleId: z.string().min(1, "Le véhicule est requis"),
   startDate: z.string().min(1, "La date/heure de départ est requise"),

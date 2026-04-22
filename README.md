@@ -1,226 +1,230 @@
-# RentCar SaaS - Système de Gestion de Location
+# Locaryx
 
-MVP pour agences de location de voitures au Maroc.
+Plateforme SaaS de gestion pour agences de location de voitures au Maroc.
 
-## Stack Technique
+Locaryx combine un back-office multi-tenant pour les équipes d'agence et une surface publique en cours de développement pour les demandes de réservation et le storefront agence.
 
-- **Frontend:** Next.js 14 (App Router), React 19, TypeScript
-- **UI:** TailwindCSS, shadcn/ui
-- **Backend:** Next.js API Routes, Prisma ORM
-- **Database:** PostgreSQL
-- **Auth:** NextAuth.js (credentials)
-- **PDF:** Playwright
-- **Forms:** React Hook Form + Zod
+## Fonctionnalités actuelles
+
+- authentification par email/mot de passe avec NextAuth
+- inscription propriétaire avec vérification email et approbation interne
+- gestion multi-agence avec séparation par `agencyId`
+- véhicules, clients, réservations, paiements, cautions et dépenses
+- dashboard opérationnel, onboarding guidé et centre de notifications
+- inspections / damage reports et infractions
+- gestion des utilisateurs avec permissions effectives et overrides
+- paramètres de site web agence et demandes de réservation storefront
+- support PWA et infrastructure de notifications push web
+- impression / export booking côté print routes
+
+## Stack technique
+
+- Next.js `15.1.4` - App Router
+- React `19`
+- TypeScript `5`
+- Prisma `6`
+- PostgreSQL via `prisma/schema.prisma`
+- NextAuth `4`
+- Tailwind CSS `3`, shadcn/ui, Radix UI
+- Zod + React Hook Form
+- Playwright présent dans le repo pour tests/outillage
+- `web-push` pour les notifications push
 
 ## Prérequis
 
-- Node.js 18+
-- PostgreSQL 14+ (installé et en cours d'exécution)
-- npm ou yarn
+- Node.js `18+`
+- npm
+- une base PostgreSQL accessible
+- idéalement Supabase si vous suivez `.env.example`
 
-## Installation
+## Installation locale
 
 ### 1. Installer les dépendances
 
 ```bash
-npm install --legacy-peer-deps
+npm install
 ```
 
-### 2. Configurer la base de données
+### 2. Configurer l'environnement
 
-Créez une base de données PostgreSQL:
-
-```bash
-# Via psql
-createdb rentcar_db
-
-# Ou via PostgreSQL
-psql -U postgres
-CREATE DATABASE rentcar_db;
-```
-
-### 3. Configurer les variables d'environnement
-
-Copiez le fichier `.env.example` en `.env`:
+Copiez `.env.example` vers `.env` puis remplissez les variables nécessaires.
 
 ```bash
 cp .env.example .env
 ```
 
-Modifiez `.env` avec vos informations:
+Variables minimales pour démarrer:
 
 ```env
-# Database - Remplacez par vos credentials PostgreSQL
-DATABASE_URL="postgresql://VOTRE_USER:VOTRE_PASSWORD@localhost:5432/rentcar_db?schema=public"
-
-# NextAuth
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="votre-secret-genere-ici"
-
-# App
+NEXTAUTH_SECRET="..."
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-Pour générer `NEXTAUTH_SECRET`:
+Générer `NEXTAUTH_SECRET`:
+
 ```bash
 openssl rand -base64 32
 ```
 
-### 4. Initialiser la base de données
+Variables optionnelles selon les features utilisées:
 
-Exécutez les migrations Prisma:
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+- `VAPID_PRIVATE_KEY`
+- `VAPID_SUBJECT`
+- `PUSH_PROCESSOR_CRON_SECRET`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+
+### 3. Appliquer les migrations
 
 ```bash
 npm run db:migrate
 ```
 
-Quand demandé pour un nom de migration, tapez: `init`
-
-### 5. Peupler avec les données de test
+### 4. Seed de développement
 
 ```bash
 npm run db:seed
 ```
 
-Cela créera en local uniquement:
-- 1 agence: Auto Maroc Location
-- 1 utilisateur owner de démonstration: `owner@automaroc.ma` / `password123`
-- 5 véhicules (Dacia Logan, Renault Clio, Peugeot 208, Hyundai i10, Toyota Corolla)
-- 3 clients
-- 4 réservations (1 active, 1 retour aujourd'hui, 1 départ aujourd'hui, 1 terminée)
+Le seed crée notamment:
 
-## Lancer l'application
+- 1 agence `Auto Maroc Location`
+- 1 owner de démonstration `owner@automaroc.ma` / `password123`
+- des véhicules, clients, réservations et paramètres de site web
+
+### 5. Lancer l'application
 
 ```bash
 npm run dev
 ```
 
-L'application sera accessible sur: **http://localhost:3000**
+Application disponible sur `http://localhost:3000`.
 
-## Test de la Foundation
+## Parcours principaux en local
 
-### 1. Tester la page de connexion en local
+### Connexion
 
-1. Ouvrez http://localhost:3000
-2. Vous devriez voir une page d'accueil basique
-3. Allez sur http://localhost:3000/login
-4. Connectez-vous avec le compte de démonstration local:
-   - **Email:** `owner@automaroc.ma`
-   - **Mot de passe:** `password123`
+- page login: `http://localhost:3000/login`
+- compte seed: `owner@automaroc.ma` / `password123`
 
-### 2. Vérifier l'authentification
+### Dashboard
 
-Après connexion, vous devriez être redirigé vers `/dashboard`.
+Le dashboard est locale-aware. Les routes réelles vivent sous `/{locale}/...`, par exemple:
 
-**Note:** En production, les nouveaux propriétaires passent par le flux `signup -> vérification email -> approbation interne -> première connexion`.
+- `/fr/dashboard`
+- `/fr/vehicles`
+- `/fr/bookings`
+- `/ar/dashboard`
 
-### 3. Vérifier la base de données
+Le middleware peut rediriger les chemins dashboard non préfixés vers la locale active.
 
-Vous pouvez explorer la base de données avec Prisma Studio:
+### Signup owner
+
+Le flux d'inscription owner passe par:
+
+1. `/signup`
+2. vérification email
+3. approbation interne
+4. première connexion
+
+## Scripts utiles
+
+- `npm run dev` - démarre le serveur local
+- `npm run dev:turbopack` - variante Turbopack explicite
+- `npm run build` - génère Prisma Client puis build Next.js
+- `npm run build:db` - `prisma db push`, `prisma generate`, puis build
+- `npm run start` - démarre l'app en mode production
+- `npm run test` - exécute les tests Node présents sous `lib/**/*.test.ts`
+- `npm run lint` - lint Next.js
+- `npm run db:migrate` - migrations Prisma en local
+- `npm run db:seed` - seed de dev
+- `npm run db:reset` - reset complet de la base
+- `npm run db:studio` - ouvre Prisma Studio
+- `npm run deploy:check` - vérifie migrations + build avant déploiement
+- `npm run i18n:audit` - audit simple des routes/messages i18n
+- `npm run i18n:parity` - test de parité des messages i18n
+
+## Architecture du repo
+
+```text
+app/
+  (auth)/                       routes publiques: login, signup, setup, verify-email
+  [locale]/(dashboard)/         dashboard multi-locale et protégé
+  api/                          routes API internes, publiques et push
+  storefront/                   surface publique storefront
+  (print)/                      vues print / impression
+components/
+  layout/ shared/ ui/           shell, composants transverses et primitives UI
+  bookings/ customers/ vehicles/ users/ settings/ ...
+lib/
+  actions/                      server actions
+  push/                         logique push web
+  storefront/                   logique publique / website settings / booking requests
+  permissions.ts                matrice de permissions
+  auth.ts                       NextAuth
+prisma/
+  schema.prisma                 schéma PostgreSQL
+  migrations/                   historique des migrations
+  seed.ts                       seed de développement
+public/
+  pwa/                          icônes et assets PWA
+```
+
+## Points d'attention techniques
+
+### Multi-tenant
+
+- toutes les données métier doivent rester scoppées par `agencyId`
+- ne pas ajouter de requêtes Prisma cross-tenant par accident
+
+### Permissions
+
+- rôles disponibles: `OWNER`, `MANAGER`, `EMPLOYEE`
+- beaucoup d'écrans utilisent les permissions effectives, pas seulement le rôle
+- voir `lib/permissions.ts`
+
+### Localisation
+
+- locales actives: `fr` et `ar`
+- la UI reste French-first aujourd'hui, avec support arabe en cours dans l'app
+
+### PWA et push
+
+- manifeste: `app/manifest.ts`
+- bootstrap PWA: `app/layout.tsx`
+- API push: `app/api/push/*`
+- traitement interne push: `app/api/internal/push/process`
+
+## Déploiement
+
+Avant un déploiement production:
 
 ```bash
-npm run db:studio
+npm run deploy:check
 ```
 
-Cela ouvrira une interface web sur http://localhost:5555 où vous pouvez voir toutes les tables et données.
+Puis:
 
-### 4. Vérifier la protection des routes
-
-Essayez d'accéder à `/dashboard` sans être connecté - vous devriez être redirigé vers `/login`.
-
-## Scripts Disponibles
-
-- `npm run dev` - Lancer le serveur de développement
-- `npm run build` - Build pour production
-- `npm start` - Lancer en mode production
-- `npm run db:migrate` - Exécuter les migrations Prisma
-- `npm run db:seed` - Peupler la BD avec les données de test
-- `npm run db:reset` - Réinitialiser la BD (⚠️ supprime toutes les données)
-- `npm run db:studio` - Ouvrir Prisma Studio
-
-## Structure du Projet
-
-```
-├── app/
-│   ├── (auth)/
-│   │   └── login/          # Page de connexion
-│   ├── (dashboard)/        # Routes protégées
-│   │   ├── dashboard/      # Tableau de bord
-│   │   ├── vehicles/       # Gestion véhicules
-│   │   ├── customers/      # Gestion clients
-│   │   ├── bookings/       # Gestion réservations
-│   │   ├── contracts/      # Contrats PDF
-│   │   ├── payments/       # Paiements & cautions
-│   │   └── damage-reports/ # Rapports de dégâts
-│   ├── api/
-│   │   └── auth/           # NextAuth endpoints
-│   ├── layout.tsx
-│   └── globals.css
-├── components/
-│   ├── ui/                 # Composants shadcn/ui
-│   └── shared/             # Composants réutilisables
-├── lib/
-│   ├── prisma.ts           # Client Prisma
-│   ├── auth.ts             # Config NextAuth
-│   ├── utils.ts            # Utilitaires
-│   └── validations/        # Schémas Zod
-├── prisma/
-│   ├── schema.prisma       # Modèles de données
-│   └── seed.ts             # Données de test
-└── public/
-    └── uploads/            # Stockage local fichiers
-```
-
-## Modèles de Données
-
-- **Agency** - Informations agence
-- **User** - Utilisateurs (OWNER, STAFF)
-- **Vehicle** - Véhicules (AVAILABLE, RENTED, MAINTENANCE)
-- **Customer** - Clients
-- **Booking** - Réservations (DRAFT, CONFIRMED, ACTIVE, COMPLETED, CANCELED)
-- **Payment** - Paiements (CASH, CARD, TRANSFER)
-- **Deposit** - Cautions (HELD, PARTIAL_RETURNED, RETURNED, FORFEITED)
-- **Contract** - Contrats PDF
-- **DamageReport** - Rapports de dégâts
-- **DamagePhoto** - Photos de dommages
-
-## Prochaines Étapes
-
-La foundation est complète! Les prochaines étapes incluent:
-
-1. ✅ Authentification et structure de base
-2. 🔄 Composants réutilisables (PageHeader, StatCard, etc.)
-3. 🔄 Pages CRUD (Véhicules, Clients)
-4. 🔄 Système de réservations
-5. 🔄 Dashboard avec métriques
-6. 🔄 Génération de contrats PDF
-7. 🔄 Gestion paiements & cautions
-8. 🔄 Rapports de dégâts avec photos
-
-## Dépannage
-
-### Erreur de connexion à la base de données
-
-Vérifiez que:
-- PostgreSQL est démarré
-- Les credentials dans `.env` sont corrects
-- La base de données existe
-
-### Erreur lors de l'installation
-
-Si vous avez des conflits de peer dependencies, utilisez:
 ```bash
-npm install --legacy-peer-deps
+npx prisma migrate deploy
 ```
 
-### Erreur Prisma
+Checklist minimale:
 
-Si vous modifiez le schéma:
-```bash
-npm run db:migrate
-npx prisma generate
-```
+1. charger les variables d'environnement de production
+2. exécuter `npm run deploy:check`
+3. exécuter `npx prisma migrate deploy`
+4. déployer l'application
+5. tester au minimum `/dashboard`, `/customers`, `/vehicles` et `/bookings`
 
-## Support
+## Références utiles
 
-Pour toute question ou problème, créez une issue dans le repository.
+- [claude.md](claude.md) - guide repo orienté agent/coding
+- [AGENTS.md](AGENTS.md) - bootstrap de contexte pour tout agent
+- [PROJECT_MEMORY.md](PROJECT_MEMORY.md) - mémoire projet vivante
+- [prisma/schema.prisma](prisma/schema.prisma) - source de vérité du modèle de données
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - aide au diagnostic env / Prisma / Supabase
