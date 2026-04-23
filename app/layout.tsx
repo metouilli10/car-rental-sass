@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
+import { VercelToolbar } from "@vercel/toolbar/next";
 import { LocaleHtmlAttributes } from "@/components/locale/LocaleHtmlAttributes";
 import { PwaBootstrap } from "@/components/pwa/PwaBootstrap";
 import {
@@ -24,6 +25,9 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   display: "swap",
 });
+
+const shouldRenderVercelToolbar =
+  process.env.NODE_ENV === "development" || process.env.VERCEL_TOOLBAR_ENABLED === "true";
 
 export const metadata: Metadata = {
   title: "Locaryx — Votre agence, sous contrôle",
@@ -50,7 +54,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: "#002e5d",
+  themeColor: "#f4f7fb",
 };
 
 export default async function RootLayout({
@@ -73,6 +77,7 @@ export default async function RootLayout({
         <LocaleHtmlAttributes />
         <PwaBootstrap />
         {children}
+        {shouldRenderVercelToolbar ? <VercelToolbar /> : null}
       </body>
     </html>
   );

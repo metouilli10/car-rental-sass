@@ -38,6 +38,13 @@ This is the canonical shared memory for the repository.
 - `Touched:` shared branding components, `public/pwa/`, `public/assets/locaryx-favicon.png`
 - `Follow-up:` PWA launcher icons now use dedicated `public/pwa/icon-launcher.svg` and `public/pwa/icon-maskable.svg` sources so mobile install icons can keep safe padding.
 
+### 2026-04-23 - App launch experience polished for installed PWA
+
+- `Change:` Added a premium root `app/loading.tsx` splash experience with the new Locaryx branding and aligned manifest/viewport launch colors to the softer app-entry background.
+- `Impact:` Opening the installed app now feels more intentional and premium instead of falling back to a bare white loading state.
+- `Touched:` `app/loading.tsx`, `app/manifest.ts`, `app/layout.tsx`
+- `Follow-up:` If the brand team later ships a dedicated launch-motion spec, mirror it here instead of reusing generic loading UI.
+
 ### 2026-04-22 - Vercel Toolbar installed
 
 - `Change:` Added `@vercel/toolbar`, mounted the toolbar from the root layout in development or when `VERCEL_TOOLBAR_ENABLED=true`, and wrapped `next.config.ts` with the Vercel Toolbar Next plugin.
