@@ -74,7 +74,7 @@ export function LoginPageClient() {
           <div className="space-y-6">
             <div className="relative w-48 h-16">
               <Image
-                src="/assets/locaryx-logo-dark.png"
+                src="/assets/locaryx logo new.png"
                 alt="Locaryx"
                 fill
                 className="object-contain object-left"
@@ -136,7 +136,7 @@ export function LoginPageClient() {
               <div className="lg:hidden flex items-center justify-center mb-2">
                 <div className="relative w-40 h-12">
                   <Image
-                    src="/assets/locaryx-logo-dark.png"
+                    src="/assets/locaryx logo new.png"
                     alt="Locaryx"
                     fill
                     className="object-contain"

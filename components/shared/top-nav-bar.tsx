@@ -159,7 +159,7 @@ export function TopNavBar({
               className="inline-flex items-center rounded-lg px-1 py-1 transition-colors hover:bg-muted/50 sm:px-1.5"
             >
               <Image
-                src="/assets/locaryx-icon-dark.png"
+                src="/assets/locaryx icon.png"
                 alt="Locaryx"
                 width={32}
                 height={32}
@@ -167,7 +167,7 @@ export function TopNavBar({
                 priority
               />
               <Image
-                src="/assets/locaryx-logo-dark.png"
+                src="/assets/locaryx logo new.png"
                 alt="Locaryx"
                 width={120}
                 height={28}

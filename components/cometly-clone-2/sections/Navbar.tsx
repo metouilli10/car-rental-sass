@@ -25,7 +25,7 @@ export function Navbar() {
       <div className="mx-auto flex h-[68px] max-w-[1240px] items-center justify-between px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
           <Image
-            src="/assets/locaryx-logo-dark.png"
+            src="/assets/locaryx logo new.png"
             alt="Locaryx"
             width={1193}
             height={345}

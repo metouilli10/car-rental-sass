@@ -36,9 +36,14 @@ export function ScrollNav() {
       <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-[72px]">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link
+            href="/"
+            className={`flex items-center rounded-2xl transition-all duration-300 ${
+              scrolled ? "" : "bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm"
+            }`}
+          >
             <Image
-              src={scrolled ? "/assets/locaryx-logo-dark.png" : "/assets/locaryx-logo-white.png"}
+              src="/assets/locaryx logo new.png"
               alt="Locaryx"
               width={130}
               height={32}

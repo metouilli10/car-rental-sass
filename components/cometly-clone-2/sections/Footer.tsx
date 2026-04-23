@@ -26,7 +26,7 @@ export function Footer() {
       navLinks={navLinks}
       brandIcon={
         <Image
-          src="/assets/locaryx-icon-white.png"
+          src="/assets/locaryx icon.png"
           alt="Locaryx"
           width={96}
           height={96}

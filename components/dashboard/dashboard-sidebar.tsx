@@ -72,7 +72,7 @@ export function DashboardSidebar({ agencyName, role }: DashboardSidebarProps) {
         {!isCollapsed ? (
           <div className="relative w-36 h-10 overflow-hidden flex-1 min-w-0">
             <Image
-              src="/assets/locaryx-logo-dark.png"
+              src="/assets/locaryx logo new.png"
               alt="Locaryx"
               fill
               className="object-contain object-left"
@@ -82,7 +82,7 @@ export function DashboardSidebar({ agencyName, role }: DashboardSidebarProps) {
         ) : (
           <div className="relative h-8 w-8 rounded-lg bg-muted/40 border border-border/40 shrink-0 overflow-hidden">
             <Image
-              src="/assets/locaryx-icon-dark.png"
+              src="/assets/locaryx icon.png"
               alt="Locaryx"
               fill
               className="object-contain p-1"

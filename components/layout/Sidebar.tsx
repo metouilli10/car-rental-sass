@@ -97,7 +97,7 @@ export function Sidebar({
         {!isCollapsed ? (
           <div className="relative h-10 min-w-0 flex-1 overflow-hidden">
             <Image
-              src="/assets/locaryx-logo-dark.png"
+              src="/assets/locaryx logo new.png"
               alt="Locaryx"
               fill
               className="object-contain object-left"
@@ -107,7 +107,7 @@ export function Sidebar({
         ) : (
           <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-subtle bg-slate-50">
             <Image
-              src="/assets/locaryx-icon-dark.png"
+              src="/assets/locaryx icon.png"
               alt="Locaryx"
               fill
               className="object-contain p-0.5"
