@@ -36,7 +36,7 @@ This is the canonical shared memory for the repository.
 - `Change:` Updated shared app logo references to `public/assets/locaryx logo new.png` and regenerated the PWA/browser icon assets from `public/assets/locaryx icon.png`.
 - `Impact:` Dashboard, login, landing surfaces, and installable app icons now use the new Locaryx brand assets consistently.
 - `Touched:` shared branding components, `public/pwa/`, `public/assets/locaryx-favicon.png`
-- `Follow-up:` If design later delivers dedicated light/dark or maskable exports, replace the generated derivatives with those final files.
+- `Follow-up:` PWA launcher icons now use dedicated `public/pwa/icon-launcher.svg` and `public/pwa/icon-maskable.svg` sources so mobile install icons can keep safe padding.
 
 ### 2026-04-22 - Vercel Toolbar installed
 
