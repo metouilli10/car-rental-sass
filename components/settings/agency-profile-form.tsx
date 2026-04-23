@@ -41,7 +41,7 @@ export function AgencyProfileForm({
   const logoLabel = getLogoLabel(form.logoUrl);
   const inputClass = cn(
     "h-11",
-    isSetup && "h-12 bg-neutral-50 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#2c2cf2]/30"
+    isSetup && "h-12 bg-neutral-50"
   );
 
   async function handleLogoUpload(file: File) {
@@ -104,7 +104,7 @@ export function AgencyProfileForm({
       onSubmit={handleSubmit}
       className={cn(
         "space-y-6 rounded-2xl border border-border/70 bg-white p-6",
-        isSetup && "space-y-8 rounded-none border-0 bg-transparent p-0"
+        isSetup && "space-y-8 rounded-[28px] border border-border/70 bg-[hsl(var(--surface-muted))] p-6 shadow-sm"
       )}
     >
       <div className="space-y-4">
@@ -188,7 +188,7 @@ export function AgencyProfileForm({
         <Label>Logo</Label>
         <div className={cn(
           "flex flex-col gap-3 rounded-xl border border-dashed border-primary/20 bg-primary/[0.03] p-4 sm:flex-row sm:items-center sm:justify-between",
-          isSetup && "hover:bg-[#2c2cf2]/[0.05] transition-colors duration-200"
+          isSetup && "transition-colors duration-200 hover:bg-primary/[0.06]"
         )}>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">

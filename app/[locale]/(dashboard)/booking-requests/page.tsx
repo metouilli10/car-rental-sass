@@ -9,6 +9,7 @@ import { markBookingRequestAsRead } from "@/lib/notifications/booking-requests";
 import { getBookingRequestsForAgency } from "@/lib/storefront/queries";
 import { requireLocaleParam } from "@/lib/i18n/server-params";
 import { withLocalePath } from "@/lib/i18n/config";
+import { Button } from "@/components/ui/button";
 
 const statusOptions: Array<{ value: BookingRequestStatus | "ALL"; label: string }> = [
   { value: "ALL", label: "Tous" },
@@ -59,10 +60,15 @@ export default async function BookingRequestsPage({
         description="Centralisez les demandes reçues depuis le site web avant de les convertir manuellement en réservation."
       />
 
-      <form className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[220px_minmax(0,1fr)_auto]">
+      <form className="grid gap-4 rounded-2xl border border-subtle bg-white p-4 shadow-card md:grid-cols-[220px_minmax(0,1fr)_auto]">
         <div className="space-y-2">
           <label htmlFor="status" className="text-sm font-medium text-slate-700">Statut</label>
-          <select id="status" name="status" defaultValue={status} className="flex h-10 w-full rounded-xl border border-border/60 bg-white px-3 py-2 text-sm shadow-sm">
+          <select
+            id="status"
+            name="status"
+            defaultValue={status}
+            className="flex h-10 w-full rounded-xl border border-border/60 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+          >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
@@ -75,13 +81,11 @@ export default async function BookingRequestsPage({
             name="q"
             defaultValue={filters.q ?? ""}
             placeholder="Client, email, téléphone, voiture..."
-            className="flex h-10 w-full rounded-xl border border-border/60 bg-white px-3 py-2 text-sm shadow-sm"
+            className="flex h-10 w-full rounded-xl border border-border/60 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
           />
         </div>
         <div className="flex items-end">
-          <button type="submit" className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-medium text-white">
-            Filtrer
-          </button>
+          <Button type="submit" className="h-10">Filtrer</Button>
         </div>
       </form>
 

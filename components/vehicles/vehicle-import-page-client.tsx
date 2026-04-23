@@ -211,7 +211,7 @@ export function VehicleImportPageClient() {
         </Button>
         {file ? (
           <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-sm text-muted-foreground">
-            <FileSpreadsheet className="h-4 w-4 text-blue-600" />
+            <FileSpreadsheet className="h-4 w-4 text-primary" />
             {file.name}
           </div>
         ) : null}
@@ -229,7 +229,7 @@ export function VehicleImportPageClient() {
           <CardTitle>1. Charger le fichier Excel</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/40 p-6">
+          <div className="rounded-2xl border border-dashed border-primary/20 bg-primary/[0.04] p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">
@@ -241,7 +241,7 @@ export function VehicleImportPageClient() {
               </div>
               <Label
                 htmlFor="vehicle-import-file"
-                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/92"
               >
                 {isReading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -377,9 +377,9 @@ export function VehicleImportPageClient() {
                 <p className="text-sm text-emerald-700">A creer</p>
                 <p className="mt-1 text-2xl font-semibold text-emerald-900">{preview.counts.create}</p>
               </div>
-              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                <p className="text-sm text-blue-700">A mettre a jour</p>
-                <p className="mt-1 text-2xl font-semibold text-blue-900">{preview.counts.update}</p>
+              <div className="rounded-2xl border border-primary/20 bg-primary/[0.05] p-4">
+                <p className="text-sm text-primary">A mettre a jour</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-950">{preview.counts.update}</p>
               </div>
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                 <p className="text-sm text-amber-700">Ignorees</p>

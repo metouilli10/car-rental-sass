@@ -4,6 +4,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { useI18n } from "@/components/i18n/i18n-context";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface VehiclesSearchBarProps {
   defaultValue?: string;
@@ -44,24 +46,23 @@ export function VehiclesSearchBar({
   };
 
   return (
-    <div className="flex items-center gap-3 w-full min-w-0">
+    <div className="flex w-full min-w-0 items-center gap-3">
       <div className="relative flex-1 min-w-0 max-w-sm">
         <Search
-          className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors duration-200 ${
-            isPending ? "text-blue-600" : "text-gray-400"
+          className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors duration-200 ${
+            isPending ? "text-primary" : "text-muted-foreground"
           }`}
         />
-        <input
-          type="text"
+        <Input
           value={value}
           onChange={handleChange}
           placeholder={t("vehicles.searchPlaceholder")}
-          className="w-full pl-9 pr-8 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all duration-200 placeholder:text-gray-400 text-gray-900"
+          className="h-10 w-full bg-white pl-9 pr-8"
         />
         {value && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
             aria-label={t("vehicles.searchClearAria")}
           >
             <X className="h-3.5 w-3.5" />
@@ -69,10 +70,10 @@ export function VehiclesSearchBar({
         )}
       </div>
 
-      <button className="flex shrink-0 items-center gap-2 px-3.5 py-2.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium whitespace-nowrap">
+      <Button type="button" variant="secondary" className="h-10 shrink-0 gap-2 whitespace-nowrap">
         <SlidersHorizontal className="h-4 w-4" />
         <span className="hidden sm:inline">{t("vehicles.filtersButton")}</span>
-      </button>
+      </Button>
     </div>
   );
 }

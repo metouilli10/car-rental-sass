@@ -89,9 +89,9 @@ const SEVERITY_COLORS: Record<
   NotificationSeverity,
   { icon: string; bg: string; dot: string }
 > = {
-  INFO: { icon: "text-blue-500", bg: "bg-blue-50", dot: "bg-blue-400" },
-  WARNING: { icon: "text-amber-500", bg: "bg-amber-50", dot: "bg-amber-400" },
-  DUE: { icon: "text-red-500", bg: "bg-red-50", dot: "bg-red-500" },
+  INFO: { icon: "text-primary", bg: "bg-primary/[0.08]", dot: "bg-primary/70" },
+  WARNING: { icon: "text-amber-600", bg: "bg-amber-50/80", dot: "bg-amber-500" },
+  DUE: { icon: "text-red-600", bg: "bg-red-50/80", dot: "bg-red-500" },
 };
 
 export function TopNavBar({
@@ -185,7 +185,7 @@ export function TopNavBar({
           <button
             onClick={() => setSearchOpen(true)}
             aria-label={t("shell.topNav.searchAria")}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-subtle bg-slate-50 px-2.5 text-sm text-slate-500 transition-colors duration-200 hover:bg-white hover:text-slate-900 sm:px-3"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-subtle bg-[hsl(var(--surface-muted))] px-2.5 text-sm text-muted-foreground transition-colors duration-200 hover:bg-white hover:text-foreground sm:px-3"
           >
             <Search className="h-4 w-4" />
             <span className="hidden text-xs font-medium sm:inline">
@@ -201,7 +201,7 @@ export function TopNavBar({
                 setNotifOpen(!notifOpen);
               }}
               aria-label={`${t("shell.topNav.notificationsAria")}${notifCount > 0 ? ` (${notifCount} ${t("shell.topNav.notificationsActive")})` : ""}`}
-              className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-subtle bg-slate-50 text-slate-500 transition-colors duration-200 hover:bg-white hover:text-slate-900"
+              className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-subtle bg-[hsl(var(--surface-muted))] text-muted-foreground transition-colors duration-200 hover:bg-white hover:text-foreground"
             >
               <Bell className="h-[18px] w-[18px]" />
               {notifCount > 0 && (
@@ -317,7 +317,7 @@ export function TopNavBar({
           </div>
 
           {/* Divider */}
-          <div className="mx-0.5 h-5 w-px bg-slate-200" />
+          <div className="mx-0.5 h-5 w-px bg-border" />
 
           {/* Profile Section */}
           <DropdownMenu

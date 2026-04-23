@@ -25,7 +25,7 @@ export function VehicleCard({ agencySlug, pickupLocations, vehicle }: VehicleCar
   const fuelLabel = formatFuelType(vehicle.fuelType);
 
   return (
-    <article className="group overflow-hidden rounded-2xl bg-white shadow-[0_18px_44px_rgba(15,23,42,0.06)] ring-1 ring-slate-200/75 transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_58px_rgba(15,23,42,0.1)]">
+    <article className="group overflow-hidden rounded-[28px] bg-white shadow-[0_18px_44px_rgba(15,23,42,0.06)] ring-1 ring-[hsl(var(--public-border))]/75 transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_58px_rgba(15,23,42,0.1)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-[linear-gradient(135deg,#eef2f6_0%,#f8fafc_54%,#dfe7ef_100%)]">
         {vehicle.photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -40,8 +40,8 @@ export function VehicleCard({ agencySlug, pickupLocations, vehicle }: VehicleCar
           </div>
         )}
 
-        <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/92 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-[#1a365d] shadow-[0_8px_18px_rgba(15,23,42,0.08)] ring-1 ring-white/70 backdrop-blur">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/92 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-[hsl(var(--public-ink))] shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur">
+          <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--public-success))]" />
           Disponible
         </div>
       </div>
@@ -49,13 +49,13 @@ export function VehicleCard({ agencySlug, pickupLocations, vehicle }: VehicleCar
       <div className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h3 className="text-xl font-extrabold leading-tight tracking-[-0.035em] text-[#002045]">
+            <h3 className="text-xl font-extrabold leading-tight tracking-[-0.035em] text-[hsl(var(--public-ink))]">
               {vehicle.make} {vehicle.model}
             </h3>
           </div>
           <div className="shrink-0 text-right">
-            <p className="text-xl font-extrabold leading-none tracking-[-0.04em] text-[#002045]">{dailyRate} MAD</p>
-            <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">Par jour</p>
+            <p className="text-2xl font-extrabold leading-none tracking-[-0.04em] text-[hsl(var(--public-ink))]">{dailyRate} MAD</p>
+            <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">Tarif jour</p>
           </div>
         </div>
 
@@ -70,7 +70,7 @@ export function VehicleCard({ agencySlug, pickupLocations, vehicle }: VehicleCar
             agencySlug={agencySlug}
             vehicle={vehicle}
             pickupLocations={pickupLocations}
-            triggerClassName="w-full rounded-xl bg-[linear-gradient(135deg,#4f9cff_0%,#256fd3_100%)] py-3 text-sm font-bold text-white shadow-[0_14px_24px_rgba(37,111,211,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_28px_rgba(37,111,211,0.28)]"
+            triggerClassName="w-full rounded-full bg-[hsl(var(--public-primary))] py-3 text-sm font-bold text-white shadow-[0_14px_24px_rgba(33,150,243,0.22)] transition hover:-translate-y-0.5 hover:bg-[hsl(var(--public-primary))]/92 hover:shadow-[0_18px_28px_rgba(33,150,243,0.28)]"
           />
         </div>
       </div>
@@ -81,7 +81,7 @@ export function VehicleCard({ agencySlug, pickupLocations, vehicle }: VehicleCar
 function Spec({ icon, label }: { icon: ReactNode; label: string }) {
   return (
     <div className="flex min-w-0 items-center gap-1.5">
-      <span className="shrink-0 text-[#1a365d]">{icon}</span>
+      <span className="shrink-0 text-primary">{icon}</span>
       <p className="truncate">{label}</p>
     </div>
   );

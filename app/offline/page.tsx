@@ -11,7 +11,7 @@ export default function OfflinePage() {
   return (
     <main className="flex min-h-dvh-screen items-center justify-center bg-[hsl(var(--background))] px-4 py-10">
       <div className="w-full max-w-md rounded-[1.75rem] border border-subtle bg-white/95 p-7 shadow-[0_24px_80px_rgba(15,23,42,0.10)] backdrop-blur">
-        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#002e5d]/8 text-[#002e5d]">
+        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(var(--primary))]/12 text-primary">
           <WifiOff className="h-6 w-6" />
         </div>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-950">Connexion indisponible</h1>

@@ -77,6 +77,7 @@ Variables optionnelles selon les features utilisées:
 - `PUSH_PROCESSOR_CRON_SECRET`
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
+- `VERCEL_TOOLBAR_ENABLED` (`true` pour injecter la Vercel Toolbar hors dev)
 
 ### 3. Appliquer les migrations
 

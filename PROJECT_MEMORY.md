@@ -31,6 +31,27 @@ This is the canonical shared memory for the repository.
 
 ## Recent Changes Log
 
+### 2026-04-24 - Global primary blue tuned to calmer brand blue
+
+- `Change:` Replaced the previous dark brand blue across shared tokens, button shadows, storefront CTAs, marketing glows, and PWA/offline actions with the calmer primary blue `#2196F3`.
+- `Impact:` Primary actions now read as one cleaner brand system across dashboard, storefront, landing, and install/offline surfaces without the overly bright feel of the first lighter-blue pass.
+- `Touched:` `app/globals.css`, `components/ui/button.tsx`, `app/page.tsx`, `components/storefront/`, `components/pwa/`, `app/offline/page.tsx`
+- `Follow-up:` If dense dashboard workflows still feel too colorful, a future pass can mute non-primary accents while keeping `#2196F3` only for true primary actions.
+
+### 2026-04-23 - Premium UI system unified across public, auth, and storefront
+
+- `Change:` Replaced the clone-style guest homepage with a real Locaryx landing page, added shared public design tokens, moved button/badge primitives onto the core brand palette, and rethemed auth/onboarding/storefront CTAs and surfaces to the same dark-blue premium system.
+- `Impact:` Public, login, onboarding, dashboard chrome, and storefront now read much more like one product family instead of multiple competing visual brands.
+- `Touched:` `app/page.tsx`, `app/globals.css`, `components/ui/button.tsx`, `components/ui/badge.tsx`, auth/onboarding screens, `components/storefront/`, `components/shared/top-nav-bar.tsx`
+- `Follow-up:` A broader second pass can migrate remaining dashboard page-level one-off colors such as import/workflow utilities onto shared tokens.
+
+### 2026-04-23 - Dashboard pages aligned closer to shell style
+
+- `Change:` Reworked Vehicles and Booking Requests page-level controls to use the calmer dashboard token system, replaced legacy blue CTA/search/list styling in the vehicles workspace, and removed a lingering mobile customer-form primary-button override.
+- `Impact:` The dashboard now feels more consistent page to page, with Vehicles and Booking Requests reading much closer to the premium shell and bookings/customers workspaces.
+- `Touched:` `app/[locale]/(dashboard)/vehicles/page.tsx`, `components/vehicles/vehicles-search-bar.tsx`, `components/vehicles/vehicles-list.tsx`, `app/[locale]/(dashboard)/booking-requests/page.tsx`, `components/customers/customer-form.tsx`, `components/vehicles/vehicle-import-page-client.tsx`
+- `Follow-up:` Continue the same pass on notifications, reservation creation flows, and any remaining vehicle workflow screens that still use local color systems.
+
 ### 2026-04-23 - Shared app branding switched to uploaded logo and icon
 
 - `Change:` Updated shared app logo references to `public/assets/locaryx logo new.png` and regenerated the PWA/browser icon assets from `public/assets/locaryx icon.png`.

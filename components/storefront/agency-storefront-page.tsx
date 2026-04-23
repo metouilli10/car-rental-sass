@@ -43,10 +43,10 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
   const currentYear = new Date().getFullYear();
 
   return (
-    <main className="min-h-screen bg-[#f7f9fb] text-[#191c1e]">
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/88 backdrop-blur-xl">
+    <main className="min-h-screen bg-[hsl(var(--public-surface))] text-[hsl(var(--public-ink))]">
+      <header className="sticky top-0 z-40 border-b border-[hsl(var(--public-border))]/70 bg-white/88 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
-          <a href="#" className="flex items-center gap-3 text-[#001b3c]">
+          <a href="#" className="flex items-center gap-3 text-[hsl(var(--public-ink))]">
             {settings.agency.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -55,7 +55,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
                 className="h-10 w-10 rounded-2xl object-cover shadow-[0_14px_28px_rgba(25,28,30,0.08)]"
               />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#002045] text-sm font-extrabold text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[hsl(var(--public-primary))] text-sm font-extrabold text-white">
                 {siteTitle.slice(0, 2).toUpperCase()}
               </div>
             )}
@@ -66,16 +66,16 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
           </a>
 
           <nav className="hidden items-center gap-8 md:flex">
-            <a href="#" className="text-sm font-bold text-[#001b3c]">
+            <a href="#" className="text-sm font-bold text-[hsl(var(--public-ink))]">
               Accueil
             </a>
-            <a href="#fleet" className="text-sm font-medium text-slate-600 transition hover:text-[#1a365d]">
+            <a href="#fleet" className="text-sm font-medium text-slate-600 transition hover:text-primary">
               Véhicules
             </a>
-            <a href="#how-it-works" className="text-sm font-medium text-slate-600 transition hover:text-[#1a365d]">
+            <a href="#how-it-works" className="text-sm font-medium text-slate-600 transition hover:text-primary">
               Processus
             </a>
-            <a href="#contact" className="text-sm font-medium text-slate-600 transition hover:text-[#1a365d]">
+            <a href="#contact" className="text-sm font-medium text-slate-600 transition hover:text-primary">
               Contact
             </a>
           </nav>
@@ -84,14 +84,14 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
             {contactPhone ? (
               <a
                 href={`tel:${contactPhone}`}
-                className="hidden rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[#002045] shadow-[0_16px_30px_rgba(25,28,30,0.06)] ring-1 ring-slate-200/70 transition hover:bg-slate-50 sm:inline-flex"
+                className="hidden rounded-full border border-[hsl(var(--public-border))] bg-white px-4 py-2.5 text-sm font-semibold text-[hsl(var(--public-ink))] shadow-[0_16px_30px_rgba(25,28,30,0.06)] transition hover:bg-[hsl(var(--public-primary-soft))] sm:inline-flex"
               >
                 Appeler
               </a>
             ) : null}
             <a
               href="#fleet"
-              className="inline-flex items-center gap-2 rounded-xl bg-[linear-gradient(135deg,#4f9cff_0%,#256fd3_100%)] px-4 py-2.5 text-sm font-bold text-white shadow-[0_14px_24px_rgba(37,111,211,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_28px_rgba(37,111,211,0.28)]"
+              className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--public-primary))] px-4 py-2.5 text-sm font-bold text-white shadow-[0_14px_24px_rgba(33,150,243,0.22)] transition hover:-translate-y-0.5 hover:bg-[hsl(var(--public-primary))]/92 hover:shadow-[0_18px_28px_rgba(33,150,243,0.28)]"
             >
               Réserver
               <ArrowRight className="h-4 w-4" />
@@ -102,40 +102,40 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
 
       <section
         aria-labelledby="storefront-hero-title"
-        className="relative overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_62%,#ffffff_100%)]"
+        className="relative overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,hsl(var(--public-primary-soft))_62%,#ffffff_100%)]"
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.08),transparent_34%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(33,150,243,0.12),transparent_34%)]" />
 
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
           <div className="grid min-h-[37rem] items-center gap-12 lg:min-h-[43.5rem] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
             <div className="relative z-10 max-w-[36rem]">
               <h1
                 id="storefront-hero-title"
-                className="max-w-none text-[2.85rem] font-extrabold leading-[1.05] tracking-[-0.068em] text-[#07152f] sm:text-[3.75rem] lg:text-[4.6rem]"
+                className="max-w-none text-[2.85rem] font-extrabold leading-[1.05] tracking-[-0.068em] text-[hsl(var(--public-ink))] sm:text-[3.75rem] lg:text-[4.6rem]"
               >
                 {heroTitle}
               </h1>
 
-              <p className="mt-6 max-w-2xl text-[1.02rem] leading-[1.5] text-[#24364d] sm:text-[1.12rem] lg:text-[1.18rem]">
+              <p className="mt-6 max-w-2xl text-[1.02rem] leading-[1.5] text-slate-600 sm:text-[1.12rem] lg:text-[1.18rem]">
                 {heroSubtitle}
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <a
                   href="#fleet"
-                  className="inline-flex min-h-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,#4f9cff_0%,#256fd3_100%)] px-7 py-3.5 text-base font-semibold text-white shadow-[0_14px_24px_rgba(37,111,211,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_28px_rgba(37,111,211,0.28)]"
+                  className="inline-flex min-h-14 items-center justify-center rounded-full bg-[hsl(var(--public-primary))] px-7 py-3.5 text-base font-semibold text-white shadow-[0_14px_24px_rgba(33,150,243,0.22)] transition hover:-translate-y-0.5 hover:bg-[hsl(var(--public-primary))]/92 hover:shadow-[0_18px_28px_rgba(33,150,243,0.28)]"
                 >
                   Voir les véhicules
                 </a>
                 <a
                   href={heroContactHref || "#contact"}
-                  className="inline-flex min-h-14 items-center justify-center rounded-full border border-[#a9c7ea] bg-white px-7 py-3.5 text-base font-medium text-[#4b78a4] shadow-[0_10px_20px_rgba(15,23,42,0.04)] transition hover:border-[#92b7e2] hover:bg-[#fbfdff]"
+                  className="inline-flex min-h-14 items-center justify-center rounded-full border border-[hsl(var(--public-border))] bg-white px-7 py-3.5 text-base font-medium text-[hsl(var(--public-ink))] shadow-[0_10px_20px_rgba(15,23,42,0.04)] transition hover:border-primary/20 hover:bg-[hsl(var(--public-primary-soft))]"
                 >
                   Contacter l’agence
                 </a>
               </div>
 
-              <div className="mt-8 grid max-w-[42rem] grid-cols-2 gap-6 text-[#52667b] sm:grid-cols-4">
+              <div className="mt-8 grid max-w-[42rem] grid-cols-2 gap-6 text-slate-600 sm:grid-cols-4">
                 <HeroTrustItem icon={<ShieldCheck className="h-[18px] w-[18px]" />} label="Validation humaine" />
                 <HeroTrustItem icon={<TimerReset className="h-[18px] w-[18px]" />} label="Réponse rapide" />
                 <HeroTrustItem icon={<FileText className="h-[18px] w-[18px]" />} label="Contrat clair" />
@@ -174,12 +174,12 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
 
       <section
         id="how-it-works"
-        className="bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] py-16 lg:py-20"
+        className="bg-[linear-gradient(180deg,#ffffff_0%,hsl(var(--public-primary-soft))_100%)] py-16 lg:py-20"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-bold uppercase tracking-[0.24em] text-[#1a365d]">Processus simple</p>
-            <h2 className="mt-3 text-4xl font-extrabold tracking-[-0.05em] text-[#002045] sm:text-5xl">
+            <p className="text-sm font-bold uppercase tracking-[0.24em] text-primary">Processus simple</p>
+            <h2 className="mt-3 text-4xl font-extrabold tracking-[-0.05em] text-[hsl(var(--public-ink))] sm:text-5xl">
               Comment ça fonctionne
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-slate-600">
@@ -188,8 +188,8 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
           </div>
 
           <div className="relative mx-auto mt-10 grid max-w-5xl gap-12 md:grid-cols-3 md:gap-16">
-            <div className="pointer-events-none absolute left-[23%] top-8 hidden w-24 border-t border-dashed border-[#9db4c9]/55 md:block" />
-            <div className="pointer-events-none absolute right-[23%] top-8 hidden w-24 border-t border-dashed border-[#9db4c9]/55 md:block" />
+            <div className="pointer-events-none absolute left-[23%] top-8 hidden w-24 border-t border-dashed border-primary/20 md:block" />
+            <div className="pointer-events-none absolute right-[23%] top-8 hidden w-24 border-t border-dashed border-primary/20 md:block" />
             <ProcessStep
               icon={<CarFront className="h-6 w-6" />}
               title="Choisissez un véhicule"
@@ -212,10 +212,10 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
       <section id="fleet" className="py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <p className="text-sm font-bold uppercase tracking-[0.24em] text-[#1a365d]">
+            <p className="text-sm font-bold uppercase tracking-[0.24em] text-primary">
               LOCATION DE VOITURES À {city.toUpperCase()}
             </p>
-            <h2 className="mt-3 text-4xl font-extrabold tracking-[-0.05em] text-[#002045] sm:text-5xl">
+            <h2 className="mt-3 text-4xl font-extrabold tracking-[-0.05em] text-[hsl(var(--public-ink))] sm:text-5xl">
               Notre flotte premium
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
@@ -224,11 +224,11 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
           </div>
 
           {vehicles.length === 0 ? (
-            <div className="mt-10 rounded-[2rem] bg-white p-10 shadow-[0_26px_60px_rgba(25,28,30,0.06)] ring-1 ring-slate-200/70">
-              <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-[#d6e3ff] text-[#002045]">
+            <div className="mt-10 rounded-[2rem] bg-white p-10 shadow-[0_26px_60px_rgba(25,28,30,0.06)] ring-1 ring-[hsl(var(--public-border))]/70">
+              <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-primary/[0.1] text-[hsl(var(--public-ink))]">
                 <CarFront className="h-8 w-8" />
               </div>
-              <h3 className="mt-6 text-2xl font-bold tracking-[-0.04em] text-[#002045]">
+              <h3 className="mt-6 text-2xl font-bold tracking-[-0.04em] text-[hsl(var(--public-ink))]">
                 La vitrine est prête, la flotte arrive bientôt
               </h3>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
@@ -239,7 +239,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
                 {contactPhone ? (
                   <a
                     href={`tel:${contactPhone}`}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#002045] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#163765]"
+                    className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--public-primary))] px-5 py-3 text-sm font-bold text-white transition hover:bg-[hsl(var(--public-primary))]/92"
                   >
                     <PhoneCall className="h-4 w-4" />
                     Appeler l&apos;agence
@@ -248,7 +248,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
                 {contactEmail ? (
                   <a
                     href={`mailto:${contactEmail}`}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#f2f4f6] px-5 py-3 text-sm font-bold text-[#002045] transition hover:bg-[#e6e8ea]"
+                    className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--public-primary-soft))] px-5 py-3 text-sm font-bold text-[hsl(var(--public-ink))] transition hover:bg-primary/[0.12]"
                   >
                     Écrire à l&apos;agence
                   </a>
@@ -272,7 +272,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
 
       <ClosingCta contactHref={heroContactHref || "#contact"} pickupLocationSummary={pickupLocationSummary} />
 
-      <footer className="border-t border-white/10 bg-[linear-gradient(135deg,#4f9cff_0%,#256fd3_100%)] text-white">
+      <footer className="border-t border-white/10 bg-[linear-gradient(135deg,#1d88e5_0%,hsl(var(--public-primary))_100%)] text-white">
         <div
           id="contact"
           className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.35fr_0.8fr_0.95fr_1fr] lg:px-8"
@@ -332,7 +332,7 @@ export function AgencyStorefrontPage({ settings, vehicles }: AgencyStorefrontPag
             <p className="mt-3 max-w-xs text-xs font-medium leading-5 text-white/70">{pickupLocationSummary}</p>
             <a
               href="#fleet"
-              className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-bold text-[#256fd3] shadow-[0_14px_24px_rgba(11,27,43,0.14)] transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-[0_18px_28px_rgba(11,27,43,0.18)]"
+              className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-bold text-[hsl(var(--public-primary))] shadow-[0_14px_24px_rgba(11,27,43,0.14)] transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-[0_18px_28px_rgba(11,27,43,0.18)]"
             >
               Voir les véhicules
             </a>
@@ -367,15 +367,15 @@ function ClosingCta({
   return (
     <section aria-labelledby="storefront-closing-cta-title" className="px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
       <div className="mx-auto max-w-6xl">
-        <div className="relative overflow-hidden rounded-[28px] border border-[#dbe8f6] bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_100%)] px-6 py-8 shadow-[0_28px_70px_rgba(15,23,42,0.08)] sm:px-8 lg:px-10">
-          <div className="pointer-events-none absolute -right-20 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-[#4f9cff]/16 blur-3xl" />
+        <div className="relative overflow-hidden rounded-[28px] border border-[hsl(var(--public-border))] bg-[linear-gradient(135deg,#ffffff_0%,hsl(var(--public-primary-soft))_100%)] px-6 py-8 shadow-[0_28px_70px_rgba(15,23,42,0.08)] sm:px-8 lg:px-10">
+          <div className="pointer-events-none absolute -right-20 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-primary/[0.12] blur-3xl" />
 
           <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-12">
             <div className="max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#256fd3]">RÉSERVATION SIMPLE</p>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">RÉSERVATION SIMPLE</p>
               <h2
                 id="storefront-closing-cta-title"
-                className="mt-3 text-3xl font-extrabold tracking-[-0.045em] text-[#002045] sm:text-4xl"
+                className="mt-3 text-3xl font-extrabold tracking-[-0.045em] text-[hsl(var(--public-ink))] sm:text-4xl"
               >
                 Prêt à réserver votre véhicule ?
               </h2>
@@ -388,13 +388,13 @@ function ClosingCta({
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:min-w-[24rem] lg:flex-col lg:items-stretch">
               <a
                 href="#fleet"
-                className="inline-flex min-h-[3.25rem] items-center justify-center rounded-full bg-[linear-gradient(135deg,#4f9cff_0%,#256fd3_100%)] px-6 py-3.5 text-sm font-bold text-white shadow-[0_14px_24px_rgba(37,111,211,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_28px_rgba(37,111,211,0.28)]"
+                className="inline-flex min-h-[3.25rem] items-center justify-center rounded-full bg-[hsl(var(--public-primary))] px-6 py-3.5 text-sm font-bold text-white shadow-[0_14px_24px_rgba(33,150,243,0.22)] transition hover:-translate-y-0.5 hover:bg-[hsl(var(--public-primary))]/92 hover:shadow-[0_18px_28px_rgba(33,150,243,0.28)]"
               >
                 Voir les véhicules
               </a>
               <a
                 href={contactHref}
-                className="inline-flex min-h-[3.25rem] items-center justify-center rounded-full border border-[#a9c7ea] bg-white px-6 py-3.5 text-sm font-semibold text-[#4b78a4] shadow-[0_10px_20px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-[#92b7e2] hover:bg-[#fbfdff]"
+                className="inline-flex min-h-[3.25rem] items-center justify-center rounded-full border border-[hsl(var(--public-border))] bg-white px-6 py-3.5 text-sm font-semibold text-[hsl(var(--public-ink))] shadow-[0_10px_20px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-primary/20 hover:bg-[hsl(var(--public-primary-soft))]"
               >
                 Contacter l’agence
               </a>
@@ -423,8 +423,8 @@ function HeroTrustItem({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-[#9db4c9]">{icon}</div>
-      <p className="max-w-[10ch] text-[0.98rem] font-medium leading-[1.15] tracking-[-0.03em] text-[#52667b]">
+      <div className="mt-0.5 text-primary/45">{icon}</div>
+      <p className="max-w-[10ch] text-[0.98rem] font-medium leading-[1.15] tracking-[-0.03em] text-slate-600">
         {label}
       </p>
     </div>
@@ -442,10 +442,10 @@ function ProcessStep({
 }) {
   return (
     <div className="relative z-10 flex flex-col items-center text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#cfe0f5] bg-[#f8fbff] text-[#1a365d] shadow-[0_16px_28px_rgba(37,111,211,0.08)]">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[hsl(var(--public-border))] bg-white text-primary shadow-[0_16px_28px_rgba(33,150,243,0.12)]">
         {icon}
       </div>
-      <p className="mt-4 text-[18px] font-semibold tracking-[-0.025em] text-[#002045]">{title}</p>
+      <p className="mt-4 text-[18px] font-semibold tracking-[-0.025em] text-[hsl(var(--public-ink))]">{title}</p>
       <p className="mt-3 max-w-[17rem] text-sm leading-6 text-slate-600">{body}</p>
     </div>
   );

@@ -105,11 +105,7 @@ export function DashboardHeaderV3({
       </div>
 
       <div className="flex items-center gap-2 self-start">
-        <Button
-          asChild
-          size="sm"
-          className="rounded-xl bg-[#1D4ED8] text-white shadow-none transition-colors duration-200 hover:bg-[#1E40AF]"
-        >
+        <Button asChild size="sm" className="rounded-xl shadow-none">
           <Link href={lp("/bookings/create")}>
             <Plus className="h-4 w-4" />
             {t("dashboard.header.newBooking")}

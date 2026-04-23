@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Plus, FileSpreadsheet, Car } from "lucide-react";
 import { VehiclesSearchBar } from "@/components/vehicles/vehicles-search-bar";
 import { VehiclesList } from "@/components/vehicles/vehicles-list";
+import { Button } from "@/components/ui/button";
 import type { BookingStatus, VehicleStatus } from "@prisma/client";
 import { getMessages, interpolate } from "@/lib/i18n/messages";
 import { isValidLocale, withLocalePath, type AppLocale } from "@/lib/i18n/config";
@@ -190,42 +191,38 @@ export default async function VehiclesPage({
 
   return (
     <div className="space-y-6">
-      {/* ── Header ── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
             {ui.vehicles.title}
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             {ui.vehicles.subtitle}
           </p>
         </div>
         {canManage ? (
           <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
-            <Link
-              href={lp("/vehicles/import")}
-              className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-medium text-blue-700 transition-colors duration-200 hover:bg-blue-100 sm:flex-none sm:px-4 sm:text-sm"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              {ui.vehicles.importExcel}
-            </Link>
-            <Link
-              href={lp("/vehicles/add")}
-              className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-medium text-white shadow-sm transition-colors duration-200 hover:bg-blue-700 sm:flex-none sm:px-4 sm:text-sm"
-            >
-              <Plus className="h-4 w-4" />
-              {ui.vehicles.addVehicle}
-            </Link>
+            <Button asChild variant="secondary" className="h-10 flex-1 sm:flex-none">
+              <Link href={lp("/vehicles/import")}>
+                <FileSpreadsheet className="h-4 w-4" />
+                {ui.vehicles.importExcel}
+              </Link>
+            </Button>
+            <Button asChild className="h-10 flex-1 sm:flex-none">
+              <Link href={lp("/vehicles/add")}>
+                <Plus className="h-4 w-4" />
+                {ui.vehicles.addVehicle}
+              </Link>
+            </Button>
           </div>
         ) : null}
       </div>
 
-      {/* ── Section 1: Status filter ── */}
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider sm:text-[11px]">
           {ui.vehicles.statusSection}
         </p>
-        <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-muted rounded-xl w-full">
+        <div className="flex w-full flex-wrap items-center gap-1.5 rounded-2xl border border-subtle bg-white p-1.5 shadow-card">
           {statusTabs.map((tab) => {
             const isActive =
               statusFilter === tab.key ||
@@ -241,18 +238,18 @@ export default async function VehiclesPage({
               <Link
                 key={tab.key ?? "all"}
                 href={href}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-transparent text-gray-600 hover:bg-blue-50"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-transparent text-muted-foreground hover:bg-[hsl(var(--surface-muted))] hover:text-foreground"
                 }`}
               >
                 {tab.label}
                 <span
-                  className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold min-w-[18px] h-[18px] px-1 tabular-nums ${
+                  className={`inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums ${
                     isActive
                       ? "bg-white/25 text-white"
-                      : "bg-gray-200/80 text-gray-600"
+                      : "bg-[hsl(var(--surface-muted))] text-muted-foreground"
                   }`}
                 >
                   {count}
@@ -273,40 +270,38 @@ export default async function VehiclesPage({
 
       {/* ── Content ── */}
       {vehicles.length === 0 && page === 1 ? (
-        /* Empty state */
-        <div className="flex flex-col items-center justify-center py-20 rounded-xl bg-white shadow-sm border border-border">
-          <div className="w-14 h-14 rounded-2xl bg-blue-100 border border-blue-100 flex items-center justify-center mb-4">
-            <Car className="h-7 w-7 text-blue-600/80" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-subtle bg-white py-20 shadow-card">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/[0.08] text-primary">
+            <Car className="h-7 w-7" />
           </div>
-          <p className="text-gray-700 text-sm font-medium mb-1">
+          <p className="mb-1 text-sm font-medium text-slate-800">
             {!statusFilter && !searchQuery ? ui.vehicles.emptyFleetTitle : emptyMessage}
           </p>
-          <p className="text-gray-400 text-xs mb-5">
+          <p className="mb-5 text-xs text-muted-foreground">
             {!searchQuery && !statusFilter
               ? ui.vehicles.emptyFleetHint
               : ui.vehicles.emptyAdjustHint}
           </p>
           {!statusFilter && !searchQuery && (
-            <Link
-              href={lp("/vehicles/add")}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors duration-200"
-            >
-              <Plus className="h-4 w-4" />
-              {ui.vehicles.addVehicle}
-            </Link>
+            <Button asChild>
+              <Link href={lp("/vehicles/add")}>
+                <Plus className="h-4 w-4" />
+                {ui.vehicles.addVehicle}
+              </Link>
+            </Button>
           )}
         </div>
       ) : (
         <>
-        <VehiclesList
-          vehicles={vehicles}
-          isRentedView={isRentedView}
-          canManageVehicles={canManage}
-          canDeleteVehicles={canDelete}
-          statusFilter={statusFilter}
-        />
+          <VehiclesList
+            vehicles={vehicles}
+            isRentedView={isRentedView}
+            canManageVehicles={canManage}
+            canDeleteVehicles={canDelete}
+            statusFilter={statusFilter}
+          />
           {totalPages > 1 ? (
-            <div className="rounded-xl border border-border bg-white shadow-sm">
+            <div className="rounded-2xl border border-subtle bg-white shadow-card">
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}

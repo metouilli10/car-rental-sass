@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Locaryx palette: restrained neutrals + dark blue accent */
+    /* Locaryx palette: restrained neutrals + signature blue accent */
     --background: 220 23% 97%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
@@ -13,7 +13,7 @@
     --popover-foreground: 222 47% 11%;
 
     /* Brand */
-    --primary: 215 84% 22%;
+    --primary: 207 90% 54%;
     --primary-foreground: 0 0% 100%;
 
     /* Semantic Colors */
@@ -38,7 +38,7 @@
 
     --border: 220 18% 88%;
     --input: 220 18% 88%;
-    --ring: 215 84% 22%;
+    --ring: 207 90% 54%;
     --radius: 0.5rem;
 
     /* Dashboard tokens */
@@ -60,8 +60,17 @@
     --card-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.08);
 
     /* Primary gradient */
-    --primary-gradient: linear-gradient(135deg, #002e5d 0%, #2274ae 100%);
-    --primary-gradient-hover: linear-gradient(135deg, #001f40 0%, #1d6395 100%);
+    --primary-gradient: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+    --primary-gradient-hover: linear-gradient(135deg, #1d88e5 0%, #4daaf5 100%);
+
+    /* Public / marketing tokens */
+    --public-ink: 214 60% 16%;
+    --public-primary: 207 90% 54%;
+    --public-primary-foreground: 0 0% 100%;
+    --public-primary-soft: 212 100% 97%;
+    --public-surface: 210 40% 99%;
+    --public-border: 214 32% 88%;
+    --public-success: 160 70% 34%;
 
     --chart-1: 219 83% 54%;
     --chart-2: 38 92% 50%;
@@ -70,12 +79,12 @@
     --chart-5: 217 91% 60%;
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 215 84% 22%;
+    --sidebar-primary: 207 90% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 20% 96%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 17% 91%;
-    --sidebar-ring: 215 84% 22%;
+    --sidebar-ring: 207 90% 54%;
   }
 
   .dark {
@@ -198,6 +207,12 @@
       linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 248, 250, 0.92) 100%);
   }
 
+  .public-shell {
+    background:
+      radial-gradient(circle at top, rgba(33, 150, 243, 0.1), transparent 34%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 249, 252, 0.96) 100%);
+  }
+
   .dashboard-panel {
     @apply rounded-2xl border border-subtle bg-white shadow-card;
   }
@@ -256,13 +271,17 @@
   }
   .btn-gradient:hover {
     background: var(--primary-gradient-hover);
-    box-shadow: 0 4px 12px 0 hsl(220 84% 54% / 0.25);
+    box-shadow: 0 4px 12px 0 rgba(33, 150, 243, 0.24);
+  }
+
+  .public-pill {
+    border-radius: 999px;
   }
 
   .sidebar-gradient {
-    background: #2274ae;
-    background: -webkit-linear-gradient(to bottom, #002e5d, #2274ae);
-    background: linear-gradient(to bottom, #002e5d, #2274ae);
+    background: #2196f3;
+    background: -webkit-linear-gradient(to bottom, #1d88e5, #2196f3);
+    background: linear-gradient(to bottom, #1d88e5, #2196f3);
   }
 
   /* Soft alert styles */

@@ -153,7 +153,7 @@ export function InstallPrompt() {
         )}
       >
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#002e5d]/8 text-[#002e5d]">
+          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[hsl(var(--primary))]/12 text-primary">
             {showIosHint ? <Share2 className="h-4 w-4" /> : <Download className="h-4 w-4" />}
           </div>
           <div className="min-w-0 flex-1">
@@ -194,7 +194,7 @@ export function InstallPrompt() {
                     size="sm"
                     onClick={() => void triggerInstall()}
                     disabled={installing}
-                    className="rounded-xl bg-[#002e5d] hover:bg-[#001f40]"
+                    className="rounded-xl"
                   >
                     {installing ? "Ouverture..." : "Installer"}
                   </Button>

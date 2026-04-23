@@ -169,7 +169,7 @@ export default function SignupPage() {
 
             <p className="text-sm text-muted-foreground">
               Déjà vérifié ?{" "}
-              <Link href="/login" className="font-semibold text-[#2c2cf2]">
+              <Link href="/login" className="font-semibold text-primary">
                 Retour à la connexion
               </Link>
             </p>
@@ -180,7 +180,7 @@ export default function SignupPage() {
               <Label htmlFor="signup-name">Nom complet</Label>
               <Input
                 id="signup-name"
-                className="h-12 bg-neutral-50 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#2c2cf2]/30"
+                className="h-12 bg-neutral-50"
                 value={form.name}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, name: event.target.value }))
@@ -194,7 +194,7 @@ export default function SignupPage() {
               <Input
                 id="signup-email"
                 type="email"
-                className="h-12 bg-neutral-50 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#2c2cf2]/30"
+                className="h-12 bg-neutral-50"
                 value={form.email}
                 onChange={(event) =>
                   setForm((current) => ({
@@ -215,7 +215,7 @@ export default function SignupPage() {
                 <Input
                   id="signup-password"
                   type="password"
-                  className="h-12 bg-neutral-50 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#2c2cf2]/30"
+                  className="h-12 bg-neutral-50"
                   value={form.password}
                   onChange={(event) =>
                     setForm((current) => ({
@@ -234,7 +234,7 @@ export default function SignupPage() {
                 <Input
                   id="signup-confirm-password"
                   type="password"
-                  className="h-12 bg-neutral-50 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#2c2cf2]/30"
+                  className="h-12 bg-neutral-50"
                   value={form.confirmPassword}
                   onChange={(event) =>
                     setForm((current) => ({
@@ -256,7 +256,7 @@ export default function SignupPage() {
             <div className="flex flex-col gap-4 border-t border-border/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground">
                 Déjà un compte ?{" "}
-                <Link href="/login" className="font-semibold text-[#2c2cf2]">
+                <Link href="/login" className="font-semibold text-primary">
                   Se connecter
                 </Link>
               </p>

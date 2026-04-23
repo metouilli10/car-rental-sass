@@ -1,13 +1,34 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import type { NextConfig } from "next";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isDevLike = process.env.NODE_ENV !== "production";
+const vercelToolbarEnabled = isDevLike || process.env.VERCEL_TOOLBAR_ENABLED === "true";
 const scriptSrc = [
   "'self'",
   "'unsafe-inline'",
   ...(isDevLike ? ["'unsafe-eval'"] : []),
+  ...(vercelToolbarEnabled ? ["https://vercel.live"] : []),
+].join(" ");
+const connectSrc = [
+  "'self'",
+  "https://*.supabase.co",
+  "https://api.resend.com",
+  ...(vercelToolbarEnabled ? ["https://vercel.live", "http://localhost:43214"] : []),
+].join(" ");
+const frameSrc = [
+  "'self'",
+  ...(vercelToolbarEnabled ? ["https://vercel.live"] : []),
+].join(" ");
+const imgSrc = [
+  "'self'",
+  "data:",
+  "blob:",
+  "https://*.supabase.co",
+  "https://images.unsplash.com",
+  ...(vercelToolbarEnabled ? ["https://vercel.live"] : []),
 ].join(" ");
 
 const securityHeaders = [
@@ -19,11 +40,12 @@ const securityHeaders = [
       "object-src 'none'",
       "frame-ancestors 'none'",
       "form-action 'self'",
-      "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com",
+      `img-src ${imgSrc}`,
       "font-src 'self' data:",
       "style-src 'self' 'unsafe-inline'",
       `script-src ${scriptSrc}`,
-      "connect-src 'self' https://*.supabase.co https://api.resend.com",
+      `connect-src ${connectSrc}`,
+      `frame-src ${frameSrc}`,
     ].join("; "),
   },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
@@ -101,4 +123,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withVercelToolbar()(nextConfig);

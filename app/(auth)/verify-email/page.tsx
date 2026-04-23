@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CheckCircle2, Clock3, MailWarning, XCircle } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { ContextPanel } from "@/components/onboarding/ContextPanel";
+import { Button } from "@/components/ui/button";
 import { consumeOwnerVerificationToken } from "@/lib/owner-verification";
 
 type VerifyEmailPageProps = {
@@ -44,18 +45,12 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Link
-            href={content.primaryHref}
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-[#111827] px-5 text-sm font-semibold text-white transition hover:bg-black"
-          >
-            {content.primaryLabel}
-          </Link>
-          <Link
-            href={content.secondaryHref}
-            className="inline-flex h-12 items-center justify-center rounded-xl border border-border px-5 text-sm font-semibold transition hover:bg-neutral-50"
-          >
-            {content.secondaryLabel}
-          </Link>
+          <Button asChild className="h-12 rounded-xl">
+            <Link href={content.primaryHref}>{content.primaryLabel}</Link>
+          </Button>
+          <Button asChild variant="outline" className="h-12 rounded-xl">
+            <Link href={content.secondaryHref}>{content.secondaryLabel}</Link>
+          </Button>
         </div>
       </div>
     </OnboardingShell>

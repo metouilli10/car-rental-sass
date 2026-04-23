@@ -381,7 +381,7 @@ export function CustomerForm({
           )}
 
           <div className={cn("flex gap-3 pt-4", isMobileSheet ? "sticky bottom-0 -mx-4 border-t border-border/70 bg-white/95 px-4 pb-1 pt-4 backdrop-blur" : "")}>
-            <Button type="submit" disabled={isLoading} className={cn(isMobileSheet ? "min-h-12 flex-1 bg-blue-600 hover:bg-blue-700" : "")}>
+            <Button type="submit" disabled={isLoading} className={cn(isMobileSheet ? "min-h-12 flex-1" : "")}>
               {isLoading ? "Enregistrement..." : submitLabel}
             </Button>
             <Button

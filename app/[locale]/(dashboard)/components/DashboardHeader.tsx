@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MoreHorizontal, Plus } from "lucide-react";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 const headerIconClass = "h-5 w-5 shrink-0";
 
@@ -18,13 +19,12 @@ export function DashboardHeader() {
       </div>
 
       <div className="flex items-center gap-2 border-l border-slate-200 pl-0 lg:pl-6">
-        <Link
-          href="/reservations/new"
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
-        >
-          <Plus className={headerIconClass} />
-          Nouvelle réservation
-        </Link>
+        <Button asChild>
+          <Link href="/reservations/new">
+            <Plus className={headerIconClass} />
+            Nouvelle réservation
+          </Link>
+        </Button>
 
         <div className="hidden sm:flex items-center gap-2">
           <Link

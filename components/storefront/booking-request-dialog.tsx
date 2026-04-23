@@ -140,13 +140,13 @@ export function BookingRequestDialog({
       <DialogTrigger asChild>
         <Button className={triggerClassName || "w-full"}>Envoyer une demande</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-xl rounded-[1.75rem] border-slate-200 bg-[#f7f9fb] p-0 shadow-[0_30px_80px_rgba(25,28,30,0.18)]">
-        <div className="rounded-t-[1.75rem] bg-[linear-gradient(135deg,#002045_0%,#1a365d_100%)] px-6 py-6 text-white">
+      <DialogContent className="max-w-xl rounded-[1.75rem] border-[hsl(var(--public-border))] bg-[hsl(var(--public-surface))] p-0 shadow-[0_30px_80px_rgba(25,28,30,0.18)]">
+        <div className="rounded-t-[1.75rem] bg-[linear-gradient(135deg,#ffffff_0%,hsl(var(--public-primary-soft))_100%)] px-6 py-6 text-[hsl(var(--public-ink))]">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-extrabold tracking-[-0.04em] text-white">
+            <DialogTitle className="text-2xl font-extrabold tracking-[-0.04em] text-[hsl(var(--public-ink))]">
               {vehicle.make} {vehicle.model}
             </DialogTitle>
-            <DialogDescription className="text-slate-200">
+            <DialogDescription className="text-slate-600">
               Envoyez une demande de réservation. Notre équipe vérifiera la disponibilité et vous recontactera avant toute confirmation.
             </DialogDescription>
           </DialogHeader>
@@ -198,8 +198,8 @@ export function BookingRequestDialog({
                   required
                 />
               </Field>
-              <div className="rounded-[1rem] border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-sm">
-                <p className="font-medium text-slate-900">À partir de {vehicle.pricePerDay} MAD / jour</p>
+              <div className="rounded-[1rem] border border-[hsl(var(--public-border))] bg-white p-3 text-sm text-slate-700 shadow-sm">
+                <p className="font-medium text-[hsl(var(--public-ink))]">À partir de {vehicle.pricePerDay} MAD / jour</p>
                 <p className="mt-1 text-xs text-slate-500">Catégorie {vehicle.category}</p>
               </div>
               <Field label="Date de départ" htmlFor={`pickupDate-${vehicle.id}`}>
@@ -273,7 +273,7 @@ export function BookingRequestDialog({
             />
             <Button
               type="submit"
-              className="w-full rounded-xl bg-[#002045] py-3 text-sm font-bold text-white transition hover:bg-[#163765]"
+              className="w-full rounded-full py-3 text-sm font-bold"
               disabled={isLoading}
             >
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
