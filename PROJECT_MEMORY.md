@@ -31,6 +31,13 @@ This is the canonical shared memory for the repository.
 
 ## Recent Changes Log
 
+### 2026-04-25 - Root homepage restored to cometly marketing page
+
+- `Change:` Switched the root `/` homepage back to `cometly-clone-2` while keeping authenticated-user redirect behavior and custom-domain storefront rendering on the same route.
+- `Impact:` Public visitors to `locaryx.com` see the previous long-form marketing homepage again, while verified storefront custom domains and logged-in users keep their existing route behavior.
+- `Touched:` `app/page.tsx`
+- `Follow-up:` If the premium landing returns later, split homepage variants into named components so accidental swaps are easier to spot.
+
 ### 2026-04-25 - Booking requests now use reservation-style mobile cards
 
 - `Change:` Reworked the dashboard `Demandes de réservation` page to follow the reservations screen pattern on mobile by rendering dedicated request cards below `md` while keeping the existing table for larger screens, and widened the filter CTA for small screens.
