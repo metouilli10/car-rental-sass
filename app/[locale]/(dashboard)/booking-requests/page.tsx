@@ -4,6 +4,7 @@ import { getCurrentUserAccessForPage } from "@/lib/authz";
 import { getEffectivePermissions } from "@/lib/permissions";
 import { PageHeader } from "@/components/shared/page-header";
 import { BookingRequestDetailCard } from "@/components/booking-requests/booking-request-detail-card";
+import { BookingRequestCardList } from "@/components/booking-requests/booking-request-card-list";
 import { BookingRequestsTable } from "@/components/booking-requests/booking-requests-table";
 import { markBookingRequestAsRead } from "@/lib/notifications/booking-requests";
 import { getBookingRequestsForAgency } from "@/lib/storefront/queries";
@@ -85,7 +86,7 @@ export default async function BookingRequestsPage({
           />
         </div>
         <div className="flex items-end">
-          <Button type="submit" className="h-10">Filtrer</Button>
+          <Button type="submit" className="h-10 w-full md:w-auto">Filtrer</Button>
         </div>
       </form>
 
@@ -93,7 +94,26 @@ export default async function BookingRequestsPage({
         <BookingRequestDetailCard request={highlightedRequest} locale={locale} />
       ) : null}
 
-      <BookingRequestsTable requests={requests} locale={locale} highlightedRequestId={requestId || undefined} />
+      {requests.length === 0 ? (
+        <BookingRequestsTable requests={requests} locale={locale} highlightedRequestId={requestId || undefined} />
+      ) : (
+        <>
+          <div className="md:hidden">
+            <BookingRequestCardList
+              requests={requests}
+              locale={locale}
+              highlightedRequestId={requestId || undefined}
+            />
+          </div>
+          <div className="hidden md:block">
+            <BookingRequestsTable
+              requests={requests}
+              locale={locale}
+              highlightedRequestId={requestId || undefined}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

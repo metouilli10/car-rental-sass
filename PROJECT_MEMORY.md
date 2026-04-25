@@ -31,6 +31,13 @@ This is the canonical shared memory for the repository.
 
 ## Recent Changes Log
 
+### 2026-04-25 - Booking requests now use reservation-style mobile cards
+
+- `Change:` Reworked the dashboard `Demandes de réservation` page to follow the reservations screen pattern on mobile by rendering dedicated request cards below `md` while keeping the existing table for larger screens, and widened the filter CTA for small screens.
+- `Impact:` Booking requests are now readable and actionable on phones without horizontal table overflow, while desktop keeps the denser table workflow.
+- `Touched:` `app/[locale]/(dashboard)/booking-requests/page.tsx`, `components/booking-requests/booking-request-card.tsx`, `components/booking-requests/booking-request-card-list.tsx`
+- `Follow-up:` If the booking-requests workspace grows more complex, consider sharing list-layout primitives with reservations to keep mobile and desktop patterns aligned.
+
 ### 2026-04-25 - Vehicle profile no longer crashes when vehicle-documents migration is missing
 
 - `Change:` Wrapped vehicle-document reads in the vehicle profile loader with a Prisma missing-table/missing-column fallback so `/[locale]/vehicles/[id]` still renders when `vehicle_documents` is not yet available in an environment.
