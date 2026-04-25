@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 import { AgencyStorefrontPage } from "@/components/storefront/agency-storefront-page";
 import { isReservedStorefrontSlug, normalizeAgencySlug } from "@/lib/storefront/constants";
+import { isInternalStorefrontHost, normalizeStorefrontHostname } from "@/lib/storefront/domains";
 import { getPublishedVehiclesBySlug, getWebsiteSettingsBySlug } from "@/lib/storefront/queries";
-import { toAbsoluteStorefrontUrl } from "@/lib/storefront/seo";
+import { getCanonicalStorefrontUrl } from "@/lib/storefront/seo";
+
+function getRequestHost(headerList: Awaited<ReturnType<typeof headers>>) {
+  return normalizeStorefrontHostname(headerList.get("x-forwarded-host") || headerList.get("host") || "");
+}
 
 function buildStorefrontMetadata({
   agencySlug,
@@ -12,6 +18,7 @@ function buildStorefrontMetadata({
   heroSubtitle,
   heroImageUrl,
   city,
+  customHostname,
 }: {
   agencySlug: string;
   siteTitle: string;
@@ -19,8 +26,12 @@ function buildStorefrontMetadata({
   heroSubtitle: string;
   heroImageUrl: string | null;
   city: string;
+  customHostname?: string | null;
 }): Metadata {
-  const canonical = toAbsoluteStorefrontUrl(`/${agencySlug}`);
+  const canonical = getCanonicalStorefrontUrl({
+    agencySlug,
+    customHostname,
+  });
   const title = `${siteTitle} | Location de voiture à ${city}`;
   const description =
     heroSubtitle ||
@@ -89,6 +100,14 @@ export async function generateMetadata({
     };
   }
 
+  const headerList = await headers();
+  const requestHost = getRequestHost(headerList);
+  const verifiedHostname =
+    website.agency.storefrontDomain?.status === "VERIFIED"
+      ? website.agency.storefrontDomain.hostname
+      : null;
+  const customHostname =
+    verifiedHostname && requestHost === verifiedHostname ? verifiedHostname : null;
   const siteTitle = website.siteTitle || website.agency.name;
   const heroTitle = website.heroTitle || siteTitle;
   const heroSubtitle =
@@ -102,6 +121,7 @@ export async function generateMetadata({
     heroSubtitle,
     heroImageUrl: website.heroImageUrl || null,
     city: website.agency.city,
+    customHostname,
   });
 }
 
@@ -120,6 +140,17 @@ export default async function AgencyStorefrontPageRoute({
   const result = await getPublishedVehiclesBySlug(agencySlug);
   if (!result) {
     notFound();
+  }
+
+  const headerList = await headers();
+  const requestHost = getRequestHost(headerList);
+  const verifiedHostname =
+    result.settings.agency.storefrontDomain?.status === "VERIFIED"
+      ? result.settings.agency.storefrontDomain.hostname
+      : null;
+
+  if (verifiedHostname && (!requestHost || isInternalStorefrontHost(requestHost))) {
+    redirect(getCanonicalStorefrontUrl({ agencySlug, customHostname: verifiedHostname }));
   }
 
   return <AgencyStorefrontPage settings={result.settings} vehicles={result.vehicles} />;

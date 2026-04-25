@@ -31,6 +31,7 @@ function createVehicle(
     hasAC: true,
     category: "Citadine",
     photoUrl: null,
+    publishedToWebsite: false,
     mileage: 12000,
     currentKm: 12950,
     maintenanceNotes: null,

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isReservedStorefrontSlug, normalizeAgencySlug } from "@/lib/storefront/constants";
+import { isValidStorefrontHostname, normalizeStorefrontHostname } from "@/lib/storefront/domains";
 
 const phoneField = z.string().trim().max(30, "Numéro invalide").optional().or(z.literal(""));
 const optionalText = z.string().trim().optional().or(z.literal(""));
@@ -26,6 +27,17 @@ export const websiteSettingsSchema = z.object({
 });
 
 export type WebsiteSettingsFormData = z.infer<typeof websiteSettingsSchema>;
+
+export const storefrontDomainInputSchema = z.object({
+  hostname: z
+    .string()
+    .trim()
+    .min(1, "Domaine requis")
+    .transform(normalizeStorefrontHostname)
+    .refine((hostname) => isValidStorefrontHostname(hostname), "Nom de domaine invalide"),
+});
+
+export type StorefrontDomainInput = z.infer<typeof storefrontDomainInputSchema>;
 
 export const publicBookingRequestSchema = z
   .object({

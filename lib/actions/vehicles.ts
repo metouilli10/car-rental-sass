@@ -13,6 +13,7 @@ import {
 import { vehicleReminderSchema, type VehicleReminderFormData } from "@/lib/validations/vehicle-reminder";
 import { computeVehicleReminders } from "@/lib/reminders/engine";
 import { syncAgencyOnboardingState } from "@/lib/onboarding/agency-onboarding";
+import { getStorefrontPath } from "@/lib/storefront/routes";
 import {
   createVehicleCompat,
   persistVehicleFuelType,
@@ -364,6 +365,51 @@ export async function updateVehicleReminderFields(
   } catch (error) {
     console.error("updateVehicleReminderFields error:", error);
     return { error: "Erreur lors de la mise à jour des rappels" };
+  }
+}
+
+export async function setVehicleStorefrontVisibility(id: string, publishedToWebsite: boolean) {
+  const currentUser = await getCurrentUserAccessOrThrow();
+
+  if (!canManageVehicles(currentUser.role, currentUser.permissions)) {
+    return { error: "Vous n'avez pas l'autorisation de gerer les vehicules" };
+  }
+
+  try {
+    const [vehicle, websiteSettings] = await Promise.all([
+      prisma.vehicle.findFirst({
+        where: { id, agencyId: currentUser.agencyId },
+        select: { id: true },
+      }),
+      prisma.websiteSettings.findUnique({
+        where: { agencyId: currentUser.agencyId },
+        select: { agencySlug: true },
+      }),
+    ]);
+
+    if (!vehicle) {
+      return { error: "Véhicule non trouvé" };
+    }
+
+    await updateVehicleCompat(
+      id,
+      { publishedToWebsite },
+      { id: true },
+    );
+
+    revalidatePath("/vehicles");
+    revalidatePath(`/vehicles/${id}`);
+    revalidatePath("/catalogue");
+
+    if (websiteSettings?.agencySlug) {
+      revalidatePath(getStorefrontPath(websiteSettings.agencySlug));
+      revalidatePath(`/storefront/${websiteSettings.agencySlug}`);
+    }
+
+    return { success: true as const, publishedToWebsite };
+  } catch (error) {
+    console.error("setVehicleStorefrontVisibility error:", error);
+    return { error: "Erreur lors de la mise à jour de la visibilité storefront" };
   }
 }
 

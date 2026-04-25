@@ -140,19 +140,19 @@ export function BookingRequestDialog({
       <DialogTrigger asChild>
         <Button className={triggerClassName || "w-full"}>Envoyer une demande</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-xl rounded-[1.75rem] border-[hsl(var(--public-border))] bg-[hsl(var(--public-surface))] p-0 shadow-[0_30px_80px_rgba(25,28,30,0.18)]">
-        <div className="rounded-t-[1.75rem] bg-[linear-gradient(135deg,#ffffff_0%,hsl(var(--public-primary-soft))_100%)] px-6 py-6 text-[hsl(var(--public-ink))]">
+      <DialogContent className="max-h-[92vh] max-w-xl overflow-hidden rounded-[1.5rem] border-[hsl(var(--public-border))] bg-[hsl(var(--public-surface))] p-0 shadow-[0_30px_80px_rgba(25,28,30,0.18)] sm:rounded-[1.75rem]">
+        <div className="rounded-t-[1.5rem] bg-[linear-gradient(135deg,#ffffff_0%,hsl(var(--public-primary-soft))_100%)] px-5 py-5 text-[hsl(var(--public-ink))] sm:rounded-t-[1.75rem] sm:px-6 sm:py-6">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-extrabold tracking-[-0.04em] text-[hsl(var(--public-ink))]">
+            <DialogTitle className="pr-8 text-[1.65rem] font-extrabold tracking-[-0.04em] text-[hsl(var(--public-ink))] sm:text-2xl">
               {vehicle.make} {vehicle.model}
             </DialogTitle>
-            <DialogDescription className="text-slate-600">
+            <DialogDescription className="text-sm leading-6 text-slate-600">
               Envoyez une demande de réservation. Notre équipe vérifiera la disponibilité et vous recontactera avant toute confirmation.
             </DialogDescription>
           </DialogHeader>
         </div>
 
-        <div className="space-y-4 px-6 py-6">
+        <div className="max-h-[calc(92vh-8.5rem)] overflow-y-auto px-5 py-5 sm:max-h-[calc(92vh-9rem)] sm:px-6 sm:py-6">
           {success ? (
             <div className="rounded-[1rem] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
               <p className="font-medium">Demande envoyée</p>
@@ -273,7 +273,7 @@ export function BookingRequestDialog({
             />
             <Button
               type="submit"
-              className="w-full rounded-full py-3 text-sm font-bold"
+              className="w-full rounded-full py-3 text-sm font-bold sm:py-3"
               disabled={isLoading}
             >
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

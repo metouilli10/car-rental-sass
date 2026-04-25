@@ -1,8 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { ArrowRight, BadgeCheck, CalendarClock, CarFront, CreditCard, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
+import { AgencyStorefrontPage } from "@/components/storefront/agency-storefront-page";
 import { getSession } from "@/lib/auth-cache";
+import { normalizeStorefrontHostname } from "@/lib/storefront/domains";
+import { getPublishedVehiclesBySlug } from "@/lib/storefront/queries";
+import { resolveStorefrontRequest } from "@/lib/storefront/resolve";
 import { Button } from "@/components/ui/button";
 
 const highlights = [
@@ -30,6 +35,22 @@ const trustPoints = [
 ];
 
 export default async function HomePage() {
+  const headerList = await headers();
+  const requestHost = normalizeStorefrontHostname(
+    headerList.get("x-forwarded-host") || headerList.get("host") || "",
+  );
+  const storefrontResolution = requestHost
+    ? await resolveStorefrontRequest({ host: requestHost })
+    : null;
+
+  if (storefrontResolution?.source === "custom-domain") {
+    const storefront = await getPublishedVehiclesBySlug(storefrontResolution.agencySlug);
+
+    if (storefront) {
+      return <AgencyStorefrontPage settings={storefront.settings} vehicles={storefront.vehicles} />;
+    }
+  }
+
   const session = await getSession();
 
   if (session?.user) {

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Locaryx | Location de voitures à Casablanca</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#2d0700",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#101b30",
+                        "on-surface-variant": "#444650",
+                        "on-secondary-container": "#5a647c",
+                        "inverse-primary": "#b1c5ff",
+                        "secondary": "#545e76",
+                        "error-container": "#ffdad6",
+                        "background": "#f8f9fa",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#bbc6e2",
+                        "on-tertiary-fixed-variant": "#783018",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-error": "#ffffff",
+                        "on-background": "#191c1d",
+                        "surface-container-low": "#f3f4f5",
+                        "on-secondary-fixed-variant": "#3c475d",
+                        "surface-variant": "#e1e3e4",
+                        "on-tertiary-fixed": "#390b00",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "outline": "#757682",
+                        "surface-container-highest": "#e1e3e4",
+                        "tertiary-fixed": "#ffdbd0",
+                        "primary": "#001237",
+                        "inverse-surface": "#2e3132",
+                        "surface-dim": "#d9dadb",
+                        "primary-fixed": "#dae2ff",
+                        "tertiary-container": "#501300",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#2559bd",
+                        "on-primary-fixed-variant": "#00419e",
+                        "surface": "#f8f9fa",
+                        "on-surface": "#191c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#001946",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-container": "#edeeef",
+                        "surface-bright": "#f8f9fa",
+                        "secondary-fixed": "#d7e2ff",
+                        "on-tertiary-container": "#d37758",
+                        "on-primary-container": "#5f8cf3",
+                        "secondary-container": "#d7e2ff",
+                        "primary-container": "#002560",
+                        "outline-variant": "#c5c6d2",
+                        "tertiary-fixed-dim": "#ffb59e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-shift-on-scroll { transition: all 0.3s ease; }
+        .text-glow { text-shadow: 0 0 20px rgba(177, 197, 255, 0.3); }
+        .ambient-shadow { box-shadow: 0px 20px 40px rgba(25, 28, 29, 0.06); }
+    </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none tonal-shift-on-scroll">
+<nav class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto w-full">
+<div class="text-2xl font-black tracking-tighter text-blue-950 dark:text-white">Locaryx</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="font-manrope text-sm tracking-tight font-bold border-b-2 border-blue-900 dark:border-blue-400 pb-1 text-blue-900 dark:text-blue-400" href="#">Home</a>
+<a class="font-manrope text-sm tracking-tight font-medium text-slate-600 dark:text-slate-400 hover:text-blue-900 dark:hover:text-blue-300 transition-colors" href="#fleet">Vehicles</a>
+<a class="font-manrope text-sm tracking-tight font-medium text-slate-600 dark:text-slate-400 hover:text-blue-900 dark:hover:text-blue-300 transition-colors" href="#how-it-works">How it Works</a>
+<a class="font-manrope text-sm tracking-tight font-medium text-slate-600 dark:text-slate-400 hover:text-blue-900 dark:hover:text-blue-300 transition-colors" href="#contact">Contact</a>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded hover:bg-on-primary-fixed-variant transition-all scale-95 active:scale-90 font-bold text-sm">Reserve</button>
+</nav>
+</header>
+<!-- Hero Section -->
+<main class="relative pt-24 pb-32 overflow-hidden">
+<div class="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div class="z-10">
+<span class="inline-block py-1 px-3 rounded bg-secondary-container text-on-secondary-fixed text-xs font-bold uppercase tracking-widest mb-6">Premium Service</span>
+<h1 class="text-6xl md:text-7xl font-extrabold text-primary leading-tight tracking-tighter mb-6">
+                    Location de voitures à <span class="text-on-primary-container">Casablanca</span>
+</h1>
+<p class="text-xl text-on-surface-variant max-w-lg mb-10 leading-relaxed">
+                    Choisissez un véhicule et envoyez votre demande. Confirmation rapide par l’agence pour une expérience sans friction.
+                </p>
+<div class="flex flex-wrap gap-4 mb-12">
+<a class="bg-primary text-on-primary px-8 py-4 rounded-lg font-bold hover:bg-on-primary-fixed-variant transition-all shadow-xl shadow-primary/10" href="#fleet">Explorer la flotte</a>
+<a class="bg-surface-container-lowest text-primary px-8 py-4 rounded-lg font-bold border border-outline-variant/15 hover:bg-surface-container-low transition-all" href="#how-it-works">Comment ça marche ?</a>
+</div>
+<!-- Trust Cards (Floating Style) -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="bg-surface-container-lowest p-4 rounded-xl ambient-shadow border border-outline-variant/10">
+<span class="material-symbols-outlined text-on-primary-container mb-2" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<p class="text-sm font-bold text-primary">Assurance Premium</p>
+<p class="text-xs text-on-surface-variant">Protection complète incluse</p>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl ambient-shadow border border-outline-variant/10">
+<span class="material-symbols-outlined text-on-primary-container mb-2" style="font-variation-settings: 'FILL' 1;">support_agent</span>
+<p class="text-sm font-bold text-primary">Support 24/7</p>
+<p class="text-xs text-on-surface-variant">Une équipe à votre écoute</p>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl ambient-shadow border border-outline-variant/10">
+<span class="material-symbols-outlined text-on-primary-container mb-2" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<p class="text-sm font-bold text-primary">Réponse Rapide</p>
+<p class="text-xs text-on-surface-variant">Moins de 15 minutes</p>
+</div>
+</div>
+</div>
+<div class="relative lg:h-[600px] flex items-center justify-center">
+<div class="absolute inset-0 bg-gradient-to-tr from-primary-container/20 to-transparent rounded-full blur-3xl scale-150"></div>
+<img class="relative z-10 w-full h-auto object-cover rounded-2xl ambient-shadow transform lg:scale-110 lg:translate-x-12 hover:scale-115 transition-transform duration-700" data-alt="Luxury dark grey executive sedan car parked in a high-end modern architectural setting with dramatic morning lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpvTww826OP0STC4vFc_s6jnGSd6H4ksg-9frPiw0M1qIc82aKYpXHGOMzD2w2CG7V_ZtTnkK-fdwZw5ThEi5ZluZFuhHSwQcw5Z3OYelC8wXF6E8zv4ARu8dpSPnmub5eZcf_Ve6XE2odZWSopQLzgyLqJohRZioaREhcePuU-JGdHENqdmOWUQUeCf-iqCeUQU9Dw48QT6wt7TvSsODX-P4xfyK5dNLWXmg84i4arNGtBTSwOjqvph5_Z4AJOO6goUfmaz52tg"/>
+</div>
+</div>
+</main>
+<!-- How It Works Section -->
+<section class="py-24 bg-surface-container-low" id="how-it-works">
+<div class="max-w-7xl mx-auto px-8">
+<div class="text-center max-w-2xl mx-auto mb-16">
+<h2 class="text-3xl font-extrabold text-primary mb-4 tracking-tight">Processus Simplifié</h2>
+<p class="text-on-surface-variant">Louez votre véhicule en trois étapes rapides et sécurisées.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+<!-- Step 1 -->
+<div class="relative text-center">
+<div class="w-16 h-16 bg-primary text-on-primary rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">1</div>
+<h3 class="text-xl font-bold text-primary mb-3">Choisissez</h3>
+<p class="text-on-surface-variant text-sm px-4">Parcourez notre catalogue et sélectionnez le véhicule qui correspond à vos besoins.</p>
+</div>
+<!-- Step 2 -->
+<div class="relative text-center">
+<div class="w-16 h-16 bg-primary text-on-primary rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">2</div>
+<h3 class="text-xl font-bold text-primary mb-3">Envoyez la demande</h3>
+<p class="text-on-surface-variant text-sm px-4">Remplissez vos dates et envoyez votre demande de réservation en un clic.</p>
+<div class="hidden md:block absolute top-8 -left-1/2 w-full h-0.5 bg-outline-variant/30 -z-10"></div>
+</div>
+<!-- Step 3 -->
+<div class="relative text-center">
+<div class="w-16 h-16 bg-on-primary-container text-on-primary rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">3</div>
+<h3 class="text-xl font-bold text-primary mb-3">Confirmation Humaine</h3>
+<p class="text-on-surface-variant text-sm px-4">Un agent vérifie la disponibilité et vous confirme la réservation rapidement.</p>
+<div class="hidden md:block absolute top-8 -left-1/2 w-full h-0.5 bg-outline-variant/30 -z-10"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Vehicle Catalog (3x3 Grid) -->
+<section class="py-24 bg-surface" id="fleet">
+<div class="max-w-7xl mx-auto px-8">
+<div class="flex justify-between items-end mb-16">
+<div>
+<h2 class="text-4xl font-extrabold text-primary mb-4 tracking-tighter">Notre Flotte</h2>
+<p class="text-on-surface-variant">Véhicules récents et entretenus pour un confort optimal.</p>
+</div>
+<div class="flex gap-2">
+<button class="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Car Card 1 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden ambient-shadow border border-outline-variant/5 transition-transform hover:-translate-y-2">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Luxury silver sports coupe parked in a minimal concrete studio with soft top-down professional lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsjQEjkhqdgIsm7h2SwN3iSnH_-iCo4ZBMZAIo0wiyU760GvH0RA0pbqMV1fQgvoVOvTZKQUtLPlSxw1ZPmcvMkXT_rb2gXcM7JTOpBEKipVmI1mzi6yT6XStkcO9fMZRNFrI96H06Or6hn5w8WtlJf3O47VLuFNxO1Y36Qgy0ZZgVpMkhiwzL5gBSLVmG_iDOhnqB3rmvX4oJOs_QKXzt0Wf89GQO55IYvfg0PYZ4ZHB_d1kDeFDodMDFMZSb0yKdirbt40qABw"/>
+<div class="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container animate-pulse"></span> Disponible
+                        </div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-xl font-bold text-primary mb-1">Porsche 911 Carrera</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest font-medium">Sport • Automatique</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-black text-primary">2500</span>
+<span class="text-xs text-on-surface-variant font-bold">DH/Jour</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-4 rounded-lg font-bold hover:bg-on-primary-fixed-variant transition-all flex items-center justify-center gap-2">
+                            Envoyer une demande <span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- Car Card 2 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden ambient-shadow border border-outline-variant/5 transition-transform hover:-translate-y-2">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Modern blue executive luxury SUV driving on a coastal road at sunset with golden warm lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYQLsVTxN82gea1w8s8RHdRelsjFS0C2J8ae7UcW2zgHwrwnL5kaIjX1LeRq0WMEanqV3DtrNztcugXcVOHIrc3TbYbV5pC9kxhULtcX2bjIxDZ10v7Vml9itr5rVViYlTp5h6-gg0wz7XO03YjTUUSQADRlKrMEHY0XMNqR5o0gXEizkb8YA3Cwptfm7ep0d62mI2gKfv7Si4qgr8T5zh622I5CIqJx92uxYTDMghFXs8ST2ThsWyPASajOEuRGYTC2Qc_wP37A"/>
+<div class="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container animate-pulse"></span> Disponible
+                        </div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-xl font-bold text-primary mb-1">BMW X5 M-Sport</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest font-medium">SUV • Automatique</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-black text-primary">1800</span>
+<span class="text-xs text-on-surface-variant font-bold">DH/Jour</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-4 rounded-lg font-bold hover:bg-on-primary-fixed-variant transition-all flex items-center justify-center gap-2">
+                            Envoyer une demande <span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- Car Card 3 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden ambient-shadow border border-outline-variant/5 transition-transform hover:-translate-y-2">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="High-end red performance vehicle details focusing on the wheel and side body under bright daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDD9glQyjhjVh5hmV-LWQvdUopyB6eSmpc-pzei86CiBk0Lw0pVJmm4z8Mu4FcOTtKZN81ZvuFbZMNh1AUpBkM9glofaUmfdCGI2H3RZ1xr_wiX_5_ws2M1-a-m4K0Lb3So5Grt05MCLcGLjG4On2n9yHJjEXZpwlNCdAmqI4hnG6Ug8BPXw3Lct3NQLzjbxvO28RaMoKlratVeswFqqS_sxmYjU4zQMcJvNB15kYJXoX8Ss2Xcm6GqTZ4BXTB5fAYI9uqI0nnNfw"/>
+<div class="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container animate-pulse"></span> Disponible
+                        </div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-xl font-bold text-primary mb-1">Audi RS6 Avant</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest font-medium">Break • Automatique</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-black text-primary">2200</span>
+<span class="text-xs text-on-surface-variant font-bold">DH/Jour</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-4 rounded-lg font-bold hover:bg-on-primary-fixed-variant transition-all flex items-center justify-center gap-2">
+                            Envoyer une demande <span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- More car cards (simulating 3x3 grid) -->
+<!-- Car Card 4 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden ambient-shadow border border-outline-variant/5 transition-transform hover:-translate-y-2">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Matte black luxury sedan parked in a modern courtyard with geometric shadows and minimalist feel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoE27nZqPMlhPlffMOiAhe8KfYL030I_mQhXh5pCOEt8NizWv_WrGAXZ1omEY4TplImAiqhAdacsFX_CUtW7ZPIFPm3hpoMog0Lef-O_dAaO0gIrDdAtHmzKBjXhAnInchMdcY0hkG93RNntWpEhpzk8AS8qRb3vr4GrYCDL4OPPPNVqwELRVYt8wTCQcCwspflsrajJdbHcKTl5KIiGq5j5yzo7caU3S6QoeqhKDmYoQF9o3tFC4hdToKWg4V0fZlrkfrwiluig"/>
+<div class="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container animate-pulse"></span> Disponible
+                        </div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-xl font-bold text-primary mb-1">Mercedes-Benz S-Class</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest font-medium">Berline • Automatique</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-black text-primary">3000</span>
+<span class="text-xs text-on-surface-variant font-bold">DH/Jour</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-4 rounded-lg font-bold hover:bg-on-primary-fixed-variant transition-all flex items-center justify-center gap-2">
+                            Envoyer une demande <span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- Car Card 5 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden ambient-shadow border border-outline-variant/5 transition-transform hover:-translate-y-2">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Sleek silver luxury sports car interior with leather seating and carbon fiber accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAnWklFK0iJWTP9aNpdEN_RzByzjMlpQ67VaaZlz9fmkvWVfNdgt8iBQXGVC5pzWqwKWvKeEOQ_arH_0d5eMQhDjHWFL_p1KyZZQkKoK304gbVmFqQ6g492BFonb47iZz8H9jqo9h501fbKQj2NnTLF30-vs6DkqCPkBTqvI3XGkkxYY6ZkjivSbM12pF9191rJek5CplHjMQDUVmGwXS8aXgAb-ZYcF1W7SKOGCDvAliDPnqF6-XIwC-yxKm50e4luB1oNxEHmQ"/>
+<div class="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container animate-pulse"></span> Disponible
+                        </div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-xl font-bold text-primary mb-1">Tesla Model S Plaid</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest font-medium">Electrique • Automatique</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-black text-primary">2000</span>
+<span class="text-xs text-on-surface-variant font-bold">DH/Jour</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-4 rounded-lg font-bold hover:bg-on-primary-fixed-variant transition-all flex items-center justify-center gap-2">
+                            Envoyer une demande <span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- Car Card 6 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden ambient-shadow border border-outline-variant/5 transition-transform hover:-translate-y-2">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Luxury white SUV parked in front of a modern glass building reflecting blue sky at noon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQFtdl4LxBtaLq8iyhJq3reLoyfw_Z-LJsAwvkg3KrcDO99FNkyAJfh99QEBxWqRNI2ITP0j1fBi6K24mzsbJZJKTt9OhFmUdSM9YMhfcqYYbHhdbPPE-_xIv5uvWm_ue5YTCHtB0eOXw5v6DCR1JQ4e1zFrR6zRx3JdOpSXvpbU5ujE8NBYzhqvch4wYqF2R6xOlwdiSwlmYnchqEhJ7YMFuNtfxCgRuyS_MbXMKAhpyDxRPJnfv2NOc-QNuZeyjl6jqj2GOdLg"/>
+<div class="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container animate-pulse"></span> Disponible
+                        </div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-xl font-bold text-primary mb-1">Range Rover Vogue</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest font-medium">SUV • Automatique</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-black text-primary">2800</span>
+<span class="text-xs text-on-surface-variant font-bold">DH/Jour</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-4 rounded-lg font-bold hover:bg-on-primary-fixed-variant transition-all flex items-center justify-center gap-2">
+                            Envoyer une demande <span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- Car Card 7 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden ambient-shadow border border-outline-variant/5 transition-transform hover:-translate-y-2">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Bright yellow premium sports car on a racetrack under clear blue sky with sharp detailing" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9Ur3esjAF_zjy_OAAuv3qS2SJ3S24KzaCnnX5kI4PNcLi-RtDfeZKU6BUNig9c5x2jXBgfSrr5u_jh3LALAqYn4AEkqH2Ja6asAODsPFsS293x-okfFuC61JQM9JNGvFbDa76W2N7_lMW8XX8kZnuEEaHmT-AOGqSBjLy8AJHhNjJav_CySon4787GV7RAqHyRhyoFfYN65kqmSbPyhQyypt95wtuiesBupXqtXwWLHLO2Dafm8-EMJo5KtNBo_ArtvqXe5JqKw"/>
+<div class="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container animate-pulse"></span> Disponible
+                        </div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-xl font-bold text-primary mb-1">Ferrari Roma</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest font-medium">Luxe • Automatique</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-black text-primary">7500</span>
+<span class="text-xs text-on-surface-variant font-bold">DH/Jour</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-4 rounded-lg font-bold hover:bg-on-primary-fixed-variant transition-all flex items-center justify-center gap-2">
+                            Envoyer une demande <span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- Car Card 8 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden ambient-shadow border border-outline-variant/5 transition-transform hover:-translate-y-2">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Modern high-performance white coupe speeding on a highway bridge at twilight with city lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjVEvZenehh0Pi9EWMV_QOcjoyo9ijA_PoEjbihHf9-L4j9xMRMiwWHyZNU4k_tT5wxlTXDQtayosEWMwfg0T4sfTq3dlDYAaE4Bk2QFz-rE3YrOFyeBhoo-wrfqUcsSpTWWgvI5Gu0UGTOcQfO5_O7ldLbcgof-jrd6QZ03WiCATXuzmnPsmwfjMMm2LIIy2oPhcYShK8_CJ3iFZWKhUSglOYCviQ4FTTi34OY_e5da5t4bbaj5mQY23DUaTYim_7upcew3a42g"/>
+<div class="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container animate-pulse"></span> Disponible
+                        </div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-xl font-bold text-primary mb-1">Land Rover Defender</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest font-medium">Tout-terrain • Manuel</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-black text-primary">1500</span>
+<span class="text-xs text-on-surface-variant font-bold">DH/Jour</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-4 rounded-lg font-bold hover:bg-on-primary-fixed-variant transition-all flex items-center justify-center gap-2">
+                            Envoyer une demande <span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- Car Card 9 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden ambient-shadow border border-outline-variant/5 transition-transform hover:-translate-y-2">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Classic luxury sedan in a deep blue metallic finish parked on a cobblestone street at night" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnblksZMi1nrgAf2gu_b0MoAEkwISMOu1ut_Q9L2YHa5duvO9b6wTsX0lHCwDff8QOMYCHhk_ecEgz9i1HMIMn2nQnWyaoVkXKEH8ZNb43eWz9gWRwiCFewthfEajFzTTkgfn04kYOc-t6UFxKQ-PkB1JLuAvvsLpXrP_WeV9_qIGF4qIavXyQsjicLitlgg3oJhgpwAg7o5dX8exXc54k5jerlngu1TgkvO0yqqTcjmkzgzflxE49Cpaqvvqyouq9w_dduaf_OQ"/>
+<div class="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container animate-pulse"></span> Disponible
+                        </div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-xl font-bold text-primary mb-1">Jaguar F-Type</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest font-medium">Cabriolet • Automatique</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-black text-primary">2400</span>
+<span class="text-xs text-on-surface-variant font-bold">DH/Jour</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-4 rounded-lg font-bold hover:bg-on-primary-fixed-variant transition-all flex items-center justify-center gap-2">
+                            Envoyer une demande <span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-20 text-center">
+<button class="px-12 py-5 bg-primary text-on-primary font-bold rounded-lg hover:bg-on-primary-fixed-variant transition-all">Charger plus de véhicules</button>
+</div>
+</div>
+</section>
+<!-- Trust & Benefits Section -->
+<section class="py-24 bg-primary text-on-primary relative overflow-hidden">
+<div class="absolute right-0 bottom-0 opacity-10 pointer-events-none">
+<span class="material-symbols-outlined text-[400px]" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+</div>
+<div class="max-w-7xl mx-auto px-8 relative z-10">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+<div>
+<h2 class="text-4xl font-extrabold mb-8 leading-tight tracking-tighter">Pourquoi choisir Locaryx pour votre séjour à Casablanca ?</h2>
+<div class="space-y-8">
+<div class="flex gap-6">
+<div class="w-14 h-14 rounded-xl bg-on-primary/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-primary-container">verified</span>
+</div>
+<div>
+<h4 class="text-xl font-bold mb-2">Validation Humaine</h4>
+<p class="text-on-primary/70 text-sm">Chaque demande est traitée personnellement par nos agents pour garantir une fiabilité totale et éviter les erreurs de sur-réservation.</p>
+</div>
+</div>
+<div class="flex gap-6">
+<div class="w-14 h-14 rounded-xl bg-on-primary/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-primary-container">minor_crash</span>
+</div>
+<div>
+<h4 class="text-xl font-bold mb-2">Flotte Vérifiée</h4>
+<p class="text-on-primary/70 text-sm">Tous nos véhicules passent par un contrôle technique rigoureux après chaque location pour votre sécurité et confort.</p>
+</div>
+</div>
+<div class="flex gap-6">
+<div class="w-14 h-14 rounded-xl bg-on-primary/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-primary-container">forum</span>
+</div>
+<div>
+<h4 class="text-xl font-bold mb-2">Support Client Rapide</h4>
+<p class="text-on-primary/70 text-sm">Besoin d'assistance pendant votre location ? Notre support WhatsApp est disponible 24/7 pour répondre à toutes vos questions.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-on-primary-fixed/20 p-8 rounded-2xl backdrop-blur-md border border-on-primary/10">
+<h3 class="text-2xl font-bold mb-6">Contact Rapide</h3>
+<form class="space-y-4">
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest mb-2 opacity-60">Nom complet</label>
+<input class="w-full bg-primary-container/40 border-none rounded-lg p-4 text-on-primary placeholder:text-on-primary/30 focus:ring-2 focus:ring-on-primary-container" placeholder="Votre nom" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest mb-2 opacity-60">Téléphone (WhatsApp)</label>
+<input class="w-full bg-primary-container/40 border-none rounded-lg p-4 text-on-primary placeholder:text-on-primary/30 focus:ring-2 focus:ring-on-primary-container" placeholder="+212 6..." type="text"/>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest mb-2 opacity-60">Message</label>
+<textarea class="w-full bg-primary-container/40 border-none rounded-lg p-4 text-on-primary placeholder:text-on-primary/30 focus:ring-2 focus:ring-on-primary-container" placeholder="Quelle voiture vous intéresse ?" rows="4"></textarea>
+</div>
+<button class="w-full bg-on-primary-container text-on-primary py-4 rounded-lg font-bold hover:brightness-110 transition-all shadow-2xl">Envoyer au support</button>
+</form>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-slate-50 dark:bg-slate-950 w-full border-t-0 bg-slate-100 dark:bg-slate-900 tonal-layering">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12 px-8 py-16 max-w-7xl mx-auto">
+<div>
+<div class="text-xl font-black text-blue-950 dark:text-white mb-6">Locaryx</div>
+<p class="text-slate-500 dark:text-slate-500 text-sm leading-relaxed">
+                    Leader de la location de voitures premium à Casablanca. Service personnalisé et flotte de prestige pour vos déplacements professionnels et privés.
+                </p>
+</div>
+<div>
+<h4 class="font-bold text-blue-900 dark:text-blue-400 mb-6 font-manrope text-sm uppercase tracking-widest">Liens utiles</h4>
+<ul class="space-y-4">
+<li><a class="text-slate-500 dark:text-slate-500 font-manrope text-sm hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity opacity-80 hover:opacity-100" href="#">Fleet</a></li>
+<li><a class="text-slate-500 dark:text-slate-500 font-manrope text-sm hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity opacity-80 hover:opacity-100" href="#">Services</a></li>
+<li><a class="text-slate-500 dark:text-slate-500 font-manrope text-sm hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity opacity-80 hover:opacity-100" href="#">WhatsApp Support</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold text-blue-900 dark:text-blue-400 mb-6 font-manrope text-sm uppercase tracking-widest">Légal</h4>
+<ul class="space-y-4">
+<li><a class="text-slate-500 dark:text-slate-500 font-manrope text-sm hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity opacity-80 hover:opacity-100" href="#">Privacy Policy</a></li>
+<li><a class="text-slate-500 dark:text-slate-500 font-manrope text-sm hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity opacity-80 hover:opacity-100" href="#">Terms of Service</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold text-blue-900 dark:text-blue-400 mb-6 font-manrope text-sm uppercase tracking-widest">Nous Trouver</h4>
+<p class="text-slate-500 dark:text-slate-500 text-sm mb-4">Aéroport Mohammed V &amp; Centre Ville, Casablanca, Maroc</p>
+<div class="flex gap-4">
+<a class="w-10 h-10 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-blue-900 dark:text-blue-400 hover:scale-105 transition-transform" href="#"><span class="material-symbols-outlined text-sm">public</span></a>
+<a class="w-10 h-10 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-blue-900 dark:text-blue-400 hover:scale-105 transition-transform" href="#"><span class="material-symbols-outlined text-sm">mail</span></a>
+<a class="w-10 h-10 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-blue-900 dark:text-blue-400 hover:scale-105 transition-transform" href="#"><span class="material-symbols-outlined text-sm">phone</span></a>
+</div>
+</div>
+</div>
+<div class="border-t border-slate-200 dark:border-slate-800 py-8 px-8 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-slate-500 dark:text-slate-500 font-manrope text-sm">© 2024 Locaryx Premium Automotive. All rights reserved.</p>
+<div class="flex gap-6">
+<span class="text-[10px] font-bold text-blue-900/40 uppercase tracking-widest">Designed for Morocco</span>
+<span class="text-[10px] font-bold text-blue-900/40 uppercase tracking-widest">Secure Payments</span>
+</div>
+</div>
+</footer>
+</body></html>

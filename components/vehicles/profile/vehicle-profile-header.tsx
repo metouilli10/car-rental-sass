@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   CalendarPlus,
   CarFront,
@@ -16,11 +16,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { brandLogoSrc } from "@/lib/brands";
-import { deleteVehicle } from "@/lib/actions/vehicles";
+import { deleteVehicle, setVehicleStorefrontVisibility } from "@/lib/actions/vehicles";
 import { formatCurrency } from "@/lib/utils";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { useLocalizedPath } from "@/components/i18n/use-localized-path";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +56,7 @@ interface VehicleProfileHeaderProps {
     pricePerDay: number;
     currentKm: number | null;
     photoUrl: string | null;
+    publishedToWebsite: boolean;
   };
   currentOrNextBookingId: string | null;
   inspectionLabel: string | null;
@@ -73,6 +75,8 @@ export function VehicleProfileHeader({
   const router = useRouter();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPublishing, startPublishingTransition] = useTransition();
+  const [publishedToWebsite, setPublishedToWebsite] = useState(vehicle.publishedToWebsite);
   const logoSrc = brandLogoSrc(vehicle.brandKey, vehicle.make);
   const reminderHref = lp(`/vehicles/${vehicle.id}?tab=tracking&sheet=1`);
 
@@ -95,6 +99,27 @@ export function VehicleProfileHeader({
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const handleStorefrontVisibilityChange = (checked: boolean) => {
+    const previousValue = publishedToWebsite;
+    setPublishedToWebsite(checked);
+
+    startPublishingTransition(async () => {
+      const result = await setVehicleStorefrontVisibility(vehicle.id, checked);
+      if (result?.error) {
+        setPublishedToWebsite(previousValue);
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(
+        checked
+          ? "Le véhicule apparaît maintenant sur le storefront"
+          : "Le véhicule a été retiré du storefront",
+      );
+      router.refresh();
+    });
   };
 
   return (
@@ -148,6 +173,26 @@ export function VehicleProfileHeader({
                   </p>
                   <p className="text-sm font-semibold text-slate-800">{formatCurrency(vehicle.pricePerDay)}</p>
                 </div>
+              </div>
+
+              <div className="rounded-[20px] border border-slate-200/80 bg-slate-50/70 px-4 py-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-slate-950">Visibilité storefront</p>
+                    <p className="text-xs leading-5 text-slate-500">
+                      Activez cette option pour afficher ce véhicule sur le site public de l’agence.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={publishedToWebsite}
+                    onCheckedChange={handleStorefrontVisibilityChange}
+                    disabled={!canManageVehicle || isPublishing}
+                    aria-label="Publier ce véhicule sur le storefront"
+                  />
+                </div>
+                <p className="mt-3 text-xs font-medium text-slate-600">
+                  {publishedToWebsite ? "Visible sur le storefront" : "Masqué du storefront"}
+                </p>
               </div>
             </div>
           </div>

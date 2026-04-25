@@ -13,22 +13,28 @@ END $$;
 
 DO $$
 BEGIN
-  IF NOT EXISTS (
+  IF EXISTS (
     SELECT 1
-    FROM pg_enum
-    WHERE enumtypid = 'NotificationChannel'::regtype
-      AND enumlabel = 'PUSH'
+    FROM pg_type
+    WHERE typname = 'NotificationChannel'
+  ) AND NOT EXISTS (
+    SELECT 1
+    FROM pg_enum enum_value
+    INNER JOIN pg_type enum_type
+      ON enum_type.oid = enum_value.enumtypid
+    WHERE enum_type.typname = 'NotificationChannel'
+      AND enum_value.enumlabel = 'PUSH'
   ) THEN
     ALTER TYPE "NotificationChannel" ADD VALUE 'PUSH';
   END IF;
 END $$;
 
 ALTER TABLE "notifications"
-  ADD COLUMN "bookingId" TEXT,
-  ADD COLUMN "dedupeKey" TEXT,
-  ADD COLUMN "actionUrl" TEXT,
-  ADD COLUMN "sentPushAt" TIMESTAMP(3),
-  ADD COLUMN "lastEvaluatedAt" TIMESTAMP(3);
+  ADD COLUMN IF NOT EXISTS "bookingId" TEXT,
+  ADD COLUMN IF NOT EXISTS "dedupeKey" TEXT,
+  ADD COLUMN IF NOT EXISTS "actionUrl" TEXT,
+  ADD COLUMN IF NOT EXISTS "sentPushAt" TIMESTAMP(3),
+  ADD COLUMN IF NOT EXISTS "lastEvaluatedAt" TIMESTAMP(3);
 
 UPDATE "notifications"
 SET
@@ -46,10 +52,19 @@ ALTER TABLE "notifications"
   ALTER COLUMN "type" TYPE "NotificationType"
   USING ("type"::text::"NotificationType");
 
-ALTER TABLE "notifications"
-  ADD CONSTRAINT "notifications_bookingId_fkey"
-  FOREIGN KEY ("bookingId") REFERENCES "bookings"("id")
-  ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'notifications_bookingId_fkey'
+  ) THEN
+    ALTER TABLE "notifications"
+      ADD CONSTRAINT "notifications_bookingId_fkey"
+      FOREIGN KEY ("bookingId") REFERENCES "bookings"("id")
+      ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
 
 DROP INDEX IF EXISTS "notifications_agencyId_vehicleId_type_key";
 
@@ -90,18 +105,36 @@ CREATE INDEX IF NOT EXISTS "push_subscriptions_agencyId_userId_isActive_idx"
   ON "push_subscriptions"("agencyId", "userId", "isActive");
 
 ALTER TABLE "notification_events"
-  ADD COLUMN "userId" TEXT,
-  ADD COLUMN "pushSubscriptionId" TEXT;
+  ADD COLUMN IF NOT EXISTS "userId" TEXT,
+  ADD COLUMN IF NOT EXISTS "pushSubscriptionId" TEXT;
 
-ALTER TABLE "notification_events"
-  ADD CONSTRAINT "notification_events_userId_fkey"
-  FOREIGN KEY ("userId") REFERENCES "users"("id")
-  ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'notification_events_userId_fkey'
+  ) THEN
+    ALTER TABLE "notification_events"
+      ADD CONSTRAINT "notification_events_userId_fkey"
+      FOREIGN KEY ("userId") REFERENCES "users"("id")
+      ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;
 
-ALTER TABLE "notification_events"
-  ADD CONSTRAINT "notification_events_pushSubscriptionId_fkey"
-  FOREIGN KEY ("pushSubscriptionId") REFERENCES "push_subscriptions"("id")
-  ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'notification_events_pushSubscriptionId_fkey'
+  ) THEN
+    ALTER TABLE "notification_events"
+      ADD CONSTRAINT "notification_events_pushSubscriptionId_fkey"
+      FOREIGN KEY ("pushSubscriptionId") REFERENCES "push_subscriptions"("id")
+      ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS "notification_events_userId_idx"
   ON "notification_events"("userId");

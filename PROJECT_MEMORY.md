@@ -31,6 +31,55 @@ This is the canonical shared memory for the repository.
 
 ## Recent Changes Log
 
+### 2026-04-25 - Vehicle profile no longer crashes when vehicle-documents migration is missing
+
+- `Change:` Wrapped vehicle-document reads in the vehicle profile loader with a Prisma missing-table/missing-column fallback so `/[locale]/vehicles/[id]` still renders when `vehicle_documents` is not yet available in an environment.
+- `Impact:` Vehicle detail pages now degrade gracefully instead of throwing a server-render error during rollout or schema drift; documents simply appear empty until migrations are applied.
+- `Touched:` `lib/vehicles/profile.ts`
+- `Follow-up:` Apply the `20260310110000_vehicle_documents` migration in any lagging environment so document data becomes fully available again.
+
+### 2026-04-25 - Production migration chain repaired for partial storefront and push rollout state
+
+- `Change:` Added a compatibility copy of the legacy internal-agency-controls migration folder and hardened the web-push, storefront, booking-request, and storefront-domain SQL migrations to be idempotent against partially applied production state, then repaired Prisma migration history so `migrate deploy` can complete again.
+- `Impact:` Prisma migration status is unblocked on the shared database, later storefront and booking-request migrations are recorded as applied, and future deploys should no longer fail on the previously stuck partial-rollout state.
+- `Touched:` `prisma/migrations/20260319081433_20260318120000_internal_agency_controls/`, `prisma/migrations/20260410110000_web_push_notifications/`, `prisma/migrations/20260413120000_tenant_storefront_v1/`, `prisma/migrations/20260416123000_link_booking_request_to_booking/`, `prisma/migrations/20260416153000_booking_request_notifications_v1/`, `prisma/migrations/20260424103000_storefront_domains_v1/`
+- `Follow-up:` A DB owner can still normalize the leftover `updatedAt` defaults on `booking_requests`, `push_subscriptions`, `storefront_domains`, and `website_settings` if exact schema parity is needed.
+
+### 2026-04-25 - Vehicle profile now exposes storefront visibility toggle
+
+- `Change:` Added a direct publish/unpublish switch to the vehicle profile header, exposed `publishedToWebsite` in vehicle-profile data, and created a focused server action that updates storefront visibility and revalidates the public storefront paths.
+- `Impact:` Teams can now show or hide a car from the storefront directly from `/[locale]/vehicles/[id]` without opening the edit form.
+- `Touched:` `components/vehicles/profile/vehicle-profile-header.tsx`, `lib/actions/vehicles.ts`, `lib/vehicles/profile.ts`, `lib/vehicles/profile.test.ts`
+- `Follow-up:` If agencies ask for more storefront controls from the vehicle page, add a quick link to website settings or a storefront preview next to this toggle.
+
+### 2026-04-24 - Custom-domain replacement and verification flow hardened
+
+- `Change:` Fixed storefront custom-domain replacement so a new hostname is attached and persisted before the old hostname is removed, and preserved Vercel verification challenge records during refreshes instead of overwriting them with config-only DNS hints.
+- `Impact:` Agencies are less likely to lose a working custom domain during a swap, and the dashboard keeps showing the real DNS records needed to complete verification.
+- `Touched:` `lib/actions/website.ts`, `lib/storefront/vercel-domains.ts`, `lib/storefront/vercel-domains.test.ts`
+- `Follow-up:` The remaining custom-domain improvement is to remove the public internal resolver endpoint and resolve host mappings directly in middleware.
+
+### 2026-04-25 - Custom-domain verify button now performs app-level DNS audit
+
+- `Change:` Added direct DNS lookups for expected A/CNAME/TXT records during storefront-domain verification, stored per-record statuses plus observed values, and surfaced those results in the website settings UI and verify toast feedback.
+- `Impact:` Clicking `Vérifier` now gives agencies a real app-level answer about which DNS records are detected, mismatched, or still missing instead of only reflecting a coarse Vercel response.
+- `Touched:` `lib/storefront/dns-audit.ts`, `lib/actions/website.ts`, `components/settings/website-settings-form.tsx`, `lib/storefront/dns-audit.test.ts`
+- `Follow-up:` If DNS providers continue to confuse agencies by exposing incompatible apex record combinations, tailor the displayed instruction set per record type/provider instead of showing every Vercel suggestion verbatim.
+
+### 2026-04-25 - DNS instructions now show provider-ready host/value fields
+
+- `Change:` Added helpers that collapse incompatible Vercel DNS suggestions into the effective record set for the connected hostname, convert FQDNs into registrar-friendly host values like `@`, `www`, and `_vercel.www`, and updated the website settings cards to show exact host/value instructions instead of raw domains.
+- `Impact:` Agencies now see what to enter in Namecheap-like DNS forms, and the app-level verifier no longer audits hidden conflicting apex suggestions such as `CNAME` plus `A` on the same root host.
+- `Touched:` `lib/storefront/domains.ts`, `lib/actions/website.ts`, `components/settings/website-settings-form.tsx`, `lib/storefront/domains.test.ts`
+- `Follow-up:` If support volume stays high, add optional DNS-provider presets with provider-specific screenshots or field labels.
+
+### 2026-04-24 - Storefront custom domains shipped on top of slug routing
+
+- `Change:` Added tenant-scoped `StorefrontDomain` persistence, Vercel domain attach/verify/remove flows, host-based storefront resolution in middleware, canonical custom-domain redirects, and a dashboard domain-management section inside website settings.
+- `Impact:` Agencies can now connect one verified custom hostname to their storefront while keeping the Locaryx slug URL as fallback; verified custom domains become the canonical public URL.
+- `Touched:` `prisma/schema.prisma`, `prisma/migrations/20260424103000_storefront_domains_v1/`, `lib/actions/website.ts`, `lib/storefront/`, `middleware.ts`, `app/storefront/[agencySlug]/page.tsx`, `components/settings/website-settings-form.tsx`, `.env.example`, `README.md`
+- `Follow-up:` If v2 needs automatic apex+www pairing or host-only public APIs without slug-shaped endpoints, extend the current single-domain model instead of replacing it.
+
 ### 2026-04-24 - Global primary blue tuned to calmer brand blue
 
 - `Change:` Replaced the previous dark brand blue across shared tokens, button shadows, storefront CTAs, marketing glows, and PWA/offline actions with the calmer primary blue `#2196F3`.

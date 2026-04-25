@@ -1,15 +1,25 @@
 -- CreateEnum
-CREATE TYPE "BookingRequestStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CONVERTED');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'BookingRequestStatus') THEN
+    CREATE TYPE "BookingRequestStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CONVERTED');
+  END IF;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "BookingRequestSource" AS ENUM ('WEBSITE');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'BookingRequestSource') THEN
+    CREATE TYPE "BookingRequestSource" AS ENUM ('WEBSITE');
+  END IF;
+END $$;
 
 -- AlterTable
 ALTER TABLE "vehicles"
-  ADD COLUMN "publishedToWebsite" BOOLEAN NOT NULL DEFAULT false;
+  ADD COLUMN IF NOT EXISTS "publishedToWebsite" BOOLEAN NOT NULL DEFAULT false;
 
 -- CreateTable
-CREATE TABLE "website_settings" (
+CREATE TABLE IF NOT EXISTS "website_settings" (
   "id" TEXT NOT NULL,
   "agencyId" TEXT NOT NULL,
   "agencySlug" TEXT NOT NULL,
@@ -30,7 +40,7 @@ CREATE TABLE "website_settings" (
 );
 
 -- CreateTable
-CREATE TABLE "booking_requests" (
+CREATE TABLE IF NOT EXISTS "booking_requests" (
   "id" TEXT NOT NULL,
   "agencyId" TEXT NOT NULL,
   "vehicleId" TEXT NOT NULL,
@@ -51,37 +61,58 @@ CREATE TABLE "booking_requests" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "website_settings_agencyId_key" ON "website_settings"("agencyId");
+CREATE UNIQUE INDEX IF NOT EXISTS "website_settings_agencyId_key" ON "website_settings"("agencyId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "website_settings_agencySlug_key" ON "website_settings"("agencySlug");
+CREATE UNIQUE INDEX IF NOT EXISTS "website_settings_agencySlug_key" ON "website_settings"("agencySlug");
 
 -- CreateIndex
-CREATE INDEX "vehicles_agency_published_to_website_idx" ON "vehicles"("agencyId", "publishedToWebsite");
+CREATE INDEX IF NOT EXISTS "vehicles_agency_published_to_website_idx" ON "vehicles"("agencyId", "publishedToWebsite");
 
 -- CreateIndex
-CREATE INDEX "booking_requests_agencyId_idx" ON "booking_requests"("agencyId");
+CREATE INDEX IF NOT EXISTS "booking_requests_agencyId_idx" ON "booking_requests"("agencyId");
 
 -- CreateIndex
-CREATE INDEX "booking_requests_vehicleId_idx" ON "booking_requests"("vehicleId");
+CREATE INDEX IF NOT EXISTS "booking_requests_vehicleId_idx" ON "booking_requests"("vehicleId");
 
 -- CreateIndex
-CREATE INDEX "booking_requests_agency_status_created_at_idx" ON "booking_requests"("agencyId", "status", "createdAt");
+CREATE INDEX IF NOT EXISTS "booking_requests_agency_status_created_at_idx" ON "booking_requests"("agencyId", "status", "createdAt");
 
 -- AddForeignKey
-ALTER TABLE "website_settings"
-  ADD CONSTRAINT "website_settings_agencyId_fkey"
-  FOREIGN KEY ("agencyId") REFERENCES "agencies"("id")
-  ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'website_settings_agencyId_fkey'
+  ) THEN
+    ALTER TABLE "website_settings"
+      ADD CONSTRAINT "website_settings_agencyId_fkey"
+      FOREIGN KEY ("agencyId") REFERENCES "agencies"("id")
+      ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "booking_requests"
-  ADD CONSTRAINT "booking_requests_agencyId_fkey"
-  FOREIGN KEY ("agencyId") REFERENCES "agencies"("id")
-  ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'booking_requests_agencyId_fkey'
+  ) THEN
+    ALTER TABLE "booking_requests"
+      ADD CONSTRAINT "booking_requests_agencyId_fkey"
+      FOREIGN KEY ("agencyId") REFERENCES "agencies"("id")
+      ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "booking_requests"
-  ADD CONSTRAINT "booking_requests_vehicleId_fkey"
-  FOREIGN KEY ("vehicleId") REFERENCES "vehicles"("id")
-  ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'booking_requests_vehicleId_fkey'
+  ) THEN
+    ALTER TABLE "booking_requests"
+      ADD CONSTRAINT "booking_requests_vehicleId_fkey"
+      FOREIGN KEY ("vehicleId") REFERENCES "vehicles"("id")
+      ON DELETE RESTRICT ON UPDATE CASCADE;
+  END IF;
+END $$;

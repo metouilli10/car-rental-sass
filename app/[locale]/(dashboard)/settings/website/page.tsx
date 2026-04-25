@@ -21,7 +21,9 @@ export default async function WebsiteSettingsPage({
   }
 
   const initialValues = await getWebsiteSettingsFormValues(currentUser.agencyId);
-  const previewUrl = initialValues.agencySlug ? getStorefrontPath(initialValues.agencySlug) : null;
+  const previewUrl = initialValues.website.agencySlug
+    ? getStorefrontPath(initialValues.website.agencySlug)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -29,7 +31,11 @@ export default async function WebsiteSettingsPage({
         title="Site web"
         description="Configurez la vitrine publique de votre agence et choisissez les informations visibles par vos clients."
       />
-      <WebsiteSettingsForm initialValues={initialValues} previewUrl={previewUrl} />
+      <WebsiteSettingsForm
+        initialValues={initialValues.website}
+        initialDomain={initialValues.domain}
+        previewUrl={previewUrl}
+      />
     </div>
   );
 }

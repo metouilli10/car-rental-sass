@@ -28,6 +28,10 @@ export async function GET(
       contactEmail: website.contactEmail || website.agency.email,
       address: website.address || website.agency.address,
       pickupLocations: website.pickupLocations,
+      customDomain:
+        website.agency.storefrontDomain?.status === "VERIFIED"
+          ? website.agency.storefrontDomain.hostname
+          : null,
     },
   });
 }

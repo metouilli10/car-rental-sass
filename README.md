@@ -71,6 +71,10 @@ openssl rand -base64 32
 
 Variables optionnelles selon les features utilisées:
 
+- `PRIMARY_APP_DOMAIN` (utile si la détection des hosts internes ne doit pas dépendre uniquement de `NEXT_PUBLIC_APP_URL`)
+- `VERCEL_API_TOKEN`
+- `VERCEL_PROJECT_ID`
+- `VERCEL_TEAM_ID` ou `VERCEL_TEAM_SLUG`
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
 - `VAPID_PRIVATE_KEY`
 - `VAPID_SUBJECT`
@@ -131,6 +135,13 @@ Le flux d'inscription owner passe par:
 2. vérification email
 3. approbation interne
 4. première connexion
+
+### Storefront et domaines personnalisés
+
+- la vitrine publique garde toujours un fallback slug Locaryx en `/{agencySlug}`
+- une agence peut connecter un domaine personnalisé unique depuis `Paramètres > Site web`
+- la vérification et le SSL passent par les APIs domaine de Vercel, donc les variables `VERCEL_*` doivent être configurées côté serveur
+- les domaines personnalisés vérifiés deviennent canoniques; le slug Locaryx redirige alors vers le host vérifié
 
 ## Scripts utiles
 

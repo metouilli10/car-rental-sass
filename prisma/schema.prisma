@@ -186,6 +186,12 @@ enum NotificationEventStatus {
   FAILED
 }
 
+enum StorefrontDomainStatus {
+  PENDING
+  VERIFIED
+  ERROR
+}
+
 enum NotificationEventType {
   CREATED
   ESCALATED_DUE
@@ -236,6 +242,7 @@ model Agency {
   vehicleDocuments  VehicleDocument[]
   infractions       Infraction[]
   websiteSettings   WebsiteSettings?
+  storefrontDomain  StorefrontDomain?
 
   @@map("agencies")
 }
@@ -505,6 +512,25 @@ model WebsiteSettings {
   agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
 
   @@map("website_settings")
+}
+
+model StorefrontDomain {
+  id                  String                @id @default(cuid())
+  agencyId            String                @unique
+  hostname            String                @unique
+  status              StorefrontDomainStatus @default(PENDING)
+  verificationRecords Json?
+  verifiedAt          DateTime?
+  lastCheckedAt       DateTime?
+  verificationError   String?
+  isPrimary           Boolean               @default(true)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("storefront_domains")
 }
 
 model BookingRequest {

@@ -1,4 +1,4 @@
-import { Prisma, BookingRequestStatus } from "@prisma/client";
+import { Prisma, BookingRequestStatus, StorefrontDomainStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const publicVehicleSelect = {
@@ -69,33 +69,78 @@ export type WebsiteSettingsWithAgency = Prisma.WebsiteSettingsGetPayload<{
         phone: true;
         email: true;
         logoUrl: true;
+        storefrontDomain: true;
       };
     };
   };
 }>;
 
+export type StorefrontDomainRecord = Prisma.StorefrontDomainGetPayload<{
+  select: {
+    id: true;
+    agencyId: true;
+    hostname: true;
+    status: true;
+    verificationRecords: true;
+    verifiedAt: true;
+    lastCheckedAt: true;
+    verificationError: true;
+    isPrimary: true;
+    createdAt: true;
+    updatedAt: true;
+  };
+}>;
+
+const websiteSettingsInclude = {
+  agency: {
+    select: {
+      id: true,
+      name: true,
+      city: true,
+      address: true,
+      phone: true,
+      email: true,
+      logoUrl: true,
+      storefrontDomain: true,
+    },
+  },
+} satisfies Prisma.WebsiteSettingsInclude;
+
 export async function getWebsiteSettingsBySlug(agencySlug: string) {
   return prisma.websiteSettings.findUnique({
     where: { agencySlug },
-    include: {
-      agency: {
-        select: {
-          id: true,
-          name: true,
-          city: true,
-          address: true,
-          phone: true,
-          email: true,
-          logoUrl: true,
-        },
-      },
-    },
+    include: websiteSettingsInclude,
   });
 }
 
 export async function getWebsiteSettingsForAgency(agencyId: string) {
   return prisma.websiteSettings.findUnique({
     where: { agencyId },
+  });
+}
+
+export async function getStorefrontDomainForAgency(agencyId: string) {
+  return prisma.storefrontDomain.findUnique({
+    where: { agencyId },
+  });
+}
+
+export async function getVerifiedStorefrontDomainByHostname(hostname: string) {
+  return prisma.storefrontDomain.findFirst({
+    where: {
+      hostname,
+      status: StorefrontDomainStatus.VERIFIED,
+    },
+    include: {
+      agency: {
+        select: {
+          id: true,
+          websiteSettings: {
+            include: websiteSettingsInclude,
+          },
+        },
+      },
+    },
   });
 }
 
@@ -147,6 +192,17 @@ export async function getPublishedVehicleBySlugAndVehicleId(agencySlug: string, 
 
   if (!vehicle) return null;
   return { settings, vehicle };
+}
+
+export async function getPublishedVehiclesByHostname(hostname: string) {
+  const domain = await getVerifiedStorefrontDomainByHostname(hostname);
+  const settings = domain?.agency.websiteSettings;
+
+  if (!settings || !settings.isWebsiteEnabled) {
+    return null;
+  }
+
+  return getPublishedVehiclesBySlug(settings.agencySlug);
 }
 
 export async function getBookingRequestsForAgency(

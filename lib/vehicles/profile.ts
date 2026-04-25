@@ -10,6 +10,7 @@ import type {
   ReminderType,
   VehicleStatus,
 } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { VehicleDocumentTypeValue } from "@/lib/validations/vehicle-document";
 import { getVehicleFuelType } from "@/lib/vehicle-fuel-type";
@@ -204,6 +205,7 @@ export interface VehicleProfileData {
     hasAC: boolean;
     category: string;
     photoUrl: string | null;
+    publishedToWebsite: boolean;
     mileage: number | null;
     currentKm: number | null;
     maintenanceNotes: string | null;
@@ -242,6 +244,48 @@ export interface VehicleProfileData {
 const OPEN_BOOKING_STATUSES: BookingStatus[] = ["CONFIRMED", "ACTIVE"];
 
 const INFRACTION_OPEN_STATUSES: InfractionStatus[] = ["PENDING", "ASSIGNED", "CONTESTED"];
+
+function isPrismaMissingVehicleDocumentsSchemaError(
+  error: unknown,
+): error is Prisma.PrismaClientKnownRequestError {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    ["P2021", "P2022"].includes(error.code)
+  );
+}
+
+async function getVehicleDocumentsSafe(params: {
+  agencyId: string;
+  vehicleId: string;
+}) {
+  const vehicleDocumentDelegate = (prisma as typeof prisma & {
+    vehicleDocument?: {
+      findMany: typeof prisma.vehicleDocument.findMany;
+    };
+  }).vehicleDocument;
+
+  if (!vehicleDocumentDelegate) {
+    return [];
+  }
+
+  try {
+    return await vehicleDocumentDelegate.findMany({
+      where: {
+        agencyId: params.agencyId,
+        vehicleId: params.vehicleId,
+      },
+    });
+  } catch (error) {
+    if (isPrismaMissingVehicleDocumentsSchemaError(error)) {
+      console.warn(
+        "Vehicle documents table/columns unavailable while loading vehicle profile; continuing without documents.",
+      );
+      return [];
+    }
+
+    throw error;
+  }
+}
 
 function startOfToday() {
   const now = new Date();
@@ -620,11 +664,6 @@ export function deriveVehicleWorkspace(input: {
 
 export async function getVehicleProfile(agencyId: string, vehicleId: string): Promise<VehicleProfileData | null> {
   const now = new Date();
-  const vehicleDocumentDelegate = (prisma as typeof prisma & {
-    vehicleDocument?: {
-      findMany: typeof prisma.vehicleDocument.findMany;
-    };
-  }).vehicleDocument;
 
   const [
     vehicle,
@@ -655,6 +694,7 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
           hasAC: true,
           category: true,
           photoUrl: true,
+          publishedToWebsite: true,
           mileage: true,
           currentKm: true,
           maintenanceNotes: true,
@@ -736,14 +776,7 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
         },
         orderBy: { date: "desc" },
       }),
-      vehicleDocumentDelegate
-        ? vehicleDocumentDelegate.findMany({
-            where: {
-              agencyId,
-              vehicleId,
-            },
-          })
-        : Promise.resolve([]),
+      getVehicleDocumentsSafe({ agencyId, vehicleId }),
       getVehicleFuelType(vehicleId),
       prisma.expense.findMany({
         where: {
@@ -1003,6 +1036,7 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
       hasAC: vehicle.hasAC,
       category: vehicle.category,
       photoUrl: vehicle.photoUrl,
+      publishedToWebsite: vehicle.publishedToWebsite,
       mileage: vehicle.mileage,
       currentKm: vehicle.currentKm,
       maintenanceNotes: vehicle.maintenanceNotes,
@@ -1053,6 +1087,7 @@ export async function getVehicleProfile(agencyId: string, vehicleId: string): Pr
         hasAC: vehicle.hasAC,
         category: vehicle.category,
         photoUrl: vehicle.photoUrl,
+        publishedToWebsite: vehicle.publishedToWebsite,
         mileage: vehicle.mileage,
         currentKm: vehicle.currentKm,
         maintenanceNotes: vehicle.maintenanceNotes,
